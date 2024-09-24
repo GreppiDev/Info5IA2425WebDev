@@ -1,0 +1,676 @@
+#!/usr/bin/env bash
+
+## riferimenti per i comandi docker
+# https://docs.docker.com/reference/cli/docker/  ù
+
+## Primo esempio
+# https://docs.docker.com/reference/cli/docker/container/run/
+# Usage:	docker container run [OPTIONS] IMAGE [COMMAND] [ARG...]
+# Aliases: docker run
+
+docker run hello-world
+
+## Vedere i container attivi (running)
+# https://docs.docker.com/reference/cli/docker/container/ls/
+# Usage:	docker container ls [OPTIONS]
+# Aliases:  docker container list <-> docker container ps <-> docker ps
+docker ps
+
+# vedere i container attivi (running) e non attivi (stopped)
+docker ps -a
+
+## Terminare un container - docker stop
+# https://docs.docker.com/reference/cli/docker/container/stop/
+# Usage:    docker container stop [OPTIONS] CONTAINER [CONTAINER...]
+# Aliases:  docker stop
+docker stop container_id
+# oppure
+docker stop container_name
+
+# proviamo a lanciare un container con l'immagine di Ubuntu
+docker run ubuntu
+# nell'esempio precedente viene creato e lanciato un container con Ubuntu
+# che si ferma istantaneamente, perché il comando predefinito è
+# /bin/bash e siccome non c'è nessuno script passato alla bash
+# il processo del container viene subito terminato
+
+# proviamo a lanciare Ubuntu in modo che venga eseguita un'azione per
+# alcuni secondi
+docker run ubuntu sleep 10
+# il comando precedente lancia un container in foreground con la
+# shell collegata. Per avviare un container in background, senza
+# collegarlo alla shell corrente occorre utilizzare il parametro -d
+
+## Avviare un container in modalità detached
+# https://docs.docker.com/reference/cli/docker/container/run/#detach
+# The --detach (or -d) flag starts a container as a background process that doesn't occupy
+# your terminal window. By design, containers started in detached mode exit when the root
+# process used to run the container exits, unless you also specify the --rm option.
+# If you use -d with --rm, the container is removed when it exits or when the daemon exits,
+# whichever happens first.
+
+docker run -d ubuntu sleep 200
+# vediamo che il container è attivo
+docker ps
+
+## Eseguire un nuovo comando in un container attivo (running)
+# https://docs.docker.com/reference/cli/docker/container/exec/
+# Usage:	docker container exec [OPTIONS] CONTAINER COMMAND [ARG...]
+# Aliases:  docker exec
+# Ad esempio, se un container di Ubuntu è running, possiamo eseguire su di esso
+# un comando con la sintassi:
+docker exec container_id comando
+# oppure
+docker exec container_name comando
+# ad esempio, supponendo che il container_name con l'immagine di Ubuntu sia stoic_mayer e
+# che il comando sia cat /etc/hosts possiamo eseguire il comando
+docker exec stoic_mayer cat /etc/hosts
+
+# facciamo partire un container che rimane attivo dopo averlo lanciato
+# lanciamo nginx (web server e reverse proxy) con l'opzione detach
+docker run -d nginx
+# verifichiamo che il container sia attivo
+docker ps
+# per terminare il container possiamo usare il comando
+docker stop container_id
+# oppure
+docker stop container_name
+
+## Rimuovere un container
+# https://docs.docker.com/reference/cli/docker/container/rm/
+# Usage:    docker container rm [OPTIONS] CONTAINER [CONTAINER...]
+# Alias:    docker container remove <-> docker rm
+
+# per rimuovere un container (sintassi abbreviata)
+docker rm container_id
+# oppure
+docker rm container_name
+
+# per rimuovere un container (sintassi estesa)
+docker container remove
+# è anche possibile rimuovere più container contemporaneamente mettendo più identificativi/nomi separati da spazi
+# per gli identificativi è anche possibile specificare solo le prime tre o quattro cifre esadecimali
+
+# attenzione! per rimuovere un container bisogna che questo sia stato precedentemente fermato (stopped)
+# altrimenti si ottiene un errore
+
+## Eseguire un container con l'opzione di rimozione automatica all'uscita del processo --rm
+# https://docs.docker.com/reference/cli/docker/container/run/#rm
+# By default, a container's file system persists even after the container exits. This makes
+# debugging a lot easier,since you can inspect the container's final state and you retain all
+# your data. If you'd like Docker to automatically clean up the container and remove the file
+# system when the container exits, use the --rm flag
+# Eseguiamo un task con un container ubuntu che poi verrà automaticamente rimosso
+docker run -d --rm ubuntu sleep 20
+docker ps
+# passati i 20 secondi verifichiamo che il container sia stato rimosso
+docker ps -a
+
+## Elenco delle immagini locali sul Docker host
+# https://docs.docker.com/reference/cli/docker/image/ls/
+# Usage:	docker image ls [OPTIONS] [REPOSITORY[:TAG]]
+# Aliases:  docker image list <-> docker images
+
+# Elenco delle immagini docker (sintassi abbreviata)
+docker images
+# Elenco delle immagini docker (sintassi estesa)
+docker image ls
+
+## Rimozione di immagini
+# https://docs.docker.com/reference/cli/docker/image/rm/
+# Usage:	docker image rm [OPTIONS] IMAGE [IMAGE...]
+# Aliases:  docker image remove <-> docker rmi
+
+# Rimozione di una immagine docker (sintassi abbreviata)
+docker rmi image_id
+# oppure
+docker rmi image_name
+
+# Rimozione di una immagine docker (sintassi estesa)
+docker image rm image_id
+# oppure
+docker image rm image_name
+
+## Esempio di un container che ospita una web app
+#
+# proviamo a lanciare un container a partire dall'immagine kodekloud/simple-webapp
+# il container in questione fa partire una web application che mostra una pagina
+# di un colore random, oppure di un colore che viene impostato come variabile d'ambiente
+
+# se provassimo a lanciare il container con il comando
+docker run kodekloud/simple-webapp
+# la nostra shell rimarrebbe collegata al container, ma anche cambiando shell e provando
+# aprire il browser all'indirizzo indicato nella shell del container non vedemmo nulla
+
+# l'output a console è
+# This is a sample web application that displays a colored background.
+#  A color can be specified in two ways.
+
+#  1. As a command line argument with --color as the argument. Accepts one of red,green,blue,blue2,pink,darkblue
+#  2. As an Environment variable APP_COLOR. Accepts one of red,green,blue,blue2,pink,darkblue
+#  3. If none of the above then a random color is picked from the above list.
+#  Note: Command line argument precedes over environment variable.
+
+# No command line argument or environment variable. Picking a Random Color =blue
+#  * Serving Flask app "app" (lazy loading)
+#  * Environment: production
+#    WARNING: Do not use the development server in a production environment.
+#    Use a production WSGI server instead.
+#  * Debug mode: off
+#  * Running on http://0.0.0.0:8080/ (Press CTRL+C to quit)
+
+# per terminare il container a cui siamo collegati basta digitare CTRL+C
+
+# se provassimo con il comando
+docker run -d kodekloud/simple-webapp
+# non vedremmo comunque la pagina colorata perché il container non è collegato
+# all'interfaccia di rete del nostro computer (vedremo meglio i dettagli nella sezione networking)
+docker ps
+docker stop container_id
+
+# il modo corretto di eseguire l'avvio del container è
+docker run -d -p 8080:8080 kodekloud/simple-webapp
+# aprire il browser all'indirizzo localhost:8080
+# verificare che il container è in esecuzione
+docker ps
+# aprire un altro container della stessa immagine su un'altra porta
+docker run -d -p 8081:8080 kodekloud/simple-webapp
+# aprire il browser all'indirizzo localhost:8081
+# verificare che entrambi i container sono in esecuzione
+docker ps
+# è anche possibile passare un parametro corrispondente al colore
+docker run -d -p 8082:8080 -e APP_COLOR=green kodekloud/simple-webapp
+# con l'esempio appena visto abbiamo lanciato tre container della stessa immagine.
+
+# la cosa più importante in questo esempio è nell'utilizzo del parametro -p che permette di
+# effettuare il port mapping tra il container docker e il Docker Host (il nostro computer)
+# il parametro -p host_post:container_port permette di associare una porta sul computer host
+# con la porta su cui è in ascolto il web server all'interno del container.
+
+# fermiamo i container associati all'immagine kodekloud/simple-webapp
+docker ps
+docker stop container_id1 container_id2 container_id3
+# rimuoviamo i container
+docker rm container_id1 container_id2 container_id3
+
+## Lanciare un container in modalità interattiva
+# https://docs.docker.com/reference/cli/docker/container/run/#interactive
+# The --interactive (or -i) flag keeps the container's STDIN open, and lets you send input
+# to the container through standard input.
+# Ad esempio
+echo "ciao mondo" | docker run --rm -i ubuntu cat
+# L'opzione -i permette solo di avere accesso allo standard input del container, ma per
+# poter interagire con esso occorre di solito abilitare anche l'opzione -t
+
+## Abilitare uno pseudo-terminale (pseudo-TTY) sul container
+# https://docs.docker.com/reference/cli/docker/container/run/#tty
+# The --tty (or -t) flag attaches a pseudo-TTY to the container, connecting your terminal
+# to the I/O streams of the container. Allocating a pseudo-TTY to the container means that
+# you get access to input and output feature that TTY devices provide.
+# Ad esempio, lanciamo un container ubuntu con le opzioni -it (abbreviazione di -i -t)
+docker run -it --rm ubuntu
+# É anche possibile lanciare un container in modalità detached con le opzioni -it
+docker run -itd ubuntu
+# In questo modo il container viene lanciato con le opzioni -i e -t abilitate, ma la shell
+# corrente non è collegata ad esso. Sarà possibile collegarsi al container successivamente
+# con un comando come docker attach, oppure sarà possibile eseguire un comando con docker exec
+docker run -itd --rm ubuntu
+# oppure
+docker run -i -t -d --rm ubuntu
+# Si noti che, nell'esempio precedente, con l'opzione -it il container non viene chiuso immediatamente
+# poiché il comando predefinito è /bin/bash e il container ha lo STDIN aperto. In questo caso
+# il container è in attesa che venga impartito un input sullo STDIN. Per chiudere il container
+# in questo caso vedremo che esistono alcune opzioni (vedere gli esempi successivi).
+
+# Se si prova ad eseguire il comando seguente, si vedrà che il comando eseguito dal container
+# è sleep 20 e non /bin/bash e allo scadere del tempo stabilito il container va nello
+# stopped e quindi viene automaticamente rimosso grazie all'opzione --rm
+docker run -itd --rm ubuntu sleep 30
+docker ps
+
+## Uscita da un container
+# https://phoenixnap.com/kb/exit-docker-container
+# Supponiamo di far partire un container con l'opzione -it. Inoltre, per distinguere il container
+# appena lanciato dagli altri eventualmente attivi, utilizziamo il parametro --name prima del nome
+# dell'immagine
+docker run -it --name my_server ubuntu
+# Con il comando precedente ci ritroviamo come utenti root all'interno di un container di ubuntu.
+# Proviamo ad eseguire qualche comando come, ad esempio:
+ls -al
+pwd
+whoami
+cat /etc/*release*
+# Per uscire dal container esistono due possibilità:
+# 1) uscire in maniera definitiva, chiudendo anche il container (che verrà posto nello stato stopped)
+# 2) uscire senza chiudere il container
+
+# 1) Per uscire in maniera definitiva da un container e porlo nello stato stopped basta inserire la
+# sequenza CTRL+D. Se il container sta eseguendo un processo, ad esempio sta eseguendo un ping, si
+# deve prima inserire CTRL+C per inviare il segnale SIGINT per fermare il processo e poi CTRL+D per
+# uscire. In alternativa, è anche possibile digitare exit per uscire dal container e porlo nello stato
+# stopped.
+
+docker run -it --name my_server2 ubuntu
+# 2) Per uscire da un container senza chiuderlo si utilizza la combinazione di tasti CTRL+P seguito da CTRL+Q.
+# Dopo questa sequenza il container continua la sua esecuzione in background.
+
+# ATTENZIONE! se si utilizza il terminale di VS Code è possibile che le combinazioni CTRL+P e CTRL+Q siano
+# già associate a scorciatoie di VS Code. In questo caso basta connettersi con un terminale esterno a
+# VS Code, utilizzando il comando docker attach
+
+## Attach a un container
+# https://docs.docker.com/reference/cli/docker/container/attach/
+# Usage:	docker container attach [OPTIONS] CONTAINER
+# Aliases:  docker attach
+# Esempio:
+# Eseguire il comando `docker ps` per vedere i container attivi
+# Eseguire il comando `docker attach my_server2` per connettersi al container.
+# Eseguire qualche comando nella shell del container e poi digitare CTRL+P seguito da CTRL+Q per uscire
+
+## Opzione --detach-keys
+# Sia il comando `docker run` che il comando `docker attach` hanno anche un'opzione che
+# consente di effettuare l'override della sequenza di tasti per effettuare il detach dal container.
+# https://docs.docker.com/reference/cli/docker/container/run/#detach-keys
+# https://docs.docker.com/reference/cli/docker/container/attach/#detach-keys
+# Ad esempio:
+docker run -it --detach-keys=ctrl-u,ctrl-u --name my_server5 ubuntu
+docker ps
+docker attach --detach-keys=ctrl-u,ctrl-u my_server5
+docker ps
+
+# Rimozione di tutti i container nello stato stopped
+# https://docs.docker.com/reference/cli/docker/container/prune/
+# https://docs.docker.com/reference/cli/docker/container/prune/#filter
+docker container prune
+# oppure, se si vuole il comando che non richiede conferma (utile negli script), si utilizza la
+# versione con l'opzione -f
+docker container prune -f
+
+## Docker networking - primi elementi
+# Come visto nelle slide del corso su Docker, se si utilizzano le impostazioni di default di Docker,
+# i container vengono creati all'interno di una network con driver di tipo `bridge`
+# https://docs.docker.com/engine/network/
+# https://docs.docker.com/engine/network/drivers/
+# https://docs.docker.com/engine/network/drivers/bridge/
+# https://docs.docker.com/engine/network/tutorials/standalone/
+
+# In una network di tipo bridge, i container sono all'interno di una rete isolata nella quale possono
+# comunicare tra di loro mediante i loro indirizzi ip privati, ma non possono comunicare direttamente
+# con gli host esterni alla sottorete nella quale si trovano.
+#
+# In terms of Docker, a bridge network uses a software bridge which lets containers connected
+# to the same bridge network communicate, while providing isolation from containers that aren't
+# connected to that bridge network. The Docker bridge driver automatically installs rules in the
+# host machine so that containers on different bridge networks can't communicate directly with each other.
+#
+# When you start Docker, a default bridge network (also called bridge) is created automatically,
+# and newly-started containers connect to it unless otherwise specified. You can also create
+# user-defined custom bridge networks.
+
+# Important! -->User-defined bridge networks are superior to the default bridge network.
+
+# Per capire le differenze tra il default bridge e le user defined bridge si veda la documentazione
+# di Docker al link:
+# https://docs.docker.com/engine/network/drivers/bridge/#differences-between-user-defined-bridges-and-the-default-bridge
+#
+# Quali sono le famiglie di indirizzi privati?
+# https://whatismyipaddress.com/private-ip
+
+# La comunicazione dei container con gli host esterni alla sottorete bridge avviene tramite NAT
+# (Network Address Translation) effettuata dal Docker Host.
+# https://k21academy.com/docker-kubernetes/docker-networking-different-types-of-networking-overview-for-beginners/
+
+## Esercitazione: svolgimento della prima parte del tutorial
+# https://docs.docker.com/engine/network/tutorials/standalone/#use-the-default-bridge-network
+
+## Docker networking - port mapping
+# https://docs.docker.com/engine/network/#published-ports
+# By default, when you create or run a container using docker create or docker run,
+# containers on bridge networks don't expose any ports to the outside world.
+# Use the --publish or -p flag to make a port available to services outside the bridge network.
+# This creates a firewall rule in the host, mapping a container port to a port on the Docker
+# host to the outside world. Here are some examples:
+# Flag value	            Description
+# -p 8080:80	                Map port 8080 on the Docker host to TCP port 80 in the container.
+# -p 192.168.1.100:8080:80	    Map port 8080 on the Docker host IP 192.168.1.100 to TCP port 80 in the container.
+# -p 8080:80/udp	            Map port 8080 on the Docker host to UDP port 80 in the container.
+# -p 8080:80/tcp -p 8080:80/udp	Map TCP port 8080 on the Docker host to TCP port 80 in the container,
+#                               and map UDP port 8080 on the Docker host to UDP port 80 in the container.
+#
+# Warning! when you publish a container's ports it becomes available not only to the Docker host,
+# but to the outside world as well.
+#
+# If you include the localhost IP address (127.0.0.1, or ::1) with the publish flag, only the Docker host
+# and its containers can access the published container port.
+#
+## Ip address and hostname
+# https://docs.docker.com/engine/network/#ip-address-and-hostname
+# By default, the container gets an IP address for every Docker network it attaches to.
+# A container receives an IP address out of the IP subnet of the network.
+# The Docker daemon performs dynamic subnetting and IP address allocation for containers.
+# Each network also has a default subnet mask and gateway.
+#
+## DNS service
+# https://docs.docker.com/engine/network/#dns-services
+# Containers use the same DNS servers as the host by default, but you can override this with --dns.
+# By default, containers inherit the DNS settings as defined in the /etc/resolv.conf configuration file.
+# Containers that attach to the default bridge network receive a copy of this file.
+# Containers that attach to a custom network use Docker's embedded DNS server.
+# The embedded DNS server forwards external DNS lookups to the DNS servers configured on the host.
+# I dettagli sulle user defined bridge network verranno analizzati più avanti
+# https://docs.docker.com/engine/network/tutorials/standalone/#use-user-defined-bridge-networks
+
+## Esempi di container con port mapping
+# Lanciamo Nginx nella sua configurazione di default, in modo che mostri solo la pagina di benvenuto
+docker run --name my_web_server --rm -d -p 8080:80 nginx
+# Se si apre il browser all'indirizzo localhost:8080 si vedrà la pagina di benvenuto di Nginx
+# Lanciamo un container a partire dall'immagine kodekloud/simple-webapp
+docker run --name my_web_app --rm -d -p 8081:8080 kodekloud/simple-webapp
+
+## Docker storage - primi elementi
+# https://docs.docker.com/engine/storage/
+# By default all files created inside a container are stored on a writable container layer.
+# This means that:
+# The data doesn't persist when that container no longer exists, and it can be difficult to get
+# the data out of the container if another process needs it.
+# A container's writable layer is tightly coupled to the host machine where the container is running. You can't easily move the data somewhere else.
+
+# Docker has two options for containers to store files on the host machine, so that the files are
+# persisted even after the container stops:
+# volumes
+# bind mounts.
+# Docker also supports containers storing files in-memory on the host machine.
+# Such files are not persisted.
+
+## Quale opzione di storage scegliere per i container docker?
+
+# Volumes:
+# Volumes are stored in a part of the host filesystem which is managed by Docker
+# (/var/lib/docker/volumes/ on Linux). Non-Docker processes should not modify this part
+# of the filesystem. Volumes are the best way to persist data in Docker.
+
+# Bind mounts:
+# Bind mounts may be stored anywhere on the host system. They may even be important system
+# files or directories. Non-Docker processes on the Docker host or a Docker container can
+# modify them at any time.
+
+# tmpfs:
+# tmpfs mounts are stored in the host system's memory only, and are never written to the
+# host system's filesystem.
+
+# Dove sono memorizzati i volumi di Docker?
+# https://forums.docker.com/t/how-can-i-find-my-volumes-in-windows-11/136934
+# In linux sono nella cartella /var/lib/docker/volumes/
+# In Windows sono nella cartella \wsl$\docker-desktop-data\data\docker\volumes
+
+# Attenzione! --> la sintassi per il montaggio dei volumi e delle cartelle (bind mount) è cambiata
+# nel tempo e, per compatibilità con i primi comandi docker, esistono più modi per connettere
+# uno spazio di storage ad un container.
+# Bind mounts and volumes can both be mounted into containers using the `-v` or `--volume` flag,
+# but the syntax for each is slightly different. For tmpfs mounts, you can use the `--tmpfs`` flag.
+# We recommend using the `--mount` flag for both containers and services, for bind mounts, volumes,
+# or tmpfs mounts, as the syntax is more clear.
+
+# Volumes
+# https://docs.docker.com/engine/storage/#volumes (overview)
+# https://docs.docker.com/engine/storage/volumes/ (documentazione dettagliata)
+# Volumes are created and managed by Docker. You can create a volume explicitly using the docker
+# volume create command, or Docker can create a volume during container or service creation.
+
+# When you create a volume, it's stored within a directory on the Docker host. When you mount
+# the volume into a container, this directory is what's mounted into the container. This is similar
+# to the way that bind mounts work, except that volumes are managed by Docker and are isolated from
+# the core functionality of the host machine.
+
+# A given volume can be mounted into multiple containers simultaneously. When no running container
+# is using a volume, the volume is still available to Docker and isn't removed automatically. You can
+# remove unused volumes using `docker volume prune`.
+
+# When you mount a volume, it may be named or anonymous. Anonymous volumes are given a random name
+# that's guaranteed to be unique within a given Docker host. Just like named volumes, anonymous volumes
+# persist even if you remove the container that uses them, except if you use the --rm flag when creating
+# the container, in which case the anonymous volume is destroyed.
+
+# If you create multiple containers after each other that use anonymous volumes, each container creates
+# its own volume. Anonymous volumes aren't reused or shared between containers automatically. To share
+#  an anonymous volume between two or more containers, you must mount the anonymous volume using the
+# random volume ID.
+
+# Bind mounts
+# https://docs.docker.com/engine/storage/#bind-mounts (overview)
+# https://docs.docker.com/engine/storage/bind-mounts/ (documentazione dettagliata)
+# Bind mounts have limited functionality compared to volumes. When you use a bind mount, a file
+# or directory on the host machine is mounted into a container. The file or directory is referenced
+# by its full path on the host machine. The file or directory doesn't need to exist on the Docker
+# host already. It is created on demand if it doesn't yet exist. Bind mounts are fast, but they rely
+# on the host machine's filesystem having a specific directory structure available. If you are
+# developing new Docker applications, consider using named volumes instead. You can't use Docker CLI
+# commands to directly manage bind mounts.
+
+# Important: Bind mounts allow write access to files on the host by default.
+
+# Good use cases for volumes
+# https://docs.docker.com/engine/storage/#good-use-cases-for-volumes
+
+# Good use cases for bind mounts
+# https://docs.docker.com/engine/storage/#good-use-cases-for-bind-mounts
+
+# https://phoenixnap.com/kb/how-to-ssh-into-docker-container
+
+## Esempi di container che utilizzano volumi o bind mount
+
+### Setup di Nginx con un sito web
+# Pagina di documentazione dell'immagine di Nginx
+# https://hub.docker.com/_/nginx
+# Primo esempio con bind mount e port mapping
+
+# Supponiamo di avere le pagine web in una cartella nella wsl:
+# ~/my_dev/static_sites/site_demo
+# Si può prendere come esempio il sito condiviso su Teams
+
+# Il primo esempio della documentazione di Nginx sulla pagina ufficiale di Docker Hub è
+docker run --name some-nginx -v /some/content:/usr/share/nginx/html:ro -d nginx
+# L'esempio mostrato è un bind mount perché viene associata la cartella /some/content
+# all'interno del Docker Host (il nostro computer) alla cartella /usr/share/nginx/html
+# all'interno del container di Nginx. L'opzione :ro serve nel caso in cui si voglia montare
+# lo spazio di storage in sola lettura (read only).
+
+# Modifichiamo l'esempio riportato su Docker Hub per adattarlo al nostro esempio (da eseguire nella WSL):
+docker run --name my_nginx -v ~/my_dev/static_sites/site_demo:/usr/share/nginx/html:ro -d -p 8080:80 nginx
+
+# Se docker venisse lanciato da PowerShell il bind mount andrebbe scritto usando la notazione PowerShell
+# per il percorso che punta alla cartella del sito web.
+# Supponendo di creare una cartella in Windows (e non in WSL questa volta) in
+# $env:USERPROFILE\source\repos\my_dev\static_files\site_demo
+
+# il seguente è un comando per PowerShell o CMD:
+docker run --name my_nginx2 -v "$env:USERPROFILE\source\repos\my_dev\static_files\site_demo:/usr/share/nginx/html:ro" -d -p 8082:80 nginx
+
+# Osservazione importante: quando si scrive il percorso per il bind mount occorre tener presente che
+# con l'opzione `-v` oppure `--volume` il percorso è scritto nella forma:
+# -v host_path:container_path dove:
+# il percorso nella parte di sinistra del `:` è il percorso alla cartella sul Docker host (il nostro computer),
+# il precorso nella parte destra del `:` è il percorso all'interno del container docker.
+
+# --> Ogni percorso va scritto secondo le convenzioni specifiche dell'OS a cui si riferisce. Quindi,
+# ad esempio, se il percorso al docker host è per Windows deve essere scritto usando il formalismo di Windows;
+# se il percorso all'interno del container docker è riferito a un sistema Linux, va scritto secondo il
+# formalismo di Linux.
+# --> Nel caso di Powershell è importante mettere tutta la stringa che rappresenta il mapping tra doppi apici
+
+# In PowerShell, oltre alla variabile d'ambiente $env:USERPROFILE (che punta alla home dell'utente corrente)
+# è possibile usare anche $PWD, oppure ${PDW} (che punta alla working directory).
+# In Powershell, PWD è l'alias del comando Get-Location
+# In PowerShell basta scrivere `Get-Alias -Name pwd` e vedere che è in realtà è Get-Location
+
+# Osservazione importante: per questioni di ottimizzazione delle prestazioni è raccomandato di non creare
+# container con bind mount direttamente in cartelle di Windows, ma di fare il bind mount su cartelle della
+# wsl2. Questo è dovuto al fatto che con un bind mount tra due sistemi operativi diversi l'accesso ai file è
+# più lento. Si veda a tal proposito:
+# https://www.docker.com/blog/docker-desktop-wsl-2-best-practices/
+# https://code.visualstudio.com/remote/advancedcontainers/improve-performance
+
+### Setup del database MySQL con port mapping e volumi
+# L'immagine ufficiale docker di MySQL si trova al link
+# https://hub.docker.com/_/mysql
+# Dalla pagina di Docker hub di MySQL:
+# What is MySQL?
+# MySQL is the world's most popular open source database. With its proven performance, reliability and
+# ease-of-use, MySQL has become the leading database choice for web-based applications, covering the
+# entire range from personal projects and websites, via e-commerce and information services, all the
+# way to high profile web properties including Facebook, Twitter, YouTube, Yahoo! and many more.
+#
+# Per far partire un container con MySQL possiamo lanciare il comando:
+docker run --name mysql-server1 -e MYSQL_ROOT_PASSWORD=my-secret-pw -d -p 3306:3306 mysql:latest
+docker run --name mysql-server1 -e MYSQL_ROOT_PASSWORD=root -d -p 3306:3306 mysql:latest
+# oppure
+docker run --name mysql-server1 -e MYSQL_ROOT_PASSWORD=my-secret-pw -d -p 3306:3306 mysql
+# oppure per far partire una specifica versione
+docker run --name mysql-server1 -e MYSQL_ROOT_PASSWORD=my-secret-pw -d -p 3306:3306 mysql:9.0.1
+
+# per connetterci a MySQL possiamo procedere in diversi modi:
+# 1) lanciamo una shell bash direttamente sul container del server di MySQL:
+# apriamo un'altra finestra del nostro terminale su WSL (Ubuntu) e digitiamo il comando seguente
+docker exec -it mysql-server1 /bin/bash
+# nella shell del server eseguiamo i seguente comandi:
+pwd
+cat /etc/*release*
+# per effettuare la connessione al server di mysql, utilizziamo il programma client di mysql
+mysql -u root -p
+# il comando precedente può anche essere scritto come
+mysql -uroot -p
+# ossia mettendo il nome utente direttamente attaccato a -u
+# se volessimo inserire subito la password (ad esempio root) potremmo scrivere
+mysql -uroot -proot
+# questo modo di accedere è considerato insicuro se si accede direttamente sulla
+# command line, ma può essere utilizzato quando si esegue uno script
+# per verificare che il database dia funzionante eseguiamo la seguente query SQL:
+
+# select user, host from mysql.user;
+# Usciamo dalla sessione interattiva con mysql, digitando il comando:
+# exit
+# Per uscire dal container possiamo digitare exit
+
+# 2) Effettuiamo la connessione da un applicativo client del Docker Host (il nostro PC)
+# 2.1) Utilizziamo VS Code con il plugin per MySQL chiamato MySQL con ID = cweijan.vscode-mysql-client2
+# effettuiamo la connessione specificando i seguenti parametri:
+# host --> 127.0.0.1 oppure localhost
+# port --> 3306 (è la porta utilizzata per il docker host e che è stata mappata sulla 3306 del container)
+# username --> root
+# password --> quella usata all'atto della creazione del container
+# 2.1) Effettuiamo la connessione utilizzando mysql client della distribuzione Linux della WSL. Ad esempio,
+# per Ubuntu 24.04 è possibile installare mysql-client-core con il comando sudo apt install mysql-client-core-8.0
+# Dopo aver installato il pacchetto suddetto, la connessione può avvenire direttamente dalla shell della
+# distribuzione Linux della WSL con il comando:
+# mysql -u root -p -h 172.17.0.1
+# In questo caso occorre inserire l'indirizzo ip del server e non il nome DNS (localhost) altrimenti la connessione
+# non avrà successo.
+# 2.2) Utilizziamo l'applicativo MySQL workbench installato sul nostro computer e facciamo la connessione con i parametri
+# richiesti (username e password) e specificando come host l'indirizzo 127.0.0.1
+# MySQL Workbench può essere scaricato all'indirizzo:
+# https://dev.mysql.com/downloads/workbench/
+# Si potrebbe utilizzare anche il programma mysql.exe per Windows che viene distribuito nella versione di MySQL per
+# Windows, ma in tal caso, occorrerebbe utilizzare una versione del client che supporta il plugin per la sicurezza
+# caching_sha2_password, oppure bisogna procedere come descritto qui:
+# https://chrisshennan.com/blog/fixing-authentication-plugin-cachingsha2password-cannot-be-loaded-errors
+
+# 2.3) Effettuiamo la connessione da un altro container docker. In questo caso possiamo scegliere diverse
+# opzioni:
+# a) usare la stessa immagine di mysql per connettersi al server, come indicato nella documentazione
+# di MySQL su Docker Hub https://hub.docker.com/_/mysql
+
+# docker run -it --network some-network --rm mysql mysql -h some-mysql -u example-user -p
+
+# Nell'istruzione precedente, l'ultima parte del comando docker è mysql -h some-mysql -u example-user -p
+# ed è usata per lanciare il client di mysql verso un altro container dove è in esecuzione il server di mysql (mysqld)
+# L'esempio precedente assume che sia stata creata una user-defined network per i container in modo che sia abilitata
+# la risoluzione DNS dei nomi dei container. In alternativa, si può:
+# a.1) utilizzare l'indirizzo privato del server al posto del nome host (some-host). Questo indirizzo privato può
+# essere recuperato eseguendo il comando docker container inspect sul container su cui è in esecuzione il server di
+# MySQL.
+# a.2) lanciare il container docker per il client di MySQL con l'opzione --link (legacy e possibilmente da evitare), come
+# descritto nella pagina della documentazione docker:
+# https://docs.docker.com/engine/network/links/
+# https://docs.docker.com/engine/network/links/#communication-across-links
+# https://docs.docker.com/engine/network/links/#environment-variables
+
+# b) usare un container con l'immagine di MySQL Workbench, come ad esempio
+# https://hub.docker.com/r/linuxserver/mysql-workbench
+# Attenzione! --> L'immagine da scaricare è abbastanza grande (dell'ordine di qualche GB)
+# Si può far partire il container con l'istruzione seguente
+docker run -d \
+    --name=mysql-workbench \
+    -e PUID=1000 \
+    -e PGID=1000 \
+    -e TZ=Etc/UTC \
+    -p 3000:3000 \
+    -p 3001:3001 \
+    -v ~/my_dev/config:/config \
+    --cap-add="IPC_LOCK" \
+    --restart unless-stopped \
+    lscr.io/linuxserver/mysql-workbench:latest
+# Nell'istruzione precedente si è creata la cartella ~/my_dev/config nella distribuzione Linux della WSL per
+# consentire il salvataggio delle impostazioni dell'applicazione MySQL Workbench.
+# Per utilizzare l'applicazione si apre il browser all'indirizzo localhost:3000 per connessioni http oppure all'indirizzo
+# localhost:3001 per connessioni https (in questo caso occorre accettare il certificato privato del server)
+# Per effettuare le connessioni al server di MySQL con questo container occorre fare le stesse considerazioni fatte
+# per le altre modalità di accesso tra container docker. In questo caso la connessione può essere stabilita utilizzando
+# l'indirizzo privato del container docker di MySQL server, oppure creando una user-define custom network e usare il nome
+# del container come nome host a cui connettersi.
+
+# c) usare un container con l'immagine di phpMyAdmin
+# https://hub.docker.com/_/phpmyadmin
+docker run --name phpmyadmin -d --link mysql-server1:db -p 8080:80 phpmyadmin
+
+## Docker Networking - User defined networks
+# https://docs.docker.com/engine/network/#user-defined-networks
+# You can create custom, user-defined networks, and connect multiple containers to the same network. Once connected to a
+# user-defined network, containers can communicate with each other using container IP addresses or container names.
+# Creiamo la rete my-net con l'istruzione seguente:
+docker network create -d bridge my-net
+# Verifichiamo che la rete sia stata creata con il comando
+docker network ls
+# Verifichiamo le proprietà della rete creata con il comando:
+docker network inspect my-net
+# Fermiamo e rimuoviamo i container precedentemente creati per MySQL e per le relative applicazioni client.
+docker ps
+docker stop id1 id2 id3
+# rimuo tutti i container non in esecuzione
+docker container prune -f
+# Verifichiamo che il volume anonimo creato per MySQL sia ancora presente:
+docker volume ls
+# eliminiamo il volume creato dal container di MySQL
+
+## Eliminazione di un volume
+# https://docs.docker.com/reference/cli/docker/volume/rm/
+# Usage: docker volume rm [OPTIONS] VOLUME [VOLUME...]
+# Aliases: docker volume remove
+# Nel caso di volumi indicati tramite id, occorre specificare tutto l'identificativo e non solo le prime cifre
+docker volume remove volume_id
+
+# Creiamo nuovamente un container per MySQL server, questa volta usando la rete docker creata e usando volumi con nome:
+# https://docs.docker.com/engine/storage/volumes/#create-and-manage-volumes
+docker volume create mysql_volume
+docker volume ls
+docker volume inspect mysql_volume
+
+# Creiamo il container per MySQL:
+docker run -d \
+    --name mysql-server1 \
+    --network my-net \
+    -v mysql_volume:/var/lib/mysql \
+    -e MYSQL_ROOT_PASSWORD=root \
+    -p 3306:3306 mysql:latest
+
+# Verifichiamo le caratteristiche del container
+docker container inspect mysql-server1
+# Verifichiamo i volumi, la rete, l'indirizzo ip e i nomi dns che sono stati utilizzati per il container
+# Verifichiamo che anche la rete my-net sia stata aggiornata
+docker network inspect my-net
+
+# Lanciamo un container docker di phpMyAdmin p che si connette al database
+docker run -d \
+    --name phpmyadmin \
+    --network my-net \
+    -e PMA_HOST=mysql-server1 \
+    -p 8080:80 phpmyadmin
