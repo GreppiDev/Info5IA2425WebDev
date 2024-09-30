@@ -587,12 +587,18 @@ mysql -uroot -proot
 # Ad esempio, per Ubuntu 24.04 è possibile installare mysql-client-core con il comando sudo apt install mysql-client-core-8.0
 # Dopo aver installato il pacchetto suddetto, la connessione può avvenire direttamente dalla shell della
 # distribuzione Linux della WSL con il comando:
-# mysql -u root -p -h 172.17.0.1
-# In questo caso occorre inserire l'indirizzo ip del server e non il nome DNS (localhost) altrimenti la connessione
+# mysql -uroot -h 127.0.0.1 -p
+# In questo caso occorre inserire l'indirizzo IP del server e non il nome DNS (localhost) altrimenti la connessione
 # non avrà successo.
 
-# 2.2) Utilizziamo l'applicativo MySQL workbench installato sul nostro computer e facciamo la connessione con i parametri
-# richiesti (username e password) e specificando come host l'indirizzo 127.0.0.1
+# Importante: quando si utilizza una distribuzione WSL a scuola e si vuole accedere a internet dalla shell, ad esempio per eseguire 
+# il comando curl, oppure per scaricare o aggiornare un pacchetto tramite apt, oppure apt-get, occorre configurare il proxy.
+# Alcune applicazioni di Linux hanno una configurazione specifica per il proxy. Si veda il file di scripting relativo alla configurazione 
+# del proxy in Ubuntu.
+
+
+# 2.2) Utilizziamo l'applicativo MySQL workbench installato sul nostro computer (se disponibile) e facciamo la connessione con i
+# parametri richiesti (username e password) e specificando come host l'indirizzo 127.0.0.1
 # MySQL Workbench può essere scaricato all'indirizzo:
 # https://dev.mysql.com/downloads/workbench/
 # Si potrebbe utilizzare anche il programma mysql.exe per Windows che viene distribuito nella versione di MySQL per
@@ -615,6 +621,26 @@ mysql -uroot -proot
 # a.1) utilizzare l'indirizzo privato del server al posto del nome host (some-host). Questo indirizzo privato può
 # essere recuperato eseguendo il comando `docker container inspect` sul container su cui è in esecuzione il server di
 # MySQL.
+docker inspect mysql-server1
+# l'estrazione dell'indirizzo ip, si può ottenere con la sintassi del linguaggio Go (con cui è scritto Docker)
+docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' mysql-server1
+container_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' mysql-server1)
+# dove:
+    # -f '{{...}}':
+
+    # L'opzione -f specifica un formato personalizzato per l'output di docker inspect.
+    # La stringa tra apici singoli ('...') è una template string che indica come estrarre i dati dal JSON restituito da docker inspect.
+    # '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}':
+
+    # Questa è una Go template syntax utilizzata per navigare nel JSON e ottenere valori specifici.
+    # {{range ...}}: Inizia un ciclo per iterare su un array o una mappa. Qui stiamo iterando su .NetworkSettings.Networks, che contiene informazioni sulle reti del container.
+    # {{.IPAddress}}: All'interno del ciclo, . rappresenta l'elemento corrente (una rete), e .IPAddress estrae l'indirizzo IP di quella rete.
+    # {{end}}: Termina il ciclo range. Se ci sono più reti, il ciclo itera su ciascuna di esse
+# oppure
+# mediante il comando jq - commandline JSON processor 
+container_ip=$(docker inspect mysql-server1 | jq -r '.[0].NetworkSettings.Networks[].IPAddress')
+
+docker run -it --name my_client --rm mysql mysql -h$container_ip -uroot -p
 
 # a.2) lanciare il container docker per il client di MySQL con l'opzione --link (legacy e possibilmente da evitare), come
 # descritto nella pagina della documentazione docker:
@@ -660,7 +686,7 @@ docker container inspect container_name
 # https://hub.docker.com/_/phpmyadmin
 docker run --name phpmyadmin -d --link mysql-server1:db -p 8080:80 phpmyadmin
 
-## Docker Networking - User defined networks
+## Docker Networking - User defined networks (importante!)
 # https://docs.docker.com/engine/network/#user-defined-networks
 # You can create custom, user-defined networks, and connect multiple containers to the same network. Once connected to a
 # user-defined network, containers can communicate with each other using container IP addresses or container names.
@@ -687,7 +713,7 @@ docker volume ls
 docker volume remove volume_id
 
 #
-## Ricreiamo i container per metterli tutti collegati alla stessa sottorete
+## Ricreiamo i container per metterli tutti collegati alla stessa sottorete (importante!)
 #
 # Creiamo nuovamente un container per MySQL server, questa volta usando la rete docker creata e usando volumi con nome:
 # https://docs.docker.com/engine/storage/volumes/#create-and-manage-volumes
@@ -841,7 +867,7 @@ docker rm -v mariadb_server1
 ## Backup di un volume
 # https://docs.docker.com/engine/storage/volumes/#back-up-a-volume
 
-# domanda: cosa succede se lanciassimo un container con la notazione -v /dbdata ?
+# domanda: cosa succederebbe se lanciassimo un container con la notazione -v /dbdata ?
 # risposta: in questo caso non essendo specificato il volume da associare alla cartella /dbdata nel
 # container verrebbe creato un volume anonimo associato alla cartella /dbdata
 docker run -v /dbdata --name dbstore ubuntu /bin/bash
