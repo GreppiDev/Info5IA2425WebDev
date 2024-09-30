@@ -36,7 +36,7 @@ docker run ubuntu
 
 # proviamo a lanciare Ubuntu in modo che venga eseguita un'azione per
 # alcuni secondi
-docker run ubuntu sleep 10
+docker run ubuntu sleep 20
 # il comando precedente lancia un container in foreground con la
 # shell collegata. Per avviare un container in background, senza
 # collegarlo alla shell corrente occorre utilizzare il parametro -d
@@ -401,7 +401,11 @@ docker run --name my_web_app --rm -d -p 8081:8080 kodekloud/simple-webapp
 # Dove sono memorizzati i volumi di Docker?
 # https://forums.docker.com/t/how-can-i-find-my-volumes-in-windows-11/136934
 # In linux sono nella cartella /var/lib/docker/volumes/
-# In Windows sono nella cartella \wsl$\docker-desktop-data\data\docker\volumes
+# In Windows sono nella cartella
+# \\wsl.localhost\docker-desktop-data\data\docker\volumes
+# lo stesso percorso si può scrivere anche come:
+# \\wsl$\docker-desktop-data\data\docker\volumes
+# si veda anche https://superuser.com/questions/1726309/convert-wsl-path-to-uri-compliant-wsl-localhost
 
 # Attenzione! --> la sintassi per il montaggio dei volumi e delle cartelle (bind mount) è cambiata
 # nel tempo e, per compatibilità con i primi comandi docker, esistono più modi per connettere
@@ -476,7 +480,7 @@ docker run --name some-nginx -v /some/content:/usr/share/nginx/html:ro -d nginx
 # lo spazio di storage in sola lettura (read only).
 
 # Modifichiamo l'esempio riportato su Docker Hub per adattarlo al nostro esempio (da eseguire nella WSL):
-docker run --name my_nginx -v ~/my_dev/static_sites/site_demo:/usr/share/nginx/html:ro -d -p 8080:80 nginx
+docker run --name my_nginx -d --rm -v ~/my_dev/static_sites/site_demo:/usr/share/nginx/html:ro -p 8080:80 nginx
 
 # Se docker venisse lanciato da PowerShell il bind mount andrebbe scritto usando la notazione PowerShell
 # per il percorso che punta alla cartella del sito web.
@@ -484,7 +488,7 @@ docker run --name my_nginx -v ~/my_dev/static_sites/site_demo:/usr/share/nginx/h
 # $env:USERPROFILE\source\repos\my_dev\static_files\site_demo
 
 # il seguente è un comando per PowerShell o CMD:
-docker run --name my_nginx2 -v "$env:USERPROFILE\source\repos\my_dev\static_files\site_demo:/usr/share/nginx/html:ro" -d -p 8082:80 nginx
+docker run --name my_nginx2 -d --rm -v "$env:USERPROFILE\source\repos\my_dev\static_files\site_demo:/usr/share/nginx/html:ro" -p 8082:80 nginx
 
 # Osservazione importante: quando si scrive il percorso per il bind mount occorre tener presente che
 # con l'opzione `-v` oppure `--volume` il percorso è scritto nella forma:
@@ -510,9 +514,26 @@ docker run --name my_nginx2 -v "$env:USERPROFILE\source\repos\my_dev\static_file
 # https://www.docker.com/blog/docker-desktop-wsl-2-best-practices/
 # https://code.visualstudio.com/remote/advancedcontainers/improve-performance
 
+### Osservazione importante! --> per accedere all'interno del container di nginx dopo che è stato lanciato si potrebbe
+# utilizzare l'istruzione docker attach che, come riportato dalla documentazione, "Attach local standard input,
+# output, and error streams to a running container".
+# Se eseguissimo il comando docker attach sul container di nginx non riusciremmo a fare molto perché il
+# container viene eseguito con lo script docker-entrypoint.sh e non vedremmo nulla.
+# Se avessimo fatto partire il container con anche le opzioni -it, facendo l'attach vedremmo i messaggi di log, ma
+# non potremmo eseguire comandi...
+# Il modo migliore per entrare nel container di nginx dopo che è stato avviato, indipendentemente dal fatto che sia
+# stata utilizzata l'opzione -it, è quella di eseguire il comando:
+
+docker exec -it container_id /bin/bash
+# oppure
+docker exec -it container_name /bin/bash
+
 ### Setup del database MySQL con port mapping e volumi
 # L'immagine ufficiale docker di MySQL si trova al link
 # https://hub.docker.com/_/mysql
+# Altra documentazione sul deployment di MySQL attraverso Docker si trova sul sito ufficiale di MySQL
+# https://dev.mysql.com/doc/refman/9.0/en/linux-installation-docker.html
+# https://dev.mysql.com/doc/refman/9.0/en/docker-mysql-getting-started.html
 # Dalla pagina di Docker hub di MySQL:
 # What is MySQL?
 # MySQL is the world's most popular open source database. With its proven performance, reliability and
@@ -520,8 +541,9 @@ docker run --name my_nginx2 -v "$env:USERPROFILE\source\repos\my_dev\static_file
 # entire range from personal projects and websites, via e-commerce and information services, all the
 # way to high profile web properties including Facebook, Twitter, YouTube, Yahoo! and many more.
 #
-# Per far partire un container con MySQL possiamo lanciare il comando:
+# Per far partire un container con MySQL possiamo lanciare un comando come il seguente:
 docker run --name mysql-server1 -e MYSQL_ROOT_PASSWORD=my-secret-pw -d -p 3306:3306 mysql:latest
+# ad esempio
 docker run --name mysql-server1 -e MYSQL_ROOT_PASSWORD=root -d -p 3306:3306 mysql:latest
 # oppure
 docker run --name mysql-server1 -e MYSQL_ROOT_PASSWORD=my-secret-pw -d -p 3306:3306 mysql
@@ -529,10 +551,11 @@ docker run --name mysql-server1 -e MYSQL_ROOT_PASSWORD=my-secret-pw -d -p 3306:3
 docker run --name mysql-server1 -e MYSQL_ROOT_PASSWORD=my-secret-pw -d -p 3306:3306 mysql:9.0.1
 
 # per connetterci a MySQL possiamo procedere in diversi modi:
+
 # 1) lanciamo una shell bash direttamente sul container del server di MySQL:
 # apriamo un'altra finestra del nostro terminale su WSL (Ubuntu) e digitiamo il comando seguente
 docker exec -it mysql-server1 /bin/bash
-# nella shell del server eseguiamo i seguente comandi:
+# nella shell del container di mysql eseguiamo i seguente comandi:
 pwd
 cat /etc/*release*
 # per effettuare la connessione al server di mysql, utilizziamo il programma client di mysql
@@ -552,19 +575,22 @@ mysql -uroot -proot
 # Per uscire dal container possiamo digitare exit
 
 # 2) Effettuiamo la connessione da un applicativo client del Docker Host (il nostro PC)
+
 # 2.1) Utilizziamo VS Code con il plugin per MySQL chiamato MySQL con ID = cweijan.vscode-mysql-client2
 # effettuiamo la connessione specificando i seguenti parametri:
 # host --> 127.0.0.1 oppure localhost
 # port --> 3306 (è la porta utilizzata per il docker host e che è stata mappata sulla 3306 del container)
 # username --> root
 # password --> quella usata all'atto della creazione del container
-# 2.1) Effettuiamo la connessione utilizzando mysql client della distribuzione Linux della WSL. Ad esempio,
-# per Ubuntu 24.04 è possibile installare mysql-client-core con il comando sudo apt install mysql-client-core-8.0
+
+# 2.1) Effettuiamo la connessione utilizzando mysql client della distribuzione Linux della WSL.
+# Ad esempio, per Ubuntu 24.04 è possibile installare mysql-client-core con il comando sudo apt install mysql-client-core-8.0
 # Dopo aver installato il pacchetto suddetto, la connessione può avvenire direttamente dalla shell della
 # distribuzione Linux della WSL con il comando:
 # mysql -u root -p -h 172.17.0.1
 # In questo caso occorre inserire l'indirizzo ip del server e non il nome DNS (localhost) altrimenti la connessione
 # non avrà successo.
+
 # 2.2) Utilizziamo l'applicativo MySQL workbench installato sul nostro computer e facciamo la connessione con i parametri
 # richiesti (username e password) e specificando come host l'indirizzo 127.0.0.1
 # MySQL Workbench può essere scaricato all'indirizzo:
@@ -579,15 +605,17 @@ mysql -uroot -proot
 # a) usare la stessa immagine di mysql per connettersi al server, come indicato nella documentazione
 # di MySQL su Docker Hub https://hub.docker.com/_/mysql
 
-# docker run -it --network some-network --rm mysql mysql -h some-mysql -u example-user -p
+# docker run -it --network some-network --rm mysql mysql -hsome-mysql -uexample-user -p
 
-# Nell'istruzione precedente, l'ultima parte del comando docker è mysql -h some-mysql -u example-user -p
+# Nell'istruzione precedente, l'ultima parte del comando docker è mysql -hsome-mysql -uexample-user -p
 # ed è usata per lanciare il client di mysql verso un altro container dove è in esecuzione il server di mysql (mysqld)
 # L'esempio precedente assume che sia stata creata una user-defined network per i container in modo che sia abilitata
 # la risoluzione DNS dei nomi dei container. In alternativa, si può:
+
 # a.1) utilizzare l'indirizzo privato del server al posto del nome host (some-host). Questo indirizzo privato può
-# essere recuperato eseguendo il comando docker container inspect sul container su cui è in esecuzione il server di
+# essere recuperato eseguendo il comando `docker container inspect` sul container su cui è in esecuzione il server di
 # MySQL.
+
 # a.2) lanciare il container docker per il client di MySQL con l'opzione --link (legacy e possibilmente da evitare), come
 # descritto nella pagina della documentazione docker:
 # https://docs.docker.com/engine/network/links/
@@ -596,7 +624,11 @@ mysql -uroot -proot
 
 # b) usare un container con l'immagine di MySQL Workbench, come ad esempio
 # https://hub.docker.com/r/linuxserver/mysql-workbench
-# Attenzione! --> L'immagine da scaricare è abbastanza grande (dell'ordine di qualche GB)
+
+# Attenzione! --> L'immagine da scaricare è abbastanza grande (dell'ordine di un paio di GB)
+# Scaricare *a casa* l'immagine di My workbench con il comando
+docker pull lscr.io/linuxserver/mysql-workbench:latest
+
 # Si può far partire il container con l'istruzione seguente
 docker run -d \
     --name=mysql-workbench \
@@ -611,12 +643,18 @@ docker run -d \
     lscr.io/linuxserver/mysql-workbench:latest
 # Nell'istruzione precedente si è creata la cartella ~/my_dev/config nella distribuzione Linux della WSL per
 # consentire il salvataggio delle impostazioni dell'applicazione MySQL Workbench.
-# Per utilizzare l'applicazione si apre il browser all'indirizzo localhost:3000 per connessioni http oppure all'indirizzo
-# localhost:3001 per connessioni https (in questo caso occorre accettare il certificato privato del server)
+
+# Per utilizzare l'applicazione si apre il browser all'indirizzo http://localhost:3000 per connessioni http, oppure all'indirizzo
+# https://localhost:3001 per connessioni https (in questo caso occorre accettare il certificato privato del server)
+
 # Per effettuare le connessioni al server di MySQL con questo container occorre fare le stesse considerazioni fatte
 # per le altre modalità di accesso tra container docker. In questo caso la connessione può essere stabilita utilizzando
 # l'indirizzo privato del container docker di MySQL server, oppure creando una user-define custom network e usare il nome
 # del container come nome host a cui connettersi.
+# Per ottenere l'indirizzo privato del container a cui ci si vuole connettere si può utilizzare il comando
+docker container inspect container_id
+# oppure
+docker container inspect container_name
 
 # c) usare un container con l'immagine di phpMyAdmin
 # https://hub.docker.com/_/phpmyadmin
@@ -635,7 +673,7 @@ docker network inspect my-net
 # Fermiamo e rimuoviamo i container precedentemente creati per MySQL e per le relative applicazioni client.
 docker ps
 docker stop id1 id2 id3
-# rimuo tutti i container non in esecuzione
+# rimuoviamo tutti i container non in esecuzione
 docker container prune -f
 # Verifichiamo che il volume anonimo creato per MySQL sia ancora presente:
 docker volume ls
@@ -648,6 +686,9 @@ docker volume ls
 # Nel caso di volumi indicati tramite id, occorre specificare tutto l'identificativo e non solo le prime cifre
 docker volume remove volume_id
 
+#
+## Ricreiamo i container per metterli tutti collegati alla stessa sottorete
+#
 # Creiamo nuovamente un container per MySQL server, questa volta usando la rete docker creata e usando volumi con nome:
 # https://docs.docker.com/engine/storage/volumes/#create-and-manage-volumes
 docker volume create mysql_volume
@@ -660,7 +701,7 @@ docker run -d \
     --network my-net \
     -v mysql_volume:/var/lib/mysql \
     -e MYSQL_ROOT_PASSWORD=root \
-    -p 3306:3306 mysql:latest
+    -p 3306:3306 mysql
 
 # Verifichiamo le caratteristiche del container
 docker container inspect mysql-server1
@@ -668,9 +709,160 @@ docker container inspect mysql-server1
 # Verifichiamo che anche la rete my-net sia stata aggiornata
 docker network inspect my-net
 
-# Lanciamo un container docker di phpMyAdmin p che si connette al database
+# Lanciamo un container docker di phpMyAdmin che si connette al database
 docker run -d \
     --name phpmyadmin \
     --network my-net \
     -e PMA_HOST=mysql-server1 \
     -p 8080:80 phpmyadmin
+
+# Lanciamo un container docker di MySQL Workbench nella network my-net
+docker run -d \
+    --name=mysql-workbench \
+    --network my-net \
+    -e PUID=1000 \
+    -e PGID=1000 \
+    -e TZ=Etc/UTC \
+    -p 3000:3000 \
+    -p 3001:3001 \
+    -v ~/my_dev/config:/config \
+    --cap-add="IPC_LOCK" \
+    --restart unless-stopped \
+    lscr.io/linuxserver/mysql-workbench
+
+# Con la sottorete my-net è possibile usare i nomi dei container come nomi host al posto degli indirizzi IP
+# Dopo aver aperto MySQL Workbench, nel pannello di configurazione della connessione al server di MySQL mysql-server1 è
+# possibile specificare come host proprio il nome del container mysql-server1. Questo è dovuto al fatto che nelle user-defined
+# custom network docker abilita il servizio DNS che risolve i nomi dei container con i rispettivi indirizzi ip
+# all'interno della sottorete. Questa funzionalità non è disponibile se si utilizza la sottorete di default di docker.
+
+#
+## Creazione di un container di MariaDb
+#
+# DBMS MariaDb
+# What is MariaDB?
+# MariaDB Server is one of the most popular database servers in the world. It's made by the original developers of MySQL
+# and guaranteed to stay open source. Notable users include Wikipedia, DBS Bank, and ServiceNow.
+# The intent is also to maintain high compatibility with MySQL, ensuring a library binary equivalency and exact matching
+# with MySQL APIs and commands. MariaDB developers continue to develop new features and improve performance to better
+# serve its users
+# Perché MariaDB?
+# https://www.cloudways.com/blog/mariadb-vs-mysql/
+# https://aws.amazon.com/compare/the-difference-between-mariadb-vs-mysql/
+# Documentazione ufficiale di MariaDB
+# https://mariadb.com/kb/en/
+# https://mariadb.org/
+# https://mariadb.com/
+# https://mariadb.com/kb/en/docker-and-mariadb/
+# https://mariadb.com/kb/en/installing-and-using-mariadb-via-docker/
+# https://hub.docker.com/_/mariadb
+
+# Scarichiamo MariaDB nella versione LTS (long Term Support)
+docker pull mariadb:lts
+# creazione di un volume per lo storage dei dati
+docker volume create mariadb_volume
+# verifichiamo che il volume sia stato creato correttamente
+docker volume ls
+docker volume inspect mariadb_volume
+
+# creazione e avvio di un container di MariaDB con configurazione minimale.
+# È possibile anche configurare il riavvio automatico come descritto in:
+# https://mariadb.com/kb/en/installing-and-using-mariadb-via-docker/
+
+docker run -d \
+    --name mariadb_server1 \
+    --network my-net \
+    --restart unless-stopped \
+    -p 3306:3306 \
+    -v mariadb_volume:/var/lib/mysql \
+    --env MARIADB_ROOT_PASSWORD=root \
+    mariadb:lts
+# È anche possibile usare le variabili della shell. Ad esempio, la password può essere letta da una variabile
+
+root_password="root"
+docker run -d \
+    --name mariadb_server1 \
+    --network my-net \
+    --restart unless-stopped \
+    -p 3306:3306 \
+    -v mariadb_volume:/var/lib/mysql \
+    --env MARIADB_ROOT_PASSWORD=$root_password \
+    mariadb:lts
+
+# verifichiamo che il container sia partito
+docker ps
+# accesso a MariaDB mediante shell interattiva di Docker
+# Importante! -->usiamo una shell esterna a VS Code oppure utilizziamo
+# l'opzione --detach-keys=ctrl-u,ctrl-u
+docker exec -it mariadb_server1 /bin/bash
+
+# accesso a MariaDB dall'interno del container con il comando exec permette di accedere cose se avessimo il server
+# installato localmente:
+# mariadb -uroot -p
+
+# oppure
+# mariadb -hlocalhost -uroot -p
+
+# Come applicativo client per il database server di MariaDb è anche possibile utilizzare
+# un altro container di mariadb collegato alla stessa subnet. In questo container verrà lanciata solo
+# l'applicazione client e non anche il server.
+
+docker run -it --rm \
+    --name mariadb_client \
+    --network my-net \
+    mariadb:lts \
+    mariadb -hmariadb_server1 -uroot -proot
+# oppure
+docker run -it --rm \
+    --name mariadb_client \
+    --network my-net \
+    mariadb:lts \
+    mariadb -hmariadb_server1 -uroot -p$root_password
+
+# stop del container
+docker stop mariadb_server1
+
+# esecuzione di un container già creato in precedenza
+docker start mariadb_server1
+
+# riavvio del container
+docker restart mariadb_server1
+
+# rimozione del container
+docker rm mariadb_server1
+
+# Rimozione del container e dei volumi anonimi collegati
+docker rm -v mariadb_server1
+
+# Creazione di un container di Microsoft SQL Server
+
+## Backup, restore, or migrate data volumes
+# https://docs.docker.com/engine/storage/volumes/#back-up-restore-or-migrate-data-volumes
+## Backup di un volume
+# https://docs.docker.com/engine/storage/volumes/#back-up-a-volume
+
+# domanda: cosa succede se lanciassimo un container con la notazione -v /dbdata ?
+# risposta: in questo caso non essendo specificato il volume da associare alla cartella /dbdata nel
+# container verrebbe creato un volume anonimo associato alla cartella /dbdata
+docker run -v /dbdata --name dbstore ubuntu /bin/bash
+# provare a lanciare dbstore e poi
+docker ps
+docker container inspect dbstore
+docker volume ls
+docker rm -v dbstore
+
+# È possibile lanciare un container con un volume che non esiste ancora. In tal caso il volume verrà
+# creato nel momento in cui viene lanciato il container. Ad esempio, lanciando
+docker run -itd -v dbstore_volume:/dbdata --name dbstore ubuntu /bin/bash
+docker attach dbstore
+# 1) creare alcuni file nella cartella dbdata
+# 2) uscire dal container
+# 3) eventualmente si può provare a fermare (stop) e poi far ripartire (start) lo stesso container dbstore
+# Per effettuare il backup di un volume si può procedere come indicato dalla documentazione di Docker:
+# https://docs.docker.com/engine/storage/volumes/#back-up-a-volume
+# Importante --> Creiamo un altro container con un immagine di Linux (ad esempio Ubuntu) che monta i volumi del container dbstore e,
+# in aggiunta, ha un bind mount con una cartella del Docker host dove vogliamo mettere il backup di dbdata.
+# Questo container è usato per lanciare il comando [tar](https://ss64.com/bash/tar.html) per creare una cartella compressa di tutto
+# il contenuto della cartella dbdata del container dbstore. Il file compresso viene creato nella cartella /backup del container
+# che è mappato sulla working directory.
+docker run --rm --volumes-from dbstore -v $(pwd):/backup ubuntu tar cvf /backup/backup.tar /dbdata
