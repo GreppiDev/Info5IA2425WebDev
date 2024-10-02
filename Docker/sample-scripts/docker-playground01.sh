@@ -638,6 +638,8 @@ container_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddres
 
 # oppure, mediante il comando jq - commandline JSON processor
 # https://jqlang.github.io/jq/manual/
+# Installazione di jq, se non già presente sulla propria distribuzione
+sudo apt-get install jq
 container_ip=$(docker inspect mysql-server1 | jq -r '.[0].NetworkSettings.Networks[].IPAddress')
 
 docker run -it --name my_client --rm mysql:latest mysql -h"$container_ip" -uroot -p
@@ -768,7 +770,30 @@ docker run -d \
 # custom network docker abilita il servizio DNS che risolve i nomi dei container con i rispettivi indirizzi ip
 # all'interno della sottorete. Questa funzionalità non è disponibile se si utilizza la sottorete di default di docker.
 
+# connessione al database server di MySQL tramite container per l'applicativo client.
+# In questo caso creiamo un container a partire dall'immagine di mysql con il solo scopo di
+# utilizzare l'applicativo client mysql.
+docker run -it \
+    --name my_client \
+    --network my-net \
+    --rm \
+    -v ~/my_dev/sql_stuff:/sql_stuff \
+    mysql:latest /bin/bash
 #
+# Dopo aver creato il container possiamo far partire l'applicativo client utilizzando come nome host
+# del server direttamente il nome del container mysql-server1. In questo caso utilizziamo il
+# meccanismo di risoluzione dei nomi dei container in indirizzi IP fornito da Docker quando si
+# utilizza una "user defined network" (my-net nel nostro caso).
+# Per la connessione al database server l'istruzione da eseguire è:
+mysql -u root -h mysql-server1 -p
+# una volta connessi al server che si trova nell'altro container (mysql-server1) è, ad esempio,
+# possibile eseguire gli script contenuti nella cartella /sql_stuff con il comando source, come
+# mostrato nel tutorial https://www.mysqltutorial.org/mysql-administration/execute-sql-file-in-mysql/:
+
+source /sql_stuff/path/to/scripts/script.sql
+# ad esempio:
+source /sql_stuff/mysqlsampledatabase/mysqlsampledatabase.sql
+
 ## Creazione di un container di MariaDb
 #
 # DBMS MariaDb
