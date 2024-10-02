@@ -591,13 +591,12 @@ mysql -uroot -proot
 # In questo caso occorre inserire l'indirizzo IP del server e non il nome DNS (localhost) altrimenti la connessione
 # non avrà successo.
 
-# Importante: quando si utilizza una distribuzione WSL a scuola e si vuole accedere a internet dalla shell, ad esempio per eseguire 
+# Importante: quando si utilizza una distribuzione WSL a scuola e si vuole accedere a internet dalla shell, ad esempio per eseguire
 # il comando curl, oppure per scaricare o aggiornare un pacchetto tramite apt, oppure apt-get, occorre configurare il proxy.
-# Alcune applicazioni di Linux hanno una configurazione specifica per il proxy. Si veda il file di scripting relativo alla configurazione 
+# Alcune applicazioni di Linux hanno una configurazione specifica per il proxy. Si veda il file di scripting relativo alla configurazione
 # del proxy in Ubuntu.
 
-
-# 2.2) Utilizziamo l'applicativo MySQL workbench installato sul nostro computer (se disponibile) e facciamo la connessione con i
+# 2.2) Utilizziamo l'applicativo MySQL Workbench installato sul nostro computer (se disponibile) e facciamo la connessione con i
 # parametri richiesti (username e password) e specificando come host l'indirizzo 127.0.0.1
 # MySQL Workbench può essere scaricato all'indirizzo:
 # https://dev.mysql.com/downloads/workbench/
@@ -626,21 +625,25 @@ docker inspect mysql-server1
 docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' mysql-server1
 container_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' mysql-server1)
 # dove:
-    # -f '{{...}}':
+# -f '{{...}}':
 
-    # L'opzione -f specifica un formato personalizzato per l'output di docker inspect.
-    # La stringa tra apici singoli ('...') è una template string che indica come estrarre i dati dal JSON restituito da docker inspect.
-    # '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}':
+# L'opzione -f specifica un formato personalizzato per l'output di docker inspect.
+# La stringa tra apici singoli ('...') è una template string che indica come estrarre i dati dal JSON restituito da docker inspect.
+# '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}':
 
-    # Questa è una Go template syntax utilizzata per navigare nel JSON e ottenere valori specifici.
-    # {{range ...}}: Inizia un ciclo per iterare su un array o una mappa. Qui stiamo iterando su .NetworkSettings.Networks, che contiene informazioni sulle reti del container.
-    # {{.IPAddress}}: All'interno del ciclo, . rappresenta l'elemento corrente (una rete), e .IPAddress estrae l'indirizzo IP di quella rete.
-    # {{end}}: Termina il ciclo range. Se ci sono più reti, il ciclo itera su ciascuna di esse
-# oppure
-# mediante il comando jq - commandline JSON processor 
+# Questa è una Go template syntax utilizzata per navigare nel JSON e ottenere valori specifici.
+# {{range ...}}: Inizia un ciclo per iterare su un array o una mappa. Qui stiamo iterando su .NetworkSettings.Networks, che contiene informazioni sulle reti del container.
+# {{.IPAddress}}: All'interno del ciclo, . rappresenta l'elemento corrente (una rete), e .IPAddress estrae l'indirizzo IP di quella rete.
+# {{end}}: Termina il ciclo range. Se ci sono più reti, il ciclo itera su ciascuna di esse
+
+# oppure, mediante il comando jq - commandline JSON processor
+# https://jqlang.github.io/jq/manual/
 container_ip=$(docker inspect mysql-server1 | jq -r '.[0].NetworkSettings.Networks[].IPAddress')
 
-docker run -it --name my_client --rm mysql mysql -h$container_ip -uroot -p
+docker run -it --name my_client --rm mysql:latest mysql -h"$container_ip" -uroot -p
+# È anche possibile lanciare il container con la bash ed eseguire altri comandi prima di
+# lanciare il client mysql
+docker run -it --name my_client --rm -v ~/my_dev/sql_stuff:/sql_stuff mysql:latest /bin/bash
 
 # a.2) lanciare il container docker per il client di MySQL con l'opzione --link (legacy e possibilmente da evitare), come
 # descritto nella pagina della documentazione docker:
@@ -652,6 +655,7 @@ docker run -it --name my_client --rm mysql mysql -h$container_ip -uroot -p
 # https://hub.docker.com/r/linuxserver/mysql-workbench
 
 # Attenzione! --> L'immagine da scaricare è abbastanza grande (dell'ordine di un paio di GB)
+
 # Scaricare *a casa* l'immagine di My workbench con il comando
 docker pull lscr.io/linuxserver/mysql-workbench:latest
 
@@ -683,6 +687,8 @@ docker container inspect container_id
 docker container inspect container_name
 
 # c) usare un container con l'immagine di phpMyAdmin
+# Scaricare *a casa* l'immagine di phpMyAdmin con il comando
+docker pull phpmyadmin
 # https://hub.docker.com/_/phpmyadmin
 docker run --name phpmyadmin -d --link mysql-server1:db -p 8080:80 phpmyadmin
 
@@ -717,21 +723,21 @@ docker volume remove volume_id
 #
 # Creiamo nuovamente un container per MySQL server, questa volta usando la rete docker creata e usando volumi con nome:
 # https://docs.docker.com/engine/storage/volumes/#create-and-manage-volumes
-docker volume create mysql_volume
+docker volume create mysql-server1-vol
 docker volume ls
-docker volume inspect mysql_volume
+docker volume inspect mysql-server1-vol
 
 # Creiamo il container per MySQL:
 docker run -d \
     --name mysql-server1 \
     --network my-net \
-    -v mysql_volume:/var/lib/mysql \
+    -v mysql-server1-vol:/var/lib/mysql \
     -e MYSQL_ROOT_PASSWORD=root \
     -p 3306:3306 mysql
 
 # Verifichiamo le caratteristiche del container
 docker container inspect mysql-server1
-# Verifichiamo i volumi, la rete, l'indirizzo ip e i nomi dns che sono stati utilizzati per il container
+# Analizziamo i volumi, la rete, l'indirizzo ip e i nomi dns che sono stati utilizzati per il container
 # Verifichiamo che anche la rete my-net sia stata aggiornata
 docker network inspect my-net
 
@@ -786,44 +792,44 @@ docker run -d \
 # Scarichiamo MariaDB nella versione LTS (long Term Support)
 docker pull mariadb:lts
 # creazione di un volume per lo storage dei dati
-docker volume create mariadb_volume
+docker volume create mariadb-server1-vol
 # verifichiamo che il volume sia stato creato correttamente
 docker volume ls
-docker volume inspect mariadb_volume
+docker volume inspect mariadb-server1-vol
 
 # creazione e avvio di un container di MariaDB con configurazione minimale.
 # È possibile anche configurare il riavvio automatico come descritto in:
 # https://mariadb.com/kb/en/installing-and-using-mariadb-via-docker/
 
 docker run -d \
-    --name mariadb_server1 \
+    --name mariadb-server1 \
     --network my-net \
     --restart unless-stopped \
     -p 3306:3306 \
-    -v mariadb_volume:/var/lib/mysql \
+    -v mariadb-server1-vol:/var/lib/mysql \
     --env MARIADB_ROOT_PASSWORD=root \
     mariadb:lts
 # È anche possibile usare le variabili della shell. Ad esempio, la password può essere letta da una variabile
 
 root_password="root"
 docker run -d \
-    --name mariadb_server1 \
+    --name mariadb-server1 \
     --network my-net \
     --restart unless-stopped \
     -p 3306:3306 \
-    -v mariadb_volume:/var/lib/mysql \
-    --env MARIADB_ROOT_PASSWORD=$root_password \
+    -v mariadb-server1-vol:/var/lib/mysql \
+    --env MARIADB_ROOT_PASSWORD="$root_password" \
     mariadb:lts
 
 # verifichiamo che il container sia partito
 docker ps
 # accesso a MariaDB mediante shell interattiva di Docker
-# Importante! -->usiamo una shell esterna a VS Code oppure utilizziamo
+# Importante! -->usiamo una shell esterna a VS Code, oppure utilizziamo
 # l'opzione --detach-keys=ctrl-u,ctrl-u
-docker exec -it mariadb_server1 /bin/bash
+docker exec -it mariadb-server1 /bin/bash
 
-# accesso a MariaDB dall'interno del container con il comando exec permette di accedere cose se avessimo il server
-# installato localmente:
+# accesso a MariaDB dall'interno del container con il comando exec: permette di accedere come se avessimo il server installato
+# localmente:
 # mariadb -uroot -p
 
 # oppure
@@ -837,30 +843,31 @@ docker run -it --rm \
     --name mariadb_client \
     --network my-net \
     mariadb:lts \
-    mariadb -hmariadb_server1 -uroot -proot
+    mariadb -hmariadb-server1 -uroot -proot
 # oppure
 docker run -it --rm \
     --name mariadb_client \
     --network my-net \
     mariadb:lts \
-    mariadb -hmariadb_server1 -uroot -p$root_password
+    mariadb -hmariadb-server1 -uroot -p$root_password
 
 # stop del container
-docker stop mariadb_server1
+docker stop mariadb-server1
 
 # esecuzione di un container già creato in precedenza
-docker start mariadb_server1
+docker start mariadb-server1
 
 # riavvio del container
-docker restart mariadb_server1
+docker restart mariadb-server1
 
 # rimozione del container
-docker rm mariadb_server1
+docker rm mariadb-server1
 
 # Rimozione del container e dei volumi anonimi collegati
-docker rm -v mariadb_server1
+docker rm -v mariadb-server1
 
 # Creazione di un container di Microsoft SQL Server
+# verrà mostrata tra qualche lezione ...
 
 ## Backup, restore, or migrate data volumes
 # https://docs.docker.com/engine/storage/volumes/#back-up-restore-or-migrate-data-volumes
