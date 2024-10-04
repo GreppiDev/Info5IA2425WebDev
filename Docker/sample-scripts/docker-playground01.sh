@@ -733,9 +733,10 @@ docker volume inspect mysql-server1-vol
 docker run -d \
     --name mysql-server1 \
     --network my-net \
+    --restart unless-stopped \
     -v mysql-server1-vol:/var/lib/mysql \
     -e MYSQL_ROOT_PASSWORD=root \
-    -p 3306:3306 mysql
+    -p 3306:3306 mysql:latest
 
 # Verifichiamo le caratteristiche del container
 docker container inspect mysql-server1
@@ -770,7 +771,8 @@ docker run -d \
 # custom network docker abilita il servizio DNS che risolve i nomi dei container con i rispettivi indirizzi ip
 # all'interno della sottorete. Questa funzionalità non è disponibile se si utilizza la sottorete di default di docker.
 
-# connessione al database server di MySQL tramite container per l'applicativo client.
+## connessione al database server di MySQL tramite container per l'applicativo client.
+#
 # In questo caso creiamo un container a partire dall'immagine di mysql con il solo scopo di
 # utilizzare l'applicativo client mysql.
 docker run -it \
@@ -789,10 +791,15 @@ mysql -u root -h mysql-server1 -p
 # una volta connessi al server che si trova nell'altro container (mysql-server1) è, ad esempio,
 # possibile eseguire gli script contenuti nella cartella /sql_stuff con il comando source, come
 # mostrato nel tutorial https://www.mysqltutorial.org/mysql-administration/execute-sql-file-in-mysql/:
-
-source /sql_stuff/path/to/scripts/script.sql
-# ad esempio:
-source /sql_stuff/mysqlsampledatabase/mysqlsampledatabase.sql
+# 
+# supponendo di avere lo script con le query SQL nel file all'indirizzo:
+# /sql_stuff/path/to/scripts/script.sql
+# il comando di mysql per importare un database è:
+# source /sql_stuff/path/to/scripts/script.sql
+# ad esempio, supponendo di avere lo script per la creazione del database classicmodels nel percorso:
+# /sql_stuff/mysqlsampledatabase/mysqlsampledatabase.sql
+# il comando diventa:
+# source /sql_stuff/mysqlsampledatabase/mysqlsampledatabase.sql
 
 ## Creazione di un container di MariaDb
 #
