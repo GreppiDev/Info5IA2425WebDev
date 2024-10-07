@@ -204,7 +204,7 @@ CREATE TABLE IF NOT EXISTS `piscine_milano`.`rotazioni` (
 ENGINE = InnoDB;
 ```
 
-Il database `piscine_milano` può essere popolato con questo [script](../../../sql-scripts/02-piscine/Piscine_Milano_INSERIMENTO_DATI.sql).
+Il database `piscine_milano` può essere popolato con questo [script](../../sql-scripts/02-piscine/Piscine_Milano_INSERIMENTO_DATI.sql).
 
 ## Interrogazione di un database - clausola SELECT
 
