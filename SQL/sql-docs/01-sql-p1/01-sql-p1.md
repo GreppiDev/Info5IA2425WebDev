@@ -1,4 +1,4 @@
-# SQL in MySQL/MariaDB
+# SQL in MySQL/MariaDB - Parte 1
 
 ## Sommario
 
@@ -105,16 +105,35 @@ Le impostazioni di default del server di MySQL possono essere ispezionate con il
 mysqld --verbose --help
 ```
 
-Ad esempio:
+Ad esempio, nel caso di MySQL:
 
 ```sh
-mysqld --verbose --help | grep character
-mysqld --verbose --help | grep collation
+mysqld --verbose --help | grep character-set-server
+mysqld --verbose --help | grep collation-server
 ```
+
+Oppure nel caso di MariaDB:
+
+```sh
+mariadbd --verbose --help | grep character-set-server
+mariadbd --verbose --help | grep collation-server
+```
+
+Per MariaDB le impostazioni di default possono essere recuperate (nella bash del server) con il comando:
+
+```sh
+docker exec -it mariadb-server1 /bin/bash
+# nella shell del server si può eseguire il comando:
+my_print_defaults --mysqld
+# mentre, per ottenere tutte le impostazioni del server, si può eseguire il comando:
+mariadbd --verbose --help
+```
+
+Per ulteriori dettagli si veda anche la pagina relativa a [MariaDB su Docker Hub](https://hub.docker.com/_/mariadb)
 
 ### CHARACTER e COLLATION
 
-Il CHARACTER e la COLLATION possono essere impostati 
+Il CHARACTER e la COLLATION possono essere impostati
 
 - a livello di database:
 
@@ -164,6 +183,10 @@ Il CHARACTER e la COLLATION possono essere impostati
     COLLATE collation_name
     ```
 
+Per capire il concetto di charset e di collation si possono consultare anche le [pagine introduttive di MariaDB su character set e collation](https://mariadb.com/kb/en/character-set-and-collation-overview/), oppure le [pagine che descrivono come impostare character set e collation](https://mariadb.com/kb/en/setting-character-sets-and-collations/).
+
+Un interessante approfondimento che spiega molti aspetti su character set e collation di MySQL e MariaDB è l'articolo *[Everything you never wanted to know about MySQL Charsets & Collations](https://www.coderedcorp.com/blog/guide-to-mysql-charsets-collations)* di Vince Savino.
+
 ### Cancellazione di un database
 
 ```sql
@@ -207,12 +230,47 @@ CREATE TABLE IF NOT EXISTS studenti (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 ;
 ```
 
+### Verificare la struttura di una tabella
+
+```sql
+DESCRIBE table_name;
+```
+
+### Ottenere l'istruzione di creazione di una tabella
+
+```sql
+SHOW CREATE TABLE table_name;
+```
+
+### Inserire dati in una tabella
+
+L'istruzione per inserire dati in una tabella è `INSERT INTO`, secondo la sintassi seguente:
+
+```sql
+INSERT INTO table(column1, column2,...) 
+VALUES 
+  (value1, value2,...), 
+  (value1, value2,...), 
+  ...
+  (value1, value2,...);
+```
+
+
 Per specificare una tabella occorre definire i domini (i tipi) delle colonne, ed i vincoli d’integrità.
 I vincoli d’integrità sono di tre tipi:
 
 - Integrità sulle colonne
 - Integrità sulle tabelle
 - Integrità referenziale (tra le colonne in comune delle tabelle in relazione)
+
+### Recuperare i dati di una tabella (SELECT)
+
+Per recuperare i dati di una tabella l'istruzione da usare è la `SELECT`, secondo lo schema:
+
+```sql
+SELECT select_list
+FROM table_name;
+```
 
 ### Cancellazione di una tabella (DROP TABLE)
 
@@ -253,8 +311,6 @@ Nei calcoli scientifici di solito si usano i domini numerici approssimati FLOAT 
 Ad esempio `DECIMAL(10,3)` è un numero a 10 cifre decimali complessive e con 3 cifre dopo la virgola.
 In MySQL un DECIMAL può avere fino a 65 cifre significative complessive e fino a 30 cifre dopo la virgola
 
-
-
 ### Caratteri e testo
 
 - Caratteri [CHAR](https://www.mysqltutorial.org/mysql-basics/mysql-char-data-type/) e [VARCHAR](https://www.mysqltutorial.org/mysql-basics/mysql-varchar/)
@@ -263,23 +319,6 @@ In MySQL un DECIMAL può avere fino a 65 cifre significative complessive e fino 
 ### Enumerativo
 
 - [ENUM](https://www.mysqltutorial.org/mysql-basics/mysql-enum/)
-  Ad esempio:
-
-  ```sql
-    CREATE TABLE tickets (
-        id INT PRIMARY KEY AUTO_INCREMENT,
-        title VARCHAR(255) NOT NULL,
-        priority ENUM('Low', 'Medium', 'High') NOT NULL
-    );
-
-    # inserimento con il valore letterale
-    INSERT INTO tickets(title, priority)
-    VALUES('Scan virus for computer A', 'High');
-
-    # inserimento con l'indice dell'enumerativo
-    INSERT INTO tickets(title, priority)
-    VALUES('Upgrade Windows OS for all computers', 1);
-  ```
 
 ### Date
 
@@ -301,3 +340,83 @@ In MySQL un DECIMAL può avere fino a 65 cifre significative complessive e fino 
 ### JSON
 
 - [JSON](https://www.mysqltutorial.org/mysql-json/mysql-json-data-type/)
+
+### Altre caratteristiche dei dati
+
+- [`AUTO_INCREMENT`](https://www.mysqltutorial.org/mysql-basics/mysql-auto_increment/): Una colonna di tipo intero può avere l'attributo `AUTO_INCREMENT`  per indicare che il suo valore può essere generato automaticamente dal DBMS ad ogni inserimento. Tipicamente si usa per definire l'ID di tabelle, che sono anche chiavi primarie.
+- [`UNSIGNED`](https://www.mysqltutorial.org/mysql-basics/mysql-int/): Una colonna di tipo intero può essere `UNSIGNED` nei casi in cui può assumere solo valori non negativi.
+- [Attributi numerici deprecati](https://dev.mysql.com/doc/refman/9.0/en/numeric-type-attributes.html):
+  - `ZEROFILL`, campo display per interi
+  - `UNSIGNED` per i tipi `FLOAT`, `DOUBLE` e `DECIMAL`
+  - `AUTO_INCREMENT` per i tipi `FLOAT` e `DOUBLE`
+
+### Vincoli di integrità di colonna
+
+- Vincolo [`DEFAULT`](https://www.mysqltutorial.org/mysql-basics/mysql-default/): È possibile specificare un valore di default per una colonna, da utilizzare qualora non venga fornito in input nessun valore dal client.
+  - **Nota**: Nel caso in cui il valore di default non sia specificato e il client non fornisca nessun valore per la colonna, il [comportamento del database dipende (in MySQL) dall’SQL mode adoperato](https://dev.mysql.com/doc/refman/9.0/en/data-type-defaults.html).
+  - In MySQL, se non è specificato il valore di default e non è fornito nessun valore in ingresso (oppure è fornito NULL) per la colonna:
+  - Se la colonna può avere valore nullo, allora viene automaticamente assegnato il valore nullo (NULL).
+  - Se la colonna non può assumere il valore nullo, allora:
+    - Se non è abilitata la modalità SQL `strict mode`, MySQL assegna alla colonna il valore di default implicito per il tipo di dato della colonna (0 per i dati numerici interi, stringa vuota per le stringhe, valore `zero` per le date e timestamp , il primo valore della lista per ENUM)
+    - Se è abilitata la modalità SQL `strict mode`, MySQL dà un messaggio d’errore e il dato non è inserito.
+  - Per i tipi TEXT e BLOB non è possibile assegnare un valore di default.
+  - Il valore di default deve essere una costante
+- Vincolo `CHECK`. Il vincolo `CHECK` viene utilizzato per verificare se il valore che si vuole assegnare ad un attributo soddisfa determinati criteri.
+  - Ad esempio, [nel caso di MySQL](https://www.mysqltutorial.org/mysql-basics/mysql-check-constraint/):
+  
+    ```sql
+    CONSTRAINT constraint_name 
+    CHECK (expression) 
+    [ENFORCED | NOT ENFORCED]
+    ```
+
+  - Nel [caso di MariaDB](https://www.mariadbtutorial.com/mariadb-basics/mariadb-check-constraint/):
+
+    ```sql
+    column_name datatype 
+    constraint constraint_name 
+    check(expression)
+    ```
+
+### Modalità operativa di MariaDB
+
+MariaDB supporta [diverse modalità operative](https://mariadb.com/kb/en/sql-mode/) e l'opzione di default corrisponde a:
+
+```sql
+STRICT_TRANS_TABLES, ERROR_FOR_DIVISION_BY_ZERO , NO_AUTO_CREATE_USER, NO_ENGINE_SUBSTITUTION
+```
+
+Per verificare la modalità operativa del server è possibile eseguire la query:
+
+```sql
+SELECT @@SQL_MODE, @@GLOBAL.SQL_MODE;
+```
+
+Per impostare la modalità operativa è possibile eseguire la query:
+
+```sql
+SET GLOBAL sql_mode = 'modes';
+SET SESSION sql_mode = 'modes';
+```
+
+### Modalità operative di MySQL
+
+MySQL supporta [diverse modalità operative](https://dev.mysql.com/doc/refman/9.0/en/sql-mode.html) e l'opzione di default corrisponde a:
+
+```sql
+ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
+```
+
+Per verificare la modalità operativa del server è possibile eseguire la query:
+
+```sql
+SELECT @@GLOBAL.sql_mode;
+SELECT @@SESSION.sql_mode;
+```
+
+Per impostare la modalità operativa è possibile eseguire la query:
+
+```sql
+SET GLOBAL sql_mode = 'modes';
+SET SESSION sql_mode = 'modes';
+```

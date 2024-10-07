@@ -642,10 +642,10 @@ container_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddres
 sudo apt-get install jq
 container_ip=$(docker inspect mysql-server1 | jq -r '.[0].NetworkSettings.Networks[].IPAddress')
 
-docker run -it --name my_client --rm mysql:latest mysql -h"$container_ip" -uroot -p
+docker run -it --name my-client --rm mysql:latest mysql -h"$container_ip" -uroot -p
 # È anche possibile lanciare il container con la bash ed eseguire altri comandi prima di
 # lanciare il client mysql
-docker run -it --name my_client --rm -v ~/my_dev/sql_stuff:/sql_stuff mysql:latest /bin/bash
+docker run -it --name my-client --rm -v ~/my_dev/sql_stuff:/sql_stuff mysql:latest /bin/bash
 
 # a.2) lanciare il container docker per il client di MySQL con l'opzione --link (legacy e possibilmente da evitare), come
 # descritto nella pagina della documentazione docker:
@@ -761,6 +761,7 @@ docker run -d \
     -p 3000:3000 \
     -p 3001:3001 \
     -v ~/my_dev/config:/config \
+    -v ~/my_dev/sql_stuff:/sql_stuff \
     --cap-add="IPC_LOCK" \
     --restart unless-stopped \
     lscr.io/linuxserver/mysql-workbench
@@ -776,7 +777,7 @@ docker run -d \
 # In questo caso creiamo un container a partire dall'immagine di mysql con il solo scopo di
 # utilizzare l'applicativo client mysql.
 docker run -it \
-    --name my_client \
+    --name my-client \
     --network my-net \
     --rm \
     -v ~/my_dev/sql_stuff:/sql_stuff \
@@ -821,7 +822,7 @@ mysql -u root -h mysql-server1 -p
 # https://mariadb.com/kb/en/installing-and-using-mariadb-via-docker/
 # https://hub.docker.com/_/mariadb
 
-# Scarichiamo MariaDB nella versione LTS (long Term Support)
+# Scarichiamo MariaDB nella versione LTS (Long Term Support)
 docker pull mariadb:lts
 # creazione di un volume per lo storage dei dati
 docker volume create mariadb-server1-vol
@@ -855,12 +856,11 @@ docker run -d \
 
 # verifichiamo che il container sia partito
 docker ps
-# accesso a MariaDB mediante shell interattiva di Docker
+# accesso a MariaDB dall'interno del container con il comando exec: permette di accedere come se avessimo il server installato localmente
 # Importante! -->usiamo una shell esterna a VS Code, oppure utilizziamo
 # l'opzione --detach-keys=ctrl-u,ctrl-u
 docker exec -it mariadb-server1 /bin/bash
 
-# accesso a MariaDB dall'interno del container con il comando exec: permette di accedere come se avessimo il server installato
 # localmente:
 # mariadb -uroot -p
 
@@ -872,16 +872,38 @@ docker exec -it mariadb-server1 /bin/bash
 # l'applicazione client e non anche il server.
 
 docker run -it --rm \
-    --name mariadb_client \
+    --name mariadb-client \
     --network my-net \
     mariadb:lts \
     mariadb -hmariadb-server1 -uroot -proot
 # oppure
 docker run -it --rm \
-    --name mariadb_client \
+    --name mariadb-client \
     --network my-net \
+    -v ~/my_dev/sql_stuff:/sql_stuff \
     mariadb:lts \
     mariadb -hmariadb-server1 -uroot -p$root_password
+
+# È anche possibile lanciare un container a partire dall'immagine di mariadb e utilizzare la shell Bash
+# In questo caso l'accesso al server verrà eseguito con un successivo comando interno al container.
+# Questa configurazione è utile quando si vuole prima operare con la bash e poi successivamente collegarsi
+# al server. Nel comando di avvio del container mostrato sotto p anche stato fatto un bind mount su una 
+# cartella contenente script SQL.
+docker run -it --rm \
+    --name mariadb-client \
+    --network my-net \
+    -v ~/my_dev/sql_stuff:/sql_stuff \
+    mariadb:lts \
+    /bin/bash
+
+# Dall'interno del container si potrà, ad esempio vedere la configurazione del server, con il comando:
+
+# oppure accedere al server di MariaDB con il comando:
+# mariadb -u root -h mariadb-server1 -p
+
+# per connettersi direttamente dentro al container di mariadb
+docker exec -it mariadb-server1 /bin/bash
+
 
 # stop del container
 docker stop mariadb-server1
@@ -898,8 +920,43 @@ docker rm mariadb-server1
 # Rimozione del container e dei volumi anonimi collegati
 docker rm -v mariadb-server1
 
+# Connessione su una porta diversa da quella di default
+#
+# Lanciare un server di MySQL su una porta diversa da quella standard.
+# Nell'esempio seguente viene lanciato un container di MySQL con un port mapping 3307:3306
+docker run -d \
+    --name mysql-server2 \
+    --network my-net \
+    --restart unless-stopped \
+    -v mysql-server2-vol:/var/lib/mysql \
+    -e MYSQL_ROOT_PASSWORD=root \
+    -p 3307:3306 mysql:latest
+
+# Per connettersi con l'applicativo MySQL Monitor (dalla shell) occorre specificare anche il parametro
+# -P port_number, come nell'esempio seguente (dalla WSL):
+mysql -u root -h 127.0.0.1 -P 3307 -p
+# Nota: il parametro -P permette di specificare la porta di connessione
+# oppure da un altro container
+mysql -u root -h mysql-server2 -P 3307 -p
+
+# Lanciare un server di MariaDB su una porta diversa da quella standard.
+# Nell'esempio seguente viene lanciato un container di MariaDB con un port mapping 3308:3306
+docker run -d \
+    --name mariadb-server2 \
+    --network my-net \
+    --restart unless-stopped \
+    -p 3308:3306 \
+    -v mariadb-server2-vol:/var/lib/mysql \
+    --env MARIADB_ROOT_PASSWORD=root \
+    mariadb:lts
+
 # Creazione di un container di Microsoft SQL Server
 # verrà mostrata tra qualche lezione ...
+# Per connettersi con l'applicativo MySQL Monitor (dalla shell) occorre specificare anche il parametro
+# -P port_number, come nell'esempio seguente (dalla WSL):
+mariadb -u root -h 127.0.0.1 -P 3308 -p
+# oppure da un altro container
+mariadb -u root -h mariadb-server2 -P 3308 -p
 
 ## Backup, restore, or migrate data volumes
 # https://docs.docker.com/engine/storage/volumes/#back-up-restore-or-migrate-data-volumes
