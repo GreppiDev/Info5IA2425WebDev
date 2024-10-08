@@ -199,11 +199,11 @@ Oppure, siccome in MySQL lo schema è sinonimo di database, si può anche scrive
 DROP SCHEMA [IF EXISTS] database_name;
 ```
 
-Si veda anche [MySQL DROP DATABASE su mysqltutorial.org](https://www.mysqltutorial.org/mysql-basics/mysql-drop-database/)
+Si veda anche [MySQL Tutorial - DROP DATABASE](https://www.mysqltutorial.org/mysql-basics/mysql-drop-database/)
 
 ### Creazione di una tabella
 
-[Creazione di una tabella su mysqltutorial.org](https://www.mysqltutorial.org/mysql-basics/mysql-create-table/)
+[MySQL Tutorial - CREATE TABLE](https://www.mysqltutorial.org/mysql-basics/mysql-create-table/)
 
 Una tabella può essere creata con un'istruzione del tipo seguente:
 
@@ -219,15 +219,16 @@ Ad esempio:
 
 ```sql
 CREATE TABLE IF NOT EXISTS studenti (
-  Matricola mediumint unsigned NOT NULL auto_increment ,
+  Matricola MEDIUMINT UNSIGNED NOT NULL AUTO_INCREMENT,
   Cognome varchar(30) NOT NULL,
   Nome varchar(30) NOT NULL,
   DataNascita date NOT NULL,
   Genere enum('M','F') NOT NULL,
   Nazione varchar(30) NOT NULL default 'Italia',
+  E-Mail varchar(50),
   PRIMARY KEY  (Matricola),
-  UNIQUE KEY CognomeNome (Cognome,Nome)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 ;
+  UNIQUE KEY CognomeNomeDataN(Cognome,Nome, DataNascita)
+) ENGINE=InnoDB; 
 ```
 
 ### Verificare la struttura di una tabella
@@ -274,7 +275,7 @@ FROM table_name;
 
 ### Cancellazione di una tabella (DROP TABLE)
 
-[Cancellazione di una tabella su mysqltutorial.org](https://www.mysqltutorial.org/mysql-basics/mysql-drop-table/)
+[MySQL tutorial - DROP TABLE](https://www.mysqltutorial.org/mysql-basics/mysql-drop-table/)
 
 ```sql
 DROP [TEMPORARY] TABLE [IF EXISTS] table_name [, table_name] ...
@@ -283,7 +284,7 @@ DROP [TEMPORARY] TABLE [IF EXISTS] table_name [, table_name] ...
 
 ### Visualizzazione delle tabelle di un database (SHOW TABLES)
 
-[Visualizzazione delle tabelle di un database su mysqltutorial.org](https://www.mysqltutorial.org/mysql-administration/mysql-show-tables/)
+[MySQL tutorial - SHOW TABLES](https://www.mysqltutorial.org/mysql-administration/mysql-show-tables/)
 
 ```sql
 SHOW TABLES;
@@ -345,15 +346,17 @@ In MySQL un DECIMAL può avere fino a 65 cifre significative complessive e fino 
 
 - [`AUTO_INCREMENT`](https://www.mysqltutorial.org/mysql-basics/mysql-auto_increment/): Una colonna di tipo intero può avere l'attributo `AUTO_INCREMENT`  per indicare che il suo valore può essere generato automaticamente dal DBMS ad ogni inserimento. Tipicamente si usa per definire l'ID di tabelle, che sono anche chiavi primarie.
 - [`UNSIGNED`](https://www.mysqltutorial.org/mysql-basics/mysql-int/): Una colonna di tipo intero può essere `UNSIGNED` nei casi in cui può assumere solo valori non negativi.
-- [Attributi numerici deprecati](https://dev.mysql.com/doc/refman/9.0/en/numeric-type-attributes.html):
-  - `ZEROFILL`, campo display per interi
-  - `UNSIGNED` per i tipi `FLOAT`, `DOUBLE` e `DECIMAL`
-  - `AUTO_INCREMENT` per i tipi `FLOAT` e `DOUBLE`
+
+> :warning: **Attenzione:** alcuni attributi dei campi numerici sono considerati deprecati. In particolare, sono considerati [deprecati](https://dev.mysql.com/doc/refman/9.0/en/numeric-type-attributes.html) i seguenti attributi:
+>
+> - `ZEROFILL` e il `campo display` per gli interi
+> - `UNSIGNED` per i tipi `FLOAT`, `DOUBLE` e `DECIMAL`
+> - `AUTO_INCREMENT` per i tipi `FLOAT` e `DOUBLE`
 
 ### Vincoli di integrità di colonna
 
 - Vincolo [`DEFAULT`](https://www.mysqltutorial.org/mysql-basics/mysql-default/): È possibile specificare un valore di default per una colonna, da utilizzare qualora non venga fornito in input nessun valore dal client.
-  - **Nota**: Nel caso in cui il valore di default non sia specificato e il client non fornisca nessun valore per la colonna, il [comportamento del database dipende (in MySQL) dall’SQL mode adoperato](https://dev.mysql.com/doc/refman/9.0/en/data-type-defaults.html).
+  > :memo: **Nota:**  Nel caso in cui il valore di default non sia specificato e il client non fornisca nessun valore per la colonna, il [comportamento del database dipende (in MySQL) dall’SQL mode adoperato](https://dev.mysql.com/doc/refman/9.0/en/data-type-defaults.html).
   - In MySQL, se non è specificato il valore di default e non è fornito nessun valore in ingresso (oppure è fornito NULL) per la colonna:
   - Se la colonna può avere valore nullo, allora viene automaticamente assegnato il valore nullo (NULL).
   - Se la colonna non può assumere il valore nullo, allora:

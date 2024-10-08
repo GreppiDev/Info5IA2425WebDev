@@ -11,7 +11,7 @@ commento multilinea
 -- In questo caso si utilizzano le impostazioni di CHARACTER e COLLATE di default
 CREATE DATABASE IF NOT EXISTS dbscuola;
 
-# Se volessimo specificare COLLATE e COLLATE potremmo scrivere un'istruzione come la seguente (per MariaDB):
+# Se volessimo specificare CHARACTER e COLLATE potremmo scrivere un'istruzione come la seguente (per MariaDB):
 CREATE DATABASE IF NOT EXISTS dbscuola 
 CHARACTER SET 'utf8mb4' 
 COLLATE 'uca1400_ai_ci'; 
@@ -21,66 +21,62 @@ COLLATE 'uca1400_ai_ci';
 CREATE DATABASE IF NOT EXISTS dbscuola 
 CHARACTER SET 'utf8mb4' 
 COLLATE 'utf8mb4_0900_ai_ci';
+# questa è la default da MySQL 8 in poi
 
 # Per approfondimenti:  https://www.coderedcorp.com/blog/guide-to-mysql-charsets-collations/ 
 
--- uso il database dbscuola;
+-- selezioniamo il database dbscuola;
 USE dbscuola; 
 
-/* 
-creazione delle tabelle;
-
-*/
-
+--
+-- creazione delle tabelle;
+--
 
 CREATE TABLE IF NOT EXISTS studenti (
-  matricola mediumint unsigned ZEROFILL NOT NULL  auto_increment,
-  cognome varchar(30) NOT NULL,
-  nome varchar(30) NOT NULL,
-  data_nascita date NOT NULL,
-  genere enum('M','F') NOT NULL,
-  nazione varchar(30) NOT NULL default 'Italia',
-  e_mail varchar(50),
-  PRIMARY KEY  (matricola),
-  UNIQUE KEY cognomenomeDataN (cognome,nome, data_nascita)
+  Matricola MEDIUMINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  Cognome varchar(30) NOT NULL,
+  Nome varchar(30) NOT NULL,
+  DataNascita date NOT NULL,
+  Genere enum('M','F') NOT NULL,
+  Nazione varchar(30) NOT NULL default 'Italia',
+  E-Mail varchar(50),
+  PRIMARY KEY  (Matricola),
+  UNIQUE KEY CognomeNomeDataN(Cognome,Nome, DataNascita)
 ) ENGINE=InnoDB; 
 
 #popolo il database
-INSERT INTO studenti (cognome, nome, data_nascita, genere, nazione, e_mail) VALUES
-						( 'Verdi', 'Alessandro', '1988-02-24','M', 'argentina', 'you@ymail.com');
+INSERT INTO studenti (Cognome, Nome, DataNascita, Genere, Nazione, E-Mail) VALUES
+						( 'Verdi', 'Alessandro', '2010-02-24','M', 'argentina', 'you@ymail.com');
 
-INSERT INTO studenti (cognome, nome, data_nascita, genere, nazione, e_mail) VALUES
-						( 'Rossi', 'Alberto', '1990-03-12', 'M', 'Argentina',NULL);
+INSERT INTO studenti (Cognome, Nome, DataNascita, Genere, Nazione, E-Mail) VALUES
+						( 'Rossi', 'Alberto', '2011-03-12', 'M', 'Argentina',NULL);
 						
-INSERT INTO studenti (cognome, nome, data_nascita, genere, nazione, e_mail) VALUES						
-							('Bianchi', 'Chiara', '1970-10-07', 'F', default, 'chiarab@ymail.com');
+INSERT INTO studenti (Cognome, Nome, DataNascita, Genere, Nazione, E-Mail) VALUES						
+							('Bianchi', 'Chiara', '2009-10-07', 'F', default, 'chiarab@ymail.com');
 							
-INSERT INTO studenti (matricola, cognome, nome, data_nascita, genere, nazione, e_mail) VALUES						
-							(231, 'Alberti', 'Simone', '1987-03-23', 'M', default, 'a.simone@libero.it');
+INSERT INTO studenti (Matricola, Cognome, Nome, DataNascita, Genere, Nazione, E-Mail) VALUES						
+							(231, 'Alberti', 'Simone', '2008-03-23', 'M', default, 'a.simone@libero.it');
 						
-INSERT INTO studenti (matricola, cognome, nome, data_nascita, genere, nazione, e_mail) VALUES							
-						(232, 'Dell\'Acqua', 'Mattia','1988-03-23',default, default,default);
+INSERT INTO studenti (Matricola, Cognome, Nome, DataNascita, Genere, Nazione, E-Mail) VALUES							
+						(232, 'Dell\'Acqua', 'Mattia','2000-03-23',default, default,default);
 
-INSERT INTO studenti (cognome, nome, data_nascita, genere, nazione, e_mail) VALUES
-						( 'Falco', 'Alessandro', '1978-02-24','M', 'venezuela', 'me@ymail.com');
+INSERT INTO studenti (Cognome, Nome, DataNascita, Genere, Nazione, E-Mail) VALUES
+						( 'Falco', 'Alessandro', '2011-02-24','M', 'venezuela', 'me@ymail.com');
 
-INSERT INTO studenti (matricola, cognome, nome, data_nascita, genere, nazione, e_mail) VALUES
-						(123, 'Giovanni', 'Rossi', '1979-02-24','M', 'Costa Rica', 'medo@ymail.com');
+INSERT INTO studenti (Matricola, Cognome, Nome, DataNascita, Genere, Nazione, E-Mail) VALUES
+						(123, 'Giovanni', 'Rossi', '2007-02-24','M', 'Costa Rica', 'medo@ymail.com');
 
 SELECT * FROM studenti;
 
 -- La seguente query non funziona, perché?
-INSERT INTO studenti ( cognome, nome, data_nascita, genere, nazione, e_mail) VALUES
+INSERT INTO studenti ( Cognome, Nome, DataNascita, Genere, Nazione, E-Mail) VALUES
     -> ('De Chirico', 'Giorgio','1888-07-10',default, default,default);
 /* 
-quale valore del genere è stato assegnato?
-quale valore della mail è stato assegnato? 
-
-
-Il prossimo esempio genera errore perché il genere non corrisponde a uno di quelli previsti dal tipo enum
+quale valore del Genere è stato assegnato?
+quale valore della E-Mail è stato assegnato? 
+Il prossimo esempio genera errore perché il Genere non corrisponde a uno di quelli previsti dal tipo enum
 */
-
-INSERT INTO studenti ( cognome, nome, data_nascita, genere, nazione, e_mail) VALUES							
+INSERT INTO studenti ( Cognome, Nome, DataNascita, Genere, Nazione, E-Mail) VALUES							
 						('De Chirico 2', 'Giorgio 2','1888-07-10','X', default,default);
 
 /* 
@@ -91,68 +87,67 @@ Un server SQL può essere più o meno aderente agli standard dell'SQL e ha dei m
 */
 
 # proviamo a modificare la modalità operativa di MariaDB
-# salvo la modalità corrente
+# salviamo la modalità corrente
 SET @OLD__SESSION_SQL_MODE = (SELECT @@SESSION.sql_mode);
-# rimuovo la modalità STRICT
+# rimuoviamo la modalità STRICT
 SET SQL_MODE ='';
 
--- verifico la modalità operativa
+-- verifichiamo la modalità operativa
 SELECT @@SESSION.sql_mode;
 
-# provo a fare qualcosa di non molto corretto:
-INSERT INTO studenti (matricola, cognome, nome, data_nascita, genere, nazione, e_mail) VALUES
-						(124, 'GiovanniX', 'RossiX', '1979-02-24','X', 'Costa Rica', 'medoX@ymail.com');
+# proviamo a fare qualcosa di non molto corretto:
+INSERT INTO studenti (Matricola, Cognome, Nome, DataNascita, Genere, Nazione, E-Mail) VALUES
+						(124, 'GiovanniX', 'RossiX', '2000-02-24','X', 'Costa Rica', 'medoX@ymail.com');
 
--- provo a inserire un utente 'strano'
-INSERT INTO studenti (matricola, cognome, nome, data_nascita, genere, nazione, e_mail) VALUES							
+-- proviamo a inserire un utente 'strano'
+INSERT INTO studenti (Matricola, Cognome, Nome, DataNascita, Genere, Nazione, E-Mail) VALUES							
 						(234, 'Dell\'Acqua', 'Giorgio',default,default, default,default);
 						
-INSERT INTO studenti (matricola, cognome, nome, data_nascita, genere, nazione, e_mail) VALUES							
-						(235, 'Dell\'Acqua', 'Giorgio','1980-12-01',default, default,default);
+INSERT INTO studenti (Matricola, Cognome, Nome, DataNascita, Genere, Nazione, E-Mail) VALUES							
+						(235, 'Dell\'Acqua', 'Giorgio','2001-12-01',default, default,default);
 						-- > query OK
--- posso ritornare alla modalità di default con 
+-- possiamo ritornare alla modalità di default con 
 SET SQL_MODE = (SELECT @OLD__SESSION_SQL_MODE);
 
-# provo a fare qualcosa di non molto corretto:
-INSERT INTO studenti ( cognome, nome, data_nascita, genere, nazione, e_mail) VALUES
-						( 'GiovanniX2', 'RossiX2', '1979-02-24','X', 'Costa Rica', 'medoX@ymail.com');
+# proviamo a fare qualcosa di non molto corretto:
+INSERT INTO studenti ( Cognome, Nome, DataNascita, Genere, Nazione, E-Mail) VALUES
+						( 'GiovanniX2', 'RossiX2', '2002-02-24','X', 'Costa Rica', 'medoX@ymail.com');
 
 -- MORALE: E' SEMPRE CONSIGLIABILE utilizzare la modalità di dafault "SQL STRICT".
 
 -- altri inserimenti
 
-INSERT INTO studenti (cognome, nome, data_nascita, genere, nazione, e_mail) VALUES							
-						('Dell\'Acqua', 'Antonella','1970-12-23',default, default,default); 
--- non inserisco la matricola
--- quale valore assume la matricola?
+INSERT INTO studenti (Cognome, Nome, DataNascita, Genere, Nazione, E-Mail) VALUES							
+						('Dell\'Acqua', 'Antonella','2010-12-23',default, default,default); 
+-- non inseriamo la Matricola
+-- quale valore assume la Matricola?
 
-INSERT INTO studenti ( cognome, nome, data_nascita) VALUES							
-						('De Benedictis', 'Mattia','1993-02-23'); 
--- non inserisco la matricola, il genere, la nazione, la e-mail
+INSERT INTO studenti ( Cognome, Nome, DataNascita) VALUES							
+						('De Benedictis', 'Mattia','2011-02-23'); 
+-- non inseriamo la Matricola, il Genere, la Nazione, la E-Mail
 -- cosa è inserito nel DB?
 
 SELECT * FROM studenti;		
 						
 -- eliminare righe da una tabella, con l'uso di LIMIT
 -- https://www.mysqltutorial.org/mysql-basics/mysql-limit/ 
-DELETE FROM studenti WHERE matricola = 233 LIMIT 1;
+DELETE FROM studenti WHERE Matricola = 233 LIMIT 1;
 
--- eliminare un gruppo di righe, in questo caso non ci sono studenti con matricola compresa nei limiti imposti
+-- eliminare un gruppo di righe, in questo caso non ci sono studenti con Matricola compresa nei limiti imposti
  DELETE FROM studenti 
-	WHERE matricola >=50 AND matricola <= 60;
+	WHERE Matricola >=50 AND Matricola <= 60;
 
 # esempio di modifica di uno studente
-UPDATE studenti SET nazione='Argentina' 
-WHERE matricola=232 LIMIT 1;
+UPDATE studenti SET Nazione='Argentina' 
+WHERE Matricola=232 LIMIT 1;
 
 
-# esempio di eliminazione di un alunno
+# esempio di elimiNazione di un alunno
 DELETE FROM studenti 
-WHERE matricola=232 LIMIT 1;
+WHERE Matricola=232 LIMIT 1;
 
 -- INTEGRITA' REFERENZIALE
--- aggiungiamo al database scuola la seguente tabella che riporta le assenze fatte da uno studente
--- RITORNIAMO AL DATABASE scuola;
+-- aggiungiamo al database dbscuola la seguente tabella che riporta le assenze fatte da uno studente
 
 USE dbscuola;
 #ATTENZIONE: ricordarsi che MySQL/MariaDB su Linux è Case Sensitive, su Windows è Case Insensitive di default
@@ -160,12 +155,12 @@ USE dbscuola;
 # http://dba.stackexchange.com/questions/16198/mysql-case-sensitive-table-names-on-linux 
 
 CREATE TABLE IF NOT EXISTS assenze (
-ID MEDIUMINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-Studente MEDIUMINT unsigned ZEROFILL NOT NULL,
-Tipo ENUM('AA','AG', 'RR','RG') DEFAULT 'AA',
-Data DATE NOT NULL ,
-FOREIGN KEY (Studente) REFERENCES studenti(matricola)
-) ENGINE = InnoDB CHARSET = latin1;
+	Id MEDIUMINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+	Studente MEDIUMINT UNSIGNED NOT NULL,
+	Tipo ENUM('AA','AG', 'RR','RG') DEFAULT 'AA',
+	Data DATE NOT NULL ,
+	FOREIGN KEY (Studente) REFERENCES studenti(Matricola)
+) ENGINE = InnoDB;
 
 -- per verificare la struttura di una tabella si possono usare diversi comandi SQL:
 -- 1 SHOW CREATE TABLE: permette di vedere la struttura della tabella così come descritta nella CREATE TABLE
@@ -175,59 +170,55 @@ DESCRIBE assenze \G
 
 -- 3 SHOW COLUMNS FROM: fornisce lo stesso risultato di DESCRIBE
 SHOW COLUMNS FROM assenze \G
-use dbscuola;
+USE dbscuola;
 -- inseriamo qualche assenza nel database
 INSERT INTO assenze (Studente, Tipo, Data) VALUES (123, 'AA', CURRENT_DATE);
 INSERT INTO assenze (Studente, Tipo, Data) VALUES (234, 'AG', CURRENT_DATE);
 INSERT INTO assenze (Studente, Tipo, Data) VALUES (123, 'AA', CURRENT_DATE - interval 3 day);
--- notare come in MySQl si possa effettuare la differenza tra una data e un intervallo,
+-- notare come in MySQL si possa effettuare la differenza tra una data e un intervallo,
 --  ma non la differenze tra due date che va fatta con la DATEDIFF che vedremo...
 
--- domanda: cosa succede se proviamo a inserire?
+-- domanda: cosa succede se provassimo a fare il seguente inserimento?
 INSERT INTO assenze (Studente, Tipo, Data) VALUES (500, 'AG', CURRENT_DATE);
--- >otteniamo un messaggio d'errore! perché? 
--- MySQl supporta l'integrità referenziale con tabelle di tipo InnoDB:
+--> otterremmo un messaggio d'errore! perché? 
+-- MySQL supporta l'integrità referenziale con tabelle di tipo InnoDB:
 -- per ogni valore della colonna (o colonne) in comune nella parte a molti (tabella esterna: assenze) 
 -- sia sempre presente un valore uguale nella parte a uno (tabella interna: Studenti). 
 
 -- proviamo a eliminare lo studente con codice 123 e vediamo cosa succede
-DELETE FROM studenti WHERE matricola = 123;
+DELETE FROM studenti WHERE Matricola = 123;
 -- > otteniamo un messaggio d'errore! perché?
 -- cosa succederebbe se potessimo eliminare uno studente di cui sono ancora memorizzate le assenze nel DB?
--- gurdare le slide a questo punto
+
 -- modifichiamo la struttura della chiave esterna
 -- prima rimuoviamo il vincolo di chiave esterna e poi lo ricreiamo nuovamente
 -- per vedere la chiave esterna faccio una SHOW CREATE TABLE
 SHOW CREATE TABLE assenze \G
 ALTER TABLE assenze DROP FOREIGN KEY assenze_ibfk_1; -- rimuovo la chiave esterna precedente
--- ricostruisco la chiave esterna con la clausola CASCADE
+-- ricostruiamo la chiave esterna con la clausola CASCADE
 ALTER TABLE assenze ADD CONSTRAINT assenze_fk1 
-	FOREIGN KEY (Studente) REFERENCES studenti(matricola) 
+	FOREIGN KEY (Studente) REFERENCES studenti(Matricola) 
 	ON DELETE CASCADE 
 	ON UPDATE CASCADE;
--- cosa succede se proviamo ora a eliminare lo studente con matricola 123?
-DELETE FROM studenti WHERE matricola = 123;
--- > Query OK --> ho eliminato lo studente, e le assenze?
+-- cosa succede se provassimo ora a eliminare lo studente con Matricola 123?
+DELETE FROM studenti WHERE Matricola = 123;
+-- > Query OK --> abbiamo eliminato lo studente, e le assenze?
 -- anche quelle eliminate!
--- cosa succede se cambiamo il numero di matricola allo studente con matricola 234 (Dell'Acqua Giorgio)?
+-- cosa succederebbe se cambiassimo il numero di Matricola allo studente con Matricola 234 (Dell'Acqua Giorgio)?
 -- prima vediamo nella tabella assenze il contenuto del record relativo all'assenza dello studente 234
--- facciamo il cambio di matricola
-UPDATE studenti SET matricola = 255 
-WHERE matricola = 234;
+-- facciamo il cambio di Matricola
+UPDATE studenti SET Matricola = 255 
+WHERE Matricola = 234;
 
 --vediamo il risultato
 SELECT * FROM studenti;
 SELECT * FROM assenze;
 -- notiamo che la chiave esterna nella tabella assenze è stata modificata!
 
--- ************************************************	
--- DA QUI IN POI MATERIALE DI SUPPORTO: SLIDE SQL P3
--- *************************************************
--- modificare la struttura di una tabella
--- 12.1.7. ALTER TABLE Syntax
+-- modificare la struttura di una tabella ALTER TABLE
 	-- aggiungere una colonna
 	ALTER TABLE studenti 
-		ADD COLUMN indirizzo VARCHAR(60) AFTER nazione;
+		ADD COLUMN indirizzo VARCHAR(60) AFTER Nazione;
 		
 	-- eliminare una colonna di una tabella
 	ALTER TABLE studenti
@@ -235,15 +226,14 @@ SELECT * FROM assenze;
 		
 	-- modificare un campo di una tabella (uso di CHANGE non standard)
 	ALTER TABLE studenti
-		CHANGE COLUMN nazione nazionalita varchar(30) NOT NULL default 'Italiana';
+		CHANGE COLUMN Nazione nazionalita varchar(30) NOT NULL default 'Italiana';
 	-- domanda: il valore della nazionalità è cambiato nelle tuple di studenti?
 	
 	-- per modificare il valore di un campo di una tabella si usa l'istruzione UPDATE
-	-- 12.2.11. UPDATE Syntax
-	UPDATE studenti
+		UPDATE studenti
 		SET nazionalita = 'Cilena'
 		WHERE nazionalita = 'Argentina';
-		-- notare che la condizione con il nome 'Argentina' modifica anche la tupla con 'argentina' perché?
+		-- notare che la condizione con il Nome 'Argentina' modifica anche la tupla con 'argentina' perché?
 				-- > per rispondere andare a vedere le caratterisciche delle tabelle 
 				-- 	 con il comando SHOW TABLE STATUS FROM dbscuola \G
 				-- > Collation?
@@ -264,202 +254,56 @@ ALTER TABLE studenti engine = InnoDB;
 -- per vedere quali engine sono supportarti dal nostro server basta digitare 
 SHOW ENGINES;
 
--- Qual è l'engine di default in MySQL?
-		-- > dipende dall'installazione 
-		-- 		per versioni < 5.5.5 --> default = MyISAM
-		--		per versioni > 5.5.5 --> default = InnoDB
-
 -- INDICI SU TABELLE
 	-- la tabella studenti presenta già degli indici?
 	-- 	> PRIMARY KEY
 	-- 	> UNIQUE KEY
-	-- creiamo un indice generico per velocizzare la ricerca per cognome, utilizzando solo i primi 10 caratteri del cognome
-	CREATE INDEX per_cognome ON studenti (cognome(10));
+	-- creiamo un indice generico per velocizzare la ricerca per Cognome, utilizzando solo i primi 10 caratteri del Cognome
+	CREATE INDEX perCognome ON studenti (Cognome(10));
 	-- come fare a visualizzare gli indici presenti su una tabella?
 	SHOW INDEX FROM studenti \G
 	-- cancelliamo l'indice creato
-	DROP INDEX per_cognome ON studenti;
+	DROP INDEX perCognome ON studenti;
 	
-	-- possiamo creare indici di tipo UNIQUE (già visti) oppure un indice di tipo FULLTEXT
-	-- gli indici di tipo FULLTEXT richiedono tabelle con engine = MyISAM (dall versione 5.6 di MySQL è supportato anche in tabelle Innodb)
-	-- prendiamo l'esempio del manuale di MySQL: 11.9.1. Natural Language Full-Text Searches
-	-- per la teoria e gli esempi sugli indici di tipo FULLTEXT si poò vedere i seguenti riferimenti:
-	-- https://www.mysqltutorial.org/introduction-to-mysql-full-text-search.aspx
-	-- https://www.mysqltutorial.org/activating-full-text-searching.aspx
-	-- https://www.mysqltutorial.org/mysql-natural-language-search.aspx
-	-- https://www.mysqltutorial.org/mysql-boolean-text-searches.aspx
-	-- CAMBIAMO TEMPORANEAMENTE DATABASE: prendiamo il database test e creiamo due tabelle:
-	-- articles e clienti
-	-- cambio database:
-	CREATE DATABASE IF NOT EXISTS test;
-	USE test;
-	CREATE TABLE IF NOT EXISTS clienti (
-	codice MEDIUMINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-	denominazione VARCHAR(40) NOT NULL UNIQUE,
-	telefono CHAR(15),
-	cellulare CHAR(15),
-	UNIQUE(telefono, cellulare)
-	);
-	
-	CREATE TABLE IF NOT EXISTS articles (
-		id INT UNSIGNED AUTO_INCREMENT NOT NULL PRIMARY KEY,
-		title VARCHAR(200),
-		body TEXT,
-		FULLTEXT (title,body)
-	) ENGINE=InnoDB;
-
-INSERT INTO articles (title,body) VALUES
- ('MySQL Tutorial','DBMS stands for DataBase ...'),
- ('How To Use MySQL Well','After you went through a ...'),
- ('Optimizing MySQL','In this tutorial we will show ...'),
- ('1001 MySQL Tricks','1. Never run mysqld as root. 2. ...'),
- ('MySQL vs. YourSQL','In the following database comparison ...'),
- ('MySQL Security','When configured properly, MySQL ...');	
- 
- INSERT INTO articles (title,body) VALUES 
- ('MySQL MySQL MySQL', 'DBMS stands for MySQL, MySQL,MySQL,MySQL ...');
-
- INSERT INTO articles (title,body) VALUES 
- ('MySQL is a database', 'DBMS stands for database management system ...');
-
- INSERT INTO articles (title,body) VALUES 
- ('Most important database', 'MySQL is very important database management system ...');
--- verifichiamo il contenuto della tabella articles
-SELECT * FROM articles;
--- trovare gli articoli che hanno nel titolo o nel corpo del testo la parola database
-SELECT * FROM articles
-	WHERE MATCH(title, body) 
-	AGAINST ('database' IN NATURAL LANGUAGE MODE) > 0;
-
-SELECT * FROM articles
-	WHERE title LIKE '%database%' OR body LIKE '%database%';
-	
-SELECT id, MATCH(title, body) AGAINST ('database' IN NATURAL LANGUAGE MODE) AS score 
-FROM articles;
-
-
-SELECT id, MATCH(title, body) 
-	AGAINST ('database') AS score FROM articles;	
-	
--- nella query precedente abbiamo usato la funzione MATCH(): 11.9. Full-Text Search Functions
--- attenzione: in linguaggio naturale bisogna mettere nella MATCH le stesse colonne inserite nell'indice FULLTEXT creato sulla tabella
--- se volessimo fare una ricerca solo con titolo o solo con body dovremmo creare indici appositi
-
--- la stesso risultato si poteva ottenere anche con una query del tipo seguente (più lenta)
-SELECT * FROM articles
-	WHERE title LIKE '%database%' OR body LIKE '%database%';
--- ma la vera differenza sta nel fatto che la funzione MATCH restituisce lo score vale a dire la rilevanza 
--- di una frase in un testo
-SELECT id, MATCH(title, body) AGAINST ('database' IN NATURAL LANGUAGE MODE) AS punteggio
-FROM articles;
-
-SELECT id, MATCH(body) AGAINST ('database' IN NATURAL LANGUAGE MODE) AS punteggio
-FROM articles;
-
-SELECT id, body, MATCH(title, body) AGAINST ('database' IN NATURAL LANGUAGE MODE) AS punteggio
-FROM articles;
-
-SELECT id, body, MATCH(title, body) AGAINST ('database' IN NATURAL LANGUAGE MODE) AS punteggio
-FROM articles
-WHERE MATCH(title, body) AGAINST ('database' IN NATURAL LANGUAGE MODE) > 0;
-
-
--- si noti che il risultato è automaticamente ordinato in ordine di rilevanza decrescente 
--- dal più rilevante al meno rilevante.
-
--- cosa succede se proviamo a cercare la parola MySQL?
-SELECT id, body, MATCH(title, body) AGAINST ('MySQL' IN NATURAL LANGUAGE MODE) AS punteggio
-FROM articles
-WHERE MATCH(title, body) AGAINST ('MySQL' IN NATURAL LANGUAGE MODE) > 0;
-
-SELECT id, body, MATCH(title, body) AGAINST ('database,MySQL' IN NATURAL LANGUAGE MODE) AS punteggio
-FROM articles
-WHERE MATCH(title, body) AGAINST ('database,MySQL' IN NATURAL LANGUAGE MODE) > 0;
--- quando la ricerca è fatta in modalità NATURAL LANGUAGE le parole che sono presenti in più del 50% 
--- delle righe sono scartate!
--- infatti sono considerate irrilevanti nel documento 
---"they may have a low semantic value for the particular data set in which they occur"
-
--- inoltre in configurazione di default le parole con meno di 4 caratteri sono ignorate 
--- e le parole che appartengono a una lista 
--- di stop words sono ignorate (parole come 'alone', 'along', etc.. --> queste impostazioni possono essere modificate --> MANUALE
--- https://dev.mysql.com/doc/refman/8.0/en/fulltext-stopwords.html
--- https://dev.mysql.com/doc/refman/8.0/en/fulltext-natural-language.html 
--- http://dev.mysql.com/doc/refman/8.0/en/fulltext-fine-tuning.html
-
--- vediamo come ultimo esempio la ricerca IN BOOLEAN MODE
-SELECT * FROM articles 
-WHERE MATCH (title,body)
-	AGAINST ('+MySQL -Database' IN BOOLEAN MODE) > 0;
--- cosa otteniamo?
--- tutte le righe dove è presente la parola 'MySQL' ma non è presente la parola 'Database'
-/*
-• + stands for AND
-• - stands for NOT
-• [no operator] implies OR
-*/
-
-
-SELECT id, title, body, MATCH (title,body) AGAINST ('+MySQL -Database' IN BOOLEAN MODE) AS Punteggio
-FROM articles 
-WHERE MATCH (title,body) AGAINST ('+MySQL -Database' IN BOOLEAN MODE) > 0;
-
--- quanto vale il punteggio?
--- proviamo a inserire la tupla con body ' MySQL e MySQL e ancora MySQL'
-INSERT INTO articles (title,body) VALUES
- ('Crazy words','MySQL e MySQL e ancora MySQL');
- -- proviamo a rifare la query con la ricerca booleana di prima
- SELECT id, title, body, MATCH (title,body) AGAINST ('+MySQL -Database' IN BOOLEAN MODE) AS Punteggio
- FROM articles 
- WHERE MATCH (title,body) AGAINST ('+MySQL -Database' IN BOOLEAN MODE) > 0;
-
- -- il punteggio dell'ultimo articolo non cambia, infatti in questa modalità 
--- non è riportata la rilevanza, ma solo la presenza o meno
--- non si applica la soglia del 50%
--- la ricerca in modo booleano si può applicare anche se non è stato creato un indice FULLTEXT (più lentamente)
--- si applica comunque la lista di stop words.
-
-SELECT cognome, nome, (YEAR(CURDATE()) - YEAR(data_nascita)) 
+SELECT Cognome, Nome, (YEAR(CURDATE()) - YEAR(DataNascita)) 
 FROM studenti;
 
 SELECT RIGHT(CURDATE(),5);
 
-SELECT cognome, nome, RIGHT(CURDATE(),5) as data_corrente, RIGHT(data_nascita,5) as data_nascita, (RIGHT(CURDATE(),5)<RIGHT(data_nascita,5))
+SELECT Cognome, Nome, RIGHT(CURDATE(),5) as data_corrente, RIGHT(DataNascita,5) as DataNascita, (RIGHT(CURDATE(),5)<RIGHT(DataNascita,5))
 FROM studenti;
 
 -- esercizio con le date: usiamo il database studenti
 -- trovare l'età degli studenti
-SELECT cognome, nome, (YEAR(CURDATE()) - YEAR(data_nascita)) - (RIGHT(CURDATE(),5)<RIGHT(data_nascita,5))  Eta
+SELECT Cognome, Nome, (YEAR(CURDATE()) - YEAR(DataNascita)) - (RIGHT(CURDATE(),5)<RIGHT(DataNascita,5))  Eta
 FROM studenti;
 
-SELECT cognome, nome, (YEAR(CURDATE()) - YEAR(data_nascita)) - (RIGHT(CURDATE(),5)<RIGHT(data_nascita,5))  AS eta
+SELECT Cognome, Nome, (YEAR(CURDATE()) - YEAR(DataNascita)) - (RIGHT(CURDATE(),5)<RIGHT(DataNascita,5))  AS eta
 FROM studenti
 ORDER BY eta ASC;
-SELECT cognome, nome, (YEAR(CURDATE()) - YEAR(data_nascita)) - (RIGHT(CURDATE(),5)<RIGHT(data_nascita,5))  AS eta
+SELECT Cognome, Nome, (YEAR(CURDATE()) - YEAR(DataNascita)) - (RIGHT(CURDATE(),5)<RIGHT(DataNascita,5))  AS eta
 FROM studenti
 ORDER BY eta ASC;
 
 -- selezionare gli studenti con età superiore a un certo valore
-SELECT cognome, nome, (YEAR(CURDATE()) - YEAR(data_nascita)) - (RIGHT(CURDATE(),5)<RIGHT(data_nascita,5))  AS eta
+SELECT Cognome, Nome, (YEAR(CURDATE()) - YEAR(DataNascita)) - (RIGHT(CURDATE(),5)<RIGHT(DataNascita,5))  AS eta
 FROM studenti
-WHERE (YEAR(CURDATE()) - YEAR(data_nascita)) - (RIGHT(CURDATE(),5)<RIGHT(data_nascita,5)) > 100;
+WHERE (YEAR(CURDATE()) - YEAR(DataNascita)) - (RIGHT(CURDATE(),5)<RIGHT(DataNascita,5)) > 100;
 
 
-SELECT cognome, nome
+SELECT Cognome, Nome
 FROM studenti
-WHERE (YEAR(CURDATE()) - YEAR(data_nascita)) - (RIGHT(CURDATE(),5)<RIGHT(data_nascita,5)) > 100;
+WHERE (YEAR(CURDATE()) - YEAR(DataNascita)) - (RIGHT(CURDATE(),5)<RIGHT(DataNascita,5)) > 100;
 
 -- ordinati per età
-SELECT cognome, nome, (YEAR(CURDATE()) - YEAR(data_nascita)) - (RIGHT(CURDATE(),5)<RIGHT(data_nascita,5))  AS eta
+SELECT Cognome, Nome, (YEAR(CURDATE()) - YEAR(DataNascita)) - (RIGHT(CURDATE(),5)<RIGHT(DataNascita,5))  AS eta
 FROM studenti
-WHERE (YEAR(CURDATE()) - YEAR(data_nascita)) - (RIGHT(CURDATE(),5)<RIGHT(data_nascita,5)) > 20
-ORDER BY eta DESC, cognome, nome;
+WHERE (YEAR(CURDATE()) - YEAR(DataNascita)) - (RIGHT(CURDATE(),5)<RIGHT(DataNascita,5)) > 20
+ORDER BY eta DESC, Cognome, Nome;
 
 SELECT DATEDIFF('2007-12-31 23:59:59','2007-12-30'); 
 
--- ************************************************	
--- DA QUI IN POI MATERIALE DI SUPPORTO: SLIDE SQL P4
--- *************************************************
+
 -- GESTIONE DEI UTENTI E DEI PERMESSI IN UN DATABASE
 -- vediamo gli utenti presenti sul DBMS
 -- use mysql;
