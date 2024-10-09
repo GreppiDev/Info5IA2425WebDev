@@ -39,44 +39,44 @@ CREATE TABLE IF NOT EXISTS studenti (
   DataNascita date NOT NULL,
   Genere enum('M','F') NOT NULL,
   Nazione varchar(30) NOT NULL default 'Italia',
-  E-Mail varchar(50),
+  EMail varchar(50),
   PRIMARY KEY  (Matricola),
   UNIQUE KEY CognomeNomeDataN(Cognome,Nome, DataNascita)
 ) ENGINE=InnoDB; 
 
 #popolo il database
-INSERT INTO studenti (Cognome, Nome, DataNascita, Genere, Nazione, E-Mail) VALUES
+INSERT INTO studenti (Cognome, Nome, DataNascita, Genere, Nazione, EMail) VALUES
 						( 'Verdi', 'Alessandro', '2010-02-24','M', 'argentina', 'you@ymail.com');
 
-INSERT INTO studenti (Cognome, Nome, DataNascita, Genere, Nazione, E-Mail) VALUES
+INSERT INTO studenti (Cognome, Nome, DataNascita, Genere, Nazione, EMail) VALUES
 						( 'Rossi', 'Alberto', '2011-03-12', 'M', 'Argentina',NULL);
 						
-INSERT INTO studenti (Cognome, Nome, DataNascita, Genere, Nazione, E-Mail) VALUES						
+INSERT INTO studenti (Cognome, Nome, DataNascita, Genere, Nazione, EMail) VALUES						
 							('Bianchi', 'Chiara', '2009-10-07', 'F', default, 'chiarab@ymail.com');
 							
-INSERT INTO studenti (Matricola, Cognome, Nome, DataNascita, Genere, Nazione, E-Mail) VALUES						
+INSERT INTO studenti (Matricola, Cognome, Nome, DataNascita, Genere, Nazione, EMail) VALUES						
 							(231, 'Alberti', 'Simone', '2008-03-23', 'M', default, 'a.simone@libero.it');
 						
-INSERT INTO studenti (Matricola, Cognome, Nome, DataNascita, Genere, Nazione, E-Mail) VALUES							
+INSERT INTO studenti (Matricola, Cognome, Nome, DataNascita, Genere, Nazione, EMail) VALUES							
 						(232, 'Dell\'Acqua', 'Mattia','2000-03-23',default, default,default);
 
-INSERT INTO studenti (Cognome, Nome, DataNascita, Genere, Nazione, E-Mail) VALUES
+INSERT INTO studenti (Cognome, Nome, DataNascita, Genere, Nazione, EMail) VALUES
 						( 'Falco', 'Alessandro', '2011-02-24','M', 'venezuela', 'me@ymail.com');
 
-INSERT INTO studenti (Matricola, Cognome, Nome, DataNascita, Genere, Nazione, E-Mail) VALUES
+INSERT INTO studenti (Matricola, Cognome, Nome, DataNascita, Genere, Nazione, EMail) VALUES
 						(123, 'Giovanni', 'Rossi', '2007-02-24','M', 'Costa Rica', 'medo@ymail.com');
 
 SELECT * FROM studenti;
 
 -- La seguente query non funziona, perché?
-INSERT INTO studenti ( Cognome, Nome, DataNascita, Genere, Nazione, E-Mail) VALUES
+INSERT INTO studenti ( Cognome, Nome, DataNascita, Genere, Nazione, EMail) VALUES
     -> ('De Chirico', 'Giorgio','1888-07-10',default, default,default);
 /* 
 quale valore del Genere è stato assegnato?
-quale valore della E-Mail è stato assegnato? 
+quale valore della EMail è stato assegnato? 
 Il prossimo esempio genera errore perché il Genere non corrisponde a uno di quelli previsti dal tipo enum
 */
-INSERT INTO studenti ( Cognome, Nome, DataNascita, Genere, Nazione, E-Mail) VALUES							
+INSERT INTO studenti ( Cognome, Nome, DataNascita, Genere, Nazione, EMail) VALUES							
 						('De Chirico 2', 'Giorgio 2','1888-07-10','X', default,default);
 
 /* 
@@ -96,35 +96,35 @@ SET SQL_MODE ='';
 SELECT @@SESSION.sql_mode;
 
 # proviamo a fare qualcosa di non molto corretto:
-INSERT INTO studenti (Matricola, Cognome, Nome, DataNascita, Genere, Nazione, E-Mail) VALUES
+INSERT INTO studenti (Matricola, Cognome, Nome, DataNascita, Genere, Nazione, EMail) VALUES
 						(124, 'GiovanniX', 'RossiX', '2000-02-24','X', 'Costa Rica', 'medoX@ymail.com');
 
 -- proviamo a inserire un utente 'strano'
-INSERT INTO studenti (Matricola, Cognome, Nome, DataNascita, Genere, Nazione, E-Mail) VALUES							
+INSERT INTO studenti (Matricola, Cognome, Nome, DataNascita, Genere, Nazione, EMail) VALUES							
 						(234, 'Dell\'Acqua', 'Giorgio',default,default, default,default);
 						
-INSERT INTO studenti (Matricola, Cognome, Nome, DataNascita, Genere, Nazione, E-Mail) VALUES							
+INSERT INTO studenti (Matricola, Cognome, Nome, DataNascita, Genere, Nazione, EMail) VALUES							
 						(235, 'Dell\'Acqua', 'Giorgio','2001-12-01',default, default,default);
 						-- > query OK
 -- possiamo ritornare alla modalità di default con 
 SET SQL_MODE = (SELECT @OLD__SESSION_SQL_MODE);
 
 # proviamo a fare qualcosa di non molto corretto:
-INSERT INTO studenti ( Cognome, Nome, DataNascita, Genere, Nazione, E-Mail) VALUES
+INSERT INTO studenti ( Cognome, Nome, DataNascita, Genere, Nazione, EMail) VALUES
 						( 'GiovanniX2', 'RossiX2', '2002-02-24','X', 'Costa Rica', 'medoX@ymail.com');
 
 -- MORALE: E' SEMPRE CONSIGLIABILE utilizzare la modalità di dafault "SQL STRICT".
 
 -- altri inserimenti
 
-INSERT INTO studenti (Cognome, Nome, DataNascita, Genere, Nazione, E-Mail) VALUES							
+INSERT INTO studenti (Cognome, Nome, DataNascita, Genere, Nazione, EMail) VALUES							
 						('Dell\'Acqua', 'Antonella','2010-12-23',default, default,default); 
 -- non inseriamo la Matricola
 -- quale valore assume la Matricola?
 
 INSERT INTO studenti ( Cognome, Nome, DataNascita) VALUES							
 						('De Benedictis', 'Mattia','2011-02-23'); 
--- non inseriamo la Matricola, il Genere, la Nazione, la E-Mail
+-- non inseriamo la Matricola, il Genere, la Nazione, la EMail
 -- cosa è inserito nel DB?
 
 SELECT * FROM studenti;		
@@ -138,11 +138,11 @@ DELETE FROM studenti WHERE Matricola = 233 LIMIT 1;
 	WHERE Matricola >=50 AND Matricola <= 60;
 
 # esempio di modifica di uno studente
-UPDATE studenti SET Nazione='Argentina' 
+UPDATE studenti SET Nazione='Argentina'
 WHERE Matricola=232 LIMIT 1;
 
 
-# esempio di elimiNazione di un alunno
+# esempio di eliminazione di un alunno
 DELETE FROM studenti 
 WHERE Matricola=232 LIMIT 1;
 
@@ -160,7 +160,20 @@ CREATE TABLE IF NOT EXISTS assenze (
 	Tipo ENUM('AA','AG', 'RR','RG') DEFAULT 'AA',
 	Data DATE NOT NULL ,
 	FOREIGN KEY (Studente) REFERENCES studenti(Matricola)
+	ON DELETE SET NULL
+	ON UPDATE CASCADE
 ) ENGINE = InnoDB;
+
+-- nel caso in cui la chiave esterna sia composta da più campi, bisogna specificare tutti i campi collegati
+-- supponiamo di creare la chiave esterna con Nome e Cognome
+/* CREATE TABLE IF NOT EXISTS assenze (
+    Id MEDIUMINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    CognomeStudente VARCHAR(30) NOT NULL,
+	NomeStudente VARCHAR(30) NOT NULL,
+    Tipo ENUM('AA', 'AG', 'RR', 'RG') DEFAULT 'AA',
+    Data DATE NOT NULL,
+    FOREIGN KEY (CognomeStudente,NomeStudente) REFERENCES studenti (Cognome,Nome)
+) ENGINE = InnoDB; */
 
 -- per verificare la struttura di una tabella si possono usare diversi comandi SQL:
 -- 1 SHOW CREATE TABLE: permette di vedere la struttura della tabella così come descritta nella CREATE TABLE
@@ -181,7 +194,7 @@ INSERT INTO assenze (Studente, Tipo, Data) VALUES (123, 'AA', CURRENT_DATE - int
 -- domanda: cosa succede se provassimo a fare il seguente inserimento?
 INSERT INTO assenze (Studente, Tipo, Data) VALUES (500, 'AG', CURRENT_DATE);
 --> otterremmo un messaggio d'errore! perché? 
--- MySQL supporta l'integrità referenziale con tabelle di tipo InnoDB:
+-- MySQL e mariaDB supportano l'integrità referenziale con tabelle di tipo InnoDB:
 -- per ogni valore della colonna (o colonne) in comune nella parte a molti (tabella esterna: assenze) 
 -- sia sempre presente un valore uguale nella parte a uno (tabella interna: Studenti). 
 

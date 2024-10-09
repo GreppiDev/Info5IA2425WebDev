@@ -321,7 +321,7 @@ In MySQL un DECIMAL può avere fino a 65 cifre significative complessive e fino 
 
 - [ENUM](https://www.mysqltutorial.org/mysql-basics/mysql-enum/)
 
-### Date
+### Date e tempo
 
 - [DATE](https://www.mysqltutorial.org/mysql-basics/mysql-date/)
 - [DATETIME](https://www.mysqltutorial.org/mysql-basics/mysql-datetime/)
