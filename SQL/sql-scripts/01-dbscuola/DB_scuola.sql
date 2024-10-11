@@ -144,7 +144,7 @@ WHERE Matricola=232 LIMIT 1;
 
 # esempio di eliminazione di un alunno
 DELETE FROM studenti 
-WHERE Matricola=232 LIMIT 1;
+WHERE Matricola=234 LIMIT 1;
 
 -- INTEGRITA' REFERENZIALE
 -- aggiungiamo al database dbscuola la seguente tabella che riporta le assenze fatte da uno studente
@@ -160,12 +160,12 @@ CREATE TABLE IF NOT EXISTS assenze (
 	Tipo ENUM('AA','AG', 'RR','RG') DEFAULT 'AA',
 	Data DATE NOT NULL ,
 	FOREIGN KEY (Studente) REFERENCES studenti(Matricola)
-	ON DELETE SET NULL
-	ON UPDATE CASCADE
 ) ENGINE = InnoDB;
 
 -- nel caso in cui la chiave esterna sia composta da più campi, bisogna specificare tutti i campi collegati
--- supponiamo di creare la chiave esterna con Nome e Cognome
+-- supponendo di creare la chiave esterna con Nome e Cognome e che quindi la chiave primaria di studenti sia 
+-- composta da Nome e Cognome, avremmo:
+
 /* CREATE TABLE IF NOT EXISTS assenze (
     Id MEDIUMINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     CognomeStudente VARCHAR(30) NOT NULL,
@@ -186,7 +186,7 @@ SHOW COLUMNS FROM assenze \G
 USE dbscuola;
 -- inseriamo qualche assenza nel database
 INSERT INTO assenze (Studente, Tipo, Data) VALUES (123, 'AA', CURRENT_DATE);
-INSERT INTO assenze (Studente, Tipo, Data) VALUES (234, 'AG', CURRENT_DATE);
+INSERT INTO assenze (Studente, Tipo, Data) VALUES (235, 'AG', CURRENT_DATE);
 INSERT INTO assenze (Studente, Tipo, Data) VALUES (123, 'AA', CURRENT_DATE - interval 3 day);
 -- notare come in MySQL si possa effettuare la differenza tra una data e un intervallo,
 --  ma non la differenze tra due date che va fatta con la DATEDIFF che vedremo...
@@ -207,21 +207,22 @@ DELETE FROM studenti WHERE Matricola = 123;
 -- prima rimuoviamo il vincolo di chiave esterna e poi lo ricreiamo nuovamente
 -- per vedere la chiave esterna faccio una SHOW CREATE TABLE
 SHOW CREATE TABLE assenze \G
-ALTER TABLE assenze DROP FOREIGN KEY assenze_ibfk_1; -- rimuovo la chiave esterna precedente
+-- rimuovo la chiave esterna precedente
+ALTER TABLE assenze DROP FOREIGN KEY assenze_ibfk_1;
 -- ricostruiamo la chiave esterna con la clausola CASCADE
 ALTER TABLE assenze ADD CONSTRAINT assenze_fk1 
 	FOREIGN KEY (Studente) REFERENCES studenti(Matricola) 
 	ON DELETE CASCADE 
 	ON UPDATE CASCADE;
--- cosa succede se provassimo ora a eliminare lo studente con Matricola 123?
+-- cosa succederebbe se provassimo ora a eliminare lo studente con Matricola 123?
 DELETE FROM studenti WHERE Matricola = 123;
 -- > Query OK --> abbiamo eliminato lo studente, e le assenze?
--- anche quelle eliminate!
+-- anche quelle sono state eliminate!
 -- cosa succederebbe se cambiassimo il numero di Matricola allo studente con Matricola 234 (Dell'Acqua Giorgio)?
 -- prima vediamo nella tabella assenze il contenuto del record relativo all'assenza dello studente 234
 -- facciamo il cambio di Matricola
 UPDATE studenti SET Matricola = 255 
-WHERE Matricola = 234;
+WHERE Matricola = 235;
 
 --vediamo il risultato
 SELECT * FROM studenti;
@@ -279,40 +280,40 @@ SHOW ENGINES;
 	DROP INDEX perCognome ON studenti;
 	
 SELECT Cognome, Nome, (YEAR(CURDATE()) - YEAR(DataNascita)) 
-FROM studenti;
+	FROM studenti;
 
 SELECT RIGHT(CURDATE(),5);
 
 SELECT Cognome, Nome, RIGHT(CURDATE(),5) as data_corrente, RIGHT(DataNascita,5) as DataNascita, (RIGHT(CURDATE(),5)<RIGHT(DataNascita,5))
-FROM studenti;
+	FROM studenti;
 
--- esercizio con le date: usiamo il database studenti
 -- trovare l'età degli studenti
 SELECT Cognome, Nome, (YEAR(CURDATE()) - YEAR(DataNascita)) - (RIGHT(CURDATE(),5)<RIGHT(DataNascita,5))  Eta
 FROM studenti;
 
-SELECT Cognome, Nome, (YEAR(CURDATE()) - YEAR(DataNascita)) - (RIGHT(CURDATE(),5)<RIGHT(DataNascita,5))  AS eta
+SELECT Cognome, Nome, (YEAR(CURDATE()) - YEAR(DataNascita)) - (RIGHT(CURDATE(),5)<RIGHT(DataNascita,5))  AS Eta
 FROM studenti
-ORDER BY eta ASC;
-SELECT Cognome, Nome, (YEAR(CURDATE()) - YEAR(DataNascita)) - (RIGHT(CURDATE(),5)<RIGHT(DataNascita,5))  AS eta
+ORDER BY Eta ASC;
+
+SELECT Cognome, Nome, (YEAR(CURDATE()) - YEAR(DataNascita)) - (RIGHT(CURDATE(),5)<RIGHT(DataNascita,5))  AS Eta
 FROM studenti
-ORDER BY eta ASC;
+ORDER BY Eta DESC;
 
 -- selezionare gli studenti con età superiore a un certo valore
-SELECT Cognome, Nome, (YEAR(CURDATE()) - YEAR(DataNascita)) - (RIGHT(CURDATE(),5)<RIGHT(DataNascita,5))  AS eta
+SELECT Cognome, Nome, (YEAR(CURDATE()) - YEAR(DataNascita)) - (RIGHT(CURDATE(),5)<RIGHT(DataNascita,5))  AS Eta
 FROM studenti
-WHERE (YEAR(CURDATE()) - YEAR(DataNascita)) - (RIGHT(CURDATE(),5)<RIGHT(DataNascita,5)) > 100;
+WHERE (YEAR(CURDATE()) - YEAR(DataNascita)) - (RIGHT(CURDATE(),5)<RIGHT(DataNascita,5)) > 22;
 
 
 SELECT Cognome, Nome
 FROM studenti
-WHERE (YEAR(CURDATE()) - YEAR(DataNascita)) - (RIGHT(CURDATE(),5)<RIGHT(DataNascita,5)) > 100;
+WHERE (YEAR(CURDATE()) - YEAR(DataNascita)) - (RIGHT(CURDATE(),5)<RIGHT(DataNascita,5)) > 22;
 
 -- ordinati per età
-SELECT Cognome, Nome, (YEAR(CURDATE()) - YEAR(DataNascita)) - (RIGHT(CURDATE(),5)<RIGHT(DataNascita,5))  AS eta
+SELECT Cognome, Nome, (YEAR(CURDATE()) - YEAR(DataNascita)) - (RIGHT(CURDATE(),5)<RIGHT(DataNascita,5))  AS Eta
 FROM studenti
-WHERE (YEAR(CURDATE()) - YEAR(DataNascita)) - (RIGHT(CURDATE(),5)<RIGHT(DataNascita,5)) > 20
-ORDER BY eta DESC, Cognome, Nome;
+WHERE (YEAR(CURDATE()) - YEAR(DataNascita)) - (RIGHT(CURDATE(),5)<RIGHT(DataNascita,5)) > 15
+ORDER BY Eta DESC, Cognome, Nome;
 
 SELECT DATEDIFF('2007-12-31 23:59:59','2007-12-30'); 
 
@@ -329,6 +330,69 @@ CREATE USER 'dbscuola_user'@'localhost' IDENTIFIED BY 'lapassword';
 -- creiamo un utente con permessi limitati sul database scuola
 GRANT SELECT, INSERT, UPDATE ON dbscuola.* TO 'dbscuola_user'@'localhost';
 
+-- Osservazione importante --
+--
+-- Se si utilizza un container Docker per far eseguire il server di MySQL o di MariaDB l'account dbscuola_user@localhost
+-- non funzionerà per connessioni che non avvengano direttamente dall'interno del container. In altri termini,
+-- per connettersi al DBMS Server si dovrebbe effettuare una connessione direttamente dal container con un comando del tipo:
+-- docker exec -it nome-server /bin/bash e poi dall'interno del container eseguire il comando:
+-- mariadb -u dbscuola_user -h localhost -p 
+-- oppure
+-- mariadb -u dbscuola_user -p
+-- nel caso di MySQL si dovrebbe usare:
+-- mysql -u dbscuola_user -h localhost -p
+-- oppure 
+-- mysql -u dbscuola_user -p
+
+-- Per creare un account che si possa connettere al server di MariaDB o di MySQL dall'esterno del container si può procedere come segue:
+-- Opzione 1) si crea un account che si possa connettere da qualunque host (come accade alla configurazione di default di root nel
+-- container di MariaDB o di MySQL)
+-- Opzione 2) si crea un account che si possa connettere da un host specifico di cui si conosce l'indirizzo IP, oppure il nome di 
+-- dominio DNS.
+
+-- Opzione 1: creiamo l'utente per il database dbscuola in modo che si possa connettere da qualunque host:
+CREATE USER 'dbscuola_user_omni'@'%' IDENTIFIED BY 'lapassword';
+GRANT SELECT, INSERT, UPDATE ON dbscuola.* TO 'dbscuola_user_omni'@'%';
+FLUSH PRIVILEGES;
+
+-- Dopo aver creato l'utente dbscuola_user_omni sarà possibile connettersi dal docker host con il comando (WSL Ubuntu)
+-- mariadb -u dbscuola_user_omni -h 127.0.0.1 -p  
+
+-- Opzione 2: creiamo un utente che si possa connettere solo da un host specifico:
+-- In questo caso, siccome utilizziamo una rete di tipo bridge, la connessione dal Docker host verso i container del Docker engine
+-- avviene attraverso il NAT/Firewall di Docker: i pacchetti IP che dal nostro host (WSL Ubuntu) vengono spediti verso i container
+-- subiscono un'operazione di NAT (Network Address Translation) ad opera del bridge. Infatti, in una rete di tipo **bridge** in Docker,
+--  ogni container ottiene un indirizzo IP all'interno di quella rete privata. 
+-- Quando un pacchetto arriva al container da una macchina esterna al **bridge** (ad esempio dall' host o da un'altra macchina 
+-- sulla rete esterna), Docker usa il **Network Address Translation (NAT)** per tradurre l'indirizzo IP di origine.
+
+-- Quindi, nel caso in cui ci si connetta dall'esterno (ad esempio dall'host) al container che esegue MySQL, il server MySQL 
+-- vedrà l'indirizzo IP dell'**host Docker** (di solito l'indirizzo del gateway della rete bridge) come indirizzo sorgente
+--  dei pacchetti, non l'indirizzo della macchina esterna.
+--
+-- per ottenere l'indirizzo ip del Gateway della rete a cui sono connessi i container è possibile usare il comando docker inspect in 
+-- combinazione con il comando jp (nella WSL Ubuntu)
+-- supponendo che la bridge network di Docker si chiami my-net, è possibile ottenere l'indirizzo ip del Gateway con il comando:
+--
+-- gateway_ip=docker network inspect my-net | jq - r '.[0].IPAM.Config[0].Gateway'
+-- echo $gateway_ip
+-- 172.18.0.1
+--
+-- con l'indirizzo ip del Gateway è possibile creare l'account di mysql/mariadb come segue:
+
+
+-- Creiamo l'utente dbscuola_user_docker_internal come segue:
+CREATE USER 'dbscuola_user_gateway'@'172.18.0.1' IDENTIFIED BY 'lapassword';
+GRANT SELECT, INSERT, UPDATE ON dbscuola.* TO 'dbscuola_user_gateway' @'172.18.0.1';
+FLUSH PRIVILEGES;
+
+-- con l'untente appena creato è possibile connettersi dal Docker host (WSL Ubuntu) con il comando:
+-- mariadb -u dbscuola_user_gateway -h 127.0.0.1 -p 
+
+-- altre impostazioni che si possono configurare su un account
+-- l'istruzione seguente imposta i limiti sul numero di query e sul numero di connessioni per ora
+-- questa opzione non sempre è utilizzata. In questo caso è riportata per mostrare come fanno i fornitori di
+-- servizio a limitare l'accesso alle risorse di un DBMS
 ALTER USER 'dbscuola_user'@'localhost' 
 WITH MAX_QUERIES_PER_HOUR 100 MAX_CONNECTIONS_PER_HOUR 10;
 
@@ -338,26 +402,23 @@ SELECT User, Host, authentication_string FROM mysql.user;
 
 -- cosa notiamo a proposito della password?
 -- si provi ora a vedere il risultato della select 
--- 11.13. Encryption and Compression Functions
 
-
--- NOTA: 5.4.2.3. Password Hashing in MySQL -->As of MySQL 4.1, the PASSWORD() function has been modified to produce a 41-byte hash value
 -- come sono memorizzati i dati sensibili, come una password in un database?
 -- MD5('stringa') --> 32 hex code che occupa 32 caratteri --> This is the “RSA Data Security, Inc. MD5 Message-Digest Algorithm.” 
-SELECT md5('Lapassword');
+SELECT md5('lapassword');
 
 -- SHA2('stringa', hash_length) --> the SHA-2 family of hash functions (SHA-224, SHA-256, SHA-384, and SHA-512)
--- lo spazio occupato dal risultato dipende dal parametro hash_length - ad esempio se hash_length=256 si ottiene un 
--- risultato di 256 bit rappresentato da 64 cifre ottali che possono essere memorizzate in una stringa di 64 caratteri
-SELECT SHA2('Lapassword', 256); 
+-- lo spazio occupato dal risultato dipende dal parametro hash_length 
+-- ad esempio se hash_length=256 si ottiene un risultato di 256 bit rappresentato da 64 cifre ottali,
+--  che possono essere memorizzate in una stringa di 64 caratteri
+SELECT SHA2('lapassword', 256); 
+-- la password generata con SHA2 non coincide con quella creata dal MySQL/MariaDB perché l'algoritmo di hashing usato dal DBMS Server 
+-- utilizza anche un salt per generare l'hash
+
 -- modifichiamo la password di 'dbscuola_user'@'localhost'
--- per le vecchie versioni di MySQL  v<5.7.6
-UPDATE mysql.user SET Password=PASSWORD('pippo')
-  WHERE User='dbscuola_user' AND Host='localhost';
-FLUSH PRIVILEGES;
--- altro metodo
--- metodo preferito per cambiare la password di un account
--- mariaDB v >=10.2 e MySQL v>5.7.6
+
+-- metodo per cambiare la password di un account
+-- per mariaDB version >=10.2 e MySQL version >5.7.6
 ALTER USER 'dbscuola_user'@'localhost' IDENTIFIED BY 'paperino'; 
 FLUSH PRIVILEGES;
 -- inizializzare la password di root https://dev.mysql.com/doc/refman/8.0/en/default-privileges.html
@@ -368,17 +429,14 @@ ALTER USER 'root'@'127.0.0.1' IDENTIFIED BY 'root';
 ALTER USER 'root'@'::1' IDENTIFIED BY 'root';
 FLUSH PRIVILEGES;
 
--- resetting root password https://dev.mysql.com/doc/refman/8.0/en/resetting-permissions.html
--- change root password (if you know it and you want to change) https://dev.mysql.com/doc/refman/8.0/en/alter-user.html
--- altro metodo
--- metodo preferito per cambiare la password di un account
--- mariaDB v<10.2 e MySQL v<5.7.6
-SET PASSWORD FOR 'dbscuola_user'@'localhost' = PASSWORD('paperino');
-FLUSH PRIVILEGES;
+-- resetting root password https://dev.mysql.com/doc/refman/9.0/en/resetting-permissions.html
+-- change root password (if you know it and you want to change) https://dev.mysql.com/doc/refman/9.0/en/alter-user.html
+
 -- per revocare tutti i diritti di un utente
 REVOKE ALL PRIVILEGES, GRANT OPTION 
 FROM 'dbscuola_user'@'localhost';
 -- notare chde l'utente esiste ancora e può ancora connetteri al database, anche se non può fare praticamente nulla;
+
 -- per eliminare del tutto un utente si può eseguire il comando:
 DROP USER 'dbscuola_user'@'localhost';
 
@@ -386,15 +444,36 @@ DROP USER 'dbscuola_user'@'localhost';
 CREATE USER 'superman'@'%' IDENTIFIED BY 'Kryptonite';
 GRANT ALL PRIVILEGES ON *.* TO 'superman'@'%'  WITH GRANT OPTION;
 ALTER USER 'superman'@'%' WITH MAX_QUERIES_PER_HOUR 0 MAX_CONNECTIONS_PER_HOUR 0 MAX_UPDATES_PER_HOUR 0 MAX_USER_CONNECTIONS 0; 
--- se si vuole usare il plugin native_password per alcuni plugin che si connettono a MySQL
+
+-- uso del plugin native_password
+-- https://mariadb.com/kb/en/authentication-plugin-mysql_native_password/
+-- Nel caso di MariaDB "The easiest way to create a user account with the mysql_native_password authentication plugin is to make sure that old_passwords=0 is set, 
+-- and then create a user account via CREATE USER that does not specify an authentication plugin, but does specify a password 
+-- via the IDENTIFIED BY clause. For example:"
+
+-- https://mariadb.com/kb/en/authentication-plugin-mysql_native_password/#creating-users
+
+ SET old_passwords = 0;
+ CREATE USER username @hostname IDENTIFIED BY 'mariadb';
+-- If SQL_MODE does not have NO_AUTO_CREATE_USER set, then you can also create the user account via GRANT. For example:
+-- https://mariadb.com/kb/en/sql-mode/ 
+SET old_passwords = 0;
+GRANT SELECT ON db.* TO username @hostname IDENTIFIED BY 'mariadb';
+-- se si vuole usare il plugin native_password per alcuni client che si connettono a MySQL
 -- https://stackoverflow.com/questions/50373427/node-js-cant-authenticate-to-mysql-8-0?rq=1
 -- https://mariadb.com/kb/en/alter-user/
 -- https://mariadb.com/kb/en/authentication-plugins/
+
 ALTER USER 'superman'@'%' IDENTIFIED WITH mysql_native_password BY 'Kryptonite'; -- MySQL
 ALTER USER 'superman'@'%' IDENTIFIED VIA mysql_native_password USING PASSWORD("Kryptonite"); -- mariaDB
 ALTER USER 'superman'@'%' IDENTIFIED  BY 'Kryptonite';
+
+
+-- un esempio di utilizzo del database information_schema
 use dbscuola;
+
 SELECT * FROM studenti;
+
 select * from artisti;
 
 SELECT

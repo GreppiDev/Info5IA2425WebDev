@@ -1,15 +1,19 @@
 # SQL in MySQL/MariaDB - Parte 3
 
-## Sommario
+- [SQL in MySQL/MariaDB - Parte 3](#sql-in-mysqlmariadb---parte-3)
+  - [Vincoli d'integrità](#vincoli-dintegrità)
+  - [Vincoli d'integrità sulle tabelle: chiavi](#vincoli-dintegrità-sulle-tabelle-chiavi)
+    - [Chiave primaria](#chiave-primaria)
+    - [Tipi di tabelle - Storage ENGINE](#tipi-di-tabelle---storage-engine)
+  - [Indici su tabelle](#indici-su-tabelle)
+    - [Creazione di indici su tabelle](#creazione-di-indici-su-tabelle)
+    - [Eliminazione di un indice da una tabella](#eliminazione-di-un-indice-da-una-tabella)
+  - [Il tempo e le date](#il-tempo-e-le-date)
+    - [The DATETIME, DATE, and TIMESTAMP Types](#the-datetime-date-and-timestamp-types)
+      - [Funzioni di MYSQL/MariaDB sul tempo e le date](#funzioni-di-mysqlmariadb-sul-tempo-e-le-date)
+      - [Elaborazione sulle date](#elaborazione-sulle-date)
+      - [Unità di misura del tempo](#unità-di-misura-del-tempo)
 
-- Vincoli di integrità
-- Primary key
-- Unique
-- Creazioni di indici
-- Tipi di tabelle (storage engine)
-- Creazione di indici
-- Manipolazione di date e tempo
-  
 ## Vincoli d'integrità
 
 I vincoli d'integrità sono di tre tipi:
@@ -141,6 +145,8 @@ Si definisce **indice** un archivio che consente un accesso più  rapido alle in
 
 Un caso nel quale potrebbe essere utile avere un indice potrebbe essere, ad esempio, quello in cui bisogna fare molte ricerche di tuple in base al cognome e al nome. In questo caso conviene definire un indice su questi attributi in modo tale che la ricerca avvenga più velocemente.
 
+Per approfondimenti sugli indici delle tabelle, si veda anche [MySQL Tutorial - CREATE INDEX](https://www.mysqltutorial.org/mysql-index/mysql-create-index/)
+
 **Come funziona un indice?**
 
 - Una tabella con indice è sostanzialmente struttura dati di supporto (ad esempio B-tree, oppure hash table) che rende l'accesso ai dati più veloce.
@@ -174,7 +180,7 @@ Un caso nel quale potrebbe essere utile avere un indice potrebbe essere, ad esem
   ON table_name (column_list)
   ```
   
-  Più in generale, la sintassi prevede la possibilità di creare indici di diverso tipo:
+  Più in generale, [la sintassi di MySQL](https://dev.mysql.com/doc/refman/9.0/en/create-index.html) prevede la possibilità di creare indici di diverso tipo:
 
   ```sql
     CREATE [UNIQUE | FULLTEXT | SPATIAL] INDEX index_name
@@ -212,7 +218,7 @@ Un caso nel quale potrebbe essere utile avere un indice potrebbe essere, ad esem
   CREATE INDEX ricercaPerTelefono ON clienti (Telefono(10));
   ```
 
-> :memo: **Nota**: in MySQL/MariaDB gli indici sono, per impostazione predefinita, ASC, ossia ascendenti
+> :memo: **Nota**: in MySQL/MariaDB gli indici sono, per impostazione predefinita, `ASC`, ossia ascendenti
 
 - Per visualizzare gli indici su una tabella è possibile utilizzare il comando `DESCRIBE table_name`, oppure il comando `SHOW INDEX FROM table_name`
 
@@ -226,7 +232,7 @@ DROP INDEX index_name ON table_name;
 
 ## Il tempo e le date
 
-I tipi di dato temporali sono già stati descritti nella [sezione `date e tempo` della parte 1](../01-sql/index.md#date-e-tempo). In questa sezione esaminiamo più in dettaglio alcuni aspetti di questi tipi e le operazioni che è possibile effettuare su di essi.
+I tipi di dato temporali sono già stati descritti nella [sezione `date e tempo` della parte 1](../sql-p1/index.md#date-e-tempo). In questa sezione esaminiamo più in dettaglio alcuni aspetti di questi tipi e le operazioni che è possibile effettuare su di essi.
 
 ### The DATETIME, DATE, and TIMESTAMP Types
 
@@ -236,55 +242,129 @@ Il tipo `TIME` è utilizzato per rappresentare il tempo ed è descritto nelle [p
 
 #### Funzioni di MYSQL/MariaDB sul tempo e le date
 
-WEEKDAY(date) 
-Returns the weekday index for date (0 = Monday, 1 = Tuesday, … 6 = Sunday). 
-mysql> SELECT WEEKDAY('2008-02-03 22:23:00'); -> 6 
-mysql> SELECT WEEKDAY('2007-11-06'); -> 1 
-WEEKOFYEAR(date) 
-Returns the calendar week of the date as a number in the range from 1 to 53. WEEKOFYEAR() is a compatibility function that is equivalent to WEEK(date,3). 
-mysql> SELECT WEEKOFYEAR('2008-02-20'); -> 8 
-YEAR(date) 
-Returns the year for date, in the range 1000 to 9999, or 0 for the “zero” date. 
-mysql> SELECT YEAR('1987-01-01'); -> 1987 
-YEARWEEK(date), YEARWEEK(date,mode) 
-Returns year and week for a date. The mode argument works exactly like the mode argument to WEEK(). The year in the result may be different from the year in the date argument for the first and the last week of the year. 
-mysql> SELECT YEARWEEK('1987-01-01'); -> 198653 
+[WEEKDAY(date)](https://dev.mysql.com/doc/refman/9.0/en/date-and-time-functions.html#function_weekday)
 
-MONTH(date) 
-Returns the month for date, in the range 1 to 12 for January to December, or 0 for dates such as '0000-00-00' or '2008-00-00' that have a zero month part. 
-mysql> SELECT MONTH('2008-02-03'); -> 2 
-MONTHNAME(date) 
-Returns the full name of the month for date. As of MySQL 5.0.25, the language used for the name is controlled by the value of the lc_time_names system variable (Section 9.8, “MySQL Server Locale Support”). 
-mysql> SELECT MONTHNAME('2008-02-03'); -> 'February' 
-NOW() 
-Returns the current date and time as a value in 'YYYY-MM-DD HH:MM:SS' or YYYYMMDDHHMMSS.uuuuuu format, depending on whether the function is used in a string or numeric context. The value is expressed in the current time zone. 
-mysql> SELECT NOW(); -> '2007-12-15 23:50:26' 
-mysql> SELECT NOW() + 0; -> 20071215235026.000000 
-NOW() returns a constant time that indicates the time at which the statement began to execute
+Returns the weekday index for date `(0 = Monday, 1 = Tuesday, … 6 = Sunday)`.
 
-Esempi
-mysql> SELECT name, birth, CURDATE(), 
- (YEAR(CURDATE())-YEAR(birth)) 
- - (RIGHT(CURDATE(),5)<RIGHT(birth,5)) 
- AS age  FROM pet ORDER BY age; 
+```sql
+SELECT WEEKDAY('2008-02-03 22:23:00'); -- -> 6
+SELECT WEEKDAY('2007-11-06'); -- -> 1
+```
 
-Nota: 
-RIGHT(str,len) 
-Returns the rightmost len characters from the string str, or NULL if any argument is NULL. 
-mysql> SELECT RIGHT('foobarbar', 4); -> 'rbar' 
-This function is multi-byte safe. 
+[WEEKOFYEAR(date)](https://dev.mysql.com/doc/refman/9.0/en/date-and-time-functions.html#function_weekofyear)
+
+Returns the calendar week of the date as a number in the range from 1 to 53. WEEKOFYEAR() is a compatibility function that is equivalent to WEEK(date,3).
+
+```sql
+SELECT WEEKOFYEAR('2008-02-20'); -- -> 8 
+```
+
+[YEAR(date)](https://dev.mysql.com/doc/refman/9.0/en/date-and-time-functions.html#function_year)
+
+Returns the year for date, in the range 1000 to 9999, or 0 for the “zero” date.
+
+```sql
+SELECT YEAR('1987-01-01'); --  -> 1987 
+```
+
+[YEARWEEK(date), YEARWEEK(date,mode)](https://dev.mysql.com/doc/refman/9.0/en/date-and-time-functions.html#function_yearweek)
+
+Returns year and week for a date. The mode argument works exactly like the mode argument to WEEK(). The year in the result may be different from the year in the date argument for the first and the last week of the year.
+
+```sql
+SELECT YEARWEEK('1987-01-01'); --  -> 198653 
+```
+
+[MONTH(date)](https://dev.mysql.com/doc/refman/9.0/en/date-and-time-functions.html#function_month)
+
+Returns the month for date, in the range 1 to 12 for January to December, or 0 for dates such as '0000-00-00' or '2008-00-00' that have a zero month part.
+
+```sql
+SELECT MONTH('2008-02-03'); -- -> 2 
+```
+
+[MONTHNAME(date)](https://dev.mysql.com/doc/refman/9.0/en/date-and-time-functions.html#function_monthname)
+
+Returns the full name of the month for date. As of MySQL 5.0.25, the language used for the name is controlled by the value of the lc_time_names system variable (Section 9.8, "MySQL Server Locale Support").
+
+```sql
+SELECT MONTHNAME('2008-02-03'); -- -> 'February' 
+```
+
+[NOW()](https://dev.mysql.com/doc/refman/9.0/en/date-and-time-functions.html#function_now)
+Returns the current date and time as a value in `YYYY-MM-DD HH:MM:SS` or `YYYYMMDDHHMMSS.uuuuuu` format, depending on whether the function is used in a string or numeric context. The value is expressed in the current time zone.
+
+```sql
+SELECT NOW(); -> '2007-12-15 23:50:26' 
+SELECT NOW() + 0; -> 20071215235026.000000 
+```
+
+`NOW()` returns a constant time that indicates the time at which the statement began to execute.
+
+Esempi:
+
+Data la tabella seguente, con le date degli studenti del database `dbscuola`:
+
+| Matricola | Nome       | Cognome    | DataNascita |
+|-----------|------------|------------|-------------|
+|       231 | Simone     | Alberti    | 2008-03-23  |
+|         3 | Chiara     | Bianchi    | 2009-10-07  |
+|      1023 | Antonella  | Dell'Acqua | 2010-12-23  |
+|       235 | Giorgio    | Dell'Acqua | 2001-12-01  |
+|       123 | Rossi      | Giovanni   | 2007-02-24  |
+|       124 | RossiX     | GiovanniX  | 2000-02-24  |
+|         2 | Alberto    | Rossi      | 2011-03-12  |
+|         1 | Alessandro | Verdi      | 2010-02-24  |
+
+Il calcolo dell'età si può ottenere con la query seguente:
+
+```sql
+SELECT Matricola, Cognome, Nome, DataNascita `Data di nascita`, (YEAR(CURDATE()) - YEAR(DataNascita)) - (RIGHT(CURDATE(),5)<RIGHT(DataNascita,5))  AS Eta
+FROM studenti
+ORDER BY Eta ASC;
+```
+
+| Matricola | Cognome    | Nome       | Data di nascita | Eta  |
+|-----------|------------|------------|-----------------|------|
+|         2 | Rossi      | Alberto    | 2011-03-12      |   13 |
+|      1023 | Dell'Acqua | Antonella  | 2010-12-23      |   13 |
+|         1 | Verdi      | Alessandro | 2010-02-24      |   14 |
+|         3 | Bianchi    | Chiara     | 2009-10-07      |   15 |
+|       231 | Alberti    | Simone     | 2008-03-23      |   16 |
+|       123 | Giovanni   | Rossi      | 2007-02-24      |   17 |
+|       235 | Dell'Acqua | Giorgio    | 2001-12-01      |   22 |
+|       124 | GiovanniX  | RossiX     | 2000-02-24      |   24 |
+
+> :memo: Nota: `RIGHT(str,len)` Returns the rightmost len characters from the string str, or NULL if any argument is NULL.
+>
+> ```sql
+> SELECT RIGHT('foobarbar', 4); -- -> 'rbar'
+>  ```
+>
+> This function is multi-byte safe.
 
 #### Elaborazione sulle date
 
-DATEDIFF(expr1,expr2) 
-DATEDIFF() returns expr1 – expr2 expressed as a value in days from one date to the other. expr1 and expr2 are date or date-and-time expressions. Only the date parts of the values are used in the calculation. 
-mysql> SELECT DATEDIFF('2007-12-31 23:59:59','2007-12-30'); -> 1 mysql> SELECT DATEDIFF('2010-11-30 23:59:59','2010-12-31'); -> -31 
-DATE_ADD(date,INTERVAL expr unit), DATE_SUB(date,INTERVAL expr unit) 
-These functions perform date arithmetic. The date argument specifies the starting date or datetime value. expr is an expression specifying the interval value to be added or subtracted from the starting date. expr is a string; it may start with a “-” for negative intervals. unit is a keyword indicating the units in which the expression should be interpreted. 
-The INTERVAL keyword and the unit specifier are not case sensitive. 
-Date arithmetic also can be performed using INTERVAL together with the + or - operator:  
+[DATEDIFF(expr1,expr2)](https://dev.mysql.com/doc/refman/9.0/en/date-and-time-functions.html)
+
+DATEDIFF() returns expr1 - expr2 expressed as a value in days from one date to the other. expr1 and expr2 are date or date-and-time expressions. Only the date parts of the values are used in the calculation.
+
+```sql
+SELECT DATEDIFF('2007-12-31 23:59:59','2007-12-30'); -- -> 1  
+SELECT DATEDIFF('2010-11-30 23:59:59','2010-12-31'); -- -> -31 
+```
+
+[DATE_ADD(date,INTERVAL expr unit), DATE_SUB(date,INTERVAL expr unit)](https://dev.mysql.com/doc/refman/9.0/en/date-and-time-functions.html#function_date-add)
+
+These functions perform date arithmetic. The date argument specifies the starting date or datetime value. `expr` is an expression specifying the interval value to be added or subtracted from the starting date. `expr` is a string; it may start with a `-` for negative intervals. `unit` is a keyword indicating the units in which the expression should be interpreted.
+
+> :memo: **Nota** The `INTERVAL` keyword and the unit specifier are not case sensitive.
+> Date arithmetic also can be performed using `INTERVAL` together with the + or - operator:  
+
+```sql
 date + INTERVAL expr unit 
 date - INTERVAL expr unit
+```
 
 #### Unità di misura del tempo
 

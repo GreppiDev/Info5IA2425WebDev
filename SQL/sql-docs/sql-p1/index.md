@@ -1,15 +1,57 @@
-# SQL in MySQL/MariaDB - Parte 1
+# SQL in MySQL e MariaDB - Parte 1
 
-## Sommario
+- [SQL in MySQL e MariaDB - Parte 1](#sql-in-mysql-e-mariadb---parte-1)
+  - [Architettura di MySQL e MariaDB](#architettura-di-mysql-e-mariadb)
+  - [Riferimenti](#riferimenti)
+  - [Caratteristiche del linguaggio](#caratteristiche-del-linguaggio)
+    - [SQL è un linguaggio per la gestione dei database relazionali](#sql-è-un-linguaggio-per-la-gestione-dei-database-relazionali)
+    - [SQL è un linguaggio dichiarativo](#sql-è-un-linguaggio-dichiarativo)
+    - [SQL può essere utilizzato in due modi](#sql-può-essere-utilizzato-in-due-modi)
+      - [Modalità interattiva](#modalità-interattiva)
+      - [Modalità programma](#modalità-programma)
+  - [SQL: componenti del linguaggio](#sql-componenti-del-linguaggio)
+  - [SQL: primi passi, con MySQL](#sql-primi-passi-con-mysql)
+    - [Visualizzazione dei database disponibili](#visualizzazione-dei-database-disponibili)
+    - [Selezione di uno specifico DB](#selezione-di-uno-specifico-db)
+    - [Creazione di un database](#creazione-di-un-database)
+    - [CHARACTER e COLLATION](#character-e-collation)
+    - [Cancellazione di un database](#cancellazione-di-un-database)
+    - [Creazione di una tabella](#creazione-di-una-tabella)
+    - [Verificare la struttura di una tabella](#verificare-la-struttura-di-una-tabella)
+    - [Ottenere l'istruzione di creazione di una tabella](#ottenere-listruzione-di-creazione-di-una-tabella)
+    - [Inserire dati in una tabella](#inserire-dati-in-una-tabella)
+    - [Recuperare i dati di una tabella (SELECT)](#recuperare-i-dati-di-una-tabella-select)
+    - [Cancellazione di una tabella (DROP TABLE)](#cancellazione-di-una-tabella-drop-table)
+    - [Visualizzazione delle tabelle di un database (SHOW TABLES)](#visualizzazione-delle-tabelle-di-un-database-show-tables)
+  - [Domini](#domini)
+    - [Numeri in MySQL/MariaDB](#numeri-in-mysqlmariadb)
+    - [Caratteri e testo](#caratteri-e-testo)
+    - [Enumerativo](#enumerativo)
+    - [Date e tempo](#date-e-tempo)
+    - [BLOB and BINARY](#blob-and-binary)
+    - [Boolean](#boolean)
+    - [JSON](#json)
+    - [Altre caratteristiche dei dati](#altre-caratteristiche-dei-dati)
+    - [Vincoli di integrità di colonna](#vincoli-di-integrità-di-colonna)
+    - [Modalità operativa di MariaDB](#modalità-operativa-di-mariadb)
+    - [Modalità operative di MySQL](#modalità-operative-di-mysql)
 
-- Introduzione all’SQL in MySQL
-- Caratteristiche del linguaggio
-- Creazione di un database con mysql
-- Definizione delle colonne
-- Domini
-- Vincoli di integrità di colonna
-- SQL strict mode in MySQL
-  
+
+## Architettura di MySQL e MariaDB
+
+[MySQL](https://www.mysql.com/) è un Database Management Systems (DBMS) progettato secondo una architettura `client <-> server`.
+![Architettura di MySQL](my_sql_architecture.png).
+
+Maggiori dettagli sull'architettura di MySQL si possono trovare su [MySQL tutorial - architecture](https://www.mysqltutorial.org/mysql-administration/mysql-architecture/).
+
+[MariaDB](https://mariadb.org/) è un fork del progetto di MySQL a partire dalla versione 5.7 e mantiene una ampissima compatibilità nei comandi SQL con MySQL. È un progetto open source e mantiene una licenza più permissiva rispetto a quella di MySQL a partire dalla versione 8.0 in poi.
+MariaDB esiste in due versioni:
+
+- [Community Server](https://mariadb.com/products/community-server/)
+- [Enterprise Server](https://mariadb.com/products/enterprise/)
+
+Per ambito scolastico si farà riferimento alla versione Community di MariaDB.
+
 ## Riferimenti
 
 I riferimenti a MySQL e MariaDB si trovano sul manuale utente del database:
@@ -255,7 +297,6 @@ VALUES
   ...
   (value1, value2,...);
 ```
-
 
 Per specificare una tabella occorre definire i domini (i tipi) delle colonne, ed i vincoli d’integrità.
 I vincoli d’integrità sono di tre tipi:
