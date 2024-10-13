@@ -6,7 +6,8 @@
   - [Interrogazione di un database - clausola SELECT](#interrogazione-di-un-database---clausola-select)
   - [SELECT - primi esempi](#select---primi-esempi)
     - [SELECT - significato](#select---significato)
-    - [Ridenominazione di colonne: operatore AS](#ridenominazione-di-colonne-operatore-as)
+    - [Ridenominazione di colonne: operatore `AS`](#ridenominazione-di-colonne-operatore-as)
+    - [Quando usare single quote (`'`), double quote (`"`), e backtick (\`) in MySQL/MariaDB](#quando-usare-single-quote--double-quote--e-backtick--in-mysqlmariadb)
   - [Modifica dei dati di una tabella - (UPDATE)](#modifica-dei-dati-di-una-tabella---update)
   - [Eliminazione dei dati da una tabella](#eliminazione-dei-dati-da-una-tabella)
   - [Modifica della struttura di una tabella - ALTER TABLE](#modifica-della-struttura-di-una-tabella---alter-table)
@@ -23,7 +24,6 @@
     - [Case sensitive or case insensitive?](#case-sensitive-or-case-insensitive)
     - [Dove sono le tabelle?](#dove-sono-le-tabelle)
     - [Quali tabelle?\[^4\]](#quali-tabelle4)
-
 
 ## Inserimento di dati in una tabella
 
@@ -60,7 +60,7 @@ FOREIGN KEY (Studente) REFERENCES studenti(Matricola)
 ) ENGINE = InnoDB;
 ```
 
-La definizione completa dello schema e le istruzioni per l'inserimento dei valori sono disponibili in questo [script](../../sql-scripts/01-dbscuola/DB_scuola.sql).
+La definizione completa dello schema e le istruzioni per l'inserimento dei valori sono disponibili in questo [script](../../sql-scripts/01-dbscuola/dbscuola.sql).
 
 > :memo: **Nota:** In mysql e mariadb è possibile vedere la struttura di una tabella, con le indicazioni delle chiavi primarie ed esterne usando il comando:
 >
@@ -171,22 +171,35 @@ WHERE Matricola = '3';
 
 La parte SELECT `select_list`  di una interrogazione SQL rappresenta l’operazione di PROIEZIONE dell’algebra relazionale, ossia l’algebra della teoria relazionale in quanto permette di selezionare le colonne di una tabella (relazione)  che saranno riportate in output dalla query.
 
-### Ridenominazione di colonne: operatore AS
+### Ridenominazione di colonne: operatore `AS`
 
 Supponiamo di voler chiamare la colonna `Nome` di `Studenti` col nome di `Nome Studente`. La query che fornisce questo risultato è:
 
 ```sql
-SELECT Nome AS `Nome Studente`, Cognome, dataNascita FROM studenti;
+SELECT Nome AS 'Nome Studente', Cognome, DataNascita FROM studenti;
 ```
 
 L’uso della parola `AS` è facoltativa, infatti si potrebbe scrivere l'istruzione precedente come:
 
 ```sql
-SELECT Nome `Nome Studente`, Cognome, dataNascita FROM studenti;
+SELECT Nome 'Nome Studente', Cognome, DataNascita FROM studenti;
 ```
 
-> :memo: **Nota**
-> I backtick vanno messi quando c'è uno spazio altrimenti non servono
+### Quando usare single quote (`'`), double quote (`"`), e backtick (\`) in MySQL/MariaDB
+
+- Le doppie virgolette (`"`) sono ammesse solo per le stringhe, anche se le virgolette singole (`'`) sono maggiormente accettate.
+
+- Per i tipi di dato `CHAR`, `VARCHAR`, `TEXT`, `DATE`, `DATETIME`, `TIME` bisognerebbe sempre usare gli apici singoli (`'`).
+
+- I backtick andrebbero usati solo per i nomi di tabelle e di colonne, ma sono necessari solo quando gli identificatori sono nomi di parole riservate di MySQL/MariaDb, oppure quando l'identificatore contiene degli spazi.
+
+Per i dettagli si veda la [discussione su StackOverflow relativa all'uso delle quote in MySQL](https://stackoverflow.com/a/11321508/11116419):
+
+<cite>Backticks are to be used for table and column identifiers, but are only necessary when the identifier is a MySQL reserved keyword, or when the identifier contains whitespace characters or characters beyond a limited set (see below) It is often recommended to avoid using reserved keywords as column or table identifiers when possible, avoiding the quoting issue.</cite>
+
+<cite>Single quotes should be used for string values like in the VALUES() list. Double quotes are supported by MySQL for string values as well, but single quotes are more widely accepted by other RDBMS, so it is a good habit to use single quotes instead of double.</cite>
+
+<cite>MySQL also expects DATE and DATETIME literal values to be single-quoted as strings like '2001-01-01 00:00:00'. Consult the Date and Time Literals documentation for more details, in particular alternatives to using the hyphen - as a segment delimiter in date strings.</cite>
 
 ## Modifica dei dati di una tabella - (UPDATE)
 
@@ -492,7 +505,7 @@ L'eliminazione dello studente con Matricola = 1 implicherebbe che l'assenza da q
 
 In sintesi:
 
-![Riepilogo di ON DELETE e ON CASCADE](on_delete_on_update_riepilogo.png)
+![Riepilogo di ON DELETE e ON CASCADE](on-delete-on-update-riepilogo.png)
 
 > :memo: **Nota:** SET DEFAULT non è supportato da InnoDB di MySQL e MariaDB
 

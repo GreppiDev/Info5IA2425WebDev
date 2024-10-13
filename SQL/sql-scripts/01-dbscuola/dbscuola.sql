@@ -293,7 +293,7 @@ FROM studenti;
 
 SELECT Cognome, Nome, (YEAR(CURDATE()) - YEAR(DataNascita)) - (RIGHT(CURDATE(),5)<RIGHT(DataNascita,5))  AS Eta
 FROM studenti
-ORDER BY Eta ASC;
+ORDER BY Eta;
 
 SELECT Cognome, Nome, (YEAR(CURDATE()) - YEAR(DataNascita)) - (RIGHT(CURDATE(),5)<RIGHT(DataNascita,5))  AS Eta
 FROM studenti
@@ -374,7 +374,7 @@ FLUSH PRIVILEGES;
 -- combinazione con il comando jp (nella WSL Ubuntu)
 -- supponendo che la bridge network di Docker si chiami my-net, è possibile ottenere l'indirizzo ip del Gateway con il comando:
 --
--- gateway_ip=docker network inspect my-net | jq - r '.[0].IPAM.Config[0].Gateway'
+-- gateway_ip=$(docker network inspect my-net | jq -r '.[0].IPAM.Config[0].Gateway')
 -- echo $gateway_ip
 -- 172.18.0.1
 --

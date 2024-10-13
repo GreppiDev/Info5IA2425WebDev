@@ -12,7 +12,7 @@
       - [Visualizzare gli utenti in MySQL/MariaDb - uso di `mysql.user`](#visualizzare-gli-utenti-in-mysqlmariadb---uso-di-mysqluser)
       - [Visualizzare gli utenti in MariaDb - uso di `mysql.global_priv` (Solo in MariaDb)](#visualizzare-gli-utenti-in-mariadb---uso-di-mysqlglobal_priv-solo-in-mariadb)
       - [I privilegi di accesso del Server di MySQL/MariaDB](#i-privilegi-di-accesso-del-server-di-mysqlmariadb)
-      - [Gestione degli utenti e dei privilegi - Account Management Statements](#gestione-degli-utenti-e-dei-privilegi--account-management-statements)
+      - [Gestione degli utenti e dei privilegi - Account Management Statements](#gestione-degli-utenti-e-dei-privilegi---account-management-statements)
         - [I comandi DCL (Data Control Language)](#i-comandi-dcl-data-control-language)
           - [Il comando GRANT](#il-comando-grant)
           - [Visualizzare i permessi per unn utente](#visualizzare-i-permessi-per-unn-utente)
@@ -77,7 +77,7 @@ Per cambiare le password bisogna sempre usare il comando `ALTER USER`
 
 Dopo aver cambiato la password di `root`, per migliorare la sicurezza delle applicazioni che utilizzano il DBMS Server è assolutamente necessario creare nuovi utenti per l’accesso ai database presenti nel catalogo del DBMS.
 
-> :warning::fire: **Attenzione!**: Non utilizzare **MAI** l’utente `root` per accedere al database durante il normale funzionamento di un applicazione che utilizza il DBMS Server!
+> :warning::fire: **Attenzione!**: Non utilizzare **MAI** l'utente `root` per accedere al database durante il normale funzionamento di un applicazione che utilizza il DBMS Server!
 
 La creazione di un utente in MySQL/MariaDB può essere effettuata mediante il comando `CREATE USER`:
 
@@ -129,7 +129,7 @@ Per creare un account che si possa connettere al server di MariaDB o di MySQL da
   Supponendo che la bridge network di Docker si chiami `my-net`, è possibile ottenere l'indirizzo IP del Gateway con il comando:
   
   ```sh
-  gateway_ip=docker network inspect my-net | jq - r '.[0].IPAM.Config[0].Gateway'
+  gateway_ip=$(docker network inspect my-net | jq -r '.[0].IPAM.Config[0].Gateway')
   echo $gateway_ip
   172.18.0.1 
   ```
@@ -151,7 +151,7 @@ DROP USER [IF EXISTS] account_name1, [account_name2]...;
 
 #### Cambiare la password di un utente
 
-Il DBMS server MySQL e MariaDB memorizzano gli account e i permessi in un database di sistema chiamato `mysql`. In questo database c’è una tabella (nelle ultime versione di MySQL e MariaDB è una view) `user`, dove sono elencati gli utenti con le rispettive password criptate oltre ad altre informazioni.
+Il DBMS server MySQL e MariaDB memorizzano gli account e i permessi in un database di sistema chiamato `mysql`. In questo database c'è una tabella (nelle ultime versione di MySQL e MariaDB è una view) `user`, dove sono elencati gli utenti con le rispettive password criptate oltre ad altre informazioni.
 
 Il comando per modificare la password di un utente, ed in particolare quella dell'utente `root`, è [ALTER USER](https://dev.mysql.com/doc/refman/9.0/en/alter-user.html):
 
@@ -208,34 +208,34 @@ In MariaDB in un container Docker si potrebbe ottenere un risultato come il segu
 | ::1       | healthcheck | "*0C3708B30A8CFC10BB603CCCE0BAA348B2ABBBD0" |
 | localhost | healthcheck | "*0C3708B30A8CFC10BB603CCCE0BAA348B2ABBBD0" |
 
-Nella seconda query si è usata la funzione [`JSON_EXTRACT`](https://dev.mysql.com/doc/refman/9.0/en/json-search-functions.html) per recuperare un campo all’interno di una stringa JSON  
+Nella seconda query si è usata la funzione [`JSON_EXTRACT`](https://dev.mysql.com/doc/refman/9.0/en/json-search-functions.html) per recuperare un campo all'interno di una stringa JSON  
 
 #### I privilegi di accesso del Server di MySQL/MariaDB
 
-MySQL e MariaDB utilizzano un meccanismo di privilegi di accesso per limitare l’accesso a certi specifici comandi su specifiche tabelle di un dato database.
+MySQL e MariaDB utilizzano un meccanismo di privilegi di accesso per limitare l'accesso a certi specifici comandi su specifiche tabelle di un dato database.
 
 Ogni utente di MySQL/MariaDB può avere specifici privilegi su specifici database da specifici hosts (computers) da cui è connesso.
 
-> :warning: L’utente `root` di MySQL/MariaDB può eseguire qualsiasi operazione all’interno del DBMS.
+> :warning: L'utente `root` di MySQL/MariaDB può eseguire qualsiasi operazione all'interno del DBMS.
 
-Quando un utente tenta di fare qualcosa con il DBMS server, MySQL/MariaDB server, prima di tutto, controlla se l’utente ha il privilegio di connettersi al server:
+Quando un utente tenta di fare qualcosa con il DBMS server, MySQL/MariaDB server, prima di tutto, controlla se l'utente ha il privilegio di connettersi al server:
 
-- controlla che `user_name` e `host` siano presenti in una riga  della tabella/view `user`, e in caso affermativo, che la password fornita dall’utente coincida con quella memorizzata in corrispondenza di `user` e `host`.
+- controlla che `user_name` e `host` siano presenti in una riga  della tabella/view `user`, e in caso affermativo, che la password fornita dall'utente coincida con quella memorizzata in corrispondenza di `user` e `host`.
 
-Se un utente ha il privilegio di connettersi al DBMS server dal computer host specificato, /MariaDB controlla se l’utente ha il privilegio di lanciare specifici comandi su specifici database. Ad esempio, se un utente connesso al DBMS server tenta di effettuare una `SELECT`, oppure una `INSERT`, oppure una `CREATE` su un certo database, MySQL/MariaDB prima di lanciare il comando, verifica se l’utente ha i diritti (privilegi) per poterlo fare.
+Se un utente ha il privilegio di connettersi al DBMS server dal computer host specificato, /MariaDB controlla se l'utente ha il privilegio di lanciare specifici comandi su specifici database. Ad esempio, se un utente connesso al DBMS server tenta di effettuare una `SELECT`, oppure una `INSERT`, oppure una `CREATE` su un certo database, MySQL/MariaDB prima di lanciare il comando, verifica se l'utente ha i diritti (privilegi) per poterlo fare.
 
 MySQL/MariaDB determina i permessi usando le tabelle db, host, user, tables_priv, columns_priv del database mysql.
 
-Per vedere i privilegi di un utente (ad esempio dell’utente `root`)  ci si può connettere come `root` da terminale e inserire i comandi:
+Per vedere i privilegi di un utente (ad esempio dell'utente `root`)  ci si può connettere come `root` da terminale e inserire i comandi:
 
 ```sql
 use mysql;
-SELECT * FROM user WHERE User = 'root’\G
+SELECT * FROM user WHERE User = 'root'\G
 ```
 
-È ovvio che solo l’utente `root` deve poter accedere al database `mysql`
+È ovvio che solo l'utente `root` deve poter accedere al database `mysql`
 
-#### Gestione degli utenti e dei privilegi - Account Management Statements
+#### Gestione degli utenti e dei privilegi - Account Management Statements
 
 ##### I comandi DCL (Data Control Language)
 
@@ -247,7 +247,7 @@ SELECT * FROM user WHERE User = 'root’\G
 
 [MySQL Tutorial - comando GRANT](https://www.mysqltutorial.org/mysql-administration/mysql-grant/). Il comando `GRANT` permette di assegnare dei permessi (privilegi) ad un dato utente su una specifica risorsa. I privilegi possono essere dati a vari livelli (globali, database, tabella, ect), secondo lo schema riportato nella figura seguente:
 
-![MySQL/MariaDB privilege levels](mysql_mariadb_privilege_levels.png)
+![MySQL/MariaDB privilege levels](mysql-mariadb-privilege-levels.png)
 
 La sintassi del comando `GRANT` è riportata negli esempi seguenti, nei quali si assume che l'utente `dbscuola_user@localhost` sia già stato creato con il comando :
 
@@ -301,12 +301,12 @@ Se si indica db_name.* i privilegi sono applicati a tutte le tabelle del databas
 
 `GRANT OPTION` permette di dare ad altri utenti i permessi che un utente ha.
 
-È anche possibile limitare l’accesso al DB server da un particolare host:
+È anche possibile limitare l'accesso al DB server da un particolare host:
 
 - può essere il computer/VM/container sul quale è in esecuzione MySQL server (localhost)
-- computer/VM/container dal quale l’applicazione client accede al server.
+- computer/VM/container dal quale l'applicazione client accede al server.
 
-`hostname` può essere il nome di rete del computer oppure il suo indirizzo IP o una sottorete IP. Se si utilizza `%` come hostname si abilita l’accesso da qualsiasi host.
+`hostname` può essere il nome di rete del computer oppure il suo indirizzo IP o una sottorete IP. Se si utilizza `%` come hostname si abilita l'accesso da qualsiasi host.
 
 Esempi:
 

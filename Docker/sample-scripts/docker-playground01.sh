@@ -469,7 +469,7 @@ docker run --name my_web_app --rm -d -p 8081:8080 kodekloud/simple-webapp
 # Primo esempio con bind mount e port mapping
 
 # Supponiamo di avere le pagine web in una cartella nella wsl:
-# ~/my_dev/static_sites/site_demo
+# ~/my-dev/static-sites/site-demo
 # Si può prendere come esempio il sito condiviso su Teams
 
 # Il primo esempio della documentazione di Nginx sulla pagina ufficiale di Docker Hub è
@@ -480,15 +480,15 @@ docker run --name some-nginx -v /some/content:/usr/share/nginx/html:ro -d nginx
 # lo spazio di storage in sola lettura (read only).
 
 # Modifichiamo l'esempio riportato su Docker Hub per adattarlo al nostro esempio (da eseguire nella WSL):
-docker run --name my_nginx -d --rm -v ~/my_dev/static_sites/site_demo:/usr/share/nginx/html:ro -p 8080:80 nginx
+docker run --name my_nginx -d --rm -v ~/my-dev/static-sites/site-demo:/usr/share/nginx/html:ro -p 8080:80 nginx
 
 # Se docker venisse lanciato da PowerShell il bind mount andrebbe scritto usando la notazione PowerShell
 # per il percorso che punta alla cartella del sito web.
 # Supponendo di creare una cartella in Windows (e non in WSL questa volta) in
-# $env:USERPROFILE\source\repos\my_dev\static_files\site_demo
+# $env:USERPROFILE\source\repos\my-dev\static-files\site-demo
 
 # il seguente è un comando per PowerShell o CMD:
-docker run --name my_nginx2 -d --rm -v "$env:USERPROFILE\source\repos\my_dev\static_files\site_demo:/usr/share/nginx/html:ro" -p 8082:80 nginx
+docker run --name my_nginx2 -d --rm -v "$env:USERPROFILE\source\repos\my-dev\static-files\site-demo:/usr/share/nginx/html:ro" -p 8082:80 nginx
 
 # Osservazione importante: quando si scrive il percorso per il bind mount occorre tener presente che
 # con l'opzione `-v` oppure `--volume` il percorso è scritto nella forma:
@@ -645,7 +645,7 @@ container_ip=$(docker inspect mysql-server1 | jq -r '.[0].NetworkSettings.Networ
 docker run -it --name my-client --rm mysql:latest mysql -h"$container_ip" -uroot -p
 # È anche possibile lanciare il container con la bash ed eseguire altri comandi prima di
 # lanciare il client mysql
-docker run -it --name my-client --rm -v ~/my_dev/sql_stuff:/sql_stuff mysql:latest /bin/bash
+docker run -it --name my-client --rm -v ~/my-dev/sql-stuff:/sql-stuff mysql:latest /bin/bash
 
 # a.2) lanciare il container docker per il client di MySQL con l'opzione --link (legacy e possibilmente da evitare), come
 # descritto nella pagina della documentazione docker:
@@ -669,11 +669,11 @@ docker run -d \
     -e TZ=Etc/UTC \
     -p 3000:3000 \
     -p 3001:3001 \
-    -v ~/my_dev/config:/config \
+    -v ~/my-dev/mysql-workbench-config:/config \
     --cap-add="IPC_LOCK" \
     --restart unless-stopped \
     lscr.io/linuxserver/mysql-workbench:latest
-# Nell'istruzione precedente si è creata la cartella ~/my_dev/config nella distribuzione Linux della WSL per
+# Nell'istruzione precedente si è creata la cartella ~/my-dev/config nella distribuzione Linux della WSL per
 # consentire il salvataggio delle impostazioni dell'applicazione MySQL Workbench.
 
 # Per utilizzare l'applicazione si apre il browser all'indirizzo http://localhost:3000 per connessioni http, oppure all'indirizzo
@@ -760,8 +760,8 @@ docker run -d \
     -e TZ=Etc/UTC \
     -p 3000:3000 \
     -p 3001:3001 \
-    -v ~/my_dev/config:/config \
-    -v ~/my_dev/sql_stuff:/sql_stuff \
+    -v ~/my-dev/config:/config \
+    -v ~/my-dev/sql-stuff:/sql-stuff \
     --cap-add="IPC_LOCK" \
     --restart unless-stopped \
     lscr.io/linuxserver/mysql-workbench
@@ -780,7 +780,7 @@ docker run -it \
     --name my-client \
     --network my-net \
     --rm \
-    -v ~/my_dev/sql_stuff:/sql_stuff \
+    -v ~/my-dev/sql-stuff:/sql-stuff \
     mysql:latest /bin/bash
 #
 # Dopo aver creato il container possiamo far partire l'applicativo client utilizzando come nome host
@@ -790,17 +790,17 @@ docker run -it \
 # Per la connessione al database server l'istruzione da eseguire è:
 mysql -u root -h mysql-server1 -p
 # una volta connessi al server che si trova nell'altro container (mysql-server1) è, ad esempio,
-# possibile eseguire gli script contenuti nella cartella /sql_stuff con il comando source, come
+# possibile eseguire gli script contenuti nella cartella /sql-stuff con il comando source, come
 # mostrato nel tutorial https://www.mysqltutorial.org/mysql-administration/execute-sql-file-in-mysql/:
-# 
+#
 # supponendo di avere lo script con le query SQL nel file all'indirizzo:
-# /sql_stuff/path/to/scripts/script.sql
+# /sql-stuff/path/to/scripts/script.sql
 # il comando di mysql per importare un database è:
-# source /sql_stuff/path/to/scripts/script.sql
+# source /sql-stuff/path/to/scripts/script.sql
 # ad esempio, supponendo di avere lo script per la creazione del database classicmodels nel percorso:
-# /sql_stuff/mysqlsampledatabase/mysqlsampledatabase.sql
+# /sql-stuff/mysqlsampledatabase/mysqlsampledatabase.sql
 # il comando diventa:
-# source /sql_stuff/mysqlsampledatabase/mysqlsampledatabase.sql
+# source /sql-stuff/mysqlsampledatabase/mysqlsampledatabase.sql
 
 ## Creazione di un container di MariaDb
 #
@@ -842,8 +842,8 @@ docker run -d \
     -v mariadb-server1-vol:/var/lib/mysql \
     --env MARIADB_ROOT_PASSWORD=root \
     mariadb:lts
-# È anche possibile usare le variabili della shell. Ad esempio, la password può essere letta da una variabile
 
+# È anche possibile usare le variabili della shell. Ad esempio, la password può essere letta da una variabile
 root_password="root"
 docker run -d \
     --name mariadb-server1 \
@@ -856,7 +856,8 @@ docker run -d \
 
 # verifichiamo che il container sia partito
 docker ps
-# accesso a MariaDB dall'interno del container con il comando exec: permette di accedere come se avessimo il server installato localmente
+
+# Accesso a MariaDB dall'interno del container con il comando exec: permette di accedere come se avessimo il server installato localmente
 # Importante! -->usiamo una shell esterna a VS Code, oppure utilizziamo
 # l'opzione --detach-keys=ctrl-u,ctrl-u
 docker exec -it mariadb-server1 /bin/bash
@@ -867,8 +868,10 @@ docker exec -it mariadb-server1 /bin/bash
 # oppure
 # mariadb -hlocalhost -uroot -p
 
+# Creazione di un container client per MariaDb
+
 # Come applicativo client per il database server di MariaDb è anche possibile utilizzare
-# un altro container di mariadb collegato alla stessa subnet. In questo container verrà lanciata solo
+# un altro container di MariaDb collegato alla stessa subnet. In questo container verrà lanciata solo
 # l'applicazione client e non anche il server.
 
 docker run -it --rm \
@@ -880,30 +883,27 @@ docker run -it --rm \
 docker run -it --rm \
     --name mariadb-client \
     --network my-net \
-    -v ~/my_dev/sql_stuff:/sql_stuff \
+    -v ~/my-dev/sql-stuff:/sql-stuff \
     mariadb:lts \
     mariadb -hmariadb-server1 -uroot -p$root_password
 
 # È anche possibile lanciare un container a partire dall'immagine di mariadb e utilizzare la shell Bash
 # In questo caso l'accesso al server verrà eseguito con un successivo comando interno al container.
 # Questa configurazione è utile quando si vuole prima operare con la bash e poi successivamente collegarsi
-# al server. Nel comando di avvio del container mostrato sotto p anche stato fatto un bind mount su una 
+# al server. Nel comando di avvio del container mostrato sotto p anche stato fatto un bind mount su una
 # cartella contenente script SQL.
 docker run -it --rm \
     --name mariadb-client \
     --network my-net \
-    -v ~/my_dev/sql_stuff:/sql_stuff \
+    -v ~/my-dev/sql-stuff:/sql-stuff \
     mariadb:lts \
     /bin/bash
-
-# Dall'interno del container si potrà, ad esempio vedere la configurazione del server, con il comando:
 
 # oppure accedere al server di MariaDB con il comando:
 # mariadb -u root -h mariadb-server1 -p
 
 # per connettersi direttamente dentro al container di mariadb
 docker exec -it mariadb-server1 /bin/bash
-
 
 # stop del container
 docker stop mariadb-server1
@@ -930,7 +930,8 @@ docker run -d \
     --restart unless-stopped \
     -v mysql-server2-vol:/var/lib/mysql \
     -e MYSQL_ROOT_PASSWORD=root \
-    -p 3307:3306 mysql:latest
+    -p 3307:3306 \
+    mysql:latest
 
 # Per connettersi con l'applicativo MySQL Monitor (dalla shell) occorre specificare anche il parametro
 # -P port_number, come nell'esempio seguente (dalla WSL):
@@ -952,6 +953,7 @@ docker run -d \
 
 # Creazione di un container di Microsoft SQL Server
 # verrà mostrata tra qualche lezione ...
+
 # Per connettersi con l'applicativo MySQL Monitor (dalla shell) occorre specificare anche il parametro
 # -P port_number, come nell'esempio seguente (dalla WSL):
 mariadb -u root -h 127.0.0.1 -P 3308 -p
@@ -988,3 +990,168 @@ docker attach dbstore
 # il contenuto della cartella dbdata del container dbstore. Il file compresso viene creato nella cartella /backup del container
 # che è mappato sulla working directory.
 docker run --rm --volumes-from dbstore -v $(pwd):/backup ubuntu tar cvf /backup/backup.tar /dbdata
+
+## Configurazioni del DBMS
+#
+# Lettura delle impostazioni del DBMS Server - MariaDb
+#
+# Le impostazioni del server, descritte nella documentazione ufficiale di MariaDb:
+# https://mariadb.com/kb/en/server-system-variables/
+# https://mariadb.com/kb/en/configuring-mariadb-with-option-files/
+# possono essere consultate in due modi:
+# 1. dal client di MariaDb
+#   SHOW VARIABLES \G
+#   oppure:
+#   SELECT * FROM INFORMATION_SCHEMA.GLOBAL_VARIABLES \G
+
+# 2. dalla shell del sistema operativo (dall'interno del container Docker) si potrà, ad esempio, vedere la configurazione del server, con il comando:
+#   mariadbd --verbose --help | grep time_zone
+#
+# 3. dall'applicazione client (monitor)
+# https://stackoverflow.com/questions/930900/how-do-i-set-the-time-zone-of-mysql
+# SELECT @@global.time_zone;
+#
+# Impostazioni del DBMS - MariaDb
+# Le impostazioni del DBMS possono essere eseguite in diversi modi:
+
+# 1. alla partenza del server (mariadbd) come command line argument
+# https://mariadb.com/kb/en/server-system-variables/#setting-server-system-variables
+# Ad esempio, dalla shell del container di MariaDb si può eseguire il comando mariadbd --default-time-zone="+02:00"
+# Se si utilizza un container Docker, si può, ad esempio, lanciare il container di prova come mostrato di seguito (questo container verrà rimosso automaticamente quando verrà fermato):
+docker run -d --rm \
+    --name mariadb-server-test \
+    --network my-net \
+    -p 3309:3306 \
+    --env MARIADB_ROOT_PASSWORD=root \
+    mariadb:lts --default-time-zone "+02:00"
+
+# 2. Utilizzando un file di configurazione .cnf, come mostrato di seguito
+#
+## Creazione di un container di MariaDb con configurazione diversa da quella minimale.
+#
+# In alcune circostanze occorre creare un container di MariaDb con configurazioni diverse da quelle predefinite.
+# MariaDb ha un sistema di configurazioni che permettono di definire il comportamento del DBMS in base alle proprie esigenze.
+# La configurazione di MariaDb può essere cambiata, seguendo la documentazione ufficiale:
+# https://mariadb.com/kb/en/configuring-mariadb-with-option-files/
+# https://mariadb.com/kb/en/server-system-variables/
+# Alla partenza, MariaDb legge una serie di configurazioni da alcuni file che sono specificati nella documentazione:
+# https://mariadb.com/kb/en/configuring-mariadb-with-option-files/#default-option-file-locations-on-linux-unix-mac
+
+# Seguendo le indicazioni riportate nella documentazione dell'immagine Docker https://hub.docker.com/_/mariadb
+# nella sezione "Using a custom MariaDB configuration file", si deduce che è possibile impostare parametri specifici di configurazione
+# scrivendo, un file con estensione .cnf che deve essere montato in sola lettura nella cartella /etc/mysql/conf.d
+# Infatti i file di configurazione messi nella cartella /etc/mysql/conf.d vengono incorporati nella configurazione generale di MariaDb richiamata
+# dal file /etc/mysql/my.cnf
+
+# Come esempio di configurazione del DBMS creiamo un file di testo chiamato my-config.cnf in una cartella della WSL Ubuntu,
+# ad esempio ~/my-dev/mariadb-config/mariadb-server1. La cartella ~/my-dev/mariadb-config/mariadb-server1 verrà collegata in bind mount
+# con la cartella /etc/mysql/conf.d. Siccome il file /etc/mysql/my.cnf richiama eventuali file di configurazioni presenti nella cartella
+# /etc/mysql/conf.d, l'effetto complessivo sarà quello di applicare le configurazioni del file my-config.cnf, assieme alle altre
+# configurazioni del DBMS.
+
+# Nel file my-config.cnf inseriamo il seguente contenuto:
+# [server]
+# default-time-zone=+02:00
+
+# L'impostazione inserita consente di aver il time zone di MariaDb impostato sull'ora di Roma.
+# Si può verificare che, senza questa configurazione, il server è impostato su UTC 00:00.
+# come verifica si può eseguire l'istruzione SELECT NOW();  e vedere il risultato
+
+# Per applicare le impostazioni fermiamo il server di mariadb (nel caso fosse in esecuzione)
+docker stop mariadb-server1
+# Rimuoviamo il container
+docker rm mariadb-server1
+# Facciamo ripartire un nuovo container con le impostazioni inserite nel file my-config.cnf con il seguente comando:
+docker run -d \
+    --name mariadb-server1 \
+    --network my-net \
+    --restart unless-stopped \
+    -p 3306:3306 \
+    -v mariadb-server1-vol:/var/lib/mysql \
+    -v ~/my-dev/mariadb-config/mariadb-server1:/etc/mysql/conf.d:ro \
+    --env MARIADB_ROOT_PASSWORD=root \
+    mariadb:lts
+
+# 3. Utilizzando l'applicazione client mariadb (come utente amministrativo)
+# https://stackoverflow.com/questions/930900/how-do-i-set-the-time-zone-of-mysql
+#   SET GLOBAL time_zone='+02:00';
+
+## Configurazioni del DBMS
+#
+# Lettura delle impostazioni del DBMS Server - MySQL
+#
+# Le impostazioni del server, descritte nella documentazione ufficiale di MySQL:
+# https://dev.mysql.com/doc/refman/9.0/en/server-configuration.html
+# https://dev.mysql.com/doc/refman/9.0/en/server-options.html
+# https://dev.mysql.com/doc/refman/9.0/en/server-system-variables.html
+# possono essere consultate in due modi:
+# 1. dal client di MySQL
+#   SHOW VARIABLES \G
+
+# 2. dalla shell del sistema operativo (dall'interno del container Docker) si potrà, ad esempio, vedere la configurazione del server, con il comando:
+#   mysqld --verbose --help
+
+#
+# Impostazioni del DBMS - MySQL
+# Le impostazioni del DBMS possono essere eseguite in diversi modi:
+
+# 1. alla partenza del server (mysqld) come command line argument
+# https://dev.mysql.com/doc/refman/9.0/en/server-options.html
+# Ad esempio, dalla shell del container di MySQL si può eseguire il comando mysqld --default-time-zone="+02:00"
+# Se si utilizza un container Docker, si può, ad esempio, lanciare il container di prova come mostrato di seguito (questo container verrà rimosso automaticamente quando verrà fermato):
+docker run -d --rm \
+    --name mysql-server-test \
+    --network my-net \
+    -e MYSQL_ROOT_PASSWORD=root \
+    -p 3307:3306 \
+    mysql:latest --default-time-zone "+02:00"
+
+# 2. Utilizzando un file di configurazione .cnf, come mostrato di seguito
+#
+#
+# Creazione di un container di MySQL con configurazione diversa da quella minimale.
+#
+# In alcune circostanze occorre creare un container di MySQL con configurazioni diverse da quelle predefinite.
+# MySQL ha un sistema di configurazioni che permettono di definire il comportamento del DBMS in base alle proprie esigenze.
+# La configurazione di MySQL può essere cambiata, seguendo la documentazione ufficiale:
+# https://dev.mysql.com/doc/refman/9.0/en/server-configuration.html
+# https://dev.mysql.com/doc/refman/9.0/en/server-options.html
+# https://dev.mysql.com/doc/refman/9.0/en/server-system-variables.html
+# https://hub.docker.com/_/mysql
+
+# Seguendo le indicazioni riportate nella documentazione dell'immagine Docker https://hub.docker.com/_/mysql
+# nella sezione "Using a custom MySQL configuration file", si deduce che è possibile impostare parametri specifici di configurazione
+# scrivendo, un file con estensione .cnf che deve essere montato in sola lettura nella cartella /etc/mysql/conf.d
+# Infatti i file di configurazione messi nella cartella /etc/mysql/conf.d vengono incorporati nella configurazione generale di MySQL richiamata
+# dal file /etc/mysql/my.cnf
+
+# Come esempio di configurazione del DBMS creiamo un file di testo chiamato my-config.cnf in una cartella della WSL Ubuntu,
+# ad esempio ~/my-dev/mysql-config/mysql-server1. La cartella ~/my-dev/mariadb-config/mariadb-server1 verrà collegata in bind mount
+# con la cartella /etc/mysql/conf.d. Siccome il file /etc/mysql/my.cnf richiama eventuali file di configurazioni presenti nella cartella
+# /etc/mysql/conf.d, l'effetto complessivo sarà quello di applicare le configurazioni del file my-config.cnf, assieme alle altre
+# configurazioni del DBMS.
+
+# Nel file my-config.cnf inseriamo il seguente contenuto:
+# [server]
+# default-time-zone=+02:00
+
+# L'impostazione inserita consente di aver il time zone di MariaDb impostato sull'ora di Roma.
+# Si può verificare che, senza questa configurazione, il server è impostato su UTC 00:00.
+# come verifica si può eseguire l'istruzione SELECT NOW();  e vedere il risultato.
+
+# Per applicare le impostazioni fermiamo i server che fossero eventualmente in ascolto sulla stessa porta del Docker host (nel caso fosse in esecuzione)
+
+# lanciamo il server di MySQL e verifichiamo che l'impostazione inserita nel file di configurazione sia stata accettata correttamente
+docker run -d \
+    --name mysql-server1 \
+    --network my-net \
+    --restart unless-stopped \
+    -v mysql-server1-vol:/var/lib/mysql \
+    -v ~/my-dev/mysql-config/mysql-server1:/etc/mysql/conf.d:ro \
+    -e MYSQL_ROOT_PASSWORD=root \
+    -p 3306:3306 \
+    mysql:latest
+
+# 3. utilizzando un comando dall'applicazione client come utente amministrativo:
+# https://stackoverflow.com/questions/930900/how-do-i-set-the-time-zone-of-mysql
+# SET @@global.time_zone = '+02:00'

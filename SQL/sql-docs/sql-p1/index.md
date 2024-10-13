@@ -40,7 +40,7 @@
 ## Architettura di MySQL e MariaDB
 
 [MySQL](https://www.mysql.com/) è un Database Management Systems (DBMS) progettato secondo una architettura `client <-> server`.
-![Architettura di MySQL](my_sql_architecture.png).
+![Architettura di MySQL](my-sql-architecture.png).
 
 Maggiori dettagli sull'architettura di MySQL si possono trovare su [MySQL tutorial - architecture](https://www.mysqltutorial.org/mysql-administration/mysql-architecture/).
 
@@ -90,7 +90,7 @@ L’SQL è utilizzato all’interno di un altro linguaggio,denominato host (ad e
 
 ## SQL: componenti del linguaggio
 
-![Struttura del linguaggio SQL](SQL-srtucture.png)
+![Struttura del linguaggio SQL](SQL-structure.png)
 
 ## SQL: primi passi, con MySQL
 

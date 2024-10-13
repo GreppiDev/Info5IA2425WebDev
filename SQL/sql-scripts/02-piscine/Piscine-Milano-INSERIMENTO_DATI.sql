@@ -49,10 +49,10 @@ INSERT INTO Iscritti_Corsi(Persona, DataNascita, NomeMedico, DataCertificato)
 	VALUES('CRSALS90B24B347R', '2006-04-01', 'Altobelli Giovanni', '2024-07-03');
 -- inseriamo alcuni corsi di qualche piscina
 INSERT INTO Corsi(Piscina, NomeC, MaxP, MinP, Costo) VALUES ('Cozzi', 'Acquagym', 26, 8, 126.00);
-INSERT INTO Corsi(Piscina, NomeC, MaxP, MinP, Costo) VALUES ('Cozzi', 'Nuoto Libero', 30, 0, 80.00); 
+INSERT INTO Corsi(Piscina, NomeC, MaxP, MinP, Costo) VALUES ('Cozzi', 'Nuoto Libero', 30, 2, 80.00); 
 INSERT INTO Corsi(Piscina, NomeC, MaxP, MinP, Costo) VALUES ('Cozzi', 'Corso di Salvamento', 10, 4, 500.00);
 INSERT INTO Corsi(Piscina, NomeC, MaxP, MinP, Costo) VALUES ('Lido', 'Acquagym', 34, 8, 190.00);
-INSERT INTO Corsi(Piscina, NomeC, MaxP, MinP, Costo) VALUES ('Lido', 'Nuoto Libero', 38, 0, 100.00); 
+INSERT INTO Corsi(Piscina, NomeC, MaxP, MinP, Costo) VALUES ('Lido', 'Nuoto Libero', 38, 2, 100.00); 
 INSERT INTO Corsi(Piscina, NomeC, MaxP, MinP, Costo) VALUES ('Lido', 'Corso di Salvamento', 10, 4, 700.00);
 --  inseriamo i dettagli dei corsi delle persone che frequentano corsi
 INSERT INTO Frequenta_Corsi(Persona, NomeC, Piscina) VALUES ('DGNMTT74B24C127R', 'Nuoto Libero', 'Cozzi');

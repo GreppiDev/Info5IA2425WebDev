@@ -301,6 +301,12 @@ SELECT NOW() + 0; -> 20071215235026.000000
 
 `NOW()` returns a constant time that indicates the time at which the statement began to execute.
 
+> :warning: **Attenzione**: quando si utilizzano le funzioni che coinvolgono il tempo occorre verificare quale sia la configurazione del server relativamente al `default-time-zone`. Per impostare un parametro specifico del server di MySQL/MariaDB si veda quanto già mostrato nella sezione su Docker relativa a MySQL/MariaDB. Per modificare velocemente il time_zone basta eseguire la query seguente (come utente amministrativo) e impostare il time_zone due ore in avanti rispetto all'ora UTC:
+>
+>```sql
+>SET GLOBAL time_zone='+02:00';
+>```
+
 Esempi:
 
 Data la tabella seguente, con le date degli studenti del database `dbscuola`:
@@ -319,7 +325,7 @@ Data la tabella seguente, con le date degli studenti del database `dbscuola`:
 Il calcolo dell'età si può ottenere con la query seguente:
 
 ```sql
-SELECT Matricola, Cognome, Nome, DataNascita `Data di nascita`, (YEAR(CURDATE()) - YEAR(DataNascita)) - (RIGHT(CURDATE(),5)<RIGHT(DataNascita,5))  AS Eta
+SELECT Matricola, Cognome, Nome, DataNascita AS 'Data di nascita', (YEAR(CURDATE()) - YEAR(DataNascita)) - (RIGHT(CURDATE(),5)<RIGHT(DataNascita,5))  AS Eta
 FROM studenti
 ORDER BY Eta ASC;
 ```
