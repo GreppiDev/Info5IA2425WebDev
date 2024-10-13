@@ -15,7 +15,7 @@
       - [Gestione degli utenti e dei privilegi - Account Management Statements](#gestione-degli-utenti-e-dei-privilegi---account-management-statements)
         - [I comandi DCL (Data Control Language)](#i-comandi-dcl-data-control-language)
           - [Il comando GRANT](#il-comando-grant)
-          - [Visualizzare i permessi per unn utente](#visualizzare-i-permessi-per-unn-utente)
+          - [Visualizzare i permessi per un utente](#visualizzare-i-permessi-per-un-utente)
           - [Il comando REVOKE](#il-comando-revoke)
         - [Esempi di privilegi assegnati ad utenti](#esempi-di-privilegi-assegnati-ad-utenti)
     - [information\_schema](#information_schema)
@@ -322,7 +322,7 @@ GRANT SELECT, INSERT ON my_db.* TO 'some_user'@'some_host';
 -- user_name non seguito da nulla è sinonimo di user_name@'%'
 ```
 
-###### Visualizzare i permessi per unn utente
+###### Visualizzare i permessi per un utente
 
 ```sql
 SHOW GRANTS FOR user_name;

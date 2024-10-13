@@ -191,7 +191,7 @@ SELECT Nome 'Nome Studente', Cognome, DataNascita FROM studenti;
 
 - Per i tipi di dato `CHAR`, `VARCHAR`, `TEXT`, `DATE`, `DATETIME`, `TIME` bisognerebbe sempre usare gli apici singoli (`'`).
 
-- I backtick andrebbero usati solo per i nomi di tabelle e di colonne, ma sono necessari solo quando gli identificatori sono nomi di parole riservate di MySQL/MariaDb, oppure quando l'identificatore contiene degli spazi.
+- I backtick (\`) andrebbero usati solo per i nomi di tabelle e di colonne, ma sono necessari solo quando gli identificatori sono nomi di parole riservate di MySQL/MariaDb, oppure quando l'identificatore contiene degli spazi.
 
 Per i dettagli si veda la [discussione su StackOverflow relativa all'uso delle quote in MySQL](https://stackoverflow.com/a/11321508/11116419):
 
