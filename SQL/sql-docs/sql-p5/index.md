@@ -9,11 +9,11 @@
       - [Operatori di confronto](#operatori-di-confronto)
         - [Esempio di confronto](#esempio-di-confronto)
       - [Operatori logici](#operatori-logici)
-        - [Esempio di uso di operatori logici](#esempio-di-uso-di-operatori-logici)
+        - [Esempio d'uso di operatori logici](#esempio-duso-di-operatori-logici)
       - [Operatori speciali dell'SQL - `LIKE`, `NOT LIKE`](#operatori-speciali-dellsql---like-not-like)
-        - [Esempi di uso di `LIKE` e `NOT LIKE`](#esempi-di-uso-di-like-e-not-like)
+        - [Esempi d'uso di `LIKE` e `NOT LIKE`](#esempi-duso-di-like-e-not-like)
       - [Operatori speciali dell'SQL - `IS NULL`, `IS NOT NULL`](#operatori-speciali-dellsql---is-null-is-not-null)
-        - [Esempi di uso di `IS NULL` e `IS NOT NULL`](#esempi-di-uso-di-is-null-e-is-not-null)
+        - [Esempi d'uso di `IS NULL` e `IS NOT NULL`](#esempi-duso-di-is-null-e-is-not-null)
       - [Operatori speciali dell'SQL - `expr IN (value,...)`](#operatori-speciali-dellsql---expr-in-value)
         - [Esempio d'uso di `expr IN (value,...)`](#esempio-duso-di-expr-in-value)
       - [Operatori speciali dell'SQL - `expr BETWEEN min AND max`](#operatori-speciali-dellsql---expr-between-min-and-max)
@@ -37,7 +37,7 @@ Si vuole rappresentare una base dati contenete le informazioni relative alle pis
 
 Dopo un'analisi della realtà di interesse, sotto opportune ipotesi aggiuntive, che qui non sono riportate per il momento, si ha che il database è caratterizzato dalle seguenti tabelle:
 
-![Database Piscine di Milano](piscine-milano-E-R.png)
+![Database Piscine di Milano](piscine-milano-ER.png)
 
 Il database può essere creato a partire dallo [script](../../sql-scripts/02-piscine/Piscine-Milano-FW-engineering.sql) SQL seguente:
 
@@ -45,7 +45,7 @@ Il database può essere creato a partire dallo [script](../../sql-scripts/02-pis
 -- -----------------------------------------------------
 -- Schema piscine_milano
 -- -----------------------------------------------------
-CREATE SCHEMA IF NOT EXISTS `piscine_milano`;
+CREATE SCHEMA IF NOT EXISTS `piscine_milano` ;
 USE `piscine_milano` ;
 
 -- -----------------------------------------------------
@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS `piscine_milano`.`piscine` (
   `Indirizzo` VARCHAR(80) NOT NULL,
   `Telefono` CHAR(14) NULL DEFAULT NULL,
   `Responsabile` VARCHAR(80) NOT NULL,
-  `Tipo` TINYINT NOT NULL DEFAULT '0',
+  `Tipo` TINYINT NOT NULL DEFAULT 0,
   `Da` DATE NULL DEFAULT NULL,
   `A` DATE NULL DEFAULT NULL,
   PRIMARY KEY (`NomeP`))
@@ -69,8 +69,8 @@ ENGINE = InnoDB;
 CREATE TABLE IF NOT EXISTS `piscine_milano`.`corsi` (
   `Piscina` VARCHAR(50) NOT NULL,
   `NomeC` VARCHAR(50) NOT NULL,
-  `MaxP` SMALLINT UNSIGNED NOT NULL DEFAULT '20',
-  `MinP` SMALLINT UNSIGNED NOT NULL DEFAULT '10',
+  `MaxP` SMALLINT UNSIGNED NOT NULL DEFAULT 20,
+  `MinP` SMALLINT UNSIGNED NOT NULL DEFAULT 10,
   `Costo` DECIMAL(8,2) NOT NULL,
   PRIMARY KEY (`Piscina`, `NomeC`),
   INDEX `Piscine` (`Piscina` ASC),
@@ -210,7 +210,7 @@ CREATE TABLE IF NOT EXISTS `piscine_milano`.`rotazioni` (
 ENGINE = InnoDB;
 ```
 
-Il database `piscine_milano` può essere popolato con questo [script](../../sql-scripts/02-piscine/Piscine-Milano-INSERIMENTO_DATI.sql).
+Il database `piscine_milano` può essere popolato con questo [script](../../sql-scripts/02-piscine/Piscine-Milano-INSERIMENTO-DATI.sql).
 
 ## Concetto di prodotto cartesiano
 
@@ -418,7 +418,7 @@ WHERE ((YEAR(CURDATE()) - YEAR(DataCertificato))  - (RIGHT(DataCertificato, 5) >
 
 `AND`, `OR`, `NOT`, `XOR`
 
-##### Esempio di uso di operatori logici
+##### Esempio d'uso di operatori logici
 
 *Trovare i corsi delle piscine di Milano con un costo compreso tra  100 e  200 EUR*.
 
@@ -480,7 +480,7 @@ L'operatore `LIKE` è spesso usato in combinazione con i caratteri speciali:
 - `%` :arrow_right: corrisponde a un qualsiasi numero di caratteri, anche zero caratteri
 - `_` :arrow_right: corrisponde esattamente ad un solo carattere (che può essere qualsiasi)
 
-##### Esempi di uso di `LIKE` e `NOT LIKE`
+##### Esempi d'uso di `LIKE` e `NOT LIKE`
 
 ```sql
 -- Trovare i corsi che iniziano con la parola 'Nuoto'
@@ -508,7 +508,7 @@ WHERE insegnanti.CodiceFiscale = qualifiche.Insegnante AND QualificaIn LIKE '%Su
 
 Operatori speciali `IS NULL`, `IS NOT NULL` :arrow_right: servono a verificare se una colonna contiene un valore `NULL` oppure `NOT NULL`.
 
-##### Esempi di uso di `IS NULL` e `IS NOT NULL`
+##### Esempi d'uso di `IS NULL` e `IS NOT NULL`
 
 ```sql
 -- piscine che non hanno vasche all'aperto

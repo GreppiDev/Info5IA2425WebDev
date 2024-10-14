@@ -23,7 +23,7 @@
     - [Sintesi sui vincoli di integrità referenziale - ON DELETE | ON UPDATE](#sintesi-sui-vincoli-di-integrità-referenziale---on-delete--on-update)
     - [Case sensitive or case insensitive?](#case-sensitive-or-case-insensitive)
     - [Dove sono le tabelle?](#dove-sono-le-tabelle)
-    - [Quali tabelle?\[^4\]](#quali-tabelle4)
+    - [Quali tabelle?\[^5\]](#quali-tabelle5)
 
 ## Inserimento di dati in una tabella
 
@@ -59,6 +59,9 @@ Data DATE NOT NULL ,
 FOREIGN KEY (Studente) REFERENCES studenti(Matricola)
 ) ENGINE = InnoDB;
 ```
+
+Il diagramma `E/R`[^1] del database è riportato nella figura seguente:
+![diagramma E/R del database dbscuola](dbscuola.png)
 
 La definizione completa dello schema e le istruzioni per l'inserimento dei valori sono disponibili in questo [script](../../sql-scripts/01-dbscuola/dbscuola.sql).
 
@@ -513,12 +516,12 @@ In sintesi:
 
 Attenzione al case dei nomi di tabelle in MySQL/MariaDB.
 
-<cite>In MySQL[^1] and MariaDB, databases correspond to directories within the data directory. Each table within a database corresponds to at least one file within the database directory. Consequently, the case sensitivity of the underlying operating system plays a part in the case sensitivity of database, table, and trigger names.
+<cite>In MySQL[^2] and MariaDB, databases correspond to directories within the data directory. Each table within a database corresponds to at least one file within the database directory. Consequently, the case sensitivity of the underlying operating system plays a part in the case sensitivity of database, table, and trigger names.
 This means such names are not case sensitive in Windows, but are case sensitive in most varieties of Unix.</cite>
 
 La variabile `lower_case_table_names` specifica il comportamento del DBMS Server con riferimento al case dei nomi delle tabelle:
 
-<cite>[^2]`lower_case_table_names`: If set to 0, table names are stored as specified and comparisons are case sensitive. If set to 1, table names are stored in lowercase on disk and comparisons are not case sensitive. If set to 2, table names are stored as given but compared in lowercase. This option also applies to database names and table aliases.</cite>
+<cite>[^3]`lower_case_table_names`: If set to 0, table names are stored as specified and comparisons are case sensitive. If set to 1, table names are stored in lowercase on disk and comparisons are not case sensitive. If set to 2, table names are stored as given but compared in lowercase. This option also applies to database names and table aliases.</cite>
 
 ```sql
 SELECT @@global. lower_case_table_names;
@@ -546,11 +549,11 @@ ALTER TABLE assenze ADD CONSTRAINT FK_assenze_studenti FOREIGN KEY
 
 ### Dove sono le tabelle?
 
-<cite>[^3]By default, MySQL stores database files in `/var/lib/mysql`. However, we can override the location in the configuration file. Typically, this is the `/etc/mysql/mysql.conf.d/mysqld.cnf` file.</cite>
+<cite>[^4]By default, MySQL stores database files in `/var/lib/mysql`. However, we can override the location in the configuration file. Typically, this is the `/etc/mysql/mysql.conf.d/mysqld.cnf` file.</cite>
 
 To find out the current data directory, we can use a basic select command at the mysql prompt:
 
-### Quali tabelle?[^4]
+### Quali tabelle?[^5]
 
 - .frm :
 MySQL represents each table by an .frm table format file, stores table definition in the database directory. It is stored as .frm under data directory.
@@ -559,7 +562,8 @@ If you specify innodb_file_per_table option to my.cnf, InnoDB stores each table 
 - db.opt :
 In CREATE DATABASE command, create_specification options specify database characteristics. Database characteristics are stored in the db.opt file in the database directory.
 
-[^1]: [MySQL Manual](https://dev.mysql.com/doc/refman/9.0/en/identifier-case-sensitivity.html)
-[^2]: [MySQL Manual](https://dev.mysql.com/doc/refman/9.0/en/server-system-variables.html#sysvar_lower_case_table_names)
-[^3]: [www.baeldung.com](https://www.baeldung.com/linux/mysql-database-files-location#default-location)
-[^4]: [https://kedar.nitty-witty.com/](https://kedar.nitty-witty.com/blog/quick-look-mysql-data-directory-files)
+[^1]: Il `diagramma E/R, detto anche diagramma Entity/Relationship` è un modello grafico che permette di rappresentare dal punto di vista concettuale una base di dati. La teoria che sta alla base di questo modello verrà trattata nell'unità didattica dedicata alla progettazione concettuale dei database.
+[^2]: [MySQL Manual](https://dev.mysql.com/doc/refman/9.0/en/identifier-case-sensitivity.html)
+[^3]: [MySQL Manual](https://dev.mysql.com/doc/refman/9.0/en/server-system-variables.html#sysvar_lower_case_table_names)
+[^4]: [www.baeldung.com](https://www.baeldung.com/linux/mysql-database-files-location#default-location)
+[^5]: [kedar.nitty-witty.com](https://kedar.nitty-witty.com/blog/quick-look-mysql-data-directory-files)

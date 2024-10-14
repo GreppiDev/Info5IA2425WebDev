@@ -760,7 +760,7 @@ docker run -d \
     -e TZ=Etc/UTC \
     -p 3000:3000 \
     -p 3001:3001 \
-    -v ~/my-dev/config:/config \
+    -v ~/my-dev/mysql-workbench-config:/config \
     -v ~/my-dev/sql-stuff:/sql-stuff \
     --cap-add="IPC_LOCK" \
     --restart unless-stopped \
