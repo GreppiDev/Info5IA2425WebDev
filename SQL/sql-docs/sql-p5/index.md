@@ -3,6 +3,8 @@
 - [SQL in MySQL/MariaDB - Parte 5](#sql-in-mysqlmariadb---parte-5)
   - [Il database `piscine_milano`](#il-database-piscine_milano)
   - [Concetto di prodotto cartesiano](#concetto-di-prodotto-cartesiano)
+    - [Definizione di prodotto cartesiano su n domini](#definizione-di-prodotto-cartesiano-su-n-domini)
+    - [Definizione di prodotto cartesiano tra due tabelle](#definizione-di-prodotto-cartesiano-tra-due-tabelle)
     - [Esempio di prodotto cartesiano](#esempio-di-prodotto-cartesiano)
     - [Definizioni delle condizioni di ricerca dei dati in una query SQL](#definizioni-delle-condizioni-di-ricerca-dei-dati-in-una-query-sql)
     - [Operatori dell'SQL](#operatori-dellsql)
@@ -214,15 +216,57 @@ Il database `piscine_milano` può essere popolato con questo [script](../../sql-
 
 ## Concetto di prodotto cartesiano
 
-Definizione di prodotto cartesiano:
+### Definizione di prodotto cartesiano su n domini
 
 ![Definizione di prodotto cartesiano](definizione-prodotto-cartesiano.png)
+
+**Definizione di Dominio**: *un dominio è l'insieme dei valori che può assumere un attributo, oppure una proprietà di un oggetto*. Ad esempio, un attributo che rappresenta i giorni della settimana potrebbe avere un dominio rappresentato dall'insieme `{`lun`,`mar`,`mer`,`gio`,`ven`,`sab`,`dom`}. Un attributo che rappresenta il nome di una persona potrebbe avere un dominio rappresentato dalle possibili stringhe che rappresentano nomi di persona.
+
+**Definizione di Prodotto Cartesiano**: Dati due insiemi `D1` e `D2`, si chiama prodotto cartesiano di `D1` e `D2`, in simboli `D1xD2`, l'insieme delle coppie ordinate `(v1, v2)`, tali che `v1` è un elemento di `D1` e `v2` è un elemento di `D2`. Ad esempio, dati gli insiemi `A = {a,b,c,d}`, `B = {x,y,z}`, si definisce prodotto cartesiano tra due insiemi `A` e `B` il seguente insieme:
+
+`A X B = {(a,x),(a,y),(a,z), (b,x),(b,y),(b,z)....(d,z)}`
+
+Nel prodotto cartesiano è importante l'ordine degli elementi all'interno delle ennuple, perché, ad esempio, `(a,x)` è diversa da `(x,a)`.
+
+La definizione appena data è facilmente estendibile al caso di n domini `D1, D2,D3,...,Dn`.
+
+**Definizione di Relazione**: una `Relazione` su n domini `D1,D2,....Dn` è definita, in senso matematico, come un sottoinsieme del prodotto cartesiano tra gli n domini. Ad esempio, con riferimento ai domini `A` e `B` precedentemente mostrati, una relazione su `A` e `B` potrebbe essere l'insieme di coppie `{(a,x),(a,z),(b,z)}`.
+
+- :memo: **Osservazione importante**: mentre il prodotto cartesiano considera tutte le possibili combinazioni tra gli elementi dei singoli domini coinvolti nel prodotto, la relazione (intesa in senso matematico) può riguardare solo un sottoinsieme delle ennuple contenute nel prodotto cartesiano.
+
+**Definizione di Tabella**: una tabella è una rappresentazione di una relazione nella quale le ennuple vengono disposte su righe una sotto l'altra. Ad esempio la relazione data dall'insieme `{(a,x),(a,z),(b,z)}` può essere rappresentata dalla tabella:
+
+| A | B |
+|---|---|
+| a | x |
+| a | z |
+| b | z |
+
+**Concetto di tupla**: nei contesti delle basi di dati vengono utilizzate rappresentazioni dei dati sotto forma tabellare e in tali contesti le colonne delle tabelle hanno un nome che definisce il dominio a cui appartengono i valori di quella colonna. Ad esempio, nella tabella precedentemente riportata la prima colonna è etichettata con il nome del dominio `A` e la seconda colonna con il nome del dominio `B`. Se si valuta il contenuto informativo delle righe che rappresentano gli elementi della relazione tra `A` e `B` è ovvio che se anche si dovesse cambiare l'ordine delle colonne non si perderebbe il significato di ogni riga della tabella. Per tale motivo, nella teoria delle basi di dati si preferisce utilizzare il concetto di **tupla** al posto quello di ennupla. Una `tupla` è un'ennupla nella quale l'ordine delle componenti è irrilevante. Le righe di una tabella sono pertanto tuple.
+
+Ad esempio, la tabella:
+
+| A | B |
+|---|---|
+| a | x |
+| a | z |
+| b | z |
+
+e la tabella:
+
+| B | A |
+|---|---|
+| x | a |
+| z | a |
+| z | b |
+
+esprimono lo stesso contenuto informativo.
+
+### Definizione di prodotto cartesiano tra due tabelle
 
 Il prodotto cartesiano di due (o più) tabelle è una nuova tabella costituita da tutte le possibili combinazioni senza ripetizioni tra le righe delle tabelle di partenza.
 
 Il prodotto cartesiano tra due tabelle `A` e `B` si indica con `A x B`
-
-> :memo: **Nota**: nel prodotto cartesiano si parla di `ennupla`, nelle quali l’ordine degli attributi è rilevante. Nella teoria relazionale si parla di `tuple`, per le quali l’ordine degli attributi non è rilevante.
 
 Se nella clausola `FROM` di una query SQL compaiono due o più tabelle, l’interrogazione è eseguita da un DBMS secondo il seguente ordine:
 
@@ -287,18 +331,18 @@ Si ottiene:
 
 | Cognome | Nome     | Qualifiche Possedute             |
 |---------|----------|----------------------------------|
-| Alberti | Giovanni | Bagnino di Salvataggio           |
-| Salvati | Matteo   | Bagnino di Salvataggio           |
+| *Alberti* | *Giovanni* | *Bagnino di Salvataggio*           |
+| *Salvati* | *Matteo*   | *Bagnino di Salvataggio*           |
 | Alberti | Giovanni | Brevetto di Sub di Terzo Grado   |
 | Salvati | Matteo   | Brevetto di Sub di Terzo Grado   |
-| Alberti | Giovanni | Bagnino di Salvataggio           |
-| Salvati | Matteo   | Bagnino di Salvataggio           |
+| *Alberti* | *Giovanni* | *Bagnino di Salvataggio*           |
+| *Salvati* | *Matteo*   | *Bagnino di Salvataggio*           |
 | Alberti | Giovanni | Brevetto di Sub di Primo Grado   |
 | Salvati | Matteo   | Brevetto di Sub di Primo Grado   |
 | Alberti | Giovanni | Brevetto di Sub di Secondo Grado |
 | Salvati | Matteo   | Brevetto di Sub di Secondo Grado |
 
-> :warning: **Attenzione**: si notino le righe ripetute.
+> :warning: **Attenzione**: si notino le righe ripetute, indicate in corsivo.
 
 Usando la clausola `DISTINCT` nella precedente query, non si hanno query ripetute:
 
@@ -332,15 +376,15 @@ Si ottiene la seguente tabella:
 | Cognome | Nome     | Qualifiche Possedute             |
 |---------|----------|----------------------------------|
 | Alberti | Giovanni | Bagnino di Salvataggio           |
-| <span style="background:red">Alberti</span> | <span style="background:red">Giovanni</span> | <span style="background:red">Brevetto di Sub di Primo Grado</span>   |
-| <span style="background:red">Alberti</span> | <span style="background:red">Giovanni</span> | <span style="background:red">Brevetto di Sub di Secondo Grado</span> |
+| *Alberti* | *Giovanni* | *Brevetto di Sub di Primo Grado*   |
+| *Alberti* | *Giovanni* | *Brevetto di Sub di Secondo Grado* |
 | Alberti | Giovanni | Brevetto di Sub di Terzo Grado   |
 | Salvati | Matteo   | Bagnino di Salvataggio           |
 | Salvati | Matteo   | Brevetto di Sub di Primo Grado   |
 | Salvati | Matteo   | Brevetto di Sub di Secondo Grado |
-| <span style="background:red">Salvati</span> | <span style="background:red">Matteo</span>   | <span style="background:red">Brevetto di Sub di Terzo Grado</span>   |
+| *Salvati* | *Matteo*   | *Brevetto di Sub di Terzo Grado*   |
 
-> :boom: :warning: **Osservazione importante**: **Nella tabella precedente in cui compaiono solo alcune colonne del prodotto cartesiano si hanno delle righe, quelle evidenziate in rosso, che non corrispondono a reali qualifiche possedute dagli insegnanti**. Ad esempio l’insegnante `Salvati Matteo` possiede solo il `brevetto di Bagnino di Salvataggio` e di `Primo` e `Secondo Grado` ma non anche quello di `Terzo Grado`.
+> :boom: :warning: **Osservazione importante**: **Nella tabella precedente in cui compaiono solo alcune colonne del prodotto cartesiano si hanno delle righe, quelle con il testo in corsivo, che non corrispondono a reali qualifiche possedute dagli insegnanti**. Ad esempio l’insegnante `Salvati Matteo` possiede solo il `brevetto di Bagnino di Salvataggio` e di `Primo` e `Secondo Grado` ma non anche quello di `Terzo Grado`.
 Il problema nasce dal fatto che il prodotto cartesiano non fa alcun controllo sulle righe, ma si limita a considerare tutte le possibili combinazioni. Vedremo che **per ottenere i risultati attesi si definisce un’altra operazione sulle tabelle chiamata JOIN**.
 
 ### Definizioni delle condizioni di ricerca dei dati in una query SQL

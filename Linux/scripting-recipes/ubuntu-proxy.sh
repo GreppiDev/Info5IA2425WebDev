@@ -6,12 +6,21 @@
 
 ## Configurazione del proxy per apt, apt-get
 # per apt, apt-get la configurazione del proxy si effettua come segue:
-# host --> proxy12
+# host --> proxy12 oppure proxy12.intranet oppure proxy.intranet 
 # port --> 3128
+
+# Nota importante, la scelta su quale nome host utilizzare per il proxy può variare a seconda di diversi fattori 
+# (come è stato configurato temporaneamente il proxy a scuola, quali impostazioni sono state applicate alle impostazioni del proxy di Windows)
 
 # L'impostazione del proxy può essere fatta con un solo comando:
 sudo tee -a /etc/apt/apt.conf.d/proxy.conf <<EOF
 Acquire::http::Proxy "http://proxy12:3128";
+EOF
+
+# Importante: se l'impostazione precedente non dovesse funzionare si deve provare con gli altri nomi di dominio per il proxy, ad esempio:
+
+sudo tee -a /etc/apt/apt.conf.d/proxy.conf <<EOF
+Acquire::http::Proxy "http://proxy12.intranet:3128";
 EOF
 
 ## Spiegazione del comando per impostare il proxy (da ChatGPT)
