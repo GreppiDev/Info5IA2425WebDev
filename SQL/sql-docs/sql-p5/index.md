@@ -1,6 +1,6 @@
-# SQL in MySQL/MariaDB - Parte 5
+# SQL in MySQL/MariaDB - Prodotto cartesiano ed operatori dell'SQL
 
-- [SQL in MySQL/MariaDB - Parte 5](#sql-in-mysqlmariadb---parte-5)
+- [SQL in MySQL/MariaDB - Prodotto cartesiano ed operatori dell'SQL](#sql-in-mysqlmariadb---prodotto-cartesiano-ed-operatori-dellsql)
   - [Il database `piscine_milano`](#il-database-piscine_milano)
   - [Concetto di prodotto cartesiano](#concetto-di-prodotto-cartesiano)
     - [Definizione di prodotto cartesiano su n domini](#definizione-di-prodotto-cartesiano-su-n-domini)
@@ -218,8 +218,6 @@ Il database `piscine_milano` può essere popolato con questo [script](../../sql-
 
 ### Definizione di prodotto cartesiano su n domini
 
-![Definizione di prodotto cartesiano](definizione-prodotto-cartesiano.png)
-
 **Definizione di Dominio**: *un dominio è l'insieme dei valori che può assumere un attributo, oppure una proprietà di un oggetto*. Ad esempio, un attributo che rappresenta i giorni della settimana potrebbe avere un dominio rappresentato dall'insieme `{`lun`,`mar`,`mer`,`gio`,`ven`,`sab`,`dom`}. Un attributo che rappresenta il nome di una persona potrebbe avere un dominio rappresentato dalle possibili stringhe che rappresentano nomi di persona.
 
 **Definizione di Prodotto Cartesiano**: Dati due insiemi `D1` e `D2`, si chiama prodotto cartesiano di `D1` e `D2`, in simboli `D1xD2`, l'insieme delle coppie ordinate `(v1, v2)`, tali che `v1` è un elemento di `D1` e `v2` è un elemento di `D2`. Ad esempio, dati gli insiemi `A = {a,b,c,d}`, `B = {x,y,z}`, si definisce prodotto cartesiano tra due insiemi `A` e `B` il seguente insieme:
@@ -233,6 +231,8 @@ La definizione appena data è facilmente estendibile al caso di n domini `D1, D2
 **Definizione di Relazione**: una `Relazione` su n domini `D1,D2,....Dn` è definita, in senso matematico, come un sottoinsieme del prodotto cartesiano tra gli n domini. Ad esempio, con riferimento ai domini `A` e `B` precedentemente mostrati, una relazione su `A` e `B` potrebbe essere l'insieme di coppie `{(a,x),(a,z),(b,z)}`.
 
 - :memo: **Osservazione importante**: mentre il prodotto cartesiano considera tutte le possibili combinazioni tra gli elementi dei singoli domini coinvolti nel prodotto, la relazione (intesa in senso matematico) può riguardare solo un sottoinsieme delle ennuple contenute nel prodotto cartesiano.
+
+![Definizione di prodotto cartesiano](definizione-prodotto-cartesiano.png)
 
 **Definizione di Tabella**: una tabella è una rappresentazione di una relazione nella quale le ennuple vengono disposte su righe una sotto l'altra. Ad esempio la relazione data dall'insieme `{(a,x),(a,z),(b,z)}` può essere rappresentata dalla tabella:
 

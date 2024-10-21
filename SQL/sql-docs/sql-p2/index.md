@@ -1,6 +1,6 @@
-# SQL in MySQL/MariaDB - Parte 2
+# SQL in MySQL/MariaDB - Inserimento dati, SELECT, modifica di una tabella, integrità referenziale
 
-- [SQL in MySQL/MariaDB - Parte 2](#sql-in-mysqlmariadb---parte-2)
+- [SQL in MySQL/MariaDB - Inserimento dati, SELECT, modifica di una tabella, integrità referenziale](#sql-in-mysqlmariadb---inserimento-dati-select-modifica-di-una-tabella-integrità-referenziale)
   - [Inserimento di dati in una tabella](#inserimento-di-dati-in-una-tabella)
     - [Il database `dbscuola`](#il-database-dbscuola)
   - [Interrogazione di un database - clausola SELECT](#interrogazione-di-un-database---clausola-select)

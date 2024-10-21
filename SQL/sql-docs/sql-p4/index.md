@@ -1,6 +1,6 @@
-# SQL in MySQL/MariaDB - Parte 4
+# SQL in MySQL/MariaDB - DBMS e sicurezza
 
-- [SQL in MySQL/MariaDB - Parte 4](#sql-in-mysqlmariadb---parte-4)
+- [SQL in MySQL/MariaDB - DBMS e sicurezza](#sql-in-mysqlmariadb---dbms-e-sicurezza)
   - [DBMS e sicurezza](#dbms-e-sicurezza)
     - [Accesso al server fisico che ospita il servizio DBMS](#accesso-al-server-fisico-che-ospita-il-servizio-dbms)
     - [Accesso al DBMS server e allo schema logico della base dei dati](#accesso-al-dbms-server-e-allo-schema-logico-della-base-dei-dati)

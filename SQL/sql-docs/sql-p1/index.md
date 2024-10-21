@@ -1,6 +1,6 @@
-# SQL in MySQL e MariaDB - Parte 1
+# SQL in MySQL e MariaDB - Elementi di base dell'SQL
 
-- [SQL in MySQL e MariaDB - Parte 1](#sql-in-mysql-e-mariadb---parte-1)
+- [SQL in MySQL e MariaDB - Elementi di base dell'SQL](#sql-in-mysql-e-mariadb---elementi-di-base-dellsql)
   - [Architettura di MySQL e MariaDB](#architettura-di-mysql-e-mariadb)
   - [Riferimenti](#riferimenti)
   - [Caratteristiche del linguaggio](#caratteristiche-del-linguaggio)

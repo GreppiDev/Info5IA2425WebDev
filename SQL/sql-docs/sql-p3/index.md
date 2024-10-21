@@ -1,6 +1,6 @@
-# SQL in MySQL/MariaDB - Parte 3
+# SQL in MySQL/MariaDB - Vincoli di integrità, indici, il tempo e le date
 
-- [SQL in MySQL/MariaDB - Parte 3](#sql-in-mysqlmariadb---parte-3)
+- [SQL in MySQL/MariaDB - Vincoli di integrità, indici, il tempo e le date](#sql-in-mysqlmariadb---vincoli-di-integrità-indici-il-tempo-e-le-date)
   - [Vincoli d'integrità](#vincoli-dintegrità)
   - [Vincoli d'integrità sulle tabelle: chiavi](#vincoli-dintegrità-sulle-tabelle-chiavi)
     - [Chiave primaria](#chiave-primaria)
