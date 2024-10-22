@@ -21,7 +21,7 @@ INSERT INTO piscine (NomeP, Indirizzo, Telefono, Responsabile, Tipo, Da, A)
 INSERT INTO piscine (NomeP, Indirizzo, Telefono, Responsabile) 
 	VALUES ('Arioli Venegoni', 'Via Arioli Venegoni, 9 - Milano', '024566316','Aristide Paolini');
 INSERT INTO piscine (NomeP, Indirizzo, Telefono, Responsabile, Tipo, Da, A) 
-	VALUES ('Lido', 'P.le Lotto, 15 - Milano', '02392791','Tommaso Bianchi',1, '2023-06-01','2025-09-30');
+	VALUES ('Lido', 'P.le Lotto, 15 - Milano', '02392791','Tommaso Bianchi',1, '2024-06-01','2024-09-30');
 #inseriamo i dati delle rotazioni
 #rotazioni dell'insegnate con CF SALMAT74C24F129F
 INSERT INTO rotazioni(Insegnante, Piscina, DataIniziale, DataFinale) 

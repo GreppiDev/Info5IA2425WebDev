@@ -21,7 +21,9 @@
       - [Database `travel_agency`](#database-travel_agency)
     - [Join di più di due tabelle](#join-di-più-di-due-tabelle)
       - [Esempi di JOIN tra più tabelle con il database `piscine_milano`](#esempi-di-join-tra-più-tabelle-con-il-database-piscine_milano)
-    - [SELF JOIN](#self-join)
+    - [Self JOIN](#self-join)
+      - [Self JOIN - (primo caso) Incrocio di dati appartenenti alle colonne della stessa tabella](#self-join---primo-caso-incrocio-di-dati-appartenenti-alle-colonne-della-stessa-tabella)
+      - [Self JOIN - (secondo caso) schema logico che realizza un’associazione ricorsiva](#self-join---secondo-caso-schema-logico-che-realizza-unassociazione-ricorsiva)
 
 ## Incrocio di due o più tabelle - JOIN
 
@@ -192,7 +194,7 @@ WHERE ((YEAR(CURDATE()) - YEAR(ic.DataNascita) ) - (RIGHT(CURDATE(),5) < RIGHT(i
 
 ### INNER JOIN vs. Prodotto Cartesiano seguito da WHERE `<condizione_di_join>`
 
-Tecnicamente lo stesso risultato dell'INNER JOIN si può ottenere con un Prodotto cartesiano seguito dalla clausola WHERE che applica la condizione di JOIN, ma quale delle due versioni è da preferire?
+Tecnicamente lo stesso risultato dell'INNER JOIN si può ottenere con un `prodotto cartesiano` seguito dalla clausola `WHERE` che applica la condizione di `JOIN`, ma quale delle due versioni è da preferire?
 
 - JOIN
   
@@ -218,7 +220,7 @@ Per rispondere a questa domanda, confrontiamo i due approcci:
 1. INNER JOIN
 2. Prodotto cartesiano seguito da una condizione WHERE
 
-In genere, un INNER JOIN è più veloce ed efficiente di un prodotto cartesiano (CROSS JOIN) seguito da una condizione WHERE. Di seguito sono riportati i motivi:
+In genere, un `INNER JOIN` è più veloce ed efficiente di un `prodotto cartesiano` seguito da una condizione `WHERE`. Di seguito sono riportati i motivi:
 
 1. Piano di esecuzione
 
@@ -357,7 +359,7 @@ Esempio: Riportare per ogni insegnante tutti i dati e le qualifiche possedute.
 -- 1° metodo: con un INNER JOIN
 SELECT * 
 FROM insegnanti i INNER JOIN qualifiche q ON i.CodiceFiscale = q.Insegnante;
--- 2° metodo: con un prodotto cartesiano ed una restrizione
+-- 2° metodo: con un prodotto cartesiano ed una restrizione (WHERE)
 SELECT *
 FROM insegnanti i, qualifiche q
 WHERE i.codiceFiscale = q.insegnante;
@@ -532,7 +534,7 @@ WHERE
 ORDER BY 
     p.DataPrenotazione;
 
--- trova i viaggi che hanno prenotazioni (senza riportare il numero di prenotazioni)
+-- Trovare i viaggi che hanno prenotazioni (senza riportare il numero di prenotazioni)
 SELECT DISTINCT
     v.Id AS IdViaggio,
     v.Descrizione,
@@ -542,7 +544,7 @@ FROM
     JOIN offerte o ON v.Id = o.fkViaggio
     JOIN prenotazioni p ON o.Id = p.fkOfferta;
 
--- trova i viaggi che hanno prenotazioni (riportare anche il numero di prenotazioni)
+-- Trovare i viaggi che hanno prenotazioni (riportare anche il numero di prenotazioni)
 -- prima versione
 SELECT DISTINCT
     v.Id AS IdViaggio,
@@ -629,10 +631,7 @@ SELECT DISTINCT IF( RIGHT(ic.DataNascita,5)  <= RIGHT(CURDATE(),5),
 SELECT DISTINCT IF( RIGHT(ic.DataNascita,5) <= RIGHT(CURDATE(),5),
       YEAR(CURDATE()) - YEAR(ic.DataNascita),
       (YEAR(CURDATE()) - YEAR(ic.DataNascita)) - 1 ) AS 'Età'
-  FROM 
-  iscritti_corsi ic 
-  JOIN 
-  frequenta_corsi fc
+  FROM iscritti_corsi ic JOIN frequenta_corsi fc
     ON ic.Persona = fc.Persona 
   WHERE fc.NomeC ='Acquagym';
 
@@ -654,7 +653,128 @@ SELECT DISTINCT p.Cognome, p.Nome, ic.DataNascita
   WHERE  fc.Piscina= 'Lido' AND fc.NomeC='Acquagym';
 ```
 
-### SELF JOIN
+### Self JOIN
+
+Il self join è un’operazione di join tra una tabella ed una sua copia. È utile in tutti i casi in cui:
+
+- Si devono incrociare dati appartenenti alle colonne della stessa tabella
+- Nel caso in cui si debbano eseguire interrogazioni sulla base di uno schema logico che realizza un’associazione ricorsiva
+
+Non esiste un operatore `SELF JOIN` in MySQL/MariaDb, ma per per creare un self join bisogna:
+
+1. Creare una copia della tabella mediante ridenominazione
+2. Applicare l'operatore JOIN con una condizione di join associata alle colonne della tabella di partenza
+
+Con qualche esempio la definizione di self join sarà chiara.
+
+#### Self JOIN - (primo caso) Incrocio di dati appartenenti alle colonne della stessa tabella
+
+Si supponga di voler eseguire la seguente query: *Trovare gli insegnanti che hanno sia la qualifica di "Bagnino Salvataggio" che il "Brevetto di Sub di Terzo Grado"*
+
+:bomb: :fire: :skull: La seguente versione è sbagliata:
+
+```sql
+SELECT * 
+FROM qualifiche
+WHERE QualificaIn LIKE '%Bagnino di Salvataggio%' AND QualificaIn LIKE '%Sub di Terzo Grado%';
+```
+
+Il risultato sarebbe sempre:
+
+```sql
+Empty set 
+```
+
+Il motivo per cui la query precedente, anche se sintatticamente senza errori, è concettualmente sbagliata, è dovuto al fatto che ogni tupla di una tabella di un modello relazionale può assumere un solo valore.
+
+Se si scorrono le righe della tabella `insegnanti`, si vedrà che non c'è nessuna riga (tupla) nella quale il campo `QualificaIn` assume due valori contemporaneamente...
+
+Per poter eseguire correttamente la query richiesta occorre eseguire un self join mediante la scrittura di due alias della tabella `insegnanti`:
+
+```sql
+-- con prodotto cartesiano + condizione di join (sconsigliato)
+SELECT * 
+FROM qualifiche q1, qualifiche q2
+WHERE q1.Insegnante = q2.Insegnante;
+
+-- con JOIN (consigliato)
+SELECT * 
+FROM qualifiche q1 JOIN qualifiche q2 
+ON q1.Insegnante = q2.Insegnante;
+
+```
+
+In entrambi i casi il risultato è:
+
+| QualificaIn                      | Insegnante       | QualificaIn                      | Insegnante       |
+|----------------------------------|------------------|----------------------------------|------------------|
+| Bagnino di Salvataggio           | ALBGIN77B31C133C | Bagnino di Salvataggio           | ALBGIN77B31C133C |
+| Bagnino di Salvataggio           | ALBGIN77B31C133C | Brevetto di Sub di Terzo Grado   | ALBGIN77B31C133C |
+| Brevetto di Sub di Terzo Grado   | ALBGIN77B31C133C | Bagnino di Salvataggio           | ALBGIN77B31C133C |
+| Brevetto di Sub di Terzo Grado   | ALBGIN77B31C133C | Brevetto di Sub di Terzo Grado   | ALBGIN77B31C133C |
+| Bagnino di Salvataggio           | SALMAT74C24F129F | Bagnino di Salvataggio           | SALMAT74C24F129F |
+| Bagnino di Salvataggio           | SALMAT74C24F129F | Brevetto di Sub di Primo Grado   | SALMAT74C24F129F |
+| Bagnino di Salvataggio           | SALMAT74C24F129F | Brevetto di Sub di Secondo Grado | SALMAT74C24F129F |
+| Brevetto di Sub di Primo Grado   | SALMAT74C24F129F | Bagnino di Salvataggio           | SALMAT74C24F129F |
+| Brevetto di Sub di Primo Grado   | SALMAT74C24F129F | Brevetto di Sub di Primo Grado   | SALMAT74C24F129F |
+| Brevetto di Sub di Primo Grado   | SALMAT74C24F129F | Brevetto di Sub di Secondo Grado | SALMAT74C24F129F |
+| Brevetto di Sub di Secondo Grado | SALMAT74C24F129F | Bagnino di Salvataggio           | SALMAT74C24F129F |
+| Brevetto di Sub di Secondo Grado | SALMAT74C24F129F | Brevetto di Sub di Primo Grado   | SALMAT74C24F129F |
+| Brevetto di Sub di Secondo Grado | SALMAT74C24F129F | Brevetto di Sub di Secondo Grado | SALMAT74C24F129F |
+
+La query che restituisce il risultato richiesto è dunque:
+
+```sql
+SELECT * 
+FROM qualifiche q1 JOIN qualifiche q2 
+         ON q1.Insegnante = q2.Insegnante 
+WHERE q1.QualificaIn LIKE '%Bagnino di Salvataggio%' AND 
+           q2.QualificaIn LIKE '%Sub di Terzo Grado%';
+```
+
+Il risultato è:
+
+| QualificaIn            | Insegnante       | QualificaIn                    | Insegnante       |
+|------------------------|------------------|--------------------------------|------------------|
+| Bagnino di Salvataggio | ALBGIN77B31C133C | Brevetto di Sub di Terzo Grado | ALBGIN77B31C133C |
+
+Si supponga di voler eseguire la seguente query: *riportare il cognome ed il nome degli insegnanti che hanno sia la qualifica di "Bagnino Salvataggio" che il "Brevetto di Sub di Terzo Grado".*
+
+```sql
+-- versione con JOIN (consigliato)
+SELECT i.Cognome, i.Nome
+  FROM 
+  insegnanti i 
+  JOIN 
+  qualifiche q1
+    ON i.CodiceFiscale = q1.Insegnante
+  JOIN qualifiche q2
+    ON q1.Insegnante = q2.Insegnante 
+  WHERE q1.QualificaIn LIKE '%Bagnino di Salvataggio%' AND
+      q2.QualificaIn LIKE '%Sub di Terzo Grado%';
+
+-- versione con prodotto cartesiano seguito da selezione (sconsigliato)
+SELECT i.Cognome, i.Nome
+  FROM 
+  insegnanti i, qualifiche q1, qualifiche q2
+  WHERE i.CodiceFiscale = q1.Insegnante AND q1.Insegnante = q2.Insegnante AND q1.QualificaIn LIKE '%Bagnino di Salvataggio%' AND q2.QualificaIn LIKE '%Sub di Terzo Grado%';
+```
+
+Il risultato è:
+
+| Cognome | Nome     |
+|---------|----------|
+| Alberti | Giovanni |
+
+#### Self JOIN - (secondo caso) schema logico che realizza un’associazione ricorsiva
+
+Si supponga di avere una base di dati il cui schema concettuale Entity/Relationship (ER) sia descritto dagli oggetti definiti nella figura seguente:
+
+![Schema ER del database per la gestione di un campionato di calcio](campionato-di-calcio-ER.png)
+
+Si supponga di dover rispondere alla seguente query: *stampare i risultati delle partite giocate in una certa data del campionato; per la squadra di casa si riporti il nome della squadra, la sua città e lo stadio, mentre per la squadra in trasferta si riporti solo la città di provenienza.*
+
+
 
 [^1]: [MySQL JOIN Clause](https://dev.mysql.com/doc/refman/9.1/en/join.html)
 [^2]: [MariaDb JOIN Syntax](https://mariadb.com/kb/en/join-syntax/)
