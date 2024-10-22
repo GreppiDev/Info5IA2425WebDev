@@ -24,6 +24,8 @@
     - [Self JOIN](#self-join)
       - [Self JOIN - (primo caso) Incrocio di dati appartenenti alle colonne della stessa tabella](#self-join---primo-caso-incrocio-di-dati-appartenenti-alle-colonne-della-stessa-tabella)
       - [Self JOIN - (secondo caso) schema logico che realizza un’associazione ricorsiva](#self-join---secondo-caso-schema-logico-che-realizza-unassociazione-ricorsiva)
+    - [LEFT e RIGHT \[OUTER\] JOIN](#left-e-right-outer-join)
+      - [Esempi di query che utilizzano il LEFT JOIN](#esempi-di-query-che-utilizzano-il-left-join)
 
 ## Incrocio di due o più tabelle - JOIN
 
@@ -146,8 +148,8 @@ Si noti che la condizione di ricerca `WHERE <CondizioneRicerca>` presente nella 
 Esistono diversi tipi di JOIN, ciascuno con un comportamento specifico:
 
 - `INNER JOIN`: restituisce solo le righe che hanno valori corrispondenti nella colonna specificata in entrambe le tabelle. È il tipo di join più comune.
-- `LEFT JOIN`: restituisce tutte le righe della tabella a sinistra e le righe corrispondenti della tabella a destra. Se non esiste una corrispondenza, i valori della tabella a destra vengono impostati a NULL.
-- `RIGHT JOIN`: simile al LEFT JOIN, ma restituisce tutte le righe della tabella a destra e le righe corrispondenti della tabella a sinistra.
+- `LEFT OUTER JOIN`, oppure semplicemente `LEFT JOIN` (join esterno sinistro): la tabella derivata è formata dalle righe che derivano dell’INNER JOIN alle quali si aggiungono tutte le righe della tabella posta a sinistra dell’operatore LEFT JOIN che non sono collegate a nessuna riga della tabella di destra. Nelle righe della tabella risultato, i campi dell'altra tabella (di destra) sono valorizzati a NULL.
+- `RIGHT OUTER JOIN`, oppure semplicemente `RIGHT JOIN` (join esterno destro): come per il precedente, scambiando i ruoli delle tabelle di destra e di sinistra.
 - `SELF JOIN`: un join di una tabella con se stessa, utile per confrontare i dati all'interno della stessa tabella.
 - `NATURAL JOIN`: un natural join è un INNER JOIN che unisce le tabelle in base a tutte le colonne con lo stesso nome e lo stesso tipo di dato presenti in entrambe le tabelle. In altre parole, il sistema di gestione del database (DBMS) identifica automaticamente le colonne comuni e le utilizza come condizione di join.
 
@@ -439,12 +441,6 @@ SELECT DISTINCT a.Denominazione
 FROM aziende a
 JOIN stages st ON a.Codice = st.Azienda
 WHERE st.DataInizio BETWEEN '2024-06-01' AND '2024-08-31';
-
--- Ricercare codice, cognome e nome degli allievi a cui è stato assegnato uno stage in un certo anno scolastico
-SELECT DISTINCT s.Codice, s.Cognome, s.Nome
-FROM studenti s
-JOIN stages st ON s.Codice = st.Studente
-WHERE st.AnnoScolastico = '2023/2024';
 ```
 
 #### Database `travel_agency`
@@ -768,13 +764,67 @@ Il risultato è:
 
 #### Self JOIN - (secondo caso) schema logico che realizza un’associazione ricorsiva
 
-Si supponga di avere una base di dati il cui schema concettuale Entity/Relationship (ER) sia descritto dagli oggetti definiti nella figura seguente:
+Si supponga di avere una base di dati il cui schema Entity/Relationship (ER) sia descritto dagli oggetti definiti nella figura seguente:
 
-![Schema ER del database per la gestione di un campionato di calcio](campionato-di-calcio-ER.png)
+![Schema del database campionato_calcio](schema-campionato-calcio.png)
 
 Si supponga di dover rispondere alla seguente query: *stampare i risultati delle partite giocate in una certa data del campionato; per la squadra di casa si riporti il nome della squadra, la sua città e lo stadio, mentre per la squadra in trasferta si riporti solo la città di provenienza.*
 
+Per eseguire la query è sufficiente creare due alias della tabella squadre, una per rappresentare la squadra di casa e una per rappresentare la squadra in trasferta.
 
+![Immagine che spiega la trasformazione di un'associazione ricorsiva](trasformazione-associazione-ricorsiva.png)
+
+```sql
+-- Primo modo con prodotto cartesiano seguito da WHERE (sconsigliato)
+SELECT s.*, p.PuntiCasa, s2.Nome, s2.Citta, p.PuntiTrasferta
+  FROM partite p, squadre s, squadre s2
+  WHERE p.SquadraCasa = s.Nome AND 
+        p.SquadraTrasferta = s2.Nome AND 
+        p.Data ='la data';
+
+-- Secondo modo con INNER JOIN (consigliato)
+SELECT s.*, p.PuntiCasa, s2.Nome, s2.Citta, p.PuntiTrasferta
+  FROM 
+  partite p 
+  JOIN 
+  squadre s 
+    ON p.SquadraCasa = s.Nome
+  JOIN squadre s2 
+    ON  p.SquadraTrasferta = s2.Nome 
+  WHERE p.Data = 'la data';
+```
+
+### LEFT e RIGHT [OUTER] JOIN
+
+- `LEFT OUTER JOIN`, oppure semplicemente `LEFT JOIN` (join esterno sinistro): la tabella derivata è formata dalle righe che derivano dell’INNER JOIN alle quali si aggiungono tutte le righe della tabella posta a sinistra dell’operatore LEFT JOIN che non sono collegate a nessuna riga della tabella di destra. Nelle righe della tabella risultato, i campi dell'altra tabella (di destra) sono valorizzati a NULL.
+
+- `RIGHT OUTER JOIN`, oppure semplicemente `RIGHT JOIN` (join esterno destro): come per il precedente, scambiando i ruoli delle tabelle di destra e di sinistra.
+In MySQL/MariaDb la parola `OUTER` è facoltativa: scrivere `LEFT JOIN` o `LEFT OUTER JOIN` è equivalente.
+
+#### Esempi di query che utilizzano il LEFT JOIN
+
+Scrivere la seguente query: *trovare le piscine per le quali **non** sono ancora stati registrati corsi*
+
+```sql
+-- la tabella delle piscine 
+SELECT * FROM piscine;
+-- la tabella dei corsi
+SELECT * FROM corsi;
+
+-- le piscine che hanno corsi si trovano eseguendo un INNER JOIN
+SELECT p.nomeP, c.nomeC
+FROM piscine p JOIN corsi c
+  ON p.NomeP=c.Piscina;
+
+-- le piscine che non hanno ancora corsi si trovano eseguendo un LEFT JOIN seguito da una condizione WHERE che filtra solo le tuple che hanno a NULL i campi della tabella di destra.
+SELECT p.nomeP, c.nomeC
+FROM 
+piscine p 
+LEFT JOIN 
+corsi c
+  ON p.NomeP=c.Piscina
+WHERE c.nomeC IS NULL;
+```
 
 [^1]: [MySQL JOIN Clause](https://dev.mysql.com/doc/refman/9.1/en/join.html)
 [^2]: [MariaDb JOIN Syntax](https://mariadb.com/kb/en/join-syntax/)
