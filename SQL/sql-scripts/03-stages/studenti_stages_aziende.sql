@@ -1,16 +1,16 @@
 
 /* 
 supponendo di avere il seguente modello relazionale:
-classe(Codice, Aula)
+classi(Codice, Aula)
 studenti(Codice,Cognome, Nome, DataNascita, Genere,EMail, Classe)
 stages(Id, Azienda, Studente, AnnoScolastico, DataInizio, DurataComplessiva)
 aziende(Codice, Denominazione, Indirizzo, Sede, Telefono, EMail) 
 Si supponga che:
-classe.Codice sia una stringa che rappresenta la classe frequentata, ad esempio '1IA', '3IB', '4SC', etc.
-classe.Aula sia una stringa corrispondente alla collocazione nell'istituto, ad esempio 'A02', 'A31', 'Est.1', etc.
+classi.Codice sia una stringa che rappresenta la classi frequentata, ad esempio '1IA', '3IB', '4SC', etc.
+classi.Aula sia una stringa corrispondente alla collocazione nell'istituto, ad esempio 'A02', 'A31', 'Est.1', etc.
 studenti.Codice sia un alfanumerico a lunghezza fissa di 8 caratteri che identifica ogni studente
 studenti.Genere sia un enumerativo che può assumere i valori 'M', 'F'
-studenti.Classe è la chiave esterna che punta al codice della classe
+studenti.Classe è la chiave esterna che punta al codice della classi
 stages.Id è un intero non negativo ad auto incremento chiave priamria
 stages.Azienda è la chiave esterna che punta a aziende.Codice
 stages.Studente è la chiave esterna che punta a studenti.Codice
@@ -29,12 +29,12 @@ Popolare il database con almeno 5 classi, 10 studenti, 20 stages, 15 aziende
 CREATE DATABASE IF NOT EXISTS studenti_stages_aziende;
 USE studenti_stages_aziende;
 
--- Creazione della tabella classe
-CREATE TABLE IF NOT EXISTS classe (
+-- Creazione della tabella classi
+CREATE TABLE IF NOT EXISTS classi (
     Codice VARCHAR(4) PRIMARY KEY,
     Aula VARCHAR(10) NOT NULL
 );
-
+show TABLES;
 -- Creazione della tabella aziende
 CREATE TABLE IF NOT EXISTS aziende (
     Codice VARCHAR(16) PRIMARY KEY, -- Partita IVA o CF
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS studenti (
     Genere ENUM('M', 'F') NOT NULL,
     EMail VARCHAR(100) NOT NULL,
     Classe VARCHAR(4),
-    FOREIGN KEY (Classe) REFERENCES classe (Codice) ON DELETE SET NULL ON UPDATE CASCADE
+    FOREIGN KEY (Classe) REFERENCES classi (Codice) ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 -- Creazione della tabella stages
@@ -69,10 +69,10 @@ CREATE TABLE IF NOT EXISTS stages (
     FOREIGN KEY (Studente) REFERENCES studenti (Codice) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
--- sati per la tabella classe
+-- dati per la tabella classi
 
 INSERT INTO
-    classe (Codice, Aula)
+    classi (Codice, Aula)
 VALUES ('1IA', 'A01'),
     ('2IB', 'A02'),
     ('3SC', 'B10'),

@@ -4,22 +4,22 @@ CREATE DATABASE IF NOT EXISTS travel_agency;
 -- Use the newly created database
 USE travel_agency;
 
--- Create viaggio table
-CREATE TABLE IF NOT EXISTS viaggio (
+-- Create viaggi table
+CREATE TABLE IF NOT EXISTS viaggi (
     Id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     Descrizione TEXT,
     Destinazione VARCHAR(100)
 );
 
--- Create agenzia table
-CREATE TABLE IF NOT EXISTS agenzia (
+-- Create agenzie table
+CREATE TABLE IF NOT EXISTS agenzie (
     Id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     Nome VARCHAR(100),
     Indirizzo VARCHAR(255)
 );
 
--- Create cliente table
-CREATE TABLE IF NOT EXISTS cliente (
+-- Create clienti table
+CREATE TABLE IF NOT EXISTS clienti (
     Id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     Nome VARCHAR(50),
     Cognome VARCHAR(50),
@@ -33,8 +33,8 @@ CREATE TABLE IF NOT EXISTS offerte (
     fkAgenzia INT UNSIGNED,
     DataScadenza DATE,
     Prezzo DECIMAL(10, 2),
-    FOREIGN KEY (fkViaggio) REFERENCES viaggio (Id),
-    FOREIGN KEY (fkAgenzia) REFERENCES agenzia (Id)
+    FOREIGN KEY (fkViaggio) REFERENCES viaggi (Id),
+    FOREIGN KEY (fkAgenzia) REFERENCES agenzie (Id)
 );
 
 -- Create prenotazioni table
@@ -44,12 +44,12 @@ CREATE TABLE IF NOT EXISTS prenotazioni (
     fkCliente INT UNSIGNED,
     DataPrenotazione DATE,
     FOREIGN KEY (fkOfferta) REFERENCES offerte (Id),
-    FOREIGN KEY (fkCliente) REFERENCES cliente (Id)
+    FOREIGN KEY (fkCliente) REFERENCES clienti (Id)
 );
 
 USE travel_agency;
--- Inserimento dati nella tabella viaggio
-INSERT INTO viaggio (Descrizione, Destinazione) VALUES
+-- Inserimento dati nella tabella viaggi
+INSERT INTO viaggi (Descrizione, Destinazione) VALUES
 ('Tour delle città d''arte', 'Italia'),
 ('Vacanza al mare', 'Spagna'),
 ('Avventura nella giungla', 'Costa Rica'),
@@ -66,15 +66,15 @@ INSERT INTO viaggio (Descrizione, Destinazione) VALUES
 ('Esplorazione dei fiordi', 'Norvegia'),
 ('Tour delle capitali baltiche', 'Baltico');
 
--- Inserimento dati nella tabella agenzia
-INSERT INTO agenzia (Nome, Indirizzo) VALUES
+-- Inserimento dati nella tabella agenzie
+INSERT INTO agenzie (Nome, Indirizzo) VALUES
 ('Viaggi Fantastici', 'Via Roma 123, Milano'),
 ('Avventure Senza Confini', 'Corso Italia 456, Roma'),
 ('Sogni in Valigia', 'Piazza Maggiore 789, Bologna'),
 ('Orizzonti Lontani', 'Via Garibaldi 101, Firenze'),
 ('Viaggi nel Tempo', 'Corso Vittorio Emanuele 202, Torino');
 
-INSERT INTO cliente (Nome, Cognome, Email) VALUES
+INSERT INTO clienti (Nome, Cognome, Email) VALUES
 ('Mario', 'Rossi', 'mario.rossi@email.com'),
 ('Anna', 'Verdi', 'anna.verdi@email.com'),
 ('Giuseppe', 'Bianchi', 'giuseppe.bianchi@email.com'),
@@ -119,11 +119,11 @@ FROM
 JOIN 
     offerte o ON p.fkOfferta = o.Id
 JOIN 
-    cliente c ON p.fkCliente = c.Id
+    clienti c ON p.fkCliente = c.Id
 JOIN 
-    viaggio v ON o.fkViaggio = v.Id
+    viaggi v ON o.fkViaggio = v.Id
 JOIN 
-    agenzia a ON o.fkAgenzia = a.Id
+    agenzie a ON o.fkAgenzia = a.Id
 WHERE 
     p.DataPrenotazione < o.DataScadenza
 ORDER BY 
@@ -135,7 +135,7 @@ SELECT DISTINCT
     v.Descrizione,
     v.Destinazione
 FROM
-    viaggio v
+    viaggi v
     JOIN offerte o ON v.Id = o.fkViaggio
     JOIN prenotazioni p ON o.Id = p.fkOfferta;
 
@@ -153,7 +153,7 @@ SELECT DISTINCT
             o.fkViaggio = v.Id
     ) AS NumeroPrenotazioni
 FROM
-    viaggio v
+    viaggi v
     JOIN offerte o ON v.Id = o.fkViaggio
     JOIN prenotazioni p ON o.Id = p.fkOfferta
 ORDER BY NumeroPrenotazioni DESC;
@@ -165,7 +165,7 @@ SELECT DISTINCT
     v.Destinazione,
     COUNT(p.Id) AS NumeroPrenotazioni
 FROM
-    viaggio v
+    viaggi v
     JOIN offerte o ON v.Id = o.fkViaggio
     JOIN prenotazioni p ON o.Id = p.fkOfferta
 GROUP BY

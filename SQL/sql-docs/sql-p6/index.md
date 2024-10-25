@@ -386,12 +386,12 @@ La struttura del database è:
 CREATE DATABASE IF NOT EXISTS studenti_stages_aziende;
 USE studenti_stages_aziende;
 
--- Creazione della tabella classe
-CREATE TABLE IF NOT EXISTS classe (
+-- Creazione della tabella classi
+CREATE TABLE IF NOT EXISTS classi (
     Codice VARCHAR(4) PRIMARY KEY,
     Aula VARCHAR(10) NOT NULL
 );
-
+show TABLES;
 -- Creazione della tabella aziende
 CREATE TABLE IF NOT EXISTS aziende (
     Codice VARCHAR(16) PRIMARY KEY, -- Partita IVA o CF
@@ -411,7 +411,7 @@ CREATE TABLE IF NOT EXISTS studenti (
     Genere ENUM('M', 'F') NOT NULL,
     EMail VARCHAR(100) NOT NULL,
     Classe VARCHAR(4),
-    FOREIGN KEY (Classe) REFERENCES classe (Codice) ON DELETE SET NULL ON UPDATE CASCADE
+    FOREIGN KEY (Classe) REFERENCES classi (Codice) ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 -- Creazione della tabella stages
@@ -446,7 +446,6 @@ WHERE st.DataInizio BETWEEN '2024-06-01' AND '2024-08-31';
 #### Database `travel_agency`
 
 Si consideri il database il cui schema relazionale è dato da:
-
 ![database travel_agency](db-travel-agency.png)
 
 Il database può essere ricreato a partire da [questo script](../../sql-scripts/04-agenzie-viaggi/travel_agency.sql).
@@ -454,28 +453,27 @@ Il database può essere ricreato a partire da [questo script](../../sql-scripts/
 La struttura del database è:
 
 ```sql
--- Create the database
 CREATE DATABASE IF NOT EXISTS travel_agency;
 
 -- Use the newly created database
 USE travel_agency;
 
--- Create viaggio table
-CREATE TABLE IF NOT EXISTS viaggio (
+-- Create viaggi table
+CREATE TABLE IF NOT EXISTS viaggi (
     Id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     Descrizione TEXT,
     Destinazione VARCHAR(100)
 );
 
--- Create agenzia table
-CREATE TABLE IF NOT EXISTS agenzia (
+-- Create agenzie table
+CREATE TABLE IF NOT EXISTS agenzie (
     Id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     Nome VARCHAR(100),
     Indirizzo VARCHAR(255)
 );
 
--- Create cliente table
-CREATE TABLE IF NOT EXISTS cliente (
+-- Create clienti table
+CREATE TABLE IF NOT EXISTS clienti (
     Id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     Nome VARCHAR(50),
     Cognome VARCHAR(50),
@@ -489,8 +487,8 @@ CREATE TABLE IF NOT EXISTS offerte (
     fkAgenzia INT UNSIGNED,
     DataScadenza DATE,
     Prezzo DECIMAL(10, 2),
-    FOREIGN KEY (fkViaggio) REFERENCES viaggio (Id),
-    FOREIGN KEY (fkAgenzia) REFERENCES agenzia (Id)
+    FOREIGN KEY (fkViaggio) REFERENCES viaggi (Id),
+    FOREIGN KEY (fkAgenzia) REFERENCES agenzie (Id)
 );
 
 -- Create prenotazioni table
@@ -500,7 +498,7 @@ CREATE TABLE IF NOT EXISTS prenotazioni (
     fkCliente INT UNSIGNED,
     DataPrenotazione DATE,
     FOREIGN KEY (fkOfferta) REFERENCES offerte (Id),
-    FOREIGN KEY (fkCliente) REFERENCES cliente (Id)
+    FOREIGN KEY (fkCliente) REFERENCES clienti (Id)
 );
 ```
 
@@ -520,11 +518,11 @@ FROM
 JOIN 
     offerte o ON p.fkOfferta = o.Id
 JOIN 
-    cliente c ON p.fkCliente = c.Id
+    clienti c ON p.fkCliente = c.Id
 JOIN 
-    viaggio v ON o.fkViaggio = v.Id
+    viaggi v ON o.fkViaggio = v.Id
 JOIN 
-    agenzia a ON o.fkAgenzia = a.Id
+    agenzie a ON o.fkAgenzia = a.Id
 WHERE 
     p.DataPrenotazione < o.DataScadenza
 ORDER BY 
@@ -536,7 +534,7 @@ SELECT DISTINCT
     v.Descrizione,
     v.Destinazione
 FROM
-    viaggio v
+    viaggi v
     JOIN offerte o ON v.Id = o.fkViaggio
     JOIN prenotazioni p ON o.Id = p.fkOfferta;
 
@@ -554,7 +552,7 @@ SELECT DISTINCT
             o.fkViaggio = v.Id
     ) AS NumeroPrenotazioni
 FROM
-    viaggio v
+    viaggi v
     JOIN offerte o ON v.Id = o.fkViaggio
     JOIN prenotazioni p ON o.Id = p.fkOfferta
 ORDER BY NumeroPrenotazioni DESC;

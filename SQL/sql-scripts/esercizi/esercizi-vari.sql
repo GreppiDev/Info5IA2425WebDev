@@ -47,3 +47,60 @@ SELECT s.*, p.PuntiCasa, s2.Nome, s2.Citta, p.PuntiTrasferta
   JOIN squadre s2 
     ON  p.SquadraTrasferta = s2.Nome 
   WHERE p.Data = '2024-09-05';
+
+use travel_agency;
+-- Ricercare le prenotazioni fatte dai clienti con data antecedente alla scadenza dell’offerta
+
+-- dove sono i dati richiesti?
+-- prima versione 
+
+SELECT p.Id 'Id prenotazione', p.DataPrenotazione, c.Id, c.Nome, c.Cognome, o.Id 'Id offerta', o.DataScadenza, v.Destinazione 'Viaggio'
+FROM 
+prenotazioni p 
+JOIN 
+offerte o 
+ON p.fkOfferta = o.Id 
+JOIN cliente c 
+ON c.Id = p.fkCliente
+JOIN 
+viaggio v 
+ON v.Id = o.fkViaggio
+WHERE p.DataPrenotazione < o.DataScadenza;
+
+SELECT
+    c.Nome, 
+    c.Cognome, 
+    v.Destinazione, 
+    p.DataPrenotazione, 
+    o.DataScadenza
+FROM 
+prenotazioni p 
+JOIN 
+offerte o 
+ON p.fkOfferta = o.Id 
+JOIN cliente c 
+ON c.Id = p.fkCliente
+JOIN 
+viaggio v 
+ON v.Id = o.fkViaggio
+WHERE p.DataPrenotazione < o.DataScadenza;
+
+-- Trovare i viaggi che hanno prenotazioni (senza riportare il numero di prenotazioni)
+-- occorre fare la JOIN tra viaggio, offerte, prenotazioni 
+-- e prendere solo i viaggi
+SELECT DISTINCT v.* , (
+    SELECT COUNT(*)
+    FROM prenotazioni p
+        JOIN offerte o ON p.fkOfferta = o.Id
+    WHERE
+        o.fkViaggio = v.Id
+) AS NumeroPrenotazioni
+FROM  viaggio v 
+JOIN offerte o 
+ON o.fkViaggio = v.Id 
+JOIN prenotazioni p 
+ON p.fkOfferta = o.Id;
+
+/* ALTER TABLE cliente RENAME TO clienti;
+ALTER TABLE viaggio RENAME TO viaggi;
+ALTER TABLE agenzia RENAME TO agenzie; */
