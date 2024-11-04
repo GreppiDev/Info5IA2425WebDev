@@ -56,14 +56,14 @@ ALTER USER 'root'@localhost IDENTIFIED BY 'root-password';
 FLUSH PRIVILEGES;
 ```
 
-> :memo: **Nota**: lo stesso `user_name` potrebbe avere permessi diversi a seconda dell'host da cui si connette. Ad esempio, l'utente `root` potrebbe avere privilegi massimi quando si connette da `localhost`, ma privilegi inferiori quando si connette da un host diverso, specificato mediante un indirizzo IP, oppure un nome DNS.
->
-> :warning: **Attenzione**: Dalla versione 10.4 di MariaDB in poi `mysql.user` è una view ed è sostituita dalla tabella `mysql.global_priv`. In MySQL invece `mysql.user` è una tabella e la tabella `mysql.global_priv` non esiste. Per verificarlo basta eseguire (come utente root) il comando:
->
-> ```sql
-> SHOW FULL TABLES FROM mysql;
-> -- In MariaDB e in MySQL si otterranno risultati diversi
-> ```
+:memo: **Nota**: lo stesso `user_name` potrebbe avere permessi diversi a seconda dell'host da cui si connette. Ad esempio, l'utente `root` potrebbe avere privilegi massimi quando si connette da `localhost`, ma privilegi inferiori quando si connette da un host diverso, specificato mediante un indirizzo IP, oppure un nome DNS.
+
+:warning: **Attenzione**: Dalla versione 10.4 di MariaDB in poi `mysql.user` è una view ed è sostituita dalla tabella `mysql.global_priv`. In MySQL invece `mysql.user` è una tabella e la tabella `mysql.global_priv` non esiste. Per verificarlo basta eseguire (come utente root) il comando:
+
+```sql
+SHOW FULL TABLES FROM mysql;
+-- In MariaDB e in MySQL si otterranno risultati diversi
+```
 
 Per cambiare le password bisogna sempre usare il comando `ALTER USER`
 
@@ -77,7 +77,7 @@ Per cambiare le password bisogna sempre usare il comando `ALTER USER`
 
 Dopo aver cambiato la password di `root`, per migliorare la sicurezza delle applicazioni che utilizzano il DBMS Server è assolutamente necessario creare nuovi utenti per l’accesso ai database presenti nel catalogo del DBMS.
 
-> :warning::fire: **Attenzione!**: Non utilizzare **MAI** l'utente `root` per accedere al database durante il normale funzionamento di un applicazione che utilizza il DBMS Server!
+:warning::fire: **Attenzione!**: Non utilizzare **MAI** l'utente `root` per accedere al database durante il normale funzionamento di una applicazione che utilizza il DBMS Server!
 
 La creazione di un utente in MySQL/MariaDB può essere effettuata mediante il comando `CREATE USER`:
 
@@ -183,9 +183,9 @@ In MariaDB in un container Docker si potrebbe ottenere un risultato come il segu
 | healthcheck | *0C3708B30A8CFC10BB603CCCE0BAA348B2ABBBD0 | ::1       |
 | healthcheck | *0C3708B30A8CFC10BB603CCCE0BAA348B2ABBBD0 | localhost |
 
-> :memo: Le password non sono memorizzate in chiaro, ma viene utilizzato un algoritmo di hashing, ad esempio SHA2 per memorizzare l'hash della password. In questo modo nessuno è a conoscenza della password di ciascun utente, ad eccezione dell'utente stesso.
->
-> Quando viene inserita la password in chiaro per connettersi al DBMS viene calcolato h'hash della password in chiaro e viene fatto un confronto con il valore memorizzato nella tabella/view `mysql.user`.
+:memo: Le password non sono memorizzate in chiaro, ma viene utilizzato un algoritmo di hashing, ad esempio SHA2 per memorizzare l'hash della password. In questo modo nessuno è a conoscenza della password di ciascun utente, ad eccezione dell'utente stesso.
+
+Quando viene inserita la password in chiaro per connettersi al DBMS viene calcolato h'hash della password in chiaro e viene fatto un confronto con il valore memorizzato nella tabella/view `mysql.user`.
 
 #### Visualizzare gli utenti in MariaDb - uso di `mysql.global_priv` (Solo in MariaDb)
 
@@ -216,7 +216,7 @@ MySQL e MariaDB utilizzano un meccanismo di privilegi di accesso per limitare l'
 
 Ogni utente di MySQL/MariaDB può avere specifici privilegi su specifici database da specifici hosts (computers) da cui è connesso.
 
-> :warning: L'utente `root` di MySQL/MariaDB può eseguire qualsiasi operazione all'interno del DBMS.
+:warning: L'utente `root` di MySQL/MariaDB può eseguire qualsiasi operazione all'interno del DBMS.
 
 Quando un utente tenta di fare qualcosa con il DBMS server, MySQL/MariaDB server, prima di tutto, controlla se l'utente ha il privilegio di connettersi al server:
 
@@ -291,7 +291,6 @@ In generale:
 GRANT privileges ON db_name.table TO 'username'@'hostname'  [WITH GRANT OPTION];
 -- oppure
 GRANT privileges ON *.* TO 'username'@'hostname'  [WITH GRANT OPTION];
-
 ```
 
 `privileges` : può essere una lista di privilegi specifici come `SELECT`,`INSERT`,`UPDATE`,`DELETE`,`CREATE`,`DROP`,`ALTER` etc. oppure può essere `ALL` per permettere tutto su `db_name.table` .
@@ -369,7 +368,7 @@ ALTER USER 'dbscuola_user'@'localhost’  WITH MAX_QUERIES_PER_HOUR 100 MAX_CONN
 
 [Manuale di MySQL](https://dev.mysql.com/doc/refman/9.0/en/information-schema.html)
 
-<cite>`information_schema` is a database within each MySQL instance, the place that stores information about all the other databases that the MySQL server maintains. The `information_schema` database contains several read-only tables. They are actually views, not base tables, so there are no files associated with them, and you cannot set triggers on them. Also, there is no database directory with that name. You can only read the contents of tables, not perform `INSERT`, `UPDATE`, or `DELETE` operations on them. Here is an example of a statement that retrieves information from `information_schema`:</cite>
+*`information_schema` is a database within each MySQL instance, the place that stores information about all the other databases that the MySQL server maintains. The `information_schema` database contains several read-only tables. They are actually views, not base tables, so there are no files associated with them, and you cannot set triggers on them. Also, there is no database directory with that name. You can only read the contents of tables, not perform `INSERT`, `UPDATE`, or `DELETE` operations on them. Here is an example of a statement that retrieves information from `information_schema`*:
 
 ```sql
 SELECT table_name, table_type, engine

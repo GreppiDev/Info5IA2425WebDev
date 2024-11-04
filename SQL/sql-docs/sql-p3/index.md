@@ -35,7 +35,7 @@ Un insieme di attributi è detto chiave primaria quando è chiave candidata ed i
 
 - Nessuno degli attributi di una chiave primaria può assumere il valore NULL
 
-> :memo: Una chiave primaria non può avere valori nulli nei suoi attributi, per cui il NOT NULL qui non serve, anche se non è sbagliato
+:memo: Una chiave primaria non può avere valori nulli nei suoi attributi, per cui il NOT NULL qui non serve, anche se non è sbagliato
 
 La chiave primaria può essere composta da un solo attributo, oppure da più attributi.
 
@@ -218,7 +218,7 @@ Per approfondimenti sugli indici delle tabelle, si veda anche [MySQL Tutorial - 
   CREATE INDEX ricercaPerTelefono ON clienti (Telefono(10));
   ```
 
-> :memo: **Nota**: in MySQL/MariaDB gli indici sono, per impostazione predefinita, `ASC`, ossia ascendenti
+:memo: **Nota**: in MySQL/MariaDB gli indici sono, per impostazione predefinita, `ASC`, ossia ascendenti
 
 - Per visualizzare gli indici su una tabella è possibile utilizzare il comando `DESCRIBE table_name`, oppure il comando `SHOW INDEX FROM table_name`
 
@@ -301,11 +301,11 @@ SELECT NOW() + 0; -> 20071215235026.000000
 
 `NOW()` returns a constant time that indicates the time at which the statement began to execute.
 
-> :warning: **Attenzione**: quando si utilizzano le funzioni che coinvolgono il tempo occorre verificare quale sia la configurazione del server relativamente al `default-time-zone`. Per impostare un parametro specifico del server di MySQL/MariaDB si veda quanto già mostrato nella sezione su Docker relativa a MySQL/MariaDB. Per modificare velocemente il time_zone basta eseguire la query seguente (come utente amministrativo) e impostare il time_zone due ore in avanti rispetto all'ora UTC:
->
->```sql
->SET GLOBAL time_zone='+02:00';
->```
+:warning: **Attenzione**: quando si utilizzano le funzioni che coinvolgono il tempo occorre verificare quale sia la configurazione del server relativamente al `default-time-zone`. Per impostare un parametro specifico del server di MySQL/MariaDB si veda quanto già mostrato nella sezione su Docker relativa a MySQL/MariaDB. Per modificare velocemente il time_zone basta eseguire la query seguente (come utente amministrativo) e impostare il time_zone due ore in avanti rispetto all'ora UTC:
+
+```sql
+SET GLOBAL time_zone='+02:00';
+```
 
 Esempi:
 
@@ -341,13 +341,13 @@ ORDER BY Eta ASC;
 |       235 | Dell'Acqua | Giorgio    | 2001-12-01      |   22 |
 |       124 | GiovanniX  | RossiX     | 2000-02-24      |   24 |
 
-> :memo: Nota: `RIGHT(str,len)` Returns the rightmost len characters from the string str, or NULL if any argument is NULL.
->
-> ```sql
-> SELECT RIGHT('foobarbar', 4); -- -> 'rbar'
->  ```
->
-> This function is multi-byte safe.
+:memo: Nota: `RIGHT(str,len)` Returns the rightmost len characters from the string str, or NULL if any argument is NULL.
+
+```sql
+SELECT RIGHT('foobarbar', 4); -- -> 'rbar'
+```
+
+This function is multi-byte safe.
 
 #### Elaborazione sulle date
 
@@ -364,8 +364,9 @@ SELECT DATEDIFF('2010-11-30 23:59:59','2010-12-31'); -- -> -31
 
 These functions perform date arithmetic. The date argument specifies the starting date or datetime value. `expr` is an expression specifying the interval value to be added or subtracted from the starting date. `expr` is a string; it may start with a `-` for negative intervals. `unit` is a keyword indicating the units in which the expression should be interpreted.
 
-> :memo: **Nota** The `INTERVAL` keyword and the unit specifier are not case sensitive.
-> Date arithmetic also can be performed using `INTERVAL` together with the + or - operator:  
+:memo: **Nota** The `INTERVAL` keyword and the unit specifier are not case sensitive.
+
+Date arithmetic also can be performed using `INTERVAL` together with the + or - operator:  
 
 ```sql
 date + INTERVAL expr unit 

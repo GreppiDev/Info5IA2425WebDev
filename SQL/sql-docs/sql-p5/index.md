@@ -342,7 +342,7 @@ Si ottiene:
 | Alberti | Giovanni | Brevetto di Sub di Secondo Grado |
 | Salvati | Matteo   | Brevetto di Sub di Secondo Grado |
 
-> :warning: **Attenzione**: si notino le righe ripetute, indicate in corsivo.
+:warning: **Attenzione**: si notino le righe ripetute, indicate in corsivo.
 
 Usando la clausola `DISTINCT` nella precedente query, non si hanno query ripetute:
 
@@ -384,7 +384,7 @@ Si ottiene la seguente tabella:
 | Salvati | Matteo   | Brevetto di Sub di Secondo Grado |
 | *Salvati* | *Matteo*   | *Brevetto di Sub di Terzo Grado*   |
 
-> :boom: :warning: **Osservazione importante**: **Nella tabella precedente in cui compaiono solo alcune colonne del prodotto cartesiano si hanno delle righe, quelle con il testo in corsivo, che non corrispondono a reali qualifiche possedute dagli insegnanti**. Ad esempio l’insegnante `Salvati Matteo` possiede solo il `brevetto di Bagnino di Salvataggio` e di `Primo` e `Secondo Grado` ma non anche quello di `Terzo Grado`.
+:boom: :warning: **Osservazione importante**: **Nella tabella precedente in cui compaiono solo alcune colonne del prodotto cartesiano si hanno delle righe, quelle con il testo in corsivo, che non corrispondono a reali qualifiche possedute dagli insegnanti**. Ad esempio l’insegnante `Salvati Matteo` possiede solo il `brevetto di Bagnino di Salvataggio` e di `Primo` e `Secondo Grado` ma non anche quello di `Terzo Grado`.
 Il problema nasce dal fatto che il prodotto cartesiano non fa alcun controllo sulle righe, ma si limita a considerare tutte le possibili combinazioni. Vedremo che **per ottenere i risultati attesi si definisce un’altra operazione sulle tabelle chiamata JOIN**.
 
 ### Definizioni delle condizioni di ricerca dei dati in una query SQL

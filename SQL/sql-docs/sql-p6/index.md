@@ -58,7 +58,7 @@ Le colonne su cui si verifica l’uguaglianza di join non devono necessariamente
 
 **L’unica condizione richiesta per effettuare un'operazione di join è che le colonne dell’uguaglianza di join appartengano allo stesso dominio.**
 
-> :point_right: **Osservazione**: Quando gli sviluppatori software parlano di join intendono l’equi-join.
+:point_right: **Osservazione**: Quando gli sviluppatori software parlano di join intendono l’equi-join.
 
 #### Un esempio di Join eseguito con un prodotto cartesiano seguito da clausola WHERE
 
@@ -217,6 +217,7 @@ FROM TabellaA, TabellaB WHERE <CondizioneJoin>;
 SELECT <ElencoColonne>
 FROM TabellaA, TabellaB WHERE TabellaA.ColonnaComuneA = TabellaB.ColonnaComuneB;
 ```
+
 Per rispondere a questa domanda, confrontiamo i due approcci:
 
 1. INNER JOIN

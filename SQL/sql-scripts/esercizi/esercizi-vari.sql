@@ -104,3 +104,125 @@ ON p.fkOfferta = o.Id;
 /* ALTER TABLE cliente RENAME TO clienti;
 ALTER TABLE viaggio RENAME TO viaggi;
 ALTER TABLE agenzia RENAME TO agenzie; */
+use campionato_calcio;
+SELECT s.*, p.PuntiCasa, s2.Nome, s2.Citta, p.PuntiTrasferta
+  FROM 
+  partite p 
+  JOIN 
+  squadre s 
+    ON p.SquadraCasa = s.Nome
+  JOIN squadre s2 
+    ON  p.SquadraTrasferta = s2.Nome 
+  WHERE p.Data = '2024-09-09';
+use piscine_milano;
+  SELECT p.nomeP
+FROM piscine p
+    LEFT JOIN corsi c ON p.NomeP = c.Piscina
+WHERE
+    c.nomeC IS NULL;
+
+SELECT *
+FROM 
+piscine p 
+LEFT JOIN 
+corsi c
+ON p.NomeP=c.Piscina;
+
+SELECT *
+FROM 
+piscine p 
+JOIN 
+corsi c
+ON p.NomeP=c.Piscina;
+
+SELECT * 
+FROM piscine p
+WHERE p.`NomeP` NOT IN (
+  SELECT p.NomeP
+  FROM 
+  piscine p 
+  JOIN 
+  corsi c
+  ON p.NomeP=c.Piscina
+);
+
+/* ATTORI (CodAttore, Nome, AnnoNascita, Nazionalità);
+RECITA (CodAttore*, CodFilm*)
+FILM (CodFilm, Titolo, AnnoProduzione, Nazionalità, Regista, Genere, Durata)
+PROIEZIONI (CodProiezione, CodFilm*, CodSala*, Incasso, DataProiezione)
+SALE (CodSala, Posti, Nome, Città) */
+
+SELECT f.* 
+FROM film f 
+JOIN recita r ON r.CodFilm=f.CodFilm
+JOIN attori a1 ON r.CodAttore=a1.CodAttore
+JOIN recita r2 ON r2.CodFilm = f.CodFilm
+JOIN attori a2 ON a2.CodAttore =r2.CodAttore
+WHERE a1.Nome LIKE '%Mastroianni%' AND a2.Nome LIKE '%Loren%';
+
+SELECT f.* 
+FROM film f 
+WHERE f.CodFilm IN (
+  SELECT f.CodFilm 
+  FROM film f 
+  JOIN recita r ON r.CodFilm = f.CodFilm 
+  JOIN attori a ON a.CodAttore = r.CodAttore
+  WHERE a.Nome LIKE '%Mastroianni%'
+) AND f.CodFilm IN (
+    SELECT f.CodFilm 
+  FROM film f 
+  JOIN recita r ON r.CodFilm = f.CodFilm 
+  JOIN attori a ON a.CodAttore = r.CodAttore
+  WHERE a.Nome LIKE '%Loren%'
+);
+
+use piscine_milano;
+SELECT  COUNT(*) 
+FROM lezioni l
+GROUP BY l.Piscina;
+
+SELECT l.Piscina,l.NomeC, COUNT(*) AS `Numero di lezioni in programma`
+FROM lezioni l
+WHERE l.Piscina='Lido'
+GROUP BY l.Piscina, l.NomeC;
+
+SELECT s.Classe, COUNT(*) AS TotaleAssenzeNonGiustificate
+FROM assenze a
+JOIN studenti s ON a.Studente = s.Matricola
+WHERE a.Tipo = 'AA'
+GROUP BY s.Classe;
+
+SELECT 
+    MONTH(a.Data) AS Mese, 
+    a.Tipo,
+    COUNT(*) AS Totale
+FROM assenze a
+JOIN studenti s ON a.Studente = s.Matricola
+WHERE a.Tipo IN ('AA', 'RR')
+GROUP BY Mese, a.tipo
+ORDER BY Mese;
+
+
+-- SALE (CodSala, Posti, Nome, Città)
+SELECT Citta, COUNT(*) `Numero sale`
+FROM sale
+GROUP BY Citta;
+
+/* FILM (CodFilm, Titolo, AnnoProduzione, Nazionalità, Regista, Genere, Durata)
+PROIEZIONI (CodProiezione, CodFilm*, CodSala*, Incasso, DataProiezione)
+SALE (CodSala, Posti, Nome, Città) */
+
+/* 19- Per ogni film di S.Spielberg, il titolo del film, il numero totale di proiezioni a Pisa e l’incasso
+totale */
+
+SELECT f.CodFilm, f.Titolo, COUNT(*) `Numero proiezioni`, SUM(p.Incasso) `Incasso totale`
+FROM 
+  film f 
+  JOIN 
+  proiezioni p
+  ON f.CodFilm=p.CodFilm
+  JOIN sale s 
+  ON p.CodSala=s.CodSala
+WHERE f.Regista LIKE '%Spielberg%' AND s.Citta LIKE '%Pisa%'
+GROUP BY f.CodFilm;
+

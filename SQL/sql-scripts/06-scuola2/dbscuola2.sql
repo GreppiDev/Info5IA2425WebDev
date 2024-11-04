@@ -72,6 +72,12 @@ VALUES
 (5, 'AA', '2023-09-20'),
 (5, 'RR', '2023-10-12');
 
+
+-- aggiungiamo altre assenze
+INSERT INTO assenze (Studente, Tipo, Data) VALUES
+-- altre assenze per per Mario Rossi (3IA)
+(1, 'AA', '2023-11-01'),
+(1, 'AA', '2024-02-13');
 -- sezione query 
 -- Query Q1: Stampare il numero totale di assenze fatte in tutto l'anno scolastico da uno studente (di cui sono noti nome e cognome) di una data classe, classificate per tipo.
 SELECT Tipo, COUNT(*) AS TotaleAssenze

@@ -23,7 +23,7 @@
     - [Sintesi sui vincoli di integrità referenziale - ON DELETE | ON UPDATE](#sintesi-sui-vincoli-di-integrità-referenziale---on-delete--on-update)
     - [Case sensitive or case insensitive?](#case-sensitive-or-case-insensitive)
     - [Dove sono le tabelle?](#dove-sono-le-tabelle)
-    - [Quali tabelle?\[^5\]](#quali-tabelle5)
+    - [Quali tabelle?\[^6\]](#quali-tabelle6)
 
 ## Inserimento di dati in una tabella
 
@@ -65,13 +65,13 @@ Il diagramma `E/R`[^1] del database è riportato nella figura seguente:
 
 La definizione completa dello schema e le istruzioni per l'inserimento dei valori sono disponibili in questo [script](../../sql-scripts/01-dbscuola/dbscuola.sql).
 
-> :memo: **Nota:** In mysql e mariadb è possibile vedere la struttura di una tabella, con le indicazioni delle chiavi primarie ed esterne usando il comando:
->
-> ```sql
->  SHOW CREATE TABLE nome_tabella{;|\G} 
-> ```
->
-> Notare il \G al posto del ; per avere una formattazione dell’output più leggibile
+:memo: **Nota:** In mysql e mariadb è possibile vedere la struttura di una tabella, con le indicazioni delle chiavi primarie ed esterne usando il comando:
+
+```sql
+ SHOW CREATE TABLE nome_tabella{;|\G} 
+```
+
+Notare il `\G` al posto del `;` per avere una formattazione dell’output più leggibile.
 
 ## Interrogazione di un database - clausola SELECT
 
@@ -196,13 +196,11 @@ SELECT Nome 'Nome Studente', Cognome, DataNascita FROM studenti;
 
 - I backtick (\`) andrebbero usati solo per i nomi di tabelle e di colonne, ma sono necessari solo quando gli identificatori sono nomi di parole riservate di MySQL/MariaDb, oppure quando l'identificatore contiene degli spazi.
 
-Per i dettagli si veda la [discussione su StackOverflow relativa all'uso delle quote in MySQL](https://stackoverflow.com/a/11321508/11116419):
+*Backticks are to be used for table and column identifiers, but are only necessary when the identifier is a MySQL reserved keyword, or when the identifier contains whitespace characters or characters beyond a limited set (see below) It is often recommended to avoid using reserved keywords as column or table identifiers when possible, avoiding the quoting issue.*
 
-<cite>Backticks are to be used for table and column identifiers, but are only necessary when the identifier is a MySQL reserved keyword, or when the identifier contains whitespace characters or characters beyond a limited set (see below) It is often recommended to avoid using reserved keywords as column or table identifiers when possible, avoiding the quoting issue.</cite>
+*Single quotes should be used for string values like in the VALUES() list. Double quotes are supported by MySQL for string values as well, but single quotes are more widely accepted by other RDBMS, so it is a good habit to use single quotes instead of double.*
 
-<cite>Single quotes should be used for string values like in the VALUES() list. Double quotes are supported by MySQL for string values as well, but single quotes are more widely accepted by other RDBMS, so it is a good habit to use single quotes instead of double.</cite>
-
-<cite>MySQL also expects DATE and DATETIME literal values to be single-quoted as strings like '2001-01-01 00:00:00'. Consult the Date and Time Literals documentation for more details, in particular alternatives to using the hyphen - as a segment delimiter in date strings.</cite>
+*MySQL also expects DATE and DATETIME literal values to be single-quoted as strings like '2001-01-01 00:00:00'. Consult the Date and Time Literals documentation for more details, in particular alternatives to using the hyphen - as a segment delimiter in date strings.*[^2]
 
 ## Modifica dei dati di una tabella - (UPDATE)
 
@@ -333,11 +331,10 @@ reference_option:
     RESTRICT | CASCADE | SET NULL | NO ACTION | SET DEFAULT
 ```
 
-> :warning: **Attenzione:**
->
-> - In MySQL e MariaDB l'integrità referenziale è supportata solo su tabelle di tipo InnoDB
-> - In MySQL e MariaDB l'opzione SET DEFAULT non è supportata da InnoDB. Si veda a tal proposito la [documentazione di MySQL](https://dev.mysql.com/doc/refman/9.0/en/create-table-foreign-keys.html) o [quella di MariaDB](https://mariadb.com/kb/en/foreign-keys/
-> )
+:warning: **Attenzione:**
+
+- In MySQL e MariaDB l'integrità referenziale è supportata solo su tabelle di tipo InnoDB
+- In MySQL e MariaDB l'opzione SET DEFAULT non è supportata da InnoDB. Si veda a tal proposito la [documentazione di MySQL](https://dev.mysql.com/doc/refman/9.0/en/create-table-foreign-keys.html) o [quella di MariaDB](https://mariadb.com/kb/en/foreign-keys/)
 
 ### Inserimento di dati in un database con tabelle soggette al vincolo di integrità referenziale
 
@@ -370,7 +367,7 @@ Un vincolo d'integrità referenziale può essere applicato:
 - Se la colonna ( o colonne) della tabella interna è una chiave primaria oppure è soggetta ad un vincolo UNIQUE;
 - Alla medesima tabella.
 
-> :fire: **Importante:** Nel codice sorgente dello schema logico, la dichiarazione della tabella interna deve sempre precedere la dichiarazione della tabella esterna
+:fire: **Importante:** Nel codice sorgente dello schema logico, la dichiarazione della tabella interna deve sempre precedere la dichiarazione della tabella esterna
 
 ### Vincoli di integrità referenziale - ON DELETE | ON UPDATE
 
@@ -510,18 +507,18 @@ In sintesi:
 
 ![Riepilogo di ON DELETE e ON CASCADE](on-delete-on-update-riepilogo.png)
 
-> :memo: **Nota:** SET DEFAULT non è supportato da InnoDB di MySQL e MariaDB
+:memo: **Nota:** SET DEFAULT non è supportato da InnoDB di MySQL e MariaDB
 
 ### Case sensitive or case insensitive?
 
 Attenzione al case dei nomi di tabelle in MySQL/MariaDB.
 
-<cite>In MySQL[^2] and MariaDB, databases correspond to directories within the data directory. Each table within a database corresponds to at least one file within the database directory. Consequently, the case sensitivity of the underlying operating system plays a part in the case sensitivity of database, table, and trigger names.
-This means such names are not case sensitive in Windows, but are case sensitive in most varieties of Unix.</cite>
+*In MySQL[^3] and MariaDB, databases correspond to directories within the data directory. Each table within a database corresponds to at least one file within the database directory. Consequently, the case sensitivity of the underlying operating system plays a part in the case sensitivity of database, table, and trigger names.
+This means such names are not case sensitive in Windows, but are case sensitive in most varieties of Unix.*
 
 La variabile `lower_case_table_names` specifica il comportamento del DBMS Server con riferimento al case dei nomi delle tabelle:
 
-<cite>[^3]`lower_case_table_names`: If set to 0, table names are stored as specified and comparisons are case sensitive. If set to 1, table names are stored in lowercase on disk and comparisons are not case sensitive. If set to 2, table names are stored as given but compared in lowercase. This option also applies to database names and table aliases.</cite>
+*[^4]`lower_case_table_names`: If set to 0, table names are stored as specified and comparisons are case sensitive. If set to 1, table names are stored in lowercase on disk and comparisons are not case sensitive. If set to 2, table names are stored as given but compared in lowercase. This option also applies to database names and table aliases.*
 
 ```sql
 SELECT @@global. lower_case_table_names;
@@ -549,11 +546,11 @@ ALTER TABLE assenze ADD CONSTRAINT FK_assenze_studenti FOREIGN KEY
 
 ### Dove sono le tabelle?
 
-<cite>[^4]By default, MySQL stores database files in `/var/lib/mysql`. However, we can override the location in the configuration file. Typically, this is the `/etc/mysql/mysql.conf.d/mysqld.cnf` file.</cite>
+*[^5]By default, MySQL stores database files in `/var/lib/mysql`. However, we can override the location in the configuration file. Typically, this is the `/etc/mysql/mysql.conf.d/mysqld.cnf` file.*
 
 To find out the current data directory, we can use a basic select command at the mysql prompt:
 
-### Quali tabelle?[^5]
+### Quali tabelle?[^6]
 
 - .frm :
 MySQL represents each table by an .frm table format file, stores table definition in the database directory. It is stored as .frm under data directory.
@@ -563,7 +560,10 @@ If you specify innodb_file_per_table option to my.cnf, InnoDB stores each table 
 In CREATE DATABASE command, create_specification options specify database characteristics. Database characteristics are stored in the db.opt file in the database directory.
 
 [^1]: Il `diagramma E/R, detto anche diagramma Entity/Relationship` è un modello grafico che permette di rappresentare dal punto di vista concettuale una base di dati. La teoria che sta alla base di questo modello verrà trattata nell'unità didattica dedicata alla progettazione concettuale dei database.
-[^2]: [MySQL Manual](https://dev.mysql.com/doc/refman/9.0/en/identifier-case-sensitivity.html)
-[^3]: [MySQL Manual](https://dev.mysql.com/doc/refman/9.0/en/server-system-variables.html#sysvar_lower_case_table_names)
-[^4]: [www.baeldung.com](https://www.baeldung.com/linux/mysql-database-files-location#default-location)
-[^5]: [kedar.nitty-witty.com](https://kedar.nitty-witty.com/blog/quick-look-mysql-data-directory-files)
+
+[^2]: [Use of quotes and backtick - StackOverflow](https://stackoverflow.com/a/11321508/11116419)
+
+[^3]: [MySQL Manual- case sensitivity](https://dev.mysql.com/doc/refman/9.0/en/identifier-case-sensitivity.html)
+[^4]: [MySQL Manual - lower case table names](https://dev.mysql.com/doc/refman/9.0/en/server-system-variables.html#sysvar_lower_case_table_names)
+[^5]: [www.baeldung.com](https://www.baeldung.com/linux/mysql-database-files-location#default-location)
+[^6]: [kedar.nitty-witty.com](https://kedar.nitty-witty.com/blog/quick-look-mysql-data-directory-files)

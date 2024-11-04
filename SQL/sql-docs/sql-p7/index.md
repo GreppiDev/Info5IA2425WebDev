@@ -46,9 +46,9 @@ WHERE ic.NomeMedico = 'nome_del_medico'
 ORDER BY p.Cognome, p.Nome, ic.DataNascita;
 ```
 
-> :memo: **Importante**: **La clausola `ORDER BY` è eseguita dopo la `SELECT`**
->
-> Come conseguenza di ciò **è possibile ordinare i dati anche rispetto ad alias e a colonne calcolate definite nella SELECT**
+:memo: **Importante**: **La clausola `ORDER BY` è eseguita dopo la `SELECT`**
+
+Come conseguenza di ciò **è possibile ordinare i dati anche rispetto ad alias e a colonne calcolate definite nella SELECT**
 
 ## Elaborazione dei dati
 
@@ -222,7 +222,7 @@ WHERE YEAR(CURDATE()) - YEAR(ic.DataNascita) - (RIGHT(CURDATE(),5) < RIGHT(ic.Da
 
 Si osservi che non è possibile definire un alias per le colonne calcolate nella clausola `WHERE`, né è possibile utilizzare l'alias della `SELECT` all'interno della clausola `WHERE` perché in una query si esegue prima la clausola `FROM` poi la `WHERE` e poi la `SELECT`.
 
-> :memo: **Importante**: non è possibile definire un alias nella clausola `WHERE`[^1]. <cite>Standard SQL disallows references to column aliases in a WHERE clause. This restriction is imposed because when the WHERE clause is evaluated, the column value may not yet have been determined</cite>
+:memo: **Importante**: non è possibile definire un alias nella clausola `WHERE`[^1]. <cite>Standard SQL disallows references to column aliases in a WHERE clause. This restriction is imposed because when the WHERE clause is evaluated, the column value may not yet have been determined</cite>
 
 [^1]: [MySQL Manual - Problems with Column Alias](https://dev.mysql.com/doc/refman/9.1/en/problems-with-alias.html)
 
@@ -324,10 +324,10 @@ Nel caso in cui ci sia anche la clausola [`HAVING`](https://www.mysqltutorial.or
 
 Nella pratica, l'utilizzo della clausola `GROUP BY` è abbinato all'uso di una funzione di gruppo ([aggregate functions](https://www.mysqltutorial.org/mysql-aggregate-functions/)) come [SUM](https://www.mysqltutorial.org/mysql-aggregate-functions/mysql-sum/), [AVG](https://www.mysqltutorial.org/mysql-aggregate-functions/mysql-avg/), [MAX](https://www.mysqltutorial.org/mysql-aggregate-functions/mysql-max-function/), [MIN](https://www.mysqltutorial.org/mysql-aggregate-functions/mysql-min/), e [COUNT](https://www.mysqltutorial.org/mysql-aggregate-functions/mysql-count/). In questo caso la funzione di gruppo che appare nella clausola `SELECT` definisce ciò che viene riportato dalla query per ogni gruppo.
 
-> :memo: :bulb: **Osservazione importante**: Quando in una query SQL compare una funzione di gruppo, i DBMS eseguono, nell’ordine, i seguenti passi:
->
-> - Esecuzione della query SQL senza le funzioni aggregate e calcolo della tabella derivata con il risultato
-> - Applicazione delle funzioni di gruppo alle colonne della tabella derivata.
+:memo: :bulb: **Osservazione importante**: Quando in una query SQL compare una funzione di gruppo, i DBMS eseguono, nell’ordine, i seguenti passi:
+
+- Esecuzione della query SQL senza le funzioni aggregate e calcolo della tabella derivata con il risultato
+- Applicazione delle funzioni di gruppo alle colonne della tabella derivata.
 
 #### Esempi di query con GROUP BY con il database `piscine_milano`
 
@@ -472,7 +472,7 @@ GROUP BY l.Piscina, l.NomeC
 HAVING `Numero lezioni` >=2;
 ```
 
- :memo: :fire: **Osservazione importante**: nella query precedente è corretto utilizzare l'alias per la funzione di gruppo `COUNT(*)` nella clausola `HAVING`, perché la funzione di gruppo è calcolata quando viene eseguita la clausola `GROUP BY` e non quando viene eseguita la clausola `SELECT`. Si osservi anche che è fondamentale usare i backtick (\`) quando nei nomi di colonna calcolati ci sono degli spazi. Se al posto dei backtick (\`), usassimo i ingle quote (\'), la query precedente non darebbe il risultato corretto.
+ :memo: :fire: **Osservazione importante**: nella query precedente è corretto utilizzare l'alias per la funzione di gruppo `COUNT(*)` nella clausola `HAVING`, perché la funzione di gruppo è calcolata quando viene eseguita la clausola `GROUP BY` e non quando viene eseguita la clausola `SELECT`. Si osservi come l'uso dei backtick (\`) nei nomi di colonna calcolati sia fondamentale quando ci sono degli spazi. Se al posto dei backtick (\`) usassimo i single quote (\'), la query precedente non darebbe il risultato corretto.
 
 :memo: :skull: **Errori da evitare**:
 
@@ -520,8 +520,10 @@ CREATE TABLE IF NOT EXISTS assenze (
 
 Il database può essere ricreato a partire da questo [script](../../sql-scripts/06-scuola2/dbscuola2.sql).
 
-Q1: stampare il numero totale di assenze fatte in tutto l’anno scolastico da uno studente (di cui sono noti nome e cognome) di una data classe, classificate per tipo.
+Q1: stampare il numero totale di assenze fatte in tutto l’anno scolastico da uno studente (di cui sono noti nome e cognome e classe), classificate per tipo.
+
 Q2: visualizzare, al termine di un anno scolastico, il numero totale di assenze non giustificate effettuate nelle classi della scuola; le classi devono essere presentate in ordine alfabetico.
+
 Q3: stampare l’andamento delle assenze e dei ritardi non giustificati (classificati per mese) di un anno scolastico di uno studente di una classe.
 
 ```sql
@@ -540,7 +542,7 @@ FROM assenze a
 JOIN studenti s ON a.Studente = s.Matricola
 WHERE a.Tipo = 'AA'
 GROUP BY s.Classe
-ORDER BY s.Classe ASC;
+ORDER BY s.Classe;
 
 -- Query Q3: Stampare l’andamento delle assenze e dei ritardi non giustificati (classificati per mese) di uno studente di una classe.
 SELECT 
@@ -554,4 +556,3 @@ AND a.Tipo IN ('AA', 'RR')
 GROUP BY Mese, a.Tipo
 ORDER BY Mese;
 ```
-

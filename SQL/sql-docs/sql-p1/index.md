@@ -388,16 +388,17 @@ In MySQL un DECIMAL può avere fino a 65 cifre significative complessive e fino 
 - [`AUTO_INCREMENT`](https://www.mysqltutorial.org/mysql-basics/mysql-auto_increment/): Una colonna di tipo intero può avere l'attributo `AUTO_INCREMENT`  per indicare che il suo valore può essere generato automaticamente dal DBMS ad ogni inserimento. Tipicamente si usa per definire l'ID di tabelle, che sono anche chiavi primarie.
 - [`UNSIGNED`](https://www.mysqltutorial.org/mysql-basics/mysql-int/): Una colonna di tipo intero può essere `UNSIGNED` nei casi in cui può assumere solo valori non negativi.
 
-> :warning: **Attenzione:** alcuni attributi dei campi numerici sono considerati deprecati. In particolare, sono considerati [deprecati](https://dev.mysql.com/doc/refman/9.0/en/numeric-type-attributes.html) i seguenti attributi:
->
-> - `ZEROFILL` e il `campo display` per gli interi
-> - `UNSIGNED` per i tipi `FLOAT`, `DOUBLE` e `DECIMAL`
-> - `AUTO_INCREMENT` per i tipi `FLOAT` e `DOUBLE`
+:warning: **Attenzione:** alcuni attributi dei campi numerici sono considerati deprecati. In particolare, sono considerati [deprecati](https://dev.mysql.com/doc/refman/9.0/en/numeric-type-attributes.html) i seguenti attributi:
+
+- `ZEROFILL` e il `campo display` per gli interi
+- `UNSIGNED` per i tipi `FLOAT`, `DOUBLE` e `DECIMAL`
+- `AUTO_INCREMENT` per i tipi `FLOAT` e `DOUBLE`
 
 ### Vincoli di integrità di colonna
 
 - Vincolo [`DEFAULT`](https://www.mysqltutorial.org/mysql-basics/mysql-default/): È possibile specificare un valore di default per una colonna, da utilizzare qualora non venga fornito in input nessun valore dal client.
-  > :memo: **Nota:**  Nel caso in cui il valore di default non sia specificato e il client non fornisca nessun valore per la colonna, il [comportamento del database dipende (in MySQL) dall’SQL mode adoperato](https://dev.mysql.com/doc/refman/9.0/en/data-type-defaults.html).
+
+  :memo: **Nota:**  Nel caso in cui il valore di default non sia specificato e il client non fornisca nessun valore per la colonna, il [comportamento del database dipende (in MySQL) dall’SQL mode adoperato](https://dev.mysql.com/doc/refman/9.0/en/data-type-defaults.html).
   - In MySQL, se non è specificato il valore di default e non è fornito nessun valore in ingresso (oppure è fornito NULL) per la colonna:
   - Se la colonna può avere valore nullo, allora viene automaticamente assegnato il valore nullo (NULL).
   - Se la colonna non può assumere il valore nullo, allora:
