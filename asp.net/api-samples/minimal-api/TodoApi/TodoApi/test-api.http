@@ -1,0 +1,36 @@
+
+@TodoApi_HostAddress = http://localhost:5238
+
+# Get all todo items
+GET {{TodoApi_HostAddress}}/todoitems
+Accept: application/json
+    
+###
+# Get a specific todo item by id
+GET {{TodoApi_HostAddress}}/todoitems/1
+Accept: application/json
+
+###
+# Create a new todo item
+POST {{TodoApi_HostAddress}}/todoitems
+Content-Type: application/json
+
+{
+    "name": "Sample Todo 1",
+    "isComplete": false
+}
+
+###
+# Update an existing todo item
+PUT {{TodoApi_HostAddress}}/todoitems/1
+Content-Type: application/json
+
+{
+    "id": 1,
+    "name": "Updated Todo",
+    "isComplete": true
+}
+
+###
+# Delete a todo item
+DELETE {{TodoApi_HostAddress}}/todoitems/1

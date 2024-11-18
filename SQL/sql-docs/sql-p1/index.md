@@ -15,6 +15,8 @@
     - [Selezione di uno specifico DB](#selezione-di-uno-specifico-db)
     - [Creazione di un database](#creazione-di-un-database)
     - [CHARACTER e COLLATION](#character-e-collation)
+      - [Impostazioni predefinite di Collation e Character Set in MariaDb](#impostazioni-predefinite-di-collation-e-character-set-in-mariadb)
+      - [Impostazioni predefinite di Collation e Character Set in MySQL](#impostazioni-predefinite-di-collation-e-character-set-in-mysql)
     - [Cancellazione di un database](#cancellazione-di-un-database)
     - [Creazione di una tabella](#creazione-di-una-tabella)
     - [Verificare la struttura di una tabella](#verificare-la-struttura-di-una-tabella)
@@ -35,7 +37,6 @@
     - [Vincoli di integrità di colonna](#vincoli-di-integrità-di-colonna)
     - [Modalità operativa di MariaDB](#modalità-operativa-di-mariadb)
     - [Modalità operative di MySQL](#modalità-operative-di-mysql)
-
 
 ## Architettura di MySQL e MariaDB
 
@@ -228,6 +229,14 @@ Il CHARACTER e la COLLATION possono essere impostati
 Per capire il concetto di charset e di collation si possono consultare anche le [pagine introduttive di MariaDB su character set e collation](https://mariadb.com/kb/en/character-set-and-collation-overview/), oppure le [pagine che descrivono come impostare character set e collation](https://mariadb.com/kb/en/setting-character-sets-and-collations/).
 
 Un interessante approfondimento che spiega molti aspetti su character set e collation di MySQL e MariaDB è l'articolo *[Everything you never wanted to know about MySQL Charsets & Collations](https://www.coderedcorp.com/blog/guide-to-mysql-charsets-collations)* di Vince Savino.
+
+#### Impostazioni predefinite di Collation e Character Set in MariaDb
+
+Per impostazione predefinita, in MariaDb il default character set è `utf8mb4`, ossia `UTF-8` rappresentato su 4 byte, mentre la collation associata è `utf8mb4_uca1400_ai_ci`
+
+#### Impostazioni predefinite di Collation e Character Set in MySQL
+
+Per impostazione predefinita, in MySQL il default character set è `utf8mb4`, ossia `UTF-8` rappresentato su 4 byte, mentre la collation associata è `utf8mb4_0900_ai_ci`
 
 ### Cancellazione di un database
 

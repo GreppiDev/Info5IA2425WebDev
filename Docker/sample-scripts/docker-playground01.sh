@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 ## riferimenti per i comandi docker
-# https://docs.docker.com/reference/cli/docker/  ù
+# https://docs.docker.com/reference/cli/docker/ 
 
 ## Primo esempio
 # https://docs.docker.com/reference/cli/docker/container/run/

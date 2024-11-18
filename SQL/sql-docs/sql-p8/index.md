@@ -621,8 +621,8 @@ Quando una vista è richiamata in un comando SQL, l’interprete SQL del DBMS es
 
 La definizione di una view è soggetta ad alcuni vincoli:
 
-- una tabella o una view riferita all’interno della select_statement deve esistere al momento della definizione della view
-- La select_statement non può riferirsi a variabili di sistema o di utente
+- una tabella o una view riferita all’interno della `select_statement` deve esistere al momento della definizione della view
+- La `select_statement` non può riferirsi a variabili di sistema o di utente
 - L’elenco completo dei vincoli è sul [manuale di MySQL](https://dev.mysql.com/doc/refman/9.1/en/create-view.html), oppure sul [manuale di MariaDb](https://mariadb.com/kb/en/create-view/)
 
 ### Cancellazione di una vista

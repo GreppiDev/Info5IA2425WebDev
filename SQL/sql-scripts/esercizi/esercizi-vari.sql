@@ -181,7 +181,7 @@ SELECT  COUNT(*)
 FROM lezioni l
 GROUP BY l.Piscina;
 
-SELECT l.Piscina,l.NomeC, COUNT(*) AS `Numero di lezioni in programma`
+SELECT l.Piscina,l.NomeC, COUNT(*) `Numero di lezioni in programma`
 FROM lezioni l
 WHERE l.Piscina='Lido'
 GROUP BY l.Piscina, l.NomeC;
@@ -226,3 +226,19 @@ FROM
 WHERE f.Regista LIKE '%Spielberg%' AND s.Citta LIKE '%Pisa%'
 GROUP BY f.CodFilm;
 
+
+-- trovare i clienti che hanno fatto pagamenti superiori alla media dei pagamenti
+SELECT 
+    c.customerNumber, 
+    c.customerName,
+    p.checkNumber, 
+    p.amount
+FROM
+    payments p
+    NATURAL JOIN
+    customers c
+WHERE
+    p.amount = (SELECT MAX(amount) FROM payments);
+
+SELECT DISTINCT customerName, o.customerNumber
+FROM customers c LEFT JOIN orders o ON c.customerNumber=o.customerNumber;
