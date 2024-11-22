@@ -9,18 +9,23 @@
       - [Creazione di un progetto di Minimal API ASP.NET Core con il template `webapi`](#creazione-di-un-progetto-di-minimal-api-aspnet-core-con-il-template-webapi)
       - [Creazione di un progetto di Minimal API ASP.NET Core con `C# Dev Kit`](#creazione-di-un-progetto-di-minimal-api-aspnet-core-con-c-dev-kit)
     - [Strumenti per il testing di API](#strumenti-per-il-testing-di-api)
+      - [curl](#curl)
       - [Postman](#postman)
       - [REST Client](#rest-client)
-      - [Thunder](#thunder)
+      - [Thunder Client](#thunder-client)
+    - [Web server implementations in ASP.NET Core](#web-server-implementations-in-aspnet-core)
     - [Configure endpoints for the ASP.NET Core Kestrel web server](#configure-endpoints-for-the-aspnet-core-kestrel-web-server)
+      - [Default endpoints](#default-endpoints)
+      - [Configure endpoints](#configure-endpoints)
       - [Set the URLs for an ASP.NET Core app](#set-the-urls-for-an-aspnet-core-app)
     - [Accessing ASP.NET Core Web Server from WSL](#accessing-aspnet-core-web-server-from-wsl)
       - [Accessing Linux networking apps from Windows (localhost)](#accessing-linux-networking-apps-from-windows-localhost)
       - [Accessing Windows networking apps from Linux (host IP)](#accessing-windows-networking-apps-from-linux-host-ip)
+      - [Routing in modalità NAT tra Windows e WSL](#routing-in-modalità-nat-tra-windows-e-wsl)
     - [ASP.NET Core web API documentation with Swagger / OpenAPI](#aspnet-core-web-api-documentation-with-swagger--openapi)
-      - [Generate OpenAPI documents](#generate-openapi-documents)
-      - [Get started with NSwag and ASP.NET Core](#get-started-with-nswag-and-aspnet-core)
-      - [OpenAPI support in ASP.NET Core API apps](#openapi-support-in-aspnet-core-api-apps)
+      - [Generate OpenAPI documents \[^1\]](#generate-openapi-documents-1)
+      - [Get started with NSwag and ASP.NET Core \[^2\]](#get-started-with-nswag-and-aspnet-core-2)
+      - [OpenAPI support in ASP.NET Core API apps \[^3\]](#openapi-support-in-aspnet-core-api-apps-3)
 
 ## Introduzione alle API Web
 
@@ -115,50 +120,548 @@ Per l'aggiunta dei pacchetti `NuGet` al progetto si può procedere in diversi mo
 
 ### Strumenti per il testing di API
 
+#### curl
+
+Il command line [`curl`](https://curl.se/) è stato già introdotto nel corso di informatica di quarta. I riferimenti per l'utilizzo di curl sono riassunti nelle dispense di informatica di quarta e nella guida online [everything curl](https://everything.curl.dev/).
+
 #### Postman
+
+[Postman](https://www.postman.com/) è uno degli strumenti più utilizzati dagli sviluppatori per il testing di applicazioni web. `Postman` può essere utilizzato sia come web application che come applicazione desktop, come descritto nella [documentazione ufficiale](https://learning.postman.com/docs/getting-started/overview/).
+
+Anche `Postman` è stato ampiamente utilizzato nel corso di informatica di quarta e per i dettagli relativi al suo uso si rimanda agli appunti del corso di informatica di quarta.
+
+Esiste anche un plugin di Visual Studio Code che permette di utilizzare `Postman` con il proprio account direttamente all'interno di VS Code, senza ricorrere all'applicazione desktop oppure alla web application. Per installare il plugin di `Postman` in VS Code è sufficiente ricercare il plugin nell'elenco delle estensioni di VS Code e poi installarlo. I dettagli relativi all'utilizzo del plugin di `Postman` in VS Code sono sulla [pagina di Postman](https://marketplace.visualstudio.com/items?itemName=Postman.postman-for-vscode) nel marketplace di VS Code.
 
 #### REST Client
 
-https://github.com/Huachao/vscode-restclient
+`REST Client` è un plugin di VS Code che permette di testare in maniera molto semplice le Web API, utilizzando file con estensione `.http`, oppure `.rest`. Per installare il plugin di `Rest Client` di Huachao Mao in VS Code è sufficiente ricercare il plugin nell'elenco delle estensioni di VS Code e poi installarlo. L'installazione del plugin di `Rest Client` e il suo utilizzo di base in VS Code sono spiegati sulla [pagina di Rest Client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client) nel marketplace di VS Code.
 
-https://youtu.be/Kxp5h8tXdFE?si=W5XovIN_2iSjlRmF
+I dettagli sull'utilizzo di `REST Client` sono disponibili sulla [pagina di Github del progetto](https://github.com/Huachao/vscode-restclient) e in [qualche video online](https://youtu.be/Kxp5h8tXdFE?si=W5XovIN_2iSjlRmF)
 
-#### Thunder
+#### Thunder Client
+
+`Thunder Client` è un altro plugin di Visual Studio Code che può essere utilizzato per effettuare il testing di Web API. I dettagli relativi all'utilizzo di questo plugin si trovano sulla [pagina di Thunder Client](https://marketplace.visualstudio.com/items?itemName=rangav.vscode-thunder-client) nel marketplace di VS Code. `Thunder Client` è può essere considerato come un'alternativa a `Postman`, anche se in questo corso si utilizzeranno prevalentemente `Postman` e `Rest Client`.
+
+### Web server implementations in ASP.NET Core
+
+Come descritto nella [documentazione Microsoft relativa al web server Kestrel](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/servers) *"An ASP.NET Core app runs with an in-process HTTP server implementation. The server implementation listens for HTTP requests and surfaces them to the app as a set of request features composed into an HttpContext."*
+
+Il web server di default che è inserito in un'applicazione ASP.NET Core è [Kestrel](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/servers/kestrel)
+
+![Kestrel web server in a ASP.NET Core App](kestrel-web-server-in-asp-net-core-app.png)
+
+Si vedrà in seguito che nelle applicazioni reali è prassi utilizzare il web server Kestrel in combinazione con un altri web server,come, ad esempio, Nginx, Apache, Yarp, etc., utilizzati come reverse proxy. I motivi che sono alla base di questo tipo di architettura web saranno chiariti in seguito.
+
+![Reverse Proxy in front of Kestrel Web Server](reverse-proxy-with-kestrel-in-asp-net-core-app.png)
 
 ### Configure endpoints for the ASP.NET Core Kestrel web server
 
-https://learn.microsoft.com/en-us/aspnet/core/fundamentals/servers/kestrel/endpoints
+Come indicato nella documentazione Microsoft [Configure endpoints for the ASP.NET Core Kestrel web server](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/servers/kestrel/endpoints), *Kestrel endpoints provide the infrastructure for listening to incoming requests and routing them to the appropriate middleware. **The combination of an address and a protocol defines an endpoint**.*
+
+- *The address specifies the network interface that the server listens on for incoming requests, such as a TCP port.*
+- *The protocol specifies the communication between the client and server, such as HTTP/1.1, HTTP/2, or HTTP/3.*
+- *An endpoint can be secured using the `https` URL scheme or `UseHttps` method.*
+
+#### Default endpoints
+
+*New ASP.NET Core projects are configured to bind to a random HTTP port between 5000-5300 and a random HTTPS port between 7000-7300. The selected ports are stored in the generated `Properties/launchSettings.json` file and can be modified by the developer. The `launchSetting.json` file is only used in local development.*
+
+*If there's no endpoint configuration, then Kestrel binds to `http://localhost:5000`.*
+
+#### Configure endpoints
+
+*Kestrel endpoints listen for incoming connections. When an endpoint is created, it must be configured with the address it will listen to. Usually, this is a TCP address and port number.*
+
+*There are several options for configuring endpoints:*
+
+- [Configure endpoints with URLs](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/servers/kestrel/endpoints?view=aspnetcore-9.0#configure-endpoints-with-urls)
+- [Specify ports only](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/servers/kestrel/endpoints?view=aspnetcore-9.0#specify-ports-only)
+- [Configure endpoints in appsettings.json](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/servers/kestrel/endpoints?view=aspnetcore-9.0#configure-endpoints-in-appsettingsjson)
+- [Configure endpoints in code](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/servers/kestrel/endpoints?view=aspnetcore-9.0#configure-endpoints-in-code)
 
 #### Set the URLs for an ASP.NET Core app
 
-https://andrewlock.net/8-ways-to-set-the-urls-for-an-aspnetcore-app/
+Ci sono diversi modi per impostare le URL per un'applicazione ASP.NET Core. Nell'[articolo di Andrew Lock](https://andrewlock.net/8-ways-to-set-the-urls-for-an-aspnetcore-app/) vengono mostrati otto modi per configurare le URL di una applicazione ASP.NET Core.
 
 ### Accessing ASP.NET Core Web Server from WSL
 
-https://learn.microsoft.com/en-us/windows/wsl/networking
+Quando si tenta di accedere ad un'applicazione web installata in Windows da una distribuzione Linux di una WSL ci sono alcune considerazioni da fare, perché di default WSL utilizza un meccanismo di networking basato su NAT come descritto nella [documentazione ufficiale della WSL](https://learn.microsoft.com/en-us/windows/wsl/networking).
 
 #### Accessing Linux networking apps from Windows (localhost)
 
-https://learn.microsoft.com/en-us/windows/wsl/networking#accessing-linux-networking-apps-from-windows-localhost
+Come descritto nella [documentazione Microsoft](https://learn.microsoft.com/en-us/windows/wsl/networking#accessing-linux-networking-apps-from-windows-localhost) *If you are building a networking app (for example an app running on a NodeJS or SQL server) in your Linux distribution, you can access it from a Windows app (like your Edge or Chrome internet browser) using `localhost` (just like you normally would).*
 
 #### Accessing Windows networking apps from Linux (host IP)
 
-https://learn.microsoft.com/en-us/windows/wsl/networking#accessing-windows-networking-apps-from-linux-host-ip
+Come descritto nella [documentazione Microsoft](https://learn.microsoft.com/en-us/windows/wsl/networking#accessing-windows-networking-apps-from-linux-host-ip) *If you want to access a networking app running on Windows (for example an app running on a NodeJS or SQL server) from your Linux distribution (ie Ubuntu), then you need to use the IP address of your host machine. While this is not a common scenario, you can follow these steps to make it work.*
 
-https://superuser.com/questions/1679757/accessing-windows-localhost-from-wsl2
+1. *Obtain the IP address of your host machine by running this command from your Linux distribution: `ip route show | grep -i default | awk '{ print $3}'`*
+2. *Connect to any Windows server using the copied IP address.*
+
+Anche [questo articolo](https://superuser.com/questions/1679757/accessing-windows-localhost-from-wsl2) mostra diverse opzioni per accedere da una distribuzione Linux WSL ad un'applicazione in esecuzione in `localhost` su Windows.
+
+Ad esempio, supponendo di avere un'applicazione ASP.NET Core in esecuzione in `localhost` in Windows con una configurazione del file `launchSettings.json` come quella riportata di seguito:
+
+```json
+{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "http": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "applicationUrl": "http://localhost:5238;http://*:5001",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    "https": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "applicationUrl": "https://localhost:7245;http://localhost:5238;https://*:7001",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
+```
+
+Si noti che nella configurazione dell'applicazione ASP.NET Core l'`applicationUrl` è stato configurato in modo che il web server Kestrel possa accettare richieste sia in localhost su una determinata porta, che da qualsiasi indirizzo IP su una porta specifica (con la parte `http://*:5001` per il profilo `http`, oppure con la parte `https://*:7001` per il profilo `https`).
+Per poter accedere all'applicazione Web da una distribuzione Linux nella WSL, occorre prima di tutto sapere qual è l'indirizzo IP del NAT Gateway. L'accesso all'applicazione che in Windows è in `localhost`, da Linux WSL dovrà essere fatto attraverso l'indirizzo IP del NAT Gateway:
+
+L'indirizzo del NAT Gateway può essere determinato utilizzando il comando:
+
+```sh
+ip route
+# possibile output:
+default via 172.21.144.1 dev eth0 proto kernel
+172.21.144.0/20 dev eth0 proto kernel scope link src 172.21.156.145
+```
+
+L'indirizzo del NAT Gateway è proprio l'indirizzo IP che viene indicato dopo `default via` e che può essere ottenuto tramite l'istruzione:
+
+```sh
+ip route show | grep -i default | awk '{ print $3}'
+# possibile output
+172.21.144.1
+```
+
+Supponendo che da `localhost` l'applicazione risponda sulla rotta `/`  con un semplice messaggio di testo, potremmo ottenere un comportamento come il seguente:
+
+```ps1
+# da Windows in Powershell 
+curl http://localhost:5238/
+# output
+Hello World!
+```
+
+```sh
+# da Windows nella Git Bash
+curl http://localhost:5238/
+# output
+Hello World!
+```
+
+Dalla WSL Linux la richiesta verso il server `ASP.NET Core` dovrà essere fatta utilizzando l'indirizzo del NAT Gateway al posto di `localhost` e cambiando la porta TCP, utilizzando il valore indicato nell'`applicationURL` per qualsiasi indirizzo  ( http://*:5001 ). Se si provasse ad utilizzare la porta `5238` valida in localhost, il server non risponderebbe alla richiesta, dal momento che è stato configurato per essere in ascolto solo in localhost sulla porta `5238` con il protocollo `http`.
+
+```sh
+# dalla shell di Ubuntu in WSL
+curl http://172.21.144.1:5001/
+# output
+Hello World!
+```
+
+#### Routing in modalità NAT tra Windows e WSL
+
+Per analizzare il routing dei pacchetti tra Windows e una distribuzione Linux della WSL si possono utilizzare alcuni comandi presenti sia nella Powershell/CMD che nella Bash di Linux. Ad esempio, dalla Powershell si può digitare il comando:
+
+```ps1
+# stampa a console la configurazione di rete per tutte le interfacce di rete dell'host
+ipconfig /all 
+
+# possibile output
+# Nota bene: alcuni dati sensibili, come il nome del computer, i MAC Address e UUID DHCP sono stati sostituiti con riferimenti generici
+
+Windows IP Configuration
+
+   Host Name . . . . . . . . . . . . : NomeComputer
+   Primary Dns Suffix  . . . . . . . :
+   Node Type . . . . . . . . . . . . : Hybrid
+   IP Routing Enabled. . . . . . . . : No
+   WINS Proxy Enabled. . . . . . . . : No
+
+Wireless LAN adapter Local Area Connection* 1:
+
+   Media State . . . . . . . . . . . : Media disconnected
+   Connection-specific DNS Suffix  . :
+   Description . . . . . . . . . . . : Microsoft Wi-Fi Direct Virtual Adapter
+   Physical Address. . . . . . . . . : Real-MAC-Address
+   DHCP Enabled. . . . . . . . . . . : Yes
+   Autoconfiguration Enabled . . . . : Yes
+
+Wireless LAN adapter Local Area Connection* 2:
+
+   Connection-specific DNS Suffix  . :
+   Description . . . . . . . . . . . : Microsoft Wi-Fi Direct Virtual Adapter #2
+   Physical Address. . . . . . . . . : Real-MAC-Address
+   DHCP Enabled. . . . . . . . . . . : No
+   Autoconfiguration Enabled . . . . : Yes
+   Link-local IPv6 Address . . . . . : fe80::8a9a:880c:1633:6fe9%25(Preferred)
+   IPv4 Address. . . . . . . . . . . : 192.168.137.1(Preferred)
+   Subnet Mask . . . . . . . . . . . : 255.255.255.0
+   Default Gateway . . . . . . . . . :
+   NetBIOS over Tcpip. . . . . . . . : Enabled
+
+Ethernet adapter Ethernet:
+
+   Connection-specific DNS Suffix  . :
+   Description . . . . . . . . . . . : Realtek PCIe GbE Family Controller
+   Physical Address. . . . . . . . . : Real-MAC-Address
+   DHCP Enabled. . . . . . . . . . . : Yes
+   Autoconfiguration Enabled . . . . : Yes
+   Link-local IPv6 Address . . . . . : fe80::700e:14be:5c38:81a%14(Preferred)
+   IPv4 Address. . . . . . . . . . . : 192.168.3.194(Preferred)
+   Subnet Mask . . . . . . . . . . . : 255.255.255.0
+   Lease Obtained. . . . . . . . . . : mercoledì 20 novembre 2024 17:38:33
+   Lease Expires . . . . . . . . . . : venerdì 22 novembre 2024 06:58:19
+   Default Gateway . . . . . . . . . : 192.168.3.1
+   DHCP Server . . . . . . . . . . . : 192.168.3.1
+   DHCPv6 IAID . . . . . . . . . . . : real DHCP UUID
+   DHCPv6 Client DUID. . . . . . . . : real DHCP UUID v6
+   DNS Servers . . . . . . . . . . . : 8.8.8.8
+                                       8.8.4.4
+   NetBIOS over Tcpip. . . . . . . . : Enabled
+
+Ethernet adapter VMware Network Adapter VMnet1:
+
+   Connection-specific DNS Suffix  . :
+   Description . . . . . . . . . . . : VMware Virtual Ethernet Adapter for VMnet1
+   Physical Address. . . . . . . . . : Real-MAC-Address
+   DHCP Enabled. . . . . . . . . . . : No
+   Autoconfiguration Enabled . . . . : Yes
+   Link-local IPv6 Address . . . . . : fe80::5b43:11fd:6e67:8f69%28(Preferred)
+   IPv4 Address. . . . . . . . . . . : 192.168.171.1(Preferred)
+   Subnet Mask . . . . . . . . . . . : 255.255.255.0
+   Default Gateway . . . . . . . . . :
+   DHCPv6 IAID . . . . . . . . . . . : real DHCP UUID
+   DHCPv6 Client DUID. . . . . . . . : real DHCP UUID v6
+   NetBIOS over Tcpip. . . . . . . . : Enabled
+
+Ethernet adapter VMware Network Adapter VMnet8:
+
+   Connection-specific DNS Suffix  . :
+   Description . . . . . . . . . . . : VMware Virtual Ethernet Adapter for VMnet8
+   Physical Address. . . . . . . . . : Real-MAC-Address
+   DHCP Enabled. . . . . . . . . . . : No
+   Autoconfiguration Enabled . . . . : Yes
+   Link-local IPv6 Address . . . . . : fe80::ab75:d7a:743a:5881%18(Preferred)
+   IPv4 Address. . . . . . . . . . . : 192.168.229.1(Preferred)
+   Subnet Mask . . . . . . . . . . . : 255.255.255.0
+   Default Gateway . . . . . . . . . :
+   DHCPv6 IAID . . . . . . . . . . . : real DHCP UUID
+   DHCPv6 Client DUID. . . . . . . . : real DHCP UUID v6
+   NetBIOS over Tcpip. . . . . . . . : Enabled
+
+Wireless LAN adapter Wi-Fi:
+
+   Media State . . . . . . . . . . . : Media disconnected
+   Connection-specific DNS Suffix  . :
+   Description . . . . . . . . . . . : Intel(R) Wi-Fi 6 AX200 160MHz
+   Physical Address. . . . . . . . . : Real-MAC-Address
+   DHCP Enabled. . . . . . . . . . . : Yes
+   Autoconfiguration Enabled . . . . : Yes
+
+Ethernet adapter Bluetooth Network Connection:
+
+   Media State . . . . . . . . . . . : Media disconnected
+   Connection-specific DNS Suffix  . :
+   Description . . . . . . . . . . . : Bluetooth Device (Personal Area Network)
+   Physical Address. . . . . . . . . : Real-MAC-Address
+   DHCP Enabled. . . . . . . . . . . : Yes
+   Autoconfiguration Enabled . . . . : Yes
+
+Ethernet adapter vEthernet (Default Switch):
+
+   Connection-specific DNS Suffix  . :
+   Description . . . . . . . . . . . : Hyper-V Virtual Ethernet Adapter
+   Physical Address. . . . . . . . . : Real-MAC-Address
+   DHCP Enabled. . . . . . . . . . . : No
+   Autoconfiguration Enabled . . . . : Yes
+   Link-local IPv6 Address . . . . . : fe80::f04f:5efe:2e1d:3391%22(Preferred)
+   IPv4 Address. . . . . . . . . . . : 172.24.176.1(Preferred)
+   Subnet Mask . . . . . . . . . . . : 255.255.240.0
+   Default Gateway . . . . . . . . . :
+   DHCPv6 IAID . . . . . . . . . . . : real DHCP UUID
+   DHCPv6 Client DUID. . . . . . . . : real DHCP UUID v6
+   NetBIOS over Tcpip. . . . . . . . : Enabled
+
+Ethernet adapter vEthernet (WSLCore):
+
+   Connection-specific DNS Suffix  . :
+   Description . . . . . . . . . . . : Hyper-V Virtual Ethernet Adapter #2
+   Physical Address. . . . . . . . . : Real-MAC-Address
+   DHCP Enabled. . . . . . . . . . . : No
+   Autoconfiguration Enabled . . . . : Yes
+   Link-local IPv6 Address . . . . . : fe80::718a:f2a9:6bb4:68e1%41(Preferred)
+   IPv4 Address. . . . . . . . . . . : 172.19.112.1(Preferred)
+   Subnet Mask . . . . . . . . . . . : 255.255.240.0
+   Default Gateway . . . . . . . . . :
+   DHCPv6 IAID . . . . . . . . . . . : real DHCP UUID
+   DHCPv6 Client DUID. . . . . . . . : real DHCP UUID v6
+   NetBIOS over Tcpip. . . . . . . . : Enabled
+
+```
+
+Come si può notare dall'esempio mostrato, questo comando presenta una lista delle interfacce di rete con relativa configurazione. L'analisi dell'output mostra che nell'esempio ci sono:
+
+1. **Scheda Ethernet (Realtek PCIe GbE Family Controller)**
+    - Questa è la connessione principale alla rete esterna (Internet o LAN).
+    - **IPv4 Address:** `192.168.3.194`
+    - **Subnet Mask:** `255.255.255.0`
+    - **Gateway:** `192.168.3.1`
+  
+   **Interfaccia vEthernet (WSLCore)**
+    - Questa è l'interfaccia virtuale dedicata a **WSL** (Windows Subsystem for Linux).
+        I pacchetti dalle distribuzioni Linux in WSL attraversano questa interfaccia per raggiungere Windows o il mondo esterno.
+    - **IPv4 Address:** `172.19.112.1`
+    - **Subnet Mask:** `255.255.240.0`
+
+2. **Interfaccia vEthernet (Default Switch)**
+    - Questa è un'altra interfaccia virtuale creata da Hyper-V, utilizzata per gestire connessioni NAT in ambienti virtuali. Non è direttamente legata a WSL ma può essere usata per altre macchine virtuali.
+    - **IPv4 Address:** `172.24.176.1`
+    - **Subnet Mask:** `255.255.240.0`
+  
+3. **Interfacce VMware Network Adapter VMnet1 e VMnet8**
+    - Queste sono interfacce create da VMware per gestire il traffico tra macchine virtuali sulla macchina host.
+    - **VMnet1:** `192.168.171.1`
+    - **VMnet8:** `192.168.229.1`
+
+4. **Wireless LAN Adapter**
+    - Le interfacce wireless sono disconnesse al momento (`Media State: Media disconnected`).
+
+Un altro comando che permette di avere informazioni importanti sul routing dei pacchetti è:
+
+```ps1
+# Powershell/CMD
+route print
+# possibile output
+===========================================================================
+Interface List
+ MAC address 1 ......Microsoft Wi-Fi Direct Virtual Adapter
+ MAC address 2 ......Microsoft Wi-Fi Direct Virtual Adapter #2
+ MAC address 3 ......Realtek PCIe GbE Family Controller
+ MAC address 4 ......VMware Virtual Ethernet Adapter for VMnet1
+ MAC address 5 ......VMware Virtual Ethernet Adapter for VMnet8
+ MAC address 6 ......Intel(R) Wi-Fi 6 AX200 160MHz
+ MAC address 7 ......Bluetooth Device (Personal Area Network)
+  1...........................Software Loopback Interface 1
+ MAC address 8 ......Hyper-V Virtual Ethernet Adapter
+ MAC address 9 ......Hyper-V Virtual Ethernet Adapter #2
+ MAC address 10 ......Hyper-V Virtual Ethernet Adapter #3
+===========================================================================
+
+IPv4 Route Table
+===========================================================================
+Active Routes:
+Network Destination        Netmask          Gateway       Interface  Metric
+          0.0.0.0          0.0.0.0      192.168.3.1    192.168.3.194     35 <-- main physical interface
+        127.0.0.0        255.0.0.0         On-link         127.0.0.1    331
+        127.0.0.1  255.255.255.255         On-link         127.0.0.1    331
+  127.255.255.255  255.255.255.255         On-link         127.0.0.1    331
+     172.19.112.0    255.255.240.0         On-link      172.19.112.1   5256
+     172.19.112.1  255.255.255.255         On-link      172.19.112.1   5256 <-- WSL Core interface
+   172.19.127.255  255.255.255.255         On-link      172.19.112.1   5256
+     172.21.144.0    255.255.240.0         On-link      172.21.144.1   5256 <-- Gateway Windows per WSL
+     172.21.144.1  255.255.255.255         On-link      172.21.144.1   5256 <-- Gateway Windows per WSL
+   172.21.159.255  255.255.255.255         On-link      172.21.144.1   5256 <-- Gateway Windows per WSL
+     172.24.176.0    255.255.240.0         On-link      172.24.176.1   5256
+     172.24.176.1  255.255.255.255         On-link      172.24.176.1   5256
+   172.24.191.255  255.255.255.255         On-link      172.24.176.1   5256
+      192.168.3.0    255.255.255.0         On-link     192.168.3.194    291
+    192.168.3.194  255.255.255.255         On-link     192.168.3.194    291
+    192.168.3.255  255.255.255.255         On-link     192.168.3.194    291
+    192.168.137.0    255.255.255.0         On-link     192.168.137.1    281
+    192.168.137.1  255.255.255.255         On-link     192.168.137.1    281
+  192.168.137.255  255.255.255.255         On-link     192.168.137.1    281
+    192.168.171.0    255.255.255.0         On-link     192.168.171.1    291
+    192.168.171.1  255.255.255.255         On-link     192.168.171.1    291
+  192.168.171.255  255.255.255.255         On-link     192.168.171.1    291
+    192.168.229.0    255.255.255.0         On-link     192.168.229.1    291
+    192.168.229.1  255.255.255.255         On-link     192.168.229.1    291
+  192.168.229.255  255.255.255.255         On-link     192.168.229.1    291
+        224.0.0.0        240.0.0.0         On-link         127.0.0.1    331
+        224.0.0.0        240.0.0.0         On-link     192.168.3.194    291
+        224.0.0.0        240.0.0.0         On-link      172.24.176.1   5256
+        224.0.0.0        240.0.0.0         On-link     192.168.137.1    281
+        224.0.0.0        240.0.0.0         On-link      172.19.112.1   5256
+        224.0.0.0        240.0.0.0         On-link     192.168.229.1    291
+        224.0.0.0        240.0.0.0         On-link     192.168.171.1    291
+        224.0.0.0        240.0.0.0         On-link      172.21.144.1   5256 <-- Gateway Windows per WSL
+  255.255.255.255  255.255.255.255         On-link         127.0.0.1    331
+  255.255.255.255  255.255.255.255         On-link     192.168.3.194    291
+  255.255.255.255  255.255.255.255         On-link      172.24.176.1   5256
+  255.255.255.255  255.255.255.255         On-link     192.168.137.1    281
+  255.255.255.255  255.255.255.255         On-link      172.19.112.1   5256
+  255.255.255.255  255.255.255.255         On-link     192.168.229.1    291
+  255.255.255.255  255.255.255.255         On-link     192.168.171.1    291
+  255.255.255.255  255.255.255.255         On-link      172.21.144.1   5256 <-- Gateway Windows per WSL
+===========================================================================
+Persistent Routes:
+  None
+
+IPv6 Route Table
+===========================================================================
+Active Routes:
+ If Metric Network Destination      Gateway
+  1    331 ::1/128                  On-link
+ 14    291 fe80::/64                On-link
+ 22   5256 fe80::/64                On-link
+ 25    281 fe80::/64                On-link
+ 41   5256 fe80::/64                On-link
+ 18    291 fe80::/64                On-link
+ 28    291 fe80::/64                On-link
+ 79   5256 fe80::/64                On-link
+ 79   5256 fe80::19e0:da1:82c5:5c55/128
+                                    On-link
+ 28    291 fe80::5b43:11fd:6e67:8f69/128
+                                    On-link
+ 14    291 fe80::700e:14be:5c38:81a/128
+                                    On-link
+ 41   5256 fe80::718a:f2a9:6bb4:68e1/128
+                                    On-link
+ 25    281 fe80::8a9a:880c:1633:6fe9/128
+                                    On-link
+ 18    291 fe80::ab75:d7a:743a:5881/128
+                                    On-link
+ 22   5256 fe80::f04f:5efe:2e1d:3391/128
+                                    On-link
+  1    331 ff00::/8                 On-link
+ 14    291 ff00::/8                 On-link
+ 22   5256 ff00::/8                 On-link
+ 25    281 ff00::/8                 On-link
+ 41   5256 ff00::/8                 On-link
+ 18    291 ff00::/8                 On-link
+ 28    291 ff00::/8                 On-link
+ 79   5256 ff00::/8                 On-link
+===========================================================================
+Persistent Routes:
+  None
+```
+
+Dalla Bash della WSL Ubuntu si possono lanciare i comandi:
+
+```sh
+# riporta la configurazione per le interfacce di rete
+ifconfig
+
+# possibile output
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.21.156.145  netmask 255.255.240.0  broadcast 172.21.159.255
+        inet6 fe80::215:5dff:fe08:924a  prefixlen 64  scopeid 0x20<link>
+        ether 00:15:5d:08:92:4a  txqueuelen 1000  (Ethernet)
+        RX packets 15088  bytes 19538294 (19.5 MB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 7493  bytes 539974 (539.9 KB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1000  (Local Loopback)
+        RX packets 60  bytes 7183 (7.1 KB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 60  bytes 7183 (7.1 KB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+# l'analisi dei pacchetti può essere fatta analizzando la tabella di routing:
+ip route
+# possibile output
+default via 172.21.144.1 dev eth0 proto kernel
+172.21.144.0/20 dev eth0 proto kernel scope link src 172.21.156.145
+```
+
+Dall'analisi dei parametri di rete da Windows e da Linux emerge quanto segue:
+
+1. **Percorso da WSL verso Internet**:
+    - La **distribuzione WSL** usa la propria tabella di routing interna, che punta al **gateway Windows per la WSL** (`172.21.144.1`).
+    - Windows inoltra il traffico attraverso la sua interfaccia principale (`192.168.3.194`) tramite il gateway fisico della rete (`192.168.3.1`).
+2. **Percorso inverso (dall'esterno verso WSL)**:
+    - Il traffico deve essere reindirizzato a WSL tramite regole di NAT configurate automaticamente o manualmente (es. port forwarding).
+
+Configurazione della WSL Ubuntu
+
+1. **Configurazione rilevata**:
+
+    - **Gateway predefinito:** `172.21.144.1`
+    - **Subnet di WSL:** `172.21.144.0/20`
+    - **IP della distribuzione:** `172.21.156.145`
+    - **Interfaccia:** `eth0`
+2. **Significato**:
+
+    - WSL si trova in una subnet virtuale gestita da Windows, configurata su `172.21.144.0/20`.
+    - Il gateway virtuale di Windows per WSL è `172.21.144.1`.
+
+Lo schema di rete che definisce il routing dei pacchetti tra la WSL Linux e Windows è:
+
+```txt
++-----------------------+        +--------------------------+-----+     +-----------------------+
+|   Distribuzione WSL   |        |      Windows Host        |     |     |     Rete Esterna      |
+|  (es: Ubuntu)         |        |                          |     |     |                       |
+|                       |        |  [vEthernet (WSL)]       |     |     |                       |
+|  IP: 172.21.156.145   +------->|  Gateway: 172.21.144.1   |     |     |                       |
+|  Gateway: 172.21.144.1|        |  Subnet: 172.21.144.0/20 |     |     |                       |
+|                       |        +--------------------------+     |     |  Gateway: 192.168.3.1 |
++-----------------------+        |                                |     |                       |
+                                 |                                |     |                       |
+                                 | [Ethernet (Interfaccia Fisica)]|     |                       |
+                                 |  IP: 192.168.3.194             +---->|                       |
+                                 |  Gateway: 192.168.3.1          |     |                       |
+                                 |  DNS: 8.8.8.8, 8.8.4.4         |     |                       |
+                                 +--------------------------------+     +-----------------------+
+Legenda:  
+- Il traffico da WSL passa attraverso `172.21.144.1` (gateway virtuale di Windows).
+- Windows esegue NAT per inoltrare il traffico verso `192.168.3.1` (gateway della rete fisica).
+- Il gateway della rete locale gestisce il traffico verso Internet.
+```
 
 ### ASP.NET Core web API documentation with Swagger / OpenAPI
 
-https://learn.microsoft.com/en-us/aspnet/core/tutorials/web-api-help-pages-using-swagger
+Come indicato nella [documentazione Microsoft](https://learn.microsoft.com/en-us/aspnet/core/tutorials/web-api-help-pages-using-swagger) la specifica *[Swagger](https://swagger.io/) ([OpenAPI](https://www.openapis.org/)) is a language-agnostic specification for describing REST APIs. It allows both computers and humans to understand the capabilities of a REST API without direct access to the source code. Its main goals are to:*
 
-#### Generate OpenAPI documents
+- *Minimize the amount of work needed to connect decoupled services.*
+- *Reduce the amount of time needed to accurately document a service.*
 
-https://learn.microsoft.com/en-us/aspnet/core/fundamentals/openapi/aspnetcore-openapi
+#### Generate OpenAPI documents [^1]
 
-#### Get started with NSwag and ASP.NET Core
+*The [`Microsoft.AspNetCore.OpenApi`](https://www.nuget.org/packages/Microsoft.AspNetCore.OpenApi) package provides built-in support for OpenAPI document generation in ASP.NET Core. The package provides the following features:*
 
-https://learn.microsoft.com/en-us/aspnet/core/tutorials/getting-started-with-nswag
+- *Support for generating OpenAPI documents at run time and accessing them via an endpoint on the application.*
+- *Support for "transformer" APIs that allow modifying the generated document.*
+- *Support for generating multiple OpenAPI documents from a single app.*
+- *Takes advantage of JSON schema support provided by [`System.Text.Json`](https://learn.microsoft.com/en-us/dotnet/api/system.text.json).*
+- *Is compatible with native AoT.*
 
-#### OpenAPI support in ASP.NET Core API apps
+#### Get started with NSwag and ASP.NET Core [^2]
 
-https://learn.microsoft.com/en-us/aspnet/core/fundamentals/openapi/overview
+NSwag offers the following capabilities:
+
+- The ability to utilize the Swagger UI and Swagger generator.
+- Flexible code generation capabilities.
+
+#### OpenAPI support in ASP.NET Core API apps [^3]
+
+ASP.NET Core supports the generation of OpenAPI documents in controller-based and minimal APIs apps. The [OpenAPI specification](https://spec.openapis.org/oas/latest.html) is a programming language-agnostic standard for documenting HTTP APIs. This standard is supported in ASP.NET Core apps through a combination of built-in APIs and open-source libraries. There are three key aspects to OpenAPI integration in an application:
+
+- Generating information about the endpoints in the app.
+- Gathering the information into a format that matches the OpenAPI schema.
+- Exposing the generated OpenAPI document via a visual UI or a serialized file.
+
+ASP.NET Core apps provide built-in support for generating information about endpoints in an app via the `Microsoft.AspNetCore.OpenApi` package.
+
+[^1]: [Generate OpenAPI documents](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/openapi/aspnetcore-openapi)
+
+[^2]: [Get started with NSwag and ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/tutorials/getting-started-with-nswag)
+
+[^3]: [OpenAPI support in ASP.NET Core API apps](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/openapi/overview)

@@ -44,14 +44,22 @@ if (app.Environment.IsDevelopment())
 
 //creations of API routes
 app.MapGet("/", () => "Hello World!");
+//uso di MapGroup per raggruppare le API
+var todoItems = app.MapGroup("/todoitems");
 //get all todoitems
-app.MapGet("/todoitems", async (TodoDb db) => await db.Todos.ToListAsync());
+todoItems.MapGet("/", async (TodoDb db) => await db.Todos.ToListAsync());
 
 //get all completed todoitems
-app.MapGet("/todoitems/complete", async (TodoDb db) => await db.Todos.Where(x => x.IsComplete).ToListAsync());
+todoItems.MapGet("/complete", async (TodoDb db) => await db.Todos.Where(x => x.IsComplete).ToListAsync());
+// todoItems.MapGet("/complete", async (TodoDb db) => {
+
+// 	 var results = await db.Todos.Where(x => x.IsComplete).ToListAsync();
+// 	 return Results.Ok(results);
+
+// 	});
 
 //get specific todoitem
-app.MapGet("/todoitems/{id}", async (TodoDb db, int id) =>
+todoItems.MapGet("/{id}", async (TodoDb db, int id) =>
 await db.Todos.FindAsync(id) is Todo todo ? Results.Ok(todo) : Results.NotFound());
 // {
 // 	var todo = await db.Todos.FindAsync(id);
@@ -64,7 +72,7 @@ await db.Todos.FindAsync(id) is Todo todo ? Results.Ok(todo) : Results.NotFound(
 
 //insert specific todoitem
 //here we use Dependency Injection 
-app.MapPost("/todoitems", async (TodoDb db, Todo todo) =>
+todoItems.MapPost("/", async (TodoDb db, Todo todo) =>
 
 {
 	db.Todos.Add(todo);
@@ -73,7 +81,7 @@ app.MapPost("/todoitems", async (TodoDb db, Todo todo) =>
 });
 
 //update specific todoitem
-app.MapPut("/todoitems/{id}", async (TodoDb db, int id, Todo todo) =>
+todoItems.MapPut("/{id}", async (TodoDb db, int id, Todo todo) =>
 
 {
 	//check if the id in the URL matches the id in the body
@@ -96,7 +104,7 @@ app.MapPut("/todoitems/{id}", async (TodoDb db, int id, Todo todo) =>
 });
 
 //delete specific todoitem
-app.MapDelete("/todoitems/{id}", async (TodoDb db, int id) =>
+todoItems.MapDelete("/{id}", async (TodoDb db, int id) =>
 
 {
 	// //verify if the todoitem exists
