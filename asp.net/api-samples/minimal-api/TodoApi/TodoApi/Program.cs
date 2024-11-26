@@ -58,26 +58,18 @@ todoItems.MapDelete("/{id}", DeleteTodo);
 app.Run();
 
 //metodi richiamati dagli Endpoint Routes 
-//in questo caso i metodi espongono un tipo di ritorno IResult
-//che è un'interfaccia che rappresenta un risultato di una richiesta HTTP
-//e può essere un risultato di successo o di errore
 
-//Con questi metodi OpenAPI può generare la documentazione automaticamente
-//ma non è in grado di definire i tipi di ritorno dei metodi, perché, a differenza
-//delle lambda expression, i metodi devono dichiarare il tipo di ritorno e non 
-//c'è una inferenza di tipo come avviene con le lambda expression
-
-static async Task<IResult> GetAllTodos(TodoDb db)
+static async Task<Ok<Todo[]>> GetAllTodos(TodoDb db)
 {
 	return TypedResults.Ok(await db.Todos.ToArrayAsync());
 }
 
-static async Task<IResult> GetCompleteTodos(TodoDb db)
+static async Task<Ok<List<Todo>>> GetCompleteTodos(TodoDb db)
 {
 	return TypedResults.Ok(await db.Todos.Where(t => t.IsComplete).ToListAsync());
 }
 
-static async Task<IResult> GetTodo(int id, TodoDb db)
+static async Task<Results<Ok<Todo>, NotFound>> GetTodo(int id, TodoDb db)
 {
 	return await db.Todos.FindAsync(id)
 		is Todo todo
@@ -85,7 +77,7 @@ static async Task<IResult> GetTodo(int id, TodoDb db)
 			: TypedResults.NotFound();
 }
 
-static async Task<IResult> CreateTodo(Todo todo, TodoDb db)
+static async Task<Created<Todo>> CreateTodo(Todo todo, TodoDb db)
 {
 	db.Todos.Add(todo);
 	await db.SaveChangesAsync();
@@ -93,7 +85,7 @@ static async Task<IResult> CreateTodo(Todo todo, TodoDb db)
 	return TypedResults.Created($"/todoitems/{todo.Id}", todo);
 }
 
-static async Task<IResult> UpdateTodo(int id, Todo inputTodo, TodoDb db)
+static async Task<Results<NotFound, NoContent>> UpdateTodo(int id, Todo inputTodo, TodoDb db)
 {
 	var todo = await db.Todos.FindAsync(id);
 
@@ -107,7 +99,7 @@ static async Task<IResult> UpdateTodo(int id, Todo inputTodo, TodoDb db)
 	return TypedResults.NoContent();
 }
 
-static async Task<IResult> DeleteTodo(int id, TodoDb db)
+static async Task<Results<NoContent,NotFound>> DeleteTodo(int id, TodoDb db)
 {
 	if (await db.Todos.FindAsync(id) is Todo todo)
 	{
