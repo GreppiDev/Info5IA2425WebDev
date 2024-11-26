@@ -5,6 +5,7 @@
 
 // app.Run();
 
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using TodoApi;
 //creation of Web application builder
@@ -47,10 +48,13 @@ app.MapGet("/", () => "Hello World!");
 //uso di MapGroup per raggruppare le API
 var todoItems = app.MapGroup("/todoitems");
 //get all todoitems
-todoItems.MapGet("/", async (TodoDb db) => await db.Todos.ToListAsync());
+todoItems.MapGet("/", async (TodoDb db) => TypedResults.Ok( await db.Todos.ToListAsync()));
 
 //get all completed todoitems
-todoItems.MapGet("/complete", async (TodoDb db) => await db.Todos.Where(x => x.IsComplete).ToListAsync());
+//si noti che le lambda expressions permettono di inferire il tipo di ritorno
+//ad esempio in questo caso il tipo di ritorno è List<Todo>
+// la lambda expression è async Task<Ok<List<Todo>>> (TodoDb db) => TypedResults.Ok( await db.Todos.Where(x => x.IsComplete).ToListAsync())
+todoItems.MapGet("/complete", async (TodoDb db) => TypedResults.Ok( await db.Todos.Where(x => x.IsComplete).ToListAsync()));
 // todoItems.MapGet("/complete", async (TodoDb db) => {
 
 // 	 var results = await db.Todos.Where(x => x.IsComplete).ToListAsync();
@@ -59,8 +63,25 @@ todoItems.MapGet("/complete", async (TodoDb db) => await db.Todos.Where(x => x.I
 // 	});
 
 //get specific todoitem
-todoItems.MapGet("/{id}", async (TodoDb db, int id) =>
-await db.Todos.FindAsync(id) is Todo todo ? Results.Ok(todo) : Results.NotFound());
+//nel caso in cui si utilizzi TypedResults al posto di Results è possibile specificare il tipo di ritorno
+//ma bisogna stare attenti a come si gestiscono i tipi di ritorno
+//nel caso in cui si utilizzi Results è possibile specificare il tipo di ritorno in modo più semplice
+//nel caso in cui si utilizzi TypedResults è necessario specificare il tipo di ritorno in modo più esplicito
+// ad esempio in questo caso si specifica che il tipo di ritorno è Results<Ok<Todo>, NotFound>
+//ma sarebbe anche possibile specificare il tipo di ritorno come IResult
+//In cosa sta la differenza?
+//TypedResults.Ok(todo) ritorna un oggetto di tipo Ok<Todo>
+//Results.Ok(todo) ritorna un oggetto di tipo Ok
+//quindi se si utilizza TypedResults è necessario specificare il tipo di ritorno in modo più esplicito.
+
+//La differenza sta anche nell'utilizzo di OpenAPI, infatti se si utilizza TypedResults è possibile specificare il tipo di ritorno
+//in modo più esplicito e quindi OpenAPI può generare una documentazione più precisa
+
+todoItems.MapGet("/{id}", async Task<Results<Ok<Todo>, NotFound>> (TodoDb db, int id) =>
+{
+	var todo = await db.Todos.FindAsync(id);
+	return todo is not null ? TypedResults.Ok(todo) : TypedResults.NotFound();
+});
 // {
 // 	var todo = await db.Todos.FindAsync(id);
 // 	if (todo == null)
