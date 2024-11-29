@@ -1,11 +1,12 @@
-# Minimal API in ASP.NET Core
+# Introduzione alle Minimal API in ASP.NET Core
 
-- [Minimal API in ASP.NET Core](#minimal-api-in-aspnet-core)
+- [Introduzione alle Minimal API in ASP.NET Core](#introduzione-alle-minimal-api-in-aspnet-core)
   - [Introduzione alle API Web](#introduzione-alle-api-web)
   - [Richiamo alle specifiche REST](#richiamo-alle-specifiche-rest)
   - [Creazione di un progetto di Minimal ASP.NET Core](#creazione-di-un-progetto-di-minimal-aspnet-core)
     - [Utilizzo di .NET CLI e VS Code](#utilizzo-di-net-cli-e-vs-code)
       - [Creazione di un progetto di Minimal API ASP.NET Core con il template `web` (progetto web vuoto)](#creazione-di-un-progetto-di-minimal-api-aspnet-core-con-il-template-web-progetto-web-vuoto)
+        - [Versione finale del progetto TodoApi nel Tutorial Microsoft](#versione-finale-del-progetto-todoapi-nel-tutorial-microsoft)
       - [Creazione di un progetto di Minimal API ASP.NET Core con il template `webapi`](#creazione-di-un-progetto-di-minimal-api-aspnet-core-con-il-template-webapi)
       - [Creazione di un progetto di Minimal API ASP.NET Core con `C# Dev Kit`](#creazione-di-un-progetto-di-minimal-api-aspnet-core-con-c-dev-kit)
     - [Strumenti per il testing di API](#strumenti-per-il-testing-di-api)
@@ -25,6 +26,7 @@
     - [ASP.NET Core web API documentation with Swagger / OpenAPI](#aspnet-core-web-api-documentation-with-swagger--openapi)
       - [Generate OpenAPI documents \[^1\]](#generate-openapi-documents-1)
       - [Get started with NSwag and ASP.NET Core \[^2\]](#get-started-with-nswag-and-aspnet-core-2)
+        - [Progetto TodoApi nel tutorial Microsoft con le opzioni di NSwag](#progetto-todoapi-nel-tutorial-microsoft-con-le-opzioni-di-nswag)
       - [OpenAPI support in ASP.NET Core API apps \[^3\]](#openapi-support-in-aspnet-core-api-apps-3)
 
 ## Introduzione alle API Web
@@ -109,10 +111,125 @@ Per l'aggiunta dei pacchetti `NuGet` al progetto si può procedere in diversi mo
   # Aggiunta di Pacchetti NuGet
    dotnet add package Microsoft.EntityFrameworkCore.InMemory
    dotnet add package Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore
+   dotnet add package NSwag.AspNetCore
   ```
 
 - Utilizzando un plugin di VS Code come, ad esempio, `Nuget Gallery`
 - Utilizzando la funzionalità di `C# Dev Kit`, che permette di aggiungere pacchetti NuGet dal `Solution Explorer`
+
+##### Versione finale del progetto TodoApi nel Tutorial Microsoft
+
+```cs
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.EntityFrameworkCore;
+using TodoApi;
+//creation of Web application builder
+var builder = WebApplication.CreateBuilder(args);
+//adding services to the container
+builder.Services.AddDbContext<TodoDb>(opt => opt.UseInMemoryDatabase("TodoList"));
+if (builder.Environment.IsDevelopment())
+{
+  builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+}
+//adding API explorer
+builder.Services.AddEndpointsApiExplorer();
+//adding OpenAPI configuration
+builder.Services.AddOpenApiDocument(config => 
+{
+  config.DocumentName = "TodoAPI";
+  config.Title = "TodoAPI v1";
+  config.Version = "v1";
+});
+//creation of Web application
+var app = builder.Build();
+
+//adding middleware for Swagger
+if (app.Environment.IsDevelopment())
+{
+  app.UseOpenApi();
+  app.UseSwaggerUi(config => 
+
+  {
+    config.DocumentTitle = "TodoAPI";
+    config.Path = "/swagger";
+    config.DocumentPath = "/swagger/{documentName}/swagger.json";
+    config.DocExpansion = "list";
+  });
+}
+
+
+//creations of API Endpoint Routes
+app.MapGet("/", () => "Hello World!");
+var todoItems = app.MapGroup("/todoitems");
+
+todoItems.MapGet("/", GetAllTodos);
+todoItems.MapGet("/complete", GetCompleteTodos);
+todoItems.MapGet("/{id}", GetTodo);
+todoItems.MapPost("/", CreateTodo);
+todoItems.MapPut("/{id}", UpdateTodo);
+todoItems.MapDelete("/{id}", DeleteTodo);
+
+
+app.Run();
+
+//Endpoint Routes methods
+
+static async Task<Ok<TodoItemDTO[]>> GetAllTodos(TodoDb db)
+{
+  return TypedResults.Ok(await db.Todos.Select(x => new TodoItemDTO(x)).ToArrayAsync());
+}
+
+static async Task<Ok<List<TodoItemDTO>>> GetCompleteTodos(TodoDb db)
+{
+  return TypedResults.Ok(await db.Todos.Where(t => t.IsComplete).Select(x => new TodoItemDTO(x)).ToListAsync());
+}
+
+static async Task<Results<Ok<TodoItemDTO>, NotFound>> GetTodo(int id, TodoDb db)
+{
+  return await db.Todos.FindAsync(id)
+    is Todo todo
+      ? TypedResults.Ok(new TodoItemDTO(todo))
+      : TypedResults.NotFound();
+}
+
+static async Task<Created<TodoItemDTO>> CreateTodo(TodoItemDTO todoItemDTO, TodoDb db)
+{
+  var todoItem = new Todo
+  {
+    Name = todoItemDTO.Name,
+    IsComplete = todoItemDTO.IsComplete,
+    Secret = "Secret data"
+  } 
+  db.Todos.Add(todoItem);
+  await db.SaveChangesAsync();
+  //l'Id viene stabilito dal database
+  todoItemDTO = new TodoItemDTO(todoItem);
+
+  return TypedResults.Created($"/todoitems/{todoItemDTO.Id}", todoItemDTO);
+}
+
+static async Task<Results<NotFound, NoContent>> UpdateTodo(int id, TodoItemDTO todoItemDTO, TodoDb db)
+{
+  var todo = await db.Todos.FindAsync(id);  
+  if (todo is null) return TypedResults.NotFound(); 
+  todo.Name = todoItemDTO.Name;
+  todo.IsComplete = todoItemDTO.IsComplete; 
+  await db.SaveChangesAsync();  
+  return TypedResults.NoContent();
+}
+
+static async Task<Results<NoContent,NotFound>> DeleteTodo(int id, TodoDb db)
+{
+  if (await db.Todos.FindAsync(id) is Todo todo)
+  {
+    db.Todos.Remove(todo);
+    await db.SaveChangesAsync();
+    return TypedResults.NoContent();
+  }
+
+  return TypedResults.NotFound();
+}
+```
 
 #### Creazione di un progetto di Minimal API ASP.NET Core con il template `webapi`
 
@@ -174,10 +291,10 @@ Come indicato nella documentazione Microsoft [Configure endpoints for the ASP.NE
 
 *There are several options for configuring endpoints:*
 
-- [Configure endpoints with URLs](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/servers/kestrel/endpoints?view=aspnetcore-9.0#configure-endpoints-with-urls)
-- [Specify ports only](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/servers/kestrel/endpoints?view=aspnetcore-9.0#specify-ports-only)
-- [Configure endpoints in appsettings.json](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/servers/kestrel/endpoints?view=aspnetcore-9.0#configure-endpoints-in-appsettingsjson)
-- [Configure endpoints in code](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/servers/kestrel/endpoints?view=aspnetcore-9.0#configure-endpoints-in-code)
+- [Configure endpoints with URLs](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/servers/kestrel/endpoints?#configure-endpoints-with-urls)
+- [Specify ports only](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/servers/kestrel/endpoints?#specify-ports-only)
+- [Configure endpoints in appsettings.json](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/servers/kestrel/endpoints?#configure-endpoints-in-appsettingsjson)
+- [Configure endpoints in code](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/servers/kestrel/endpoints?#configure-endpoints-in-code)
 
 #### Set the URLs for an ASP.NET Core app
 
@@ -650,9 +767,188 @@ NSwag offers the following capabilities:
 - The ability to utilize the Swagger UI and Swagger generator.
 - Flexible code generation capabilities.
 
+##### Progetto TodoApi nel tutorial Microsoft con le opzioni di NSwag
+
+Per far in modo che il browser parta in automatico, direttamente sulla documentazione di Swagger è possibile specificare il parametro `"launchUrl": "swagger"` all'interno della configurazione dell'applicazione nel file `launchSetting.json`, impostando anche l'opzione `"launchBrowser": true`:
+
+```json
+{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "http": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "applicationUrl": "http://localhost:5238;http://*:5001",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    "https": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "applicationUrl": "https://localhost:7245;http://localhost:5238;https://*:7001",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
+```
+
+Il progetto `TodoApi` nel tutorial Microsoft con le aggiunte indicate nella documentazione di NSag diventa, ad esempio:
+
+```cs
+using System.ComponentModel;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using NSwag;
+using NSwag.Annotations;
+using TodoApi;
+//creation of Web application builder
+var builder = WebApplication.CreateBuilder(args);
+//adding services to the container
+builder.Services.AddDbContext<TodoDb>(opt => opt.UseInMemoryDatabase("TodoList"));
+if (builder.Environment.IsDevelopment())
+{
+  builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+}
+//adding API explorer
+builder.Services.AddEndpointsApiExplorer();
+// adding OpenAPI configuration
+// builder.Services.AddOpenApiDocument(config =>
+// {
+//    config.DocumentName = "TodoAPI";
+//    config.Title = "TodoAPI v1";
+//    config.Version = "v1";
+// });
+builder.Services.AddOpenApiDocument(options =>
+{
+  options.PostProcess = document =>
+  {
+    document.Info = new OpenApiInfo
+    {
+      Version = "v1",
+      Title = "ToDo API",
+      Description = "An ASP.NET Core Web API for managing ToDo items",
+      TermsOfService = "https://example.com/terms",
+      Contact = new OpenApiContact
+      {
+        Name = "Example Contact",
+        Url = "https://example.com/contact"
+      },
+      License = new OpenApiLicense
+      {
+        Name = "Example License",
+        Url = "https://example.com/license"
+      }
+    };
+  };
+});
+//creation of Web application
+var app = builder.Build();
+
+//adding middleware for Swagger
+if (app.Environment.IsDevelopment())
+{
+  app.UseOpenApi();
+  app.UseSwaggerUi(config => 
+  {
+    config.DocumentTitle = "TodoAPI";
+    config.Path = "/swagger";
+    config.DocumentPath = "/swagger/{documentName}/swagger.json";
+    config.DocExpansion = "list";
+  });
+}
+
+//creations of API routes
+//un esempio di utilizzo di MapGet con attributi
+//ProducesResponseType specifica il tipo di risposta, il codice di stato e il tipo di contenuto
+//ProducesResponseType richiede using Microsoft.AspNetCore.Mvc
+//Description specifica la descrizione dell'endpoint
+//Description richiede using System.ComponentModel
+app.MapGet("/", [ProducesResponseType(typeof(string), StatusCodes.Status200OK, "text/plain"), Description("Una semplice Get")] () => "Hello World!").WithName("HelloWorld");
+var todoItems = app.MapGroup("/todoitems");
+todoItems.MapGet("/", GetAllTodos);
+todoItems.MapGet("/complete", GetCompleteTodos);
+todoItems.MapGet("/{id}", GetTodo);
+todoItems.MapPost("/", CreateTodo);
+todoItems.MapPut("/{id}", UpdateTodo);
+todoItems.MapDelete("/{id}", DeleteTodo);
+
+
+app.Run();
+
+//metodi richiamati dagli Endpoint Routes 
+
+static async Task<Ok<TodoItemDTO[]>> GetAllTodos(TodoDb db)
+{
+  return TypedResults.Ok(await db.Todos.Select(x => new TodoItemDTO(x)).ToArrayAsync());
+}
+
+static async Task<Ok<List<TodoItemDTO>>> GetCompleteTodos(TodoDb db)
+{
+  return TypedResults.Ok(await db.Todos.Where(t => t.IsComplete).Select(x => new TodoItemDTO(x)).ToListAsync());
+}
+
+static async Task<Results<Ok<TodoItemDTO>, NotFound>> GetTodo(int id, TodoDb db)
+{
+  return await db.Todos.FindAsync(id)
+    is Todo todo
+      ? TypedResults.Ok(new TodoItemDTO(todo))
+      : TypedResults.NotFound();
+}
+
+//SwaggerResponse richiede using NSwag.Annotations
+[SwaggerResponse(StatusCodes.Status201Created, typeof(TodoItemDTO), Description = "Returns the object created ...")]
+[ProducesResponseType(typeof(TodoItemDTO), StatusCodes.Status201Created), Description("Create the specified object ...")]
+static async Task<Created<TodoItemDTO>> CreateTodo(TodoItemDTO todoItemDTO, TodoDb db)
+{
+  var todoItem = new Todo
+  {
+    Name = todoItemDTO.Name,
+    IsComplete = todoItemDTO.IsComplete,
+    Secret = "Secret data"
+  };
+  db.Todos.Add(todoItem);
+  await db.SaveChangesAsync();
+  //l'Id viene stabilito dal database
+  todoItemDTO = new TodoItemDTO(todoItem);
+
+  return TypedResults.Created($"/todoitems/{todoItemDTO.Id}", todoItemDTO);
+}
+
+static async Task<Results<NotFound, NoContent>> UpdateTodo(int id, TodoItemDTO todoItemDTO, TodoDb db)
+{
+  var todo = await db.Todos.FindAsync(id);  
+  if (todo is null) return TypedResults.NotFound(); 
+  todo.Name = todoItemDTO.Name;
+  todo.IsComplete = todoItemDTO.IsComplete; 
+  await db.SaveChangesAsync();  
+  return TypedResults.NoContent();
+}
+//SwaggerResponse richiede using NSwag.Annotations
+[SwaggerResponse(StatusCodes.Status204NoContent, typeof(void), Description = "Object has been deleted ...")]
+[SwaggerResponse(StatusCodes.Status404NotFound, typeof(void), Description = "Object with specified Id was not found ...")]
+static async Task<Results<NoContent,NotFound>> DeleteTodo(int id, TodoDb db)
+{
+  if (await db.Todos.FindAsync(id) is Todo todo)
+  {
+    db.Todos.Remove(todo);
+    await db.SaveChangesAsync();
+    return TypedResults.NoContent();
+  }
+  return TypedResults.NotFound();
+}
+```
+
 #### OpenAPI support in ASP.NET Core API apps [^3]
 
-ASP.NET Core supports the generation of OpenAPI documents in controller-based and minimal APIs apps. The [OpenAPI specification](https://spec.openapis.org/oas/latest.html) is a programming language-agnostic standard for documenting HTTP APIs. This standard is supported in ASP.NET Core apps through a combination of built-in APIs and open-source libraries. There are three key aspects to OpenAPI integration in an application:
+ASP.NET Core supports the generation of OpenAPI documents in controller-based and minimal APIs apps. The [OpenAPI specification](https://spec.openapis.org/oas/latest.html) is a programming language-agnostic standard for documenting HTTP APIs. This standard is supported in ASP.NET Core apps through a combination of built-in APIs and open-source libraries. There are three key aspects to OpenAPI integration in an application:
 
 - Generating information about the endpoints in the app.
 - Gathering the information into a format that matches the OpenAPI schema.
