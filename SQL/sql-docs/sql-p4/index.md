@@ -15,6 +15,7 @@
       - [Gestione degli utenti e dei privilegi - Account Management Statements](#gestione-degli-utenti-e-dei-privilegi---account-management-statements)
         - [I comandi DCL (Data Control Language)](#i-comandi-dcl-data-control-language)
           - [Il comando GRANT](#il-comando-grant)
+          - [Elenco dei permessi in MySQL e MariaDb](#elenco-dei-permessi-in-mysql-e-mariadb)
           - [Visualizzare i permessi per un utente](#visualizzare-i-permessi-per-un-utente)
           - [Il comando REVOKE](#il-comando-revoke)
         - [Esempi di privilegi assegnati ad utenti](#esempi-di-privilegi-assegnati-ad-utenti)
@@ -321,6 +322,10 @@ GRANT SELECT, INSERT ON my_db.* TO 'some_user'@'some_host';
 -- user_name non seguito da nulla è sinonimo di user_name@'%'
 ```
 
+###### Elenco dei permessi in MySQL e MariaDb
+
+Nelle [pagine del manuale di MariaDb relative ai permessi](https://mariadb.com/kb/en/grant/) sono indicati tutti i permessi gestibili. Analogamente nelle [pagine del manuale di MySQL relative ai permessi](https://dev.mysql.com/doc/refman/9.1/en/privileges-provided.html) è riportato l'elenco dei permessi utilizzabili con MySQL.
+
 ###### Visualizzare i permessi per un utente
 
 ```sql
@@ -360,8 +365,8 @@ GRANT ALL ON db1.* TO 'jeffrey'@'localhost';
 GRANT SELECT ON db2.invoice TO 'jeffrey'@'localhost'; 
 
 CREATE USER IF NOT EXISTS 'dbscuola_user_omni'@'%' IDENTIFIED BY 'lapassword';
-GRANT SELECT, INSERT, UPDATE ON dbscuola.* TO 'dbscuola_user'@'localhost';
-ALTER USER 'dbscuola_user'@'localhost’  WITH MAX_QUERIES_PER_HOUR 100 MAX_CONNECTIONS_PER_HOUR 10;
+GRANT SELECT, INSERT, UPDATE ON dbscuola.* TO 'dbscuola_user_omni'@'%';
+ALTER USER 'dbscuola_user_omni'@'%'  WITH MAX_QUERIES_PER_HOUR 100 MAX_CONNECTIONS_PER_HOUR 10;
 ```
 
 ### information_schema

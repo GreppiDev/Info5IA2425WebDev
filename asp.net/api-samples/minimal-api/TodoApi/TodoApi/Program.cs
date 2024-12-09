@@ -20,6 +20,9 @@ if (builder.Environment.IsDevelopment())
 {
 	builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 }
+// Add services to the container.
+// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddOpenApi();
 //adding API explorer
 builder.Services.AddEndpointsApiExplorer();
 // adding OpenAPI configuration
@@ -55,9 +58,12 @@ builder.Services.AddOpenApiDocument(options =>
 //creation of Web application
 var app = builder.Build();
 
-//adding middleware for Swagger
+//adding middleware for Swagger and OpenAPI
 if (app.Environment.IsDevelopment())
 {
+	//adding middleware for OpenAPI
+	app.MapOpenApi();
+	//adding middleware for Swagger
 	app.UseOpenApi();
 	app.UseSwaggerUi(config => 
 	{

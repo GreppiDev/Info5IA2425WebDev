@@ -1,6 +1,6 @@
-# SQL in MySQL/MariaDB - ordinamento, elaborazione, raggruppamento
+# SQL in MySQL/MariaDB - Ordinamento, elaborazione, raggruppamento
 
-- [SQL in MySQL/MariaDB - ordinamento, elaborazione, raggruppamento](#sql-in-mysqlmariadb---ordinamento-elaborazione-raggruppamento)
+- [SQL in MySQL/MariaDB - Ordinamento, elaborazione, raggruppamento](#sql-in-mysqlmariadb---ordinamento-elaborazione-raggruppamento)
   - [Ordinamento dei dati](#ordinamento-dei-dati)
     - [Esempio di ordinamento di dati](#esempio-di-ordinamento-di-dati)
   - [Elaborazione dei dati](#elaborazione-dei-dati)

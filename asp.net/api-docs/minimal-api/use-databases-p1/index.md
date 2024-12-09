@@ -1,6 +1,6 @@
-# Utilizzo dei database con ASP.NET Core
+# Utilizzo dei database in ASP.NET con EF Core
 
-- [Utilizzo dei database con ASP.NET Core](#utilizzo-dei-database-con-aspnet-core)
+- [Utilizzo dei database in ASP.NET con EF Core](#utilizzo-dei-database-in-aspnet-con-ef-core)
 	- [Progetto PizzaStore v1](#progetto-pizzastore-v1)
 		- [Utilizzo del database InMemory](#utilizzo-del-database-inmemory)
 		- [Utilizzo del database Sqlite](#utilizzo-del-database-sqlite)
@@ -51,9 +51,12 @@ var app = builder.Build();
 
 app.UseHttpsRedirection();
 
-//adding middleware for Swagger
+//adding middleware for Swagger and OpenAPI
 if (app.Environment.IsDevelopment())
 {
+	//adding middleware for OpenAPI
+	app.MapOpenApi();
+	//adding middleware for Swagger
 	app.UseOpenApi();
 	app.UseSwaggerUi(config =>
 
@@ -170,9 +173,12 @@ var app = builder.Build();
 
 //app.UseHttpsRedirection();
 
-//adding middleware for Swagger
+//adding middleware for Swagger and OpenAPI
 if (app.Environment.IsDevelopment())
 {
+	//adding middleware for OpenAPI
+	app.MapOpenApi();
+	//adding middleware for Swagger
 	app.UseOpenApi();
 	app.UseSwaggerUi(config =>
 
@@ -273,9 +279,12 @@ var app = builder.Build();
 
 //app.UseHttpsRedirection();
 
-//adding middleware for Swagger
+//adding middleware for Swagger and OpenAPI
 if (app.Environment.IsDevelopment())
 {
+	//adding middleware for OpenAPI
+	app.MapOpenApi();
+	//adding middleware for Swagger
 	app.UseOpenApi();
 	app.UseSwaggerUi(config =>
 
@@ -546,10 +555,13 @@ var app = builder.Build();
 
 //app.UseHttpsRedirection();
 
-//adding middleware for Swagger
+//adding middleware for Swagger and OpenAPI
 if (app.Environment.IsDevelopment())
 {
-	app.UseOpenApi();
+	//adding middleware for OpenAPI
+	app.MapOpenApi();
+	//adding middleware for Swagger
+	app.UseOpenApi();app.UseOpenApi();
 	app.UseSwaggerUi(config =>
 
 	{

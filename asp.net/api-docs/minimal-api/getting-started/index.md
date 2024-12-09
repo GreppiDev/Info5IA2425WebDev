@@ -2,11 +2,11 @@
 
 - [Introduzione alle Minimal API in ASP.NET Core](#introduzione-alle-minimal-api-in-aspnet-core)
   - [Introduzione alle API Web](#introduzione-alle-api-web)
-  - [Richiamo alle specifiche REST](#richiamo-alle-specifiche-rest)
+  - [Progetto di REST API](#progetto-di-rest-api)
   - [Creazione di un progetto di Minimal ASP.NET Core](#creazione-di-un-progetto-di-minimal-aspnet-core)
     - [Utilizzo di .NET CLI e VS Code](#utilizzo-di-net-cli-e-vs-code)
       - [Creazione di un progetto di Minimal API ASP.NET Core con il template `web` (progetto web vuoto)](#creazione-di-un-progetto-di-minimal-api-aspnet-core-con-il-template-web-progetto-web-vuoto)
-        - [Versione finale del progetto TodoApi nel Tutorial Microsoft](#versione-finale-del-progetto-todoapi-nel-tutorial-microsoft)
+        - [Versione finale del progetto TodoApi nel Tutorial Microsoft, con alcune aggiunte](#versione-finale-del-progetto-todoapi-nel-tutorial-microsoft-con-alcune-aggiunte)
       - [Creazione di un progetto di Minimal API ASP.NET Core con il template `webapi`](#creazione-di-un-progetto-di-minimal-api-aspnet-core-con-il-template-webapi)
       - [Creazione di un progetto di Minimal API ASP.NET Core con `C# Dev Kit`](#creazione-di-un-progetto-di-minimal-api-aspnet-core-con-c-dev-kit)
     - [Strumenti per il testing di API](#strumenti-per-il-testing-di-api)
@@ -24,10 +24,10 @@
       - [Accessing Windows networking apps from Linux (host IP)](#accessing-windows-networking-apps-from-linux-host-ip)
       - [Routing in modalità NAT tra Windows e WSL](#routing-in-modalità-nat-tra-windows-e-wsl)
     - [ASP.NET Core web API documentation with Swagger / OpenAPI](#aspnet-core-web-api-documentation-with-swagger--openapi)
-      - [Generate OpenAPI documents \[^1\]](#generate-openapi-documents-1)
-      - [Get started with NSwag and ASP.NET Core \[^2\]](#get-started-with-nswag-and-aspnet-core-2)
+      - [Generate OpenAPI documents](#generate-openapi-documents)
+      - [Get started with NSwag and ASP.NET Core](#get-started-with-nswag-and-aspnet-core)
         - [Progetto TodoApi nel tutorial Microsoft con le opzioni di NSwag](#progetto-todoapi-nel-tutorial-microsoft-con-le-opzioni-di-nswag)
-      - [OpenAPI support in ASP.NET Core API apps \[^3\]](#openapi-support-in-aspnet-core-api-apps-3)
+      - [OpenAPI support in ASP.NET Core API apps](#openapi-support-in-aspnet-core-api-apps)
 
 ## Introduzione alle API Web
 
@@ -36,9 +36,11 @@ Le API web (Application Programming Interface) permettono la comunicazione tra d
  diversi. Le API web possono essere utilizzate per vari scopi, come l'accesso ai dati di un database, l'interazione con
   servizi esterni, o la gestione di operazioni di autenticazione e autorizzazione.
 
-## Richiamo alle specifiche REST
+## Progetto di REST API
 
-REST (Representational State Transfer) è uno stile architetturale per la progettazione di API web, studiato in dettaglio nel corso di informatica di quarta. In queste note si richiamano brevemente gli aspetti fondamentali dell'architettura REST.
+I principi architetturali del REST (REpresentational State Transfer and an architectural style for distributed hypermedia systems) sono descritti nella famosa [dissertazione di Roy Fielding del 2000](https://ics.uci.edu/~fielding/pubs/dissertation/rest_arch_style.htm) e richiamati in diversi tutorial e siti internet, tra cui anche [restfulapi.net](https://restfulapi.net/).
+
+REST è uno stile architetturale per la progettazione di API web e non è un protocollo; è stato studiato in dettaglio nel corso di informatica di quarta e viene ripreso nel corso di quinta per lo sviluppo della parte server delle API. In queste note si richiamano brevemente gli aspetti fondamentali dell'architettura REST.
 
  Le API RESTful utilizzano i metodi HTTP standard (GET, POST, PUT, DELETE) per eseguire operazioni sui dati. Le caratteristiche principali delle API RESTful includono:
 
@@ -48,6 +50,37 @@ REST (Representational State Transfer) è uno stile architetturale per la proget
 - **Uniform Interface**: Un'interfaccia uniforme che consente l'interazione tra client e server in modo standardizzato. Questo include l'uso di URL per identificare le risorse e l'uso di metodi HTTP per operare su di esse.
 - **Client-Server**: Separazione delle preoccupazioni tra client e server, migliorando la scalabilità e la portabilità. Il client gestisce l'interfaccia utente e l'interazione con l'utente, mentre il server gestisce la logica di business e l'archiviazione dei dati.
 - **Layered System**: L'architettura può essere composta da più livelli, migliorando la scalabilità e la gestione della sicurezza.
+
+Per il progetto delle RESTful API si può seguire l'ottimo tutorial Microsoft [RESTful web API design](https://learn.microsoft.com/en-us/azure/architecture/best-practices/api-design) che spiega i principi architetturali con esempi concreti che mostrano come dovrebbe essere strutturato un progetto di web API conforme ai principi architetturali REST. In particolare gli aspetti che dovrebbero essere attentamente progettati in una REST API sono:
+
+- **Definizione delle operazioni in termini di metodi HTTP:**
+    - **GET:** Utilizzato per recuperare risorse.
+    - **POST:** Utilizzato per creare nuove risorse.
+    - **PUT:** Utilizzato per aggiornare completamente una risorsa esistente.
+    - **DELETE:** Utilizzato per eliminare una risorsa.
+    - **PATCH:** Utilizzato per aggiornare parzialmente una risorsa.
+- **Idempotenza:** Le operazioni HTTP dovrebbero essere idempotenti, ovvero l'esecuzione ripetuta della stessa richiesta dovrebbe produrre sempre lo stesso risultato finale.
+- **Effetti collaterali:** Le operazioni POST dovrebbero limitare i loro effetti collaterali alla risorsa creata e alle risorse direttamente correlate.
+- **Stati delle risorse:** Le risorse dovrebbero avere stati definiti e le operazioni HTTP dovrebbero modificare questi stati in modo prevedibile.
+- **Versioning:** L'API dovrebbe avere un numero di versione per consentire l'evoluzione nel tempo senza interrompere le applicazioni client esistenti.
+- **Scoperta delle risorse:** L'API dovrebbe fornire meccanismi per consentire alle applicazioni client di scoprire le risorse disponibili e le loro relazioni.
+- **Formattazione dei dati:** L'API dovrebbe utilizzare formati di dati standard come JSON o XML per facilitare l'integrazione con altri sistemi.
+- **Gestione degli errori:** L'API dovrebbe gestire gli errori in modo appropriato, fornendo codici di stato HTTP significativi e messaggi di errore dettagliati.
+- **Sicurezza:** L'API dovrebbe implementare misure di sicurezza adeguate, come l'autenticazione e l'autorizzazione, per proteggere i dati e prevenire attacchi.
+- **Prestazioni:** L'API dovrebbe essere progettata per offrire prestazioni elevate, minimizzando la latenza e massimizzando la throughput.
+- **Scalabilità:** L'API dovrebbe essere progettata per gestire un aumento del carico di lavoro e adattarsi alle crescenti esigenze.
+
+Per le linee guida sullo sviluppo delle REST API si dovrebbero tenere in considerazione le best practices descritte nel tutorial Microsoft [Web API implementation](https://learn.microsoft.com/en-us/azure/architecture/best-practices/api-implementation). Questo tutorial descrive come  creare API efficienti, scalabili e affidabili che soddisfino le esigenze delle applicazioni client, evidenziando in particolare i seguenti punti chiave:
+
+- **Idempotenza:** Le azioni HTTP come GET, PUT, DELETE e HEAD dovrebbero essere idempotenti, ovvero l'esecuzione ripetuta della stessa richiesta sullo stesso risorsa dovrebbe produrre sempre lo stesso risultato finale, indipendentemente dal numero di volte che viene eseguita.
+- **Side effects:** Le richieste POST che creano nuove risorse dovrebbero limitare i loro effetti collaterali solo alla nuova risorsa e alle risorse direttamente correlate.
+- **Efficienza:** L'implementazione dell'API dovrebbe essere efficiente, minimizzando il tempo di risposta e ottimizzando l'utilizzo delle risorse.
+- **Scalabilità:** L'API dovrebbe essere progettata per gestire un aumento del carico di lavoro e adattarsi alle crescenti esigenze.
+- **Disponibilità:** L'API dovrebbe essere altamente disponibile, minimizzando i tempi di inattività e garantendo un servizio continuo.
+- **Sicurezza:** L'API dovrebbe implementare misure di sicurezza adeguate per proteggere i dati e prevenire attacchi.
+- **Standardizzazione:** L'API dovrebbe seguire gli standard HTTP e utilizzare formati di dati comuni come JSON o XML per facilitare l'integrazione con altri sistemi.
+- **Gestione degli errori:** L'API dovrebbe gestire in modo appropriato gli errori, fornendo messaggi di errore chiari e significativi.
+- **Scoperta delle risorse:** L'API dovrebbe fornire meccanismi per consentire alle applicazioni client di scoprire le risorse disponibili e le loro relazioni.
 
 ## Creazione di un progetto di Minimal ASP.NET Core
 
@@ -112,16 +145,28 @@ Per l'aggiunta dei pacchetti `NuGet` al progetto si può procedere in diversi mo
    dotnet add package Microsoft.EntityFrameworkCore.InMemory
    dotnet add package Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore
    dotnet add package NSwag.AspNetCore
+   dotnet add package Microsoft.AspNetCore.OpenApi
   ```
 
 - Utilizzando un plugin di VS Code come, ad esempio, `Nuget Gallery`
 - Utilizzando la funzionalità di `C# Dev Kit`, che permette di aggiungere pacchetti NuGet dal `Solution Explorer`
 
-##### Versione finale del progetto TodoApi nel Tutorial Microsoft
+##### Versione finale del progetto TodoApi nel Tutorial Microsoft, con alcune aggiunte
 
 ```cs
+// var builder = WebApplication.CreateBuilder(args);
+// var app = builder.Build();
+
+// app.MapGet("/", () => "Hello World!");
+
+// app.Run();
+
+using System.ComponentModel;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using NSwag;
+using NSwag.Annotations;
 using TodoApi;
 //creation of Web application builder
 var builder = WebApplication.CreateBuilder(args);
@@ -129,39 +174,70 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<TodoDb>(opt => opt.UseInMemoryDatabase("TodoList"));
 if (builder.Environment.IsDevelopment())
 {
-  builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+	builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 }
+// Add services to the container.
+// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddOpenApi();
 //adding API explorer
 builder.Services.AddEndpointsApiExplorer();
-//adding OpenAPI configuration
-builder.Services.AddOpenApiDocument(config => 
+// adding OpenAPI configuration
+// builder.Services.AddOpenApiDocument(config =>
+// {
+// 	config.DocumentName = "TodoAPI";
+// 	config.Title = "TodoAPI v1";
+// 	config.Version = "v1";
+// });
+builder.Services.AddOpenApiDocument(options =>
 {
-  config.DocumentName = "TodoAPI";
-  config.Title = "TodoAPI v1";
-  config.Version = "v1";
+	options.PostProcess = document =>
+	{
+		document.Info = new OpenApiInfo
+		{
+			Version = "v1",
+			Title = "ToDo API",
+			Description = "An ASP.NET Core Web API for managing ToDo items",
+			TermsOfService = "https://example.com/terms",
+			Contact = new OpenApiContact
+			{
+				Name = "Example Contact",
+				Url = "https://example.com/contact"
+			},
+			License = new OpenApiLicense
+			{
+				Name = "Example License",
+				Url = "https://example.com/license"
+			}
+		};
+	};
 });
 //creation of Web application
 var app = builder.Build();
 
-//adding middleware for Swagger
+//adding middleware for Swagger and OpenAPI
 if (app.Environment.IsDevelopment())
 {
-  app.UseOpenApi();
-  app.UseSwaggerUi(config => 
-
-  {
-    config.DocumentTitle = "TodoAPI";
-    config.Path = "/swagger";
-    config.DocumentPath = "/swagger/{documentName}/swagger.json";
-    config.DocExpansion = "list";
-  });
+	//adding middleware for OpenAPI
+	app.MapOpenApi();
+	//adding middleware for Swagger
+	app.UseOpenApi();
+	app.UseSwaggerUi(config => 
+	{
+		config.DocumentTitle = "TodoAPI";
+		config.Path = "/swagger";
+		config.DocumentPath = "/swagger/{documentName}/swagger.json";
+		config.DocExpansion = "list";
+	});
 }
 
-
-//creations of API Endpoint Routes
-app.MapGet("/", () => "Hello World!");
+//creations of API routes
+//un esempio di utilizzo di MapGet con attributi
+//ProducesResponseType specifica il tipo di risposta, il codice di stato e il tipo di contenuto
+//ProducesResponseType richiede using Microsoft.AspNetCore.Mvc
+//Description specifica la descrizione dell'endpoint
+//Description richiede using System.ComponentModel
+app.MapGet("/", [ProducesResponseType(typeof(string), StatusCodes.Status200OK, "text/plain"), Description("Una semplice Get")] () => "Hello World!").WithName("HelloWorld");
 var todoItems = app.MapGroup("/todoitems");
-
 todoItems.MapGet("/", GetAllTodos);
 todoItems.MapGet("/complete", GetCompleteTodos);
 todoItems.MapGet("/{id}", GetTodo);
@@ -172,62 +248,70 @@ todoItems.MapDelete("/{id}", DeleteTodo);
 
 app.Run();
 
-//Endpoint Routes methods
+//metodi richiamati dagli Endpoint Routes 
 
 static async Task<Ok<TodoItemDTO[]>> GetAllTodos(TodoDb db)
 {
-  return TypedResults.Ok(await db.Todos.Select(x => new TodoItemDTO(x)).ToArrayAsync());
+	return TypedResults.Ok(await db.Todos.Select(x => new TodoItemDTO(x)).ToArrayAsync());
 }
 
 static async Task<Ok<List<TodoItemDTO>>> GetCompleteTodos(TodoDb db)
 {
-  return TypedResults.Ok(await db.Todos.Where(t => t.IsComplete).Select(x => new TodoItemDTO(x)).ToListAsync());
+	return TypedResults.Ok(await db.Todos.Where(t => t.IsComplete).Select(x => new TodoItemDTO(x)).ToListAsync());
 }
 
 static async Task<Results<Ok<TodoItemDTO>, NotFound>> GetTodo(int id, TodoDb db)
 {
-  return await db.Todos.FindAsync(id)
-    is Todo todo
-      ? TypedResults.Ok(new TodoItemDTO(todo))
-      : TypedResults.NotFound();
+	return await db.Todos.FindAsync(id)
+		is Todo todo
+			? TypedResults.Ok(new TodoItemDTO(todo))
+			: TypedResults.NotFound();
 }
 
+//SwaggerResponse richiede using NSwag.Annotations
+[SwaggerResponse(StatusCodes.Status201Created, typeof(TodoItemDTO), Description = "Returns the object created ...")]
+[ProducesResponseType(typeof(TodoItemDTO), StatusCodes.Status201Created), Description("Create the specified object ...")]
 static async Task<Created<TodoItemDTO>> CreateTodo(TodoItemDTO todoItemDTO, TodoDb db)
 {
-  var todoItem = new Todo
-  {
-    Name = todoItemDTO.Name,
-    IsComplete = todoItemDTO.IsComplete,
-    Secret = "Secret data"
-  } 
-  db.Todos.Add(todoItem);
-  await db.SaveChangesAsync();
-  //l'Id viene stabilito dal database
-  todoItemDTO = new TodoItemDTO(todoItem);
+	var todoItem = new Todo
+	{
+		Name = todoItemDTO.Name,
+		IsComplete = todoItemDTO.IsComplete,
+		Secret = "Secret data"
+	};
+	db.Todos.Add(todoItem);
+	await db.SaveChangesAsync();
+	//l'Id viene stabilito dal database
+	todoItemDTO = new TodoItemDTO(todoItem);
 
-  return TypedResults.Created($"/todoitems/{todoItemDTO.Id}", todoItemDTO);
+	return TypedResults.Created($"/todoitems/{todoItemDTO.Id}", todoItemDTO);
 }
 
 static async Task<Results<NotFound, NoContent>> UpdateTodo(int id, TodoItemDTO todoItemDTO, TodoDb db)
 {
-  var todo = await db.Todos.FindAsync(id);  
-  if (todo is null) return TypedResults.NotFound(); 
-  todo.Name = todoItemDTO.Name;
-  todo.IsComplete = todoItemDTO.IsComplete; 
-  await db.SaveChangesAsync();  
-  return TypedResults.NoContent();
-}
+	var todo = await db.Todos.FindAsync(id);
 
+	if (todo is null) return TypedResults.NotFound();
+
+	todo.Name = todoItemDTO.Name;
+	todo.IsComplete = todoItemDTO.IsComplete;
+
+	await db.SaveChangesAsync();
+
+	return TypedResults.NoContent();
+}
+//SwaggerResponse richiede using NSwag.Annotations
+[SwaggerResponse(StatusCodes.Status204NoContent, typeof(void), Description = "Object has been deleted ...")]
+[SwaggerResponse(StatusCodes.Status404NotFound, typeof(void), Description = "Object with specified Id was not found ...")]
 static async Task<Results<NoContent,NotFound>> DeleteTodo(int id, TodoDb db)
 {
-  if (await db.Todos.FindAsync(id) is Todo todo)
-  {
-    db.Todos.Remove(todo);
-    await db.SaveChangesAsync();
-    return TypedResults.NoContent();
-  }
-
-  return TypedResults.NotFound();
+	if (await db.Todos.FindAsync(id) is Todo todo)
+	{
+		db.Todos.Remove(todo);
+		await db.SaveChangesAsync();
+		return TypedResults.NoContent();
+	}
+	return TypedResults.NotFound();
 }
 ```
 
@@ -750,9 +834,9 @@ Come indicato nella [documentazione Microsoft](https://learn.microsoft.com/en-us
 - *Minimize the amount of work needed to connect decoupled services.*
 - *Reduce the amount of time needed to accurately document a service.*
 
-#### Generate OpenAPI documents [^1]
+#### Generate OpenAPI documents
 
-*The [`Microsoft.AspNetCore.OpenApi`](https://www.nuget.org/packages/Microsoft.AspNetCore.OpenApi) package provides built-in support for OpenAPI document generation in ASP.NET Core. The package provides the following features:*
+*The [`Microsoft.AspNetCore.OpenApi`](https://www.nuget.org/packages/Microsoft.AspNetCore.OpenApi) package provides built-in support for OpenAPI document generation in ASP.NET Core. The package provides the following features:*[^1]
 
 - *Support for generating OpenAPI documents at run time and accessing them via an endpoint on the application.*
 - *Support for "transformer" APIs that allow modifying the generated document.*
@@ -760,9 +844,9 @@ Come indicato nella [documentazione Microsoft](https://learn.microsoft.com/en-us
 - *Takes advantage of JSON schema support provided by [`System.Text.Json`](https://learn.microsoft.com/en-us/dotnet/api/system.text.json).*
 - *Is compatible with native AoT.*
 
-#### Get started with NSwag and ASP.NET Core [^2]
+#### Get started with NSwag and ASP.NET Core
 
-NSwag offers the following capabilities:
+NSwag[^2] offers the following capabilities:
 
 - The ability to utilize the Swagger UI and Swagger generator.
 - Flexible code generation capabilities.
@@ -946,9 +1030,9 @@ static async Task<Results<NoContent,NotFound>> DeleteTodo(int id, TodoDb db)
 }
 ```
 
-#### OpenAPI support in ASP.NET Core API apps [^3]
+#### OpenAPI support in ASP.NET Core API apps 
 
-ASP.NET Core supports the generation of OpenAPI documents in controller-based and minimal APIs apps. The [OpenAPI specification](https://spec.openapis.org/oas/latest.html) is a programming language-agnostic standard for documenting HTTP APIs. This standard is supported in ASP.NET Core apps through a combination of built-in APIs and open-source libraries. There are three key aspects to OpenAPI integration in an application:
+ASP.NET Core supports the generation of OpenAPI documents in controller-based and minimal APIs apps[^3]. The [OpenAPI specification](https://spec.openapis.org/oas/latest.html) is a programming language-agnostic standard for documenting HTTP APIs. This standard is supported in ASP.NET Core apps through a combination of built-in APIs and open-source libraries. There are three key aspects to OpenAPI integration in an application:
 
 - Generating information about the endpoints in the app.
 - Gathering the information into a format that matches the OpenAPI schema.

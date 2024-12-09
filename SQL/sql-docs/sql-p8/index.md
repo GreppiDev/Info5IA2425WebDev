@@ -1,6 +1,6 @@
-# SQL in MySQL/MariaDB - subquery, insiemi, viste, tabelle temporanee
+# SQL in MySQL/MariaDB - Subquery, insiemi, viste, tabelle temporanee
 
-- [SQL in MySQL/MariaDB - subquery, insiemi, viste, tabelle temporanee](#sql-in-mysqlmariadb---subquery-insiemi-viste-tabelle-temporanee)
+- [SQL in MySQL/MariaDB - Subquery, insiemi, viste, tabelle temporanee](#sql-in-mysqlmariadb---subquery-insiemi-viste-tabelle-temporanee)
   - [Subquery](#subquery)
     - [Subquery in colonne calcolate](#subquery-in-colonne-calcolate)
       - [Esempi di subquery in colonne calcolate - database `piscine_milano`](#esempi-di-subquery-in-colonne-calcolate---database-piscine_milano)

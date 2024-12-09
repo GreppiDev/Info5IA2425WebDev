@@ -1,23 +1,30 @@
-# Un esempio completo di Minimal API con MariaDB: `Azienda API`
+# Minimal API con MariaDB e Microsoft SQL Server: Progetto `AziendaAPI` con EF Core
 
-- [Un esempio completo di Minimal API con MariaDB: `Azienda API`](#un-esempio-completo-di-minimal-api-con-mariadb-azienda-api)
+- [Minimal API con MariaDB e Microsoft SQL Server: Progetto `AziendaAPI` con EF Core](#minimal-api-con-mariadb-e-microsoft-sql-server-progetto-aziendaapi-con-ef-core)
   - [Traccia del progetto](#traccia-del-progetto)
     - [Gestione delle aziende](#gestione-delle-aziende)
     - [Gestione dei prodotti](#gestione-dei-prodotti)
     - [Gestione degli sviluppatori](#gestione-degli-sviluppatori)
     - [Gestione dei progetti](#gestione-dei-progetti)
   - [Sviluppo del progetto](#sviluppo-del-progetto)
-    - [Creazione del Model](#creazione-del-model)
+    - [Richiami di teoria per il Data Model con EF Core](#richiami-di-teoria-per-il-data-model-con-ef-core)
+  - [Il Data Model del progetto](#il-data-model-del-progetto)
     - [Gestione di una associazione "molti a molti"](#gestione-di-una-associazione-molti-a-molti)
       - [Primo modo per gestire la *molti a molti*](#primo-modo-per-gestire-la-molti-a-molti)
       - [Secondo modo per gestire la *molti a molti*](#secondo-modo-per-gestire-la-molti-a-molti)
     - [Collegamento dell'applicazione con il DBMS](#collegamento-dellapplicazione-con-il-dbms)
     - [Migration](#migration)
+    - [View Model per i dati - DTO](#view-model-per-i-dati---dto)
     - [Migrazione con `Code First Approach` (solo per sviluppo e testing)](#migrazione-con-code-first-approach-solo-per-sviluppo-e-testing)
     - [Configurazione di Swagger con il View Model](#configurazione-di-swagger-con-il-view-model)
     - [Gestione di tanti Endpoints](#gestione-di-tanti-endpoints)
       - [Il file `Program.cs` finale](#il-file-programcs-finale)
-        - [Gestione degli Endpoint (Handlers)](#gestione-degli-endpoint-handlers)
+      - [Gestione degli Endpoint (Handlers)](#gestione-degli-endpoint-handlers)
+    - [Creazione di account specifici per MySQL/MariaDb](#creazione-di-account-specifici-per-mysqlmariadb)
+    - [Creazione del database mediante uno script SQL (in produzione)](#creazione-del-database-mediante-uno-script-sql-in-produzione)
+  - [Microsoft SQL Server](#microsoft-sql-server)
+    - [Documentazione di riferimento per Microsoft SQL Server in Docker Container](#documentazione-di-riferimento-per-microsoft-sql-server-in-docker-container)
+    - [Installazione di Microsoft SQL Server in Docker Container](#installazione-di-microsoft-sql-server-in-docker-container)
 
 ## Traccia del progetto
 
@@ -46,25 +53,25 @@ Il servizio deve prevedere i seguenti endpoints:
 
   - per creare una nuova azienda;
 
-- **GET /aziende/{Id}**
+- **GET /aziende/{id}**
 
   - restituisce i dati di una specifica azienda
 
-- **PUT /aziende/{Id}**
+- **PUT /aziende/{id}**
 
   - modifica una specifica azienda;
 
-- **DELETE /aziende/{Id}**
+- **DELETE /aziende/{id}**
 
   - elimina l'azienda specificata;
 
 ### Gestione dei prodotti
 
-- **GET /aziende/{Id}/prodotti**
+- **GET /aziende/{id}/prodotti**
 
   - restituisce la lista dei prodotti dell'azienda specificata
 
-- **POST /aziende/{Id}/prodotti**
+- **POST /aziende/{id}/prodotti**
 
   - per creare un prodotto appartenente all'azienda specificata
 
@@ -72,15 +79,15 @@ Il servizio deve prevedere i seguenti endpoints:
 
   - restituisce tutti i prodotti;
 
-- **GET /prodotti/{Id}**
+- **GET /prodotti/{id}**
 
   - per ottenere il prodotto specificato;
 
-- **PUT /prodotti/{Id}**
+- **PUT /prodotti/{id}**
 
   - per modificare il prodotto specificato;
 
-- **DELETE /prodotti/{Id}**
+- **DELETE /prodotti/{id}**
 
   - per eliminare il prodotto specificato
 
@@ -90,31 +97,31 @@ Il servizio deve prevedere i seguenti endpoints:
 
   - per ottenere la lista di tutti gli sviluppatori;
 
-- **POST /aziende/{Id}/sviluppatori**
+- **POST /aziende/{id}/sviluppatori**
 
   - per creare uno sviluppatore
 
-- **GET /prodotti/{Id}/sviluppatori**
+- **GET /prodotti/{id}/sviluppatori**
 
   - per ottenere la lista degli sviluppatori di un determinato prodotto
 
-- **GET /aziende/{Id}/sviluppatori**
+- **GET /aziende/{id}/sviluppatori**
 
   - per ottenere la lista degli sviluppatori di una determinata azienda
 
-- **GET /aziende/{Id}/sviluppatori?prodottoId={prodottoId}**
+- **GET /aziende/{id}/sviluppatori?prodottoId={prodottoId}**
 
   - per ottenere la lista degli sviluppatori di una determinata azienda che hanno lavorato a un determinato prodotto. Se non è presente la query string con la chiave prodottoId viene restituita la lista di tutti gli sviluppatori di una determinata azienda.
 
-- **GET /sviluppatori/{Id}**
+- **GET /sviluppatori/{id}**
 
   - per ottenere i dati di uno sviluppatore
 
-- **PUT /sviluppatori/{Id}**
+- **PUT /sviluppatori/{id}**
 
   - per modificare uno sviluppatore
 
-- **DELETE /sviluppatori/{Id}**
+- **DELETE /sviluppatori/{id}**
 
   - per eliminare uno sviluppatore. Elimina anche tutte le associazioni tra lo sviluppatore e i prodotti a cui ha lavorato (progetti)
 
@@ -130,7 +137,9 @@ Il servizio deve prevedere i seguenti endpoints:
 
 ## Sviluppo del progetto
 
-Per prima cosa si crei un progetto di `Minimal API ASP.NET`. Si installino i pacchetti richiesti per l'integrazione di EF Core con MariaDb e per il supporto a OpenApi. Nell'elenco riportato di seguito sono indicate alcune versioni pre-release, in attesa che venga rilasciata la versione stabile di `Pomelo.EntityFrameworkCore.MySql` per `net9.0`:
+Per prima cosa si crei un progetto di `Minimal API ASP.NET`. Si installino i pacchetti richiesti per l'integrazione di EF Core con MariaDb e per il supporto a OpenApi.
+
+:memo: :warning: Nell'elenco riportato di seguito sono indicate alcune versioni pre-release, in attesa che venga rilasciata la versione stabile di `Pomelo.EntityFrameworkCore.MySql` per `net9.0`:
 
 ```ps1
  dotnet add package Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore --version 9.0.0-preview.1.24081.5
@@ -144,27 +153,30 @@ Per prima cosa si crei un progetto di `Minimal API ASP.NET`. Si installino i pac
 
 ```cs
 // The database, tables and columns will explicitly be set to "latin1" by default.
-
 modelBuilder.HasCharSet("latin1");
-
+//oppure, per ciascuna entità che deve usare un charset legacy
 modelBuilder.Entity<LegacyAsciiStuff>(entity => {
-
 // The "LegacyAsciiStuff" table and all its columns will explicitly set to "ascii" by default.
-
  entity.HasCharSet("ascii");
-
 // The "LegacyUnicodeTranslation" column uses the deprecated "utf8mb3" character set.
  entity.Property(e => e.LegacyUnicodeTranslation)
   .HasCharSet("utf8mb3");
-
 });
 ```
 
 **Con MariaDb non c'è bisogno di alcuna configurazione manuale del charset di default, a meno che non sia proprio richiesto dall'applicazione**.
 
-### Creazione del Model
+### Richiami di teoria per il Data Model con EF Core
 
-Si crei una cartella `Model` nella quale sverranno scritte le classi del modello, necessarie per la creazione del database. Per ogni tabella si scriva una classe:
+Per la definizione del [modello dei dati](https://learn.microsoft.com/en-us/ef/core/modeling/) con l'ORM (Object Relational Mapper) [Entity Framework Core (EF Core)](https://learn.microsoft.com/en-us/ef/core/), occorre seguire le regole definite nella documentazione ufficiale Microsoft. In particolare la definizione del Modello fa riferimento ai concetti di [Entity](https://learn.microsoft.com/en-us/ef/core/modeling/entity-types) e di [Relationship](https://learn.microsoft.com/en-us/ef/core/modeling/relationships). Questi argomenti sono già stati ampiamente trattati nel corso di informatica di quarta e si assumeranno come acquisiti i meccanismi per la definizione delle associazioni, con particolare riferimento alle associazioni:
+
+- [One-to-many relationships](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/one-to-many)
+- [One-to-one relationships](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/one-to-one)
+- [Many-to-many relationships](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many)
+
+## Il Data Model del progetto
+
+Si crei una cartella `Model` nella quale verranno scritte le classi del modello, necessarie per la creazione del database. Per ogni tabella si scriva una classe:
 
 ```cs
 //file Azienda.cs
@@ -356,11 +368,11 @@ modelBuilder.Entity<SviluppaProdotto>()
   .HasForeignKey(s => s.SviluppatoreId);//definizione di chiave esterna
 
 //definizione esplicita di chiave esterna su Prodotto
-		modelBuilder.Entity<SviluppaProdotto>()
-			.HasOne(sp => sp.Prodotto)
-			.WithMany(c => c.SviluppaProdotti)
-			.OnDelete(DeleteBehavior.Restrict)
-			.HasForeignKey(bc => bc.ProdottoId);//definizione di chiave esterna
+modelBuilder.Entity<SviluppaProdotto>()
+    .HasOne(sp => sp.Prodotto)
+    .WithMany(c => c.SviluppaProdotti)
+    .OnDelete(DeleteBehavior.Restrict)
+    .HasForeignKey(bc => bc.ProdottoId);//definizione di chiave esterna
 ```
 
 :memo: :warning: :fire: **Osservazione importante**: Il vincolo `.OnDelete(DeleteBehavior.Restrict)` non è sempre necessario perché per impostazione predefinita EF Core applica la regola del **"cascade delete"** in tutti i casi in cui la chiave esterna non può assumere il valore nullo, perché la relazione "uno a molti" è obbligatoria; EF Core applica la regola del **"set null"** in tutti i casi in cui la chiave esterna può assumere il valore nullo perché la relazione "uno a molti" è opzionale.
@@ -394,26 +406,26 @@ Con il vincolo imposto sulla "molti a molti" `SviluppaProdotto` bisogna prestare
 
 ```cs
 //se invece non si utilizzano le convenzioni di denominazione di EF Core
-			//è necessario definire le chiavi esterne
-			modelBuilder.Entity<Sviluppatore>()
-				.HasMany(s => s.Prodotti)
-				.WithMany(p => p.Sviluppatori)
-				.UsingEntity<SviluppaProdotto>(
-					//prima lambda expression per definire la chiave esterna su Prodotti
-					left => left
-						.HasOne(sp => sp.Prodotto)
-						.WithMany(p => p.SviluppaProdotti)
-						.OnDelete(DeleteBehavior.Restrict)
-						.HasForeignKey(sp => sp.ProdottoId),
-					//seconda lambda expression per definire la chiave esterna su Sviluppatori
-					right => right
-						.HasOne(sp => sp.Sviluppatore)
-						.WithMany(s => s.SviluppaProdotti)
-						.OnDelete(DeleteBehavior.Restrict)
-						.HasForeignKey(sp => sp.SviluppatoreId),
-					//terza lambda expression per definire la chiave primaria
-					join => join.HasKey(sp => new { sp.SviluppatoreId, sp.ProdottoId })
-				);
+//è necessario definire le chiavi esterne
+modelBuilder.Entity<Sviluppatore>()
+    .HasMany(s => s.Prodotti)
+    .WithMany(p => p.Sviluppatori)
+    .UsingEntity<SviluppaProdotto>(
+        //prima lambda expression per definire la chiave esterna su Prodotti
+        left => left
+            .HasOne(sp => sp.Prodotto)
+            .WithMany(p => p.SviluppaProdotti)
+            .OnDelete(DeleteBehavior.Restrict)
+            .HasForeignKey(sp => sp.ProdottoId),
+        //seconda lambda expression per definire la chiave esterna su Sviluppatori
+        right => right
+            .HasOne(sp => sp.Sviluppatore)
+            .WithMany(s => s.SviluppaProdotti)
+            .OnDelete(DeleteBehavior.Restrict)
+            .HasForeignKey(sp => sp.SviluppatoreId),
+        //terza lambda expression per definire la chiave primaria
+        join => join.HasKey(sp => new { sp.SviluppatoreId, sp.ProdottoId })
+    );
 ```
 
 ### Collegamento dell'applicazione con il DBMS
@@ -479,15 +491,15 @@ Per creare il database fisico si può procedere in diversi modi:
 
 1. eseguendo il comando della `:NET CLI` per l'aggiornamento del database in base alla migrazione fatta.
 
-   ```ps1
-	dotnet ef database update
-	```
+    ```ps1
+    dotnet ef database update
+    ```
 
 2. effettuando la migrazione direttamente da codice, come sarà mostrato nei prossimi paragrafi.
 
 Nel paragrafo seguente viene mostrato come realizzare un View Model per i dati esposti dalle REST API
 
-### View Model per i dati (Data Transfer Object DTO)
+### View Model per i dati - DTO
 
 Prima di procedere con la scrittura del codice dell'applicazione web si proceda alla scrittura di una View per il modello dei dati che le API esporranno alle applicazioni client. Infatti, il modello dei dati utilizzato dall'applicazione contiene una serie di componenti che sono funzionali al modo di gestire i dati mediante l'ORM (Object Relational Mapper) `EF Core`, ma che non devono necessariamente essere esposte alle applicazioni client. Ad esempio, le componenti di tipo reference, usate per le chiavi esterne, oppure le collections introdotte per creare le cosiddette navigation properties non dovrebbero comparire negli oggetti restituiti dalle Web API. Tutti questi dettagli devono essere filtrati alle applicazioni client. Per fare questo verrà utilizzato il concetto di [`Data Transfer Object`](https://en.wikipedia.org/wiki/Data_transfer_object), già illustrato negli esempi precedenti.
 
@@ -525,12 +537,12 @@ namespace AziendaAPI.ModelDTO;
 
 public class AziendaDTO
 {
-    public int AziendaId { get; set; }
+    public int Id { get; set; }
     public string Nome { get; set; } = null!;
     public string? Indirizzo { get; set; }
     public AziendaDTO() { }
     public AziendaDTO(Azienda azienda) =>
-    (AziendaId, Nome, Indirizzo) = (azienda.Id, azienda.Nome, azienda.Indirizzo);
+    (Id, Nome, Indirizzo) = (azienda.Id, azienda.Nome, azienda.Indirizzo);
 }
 ```
 
@@ -539,16 +551,15 @@ public class AziendaDTO
 using AziendaAPI.Model;
 
 namespace AziendaAPI.ModelDTO;
-
 public class ProdottoDTO
 {
-    public int ProdottoId { get; set; }
+    public int Id { get; set; }
     public int AziendaId { get; set; }
     public string Nome { get; set; } = null!;
     public string? Descrizione { get; set; }
     public ProdottoDTO() { }
     public ProdottoDTO(Prodotto prodotto) =>
-    (ProdottoId, AziendaId, Nome, Descrizione) = (prodotto.Id, prodotto.AziendaId, prodotto.Nome, prodotto.Descrizione);
+    (Id, AziendaId, Nome, Descrizione) = (prodotto.Id, prodotto.AziendaId, prodotto.Nome, prodotto.Descrizione);
 
 }
 ```
@@ -561,13 +572,13 @@ namespace AziendaAPI.ModelDTO;
 
 public class SviluppatoreDTO
 {
-    public int SviluppatoreId { get; set; }
+    public int Id { get; set; }
     public int AziendaId { get; set; }
     public string Nome { get; set; } = null!;
     public string Cognome { get; set; } = null!;
     public SviluppatoreDTO() { }
     public SviluppatoreDTO(Sviluppatore sviluppatore) =>
-    (SviluppatoreId, AziendaId, Nome, Cognome) = (sviluppatore.Id, sviluppatore.AziendaId, sviluppatore.Nome, sviluppatore.Cognome);
+    (Id, AziendaId, Nome, Cognome) = (sviluppatore.Id, sviluppatore.AziendaId, sviluppatore.Nome, sviluppatore.Cognome);
 }
 ```
 
@@ -575,11 +586,11 @@ Si noti che non è stata creata una versione `DTO` della classe `SviluppaProdott
 
 ### Migrazione con `Code First Approach` (solo per sviluppo e testing)
 
-Per poter creare il database direttamente dal codice occorre che:
+Quando si è in fase di sviluppo e testing dell'applicazione può risultare comodo fare in modo che l'applicazione possa ricreare essa stessa il database direttamente dall'ultima migrazione, nel caso in cui questo sia stato precedentemente cancellato. Per poter creare il database direttamente dal codice occorre che:
 
-1. il DBMS sia in ascolto all'indirizzo e porta specificati nella stringa di connessione
+1. Il DBMS sia in ascolto all'indirizzo e porta specificati nella stringa di connessione
 
-2. iniettare un servizio nell'app che effettui la migrazione se richiesto
+2. Iniettare un servizio nell'app che effettui la migrazione se richiesta
 
 ```cs
 //questa parte va messa dopo aver creato l'app a partire dal builder
@@ -649,7 +660,7 @@ builder.Services.AddOpenApiDocument(config =>
 
 ### Gestione di tanti Endpoints
 
-In questo esempio ci sono molte rotte e per ognuna di queste occorre definire del codice che descriva l’azione da compiere. In questo caso il file `Program.cs` diventerebbe molto grande con moltissime righe di codice. Per evitare di dover gestire tutto il codice all’interno del file `Program.cs` useremo una tecnica basata sulla scrittura di metodi di estensione. Questo non è il metodo migliore in assoluto, ma è sicuramente uno dei più semplice. Ad esempio, esistono altri meccanismi più complessi basati sulla reflection, che permettono di ridurre ulteriormente il codice inserito nel file `Program.cs`, ma richiedono alcune competenze avanzate di programmazione relative alla reflection delle classi.
+In questo esempio ci sono molte rotte e per ognuna di queste occorre definire del codice che descriva l'azione da compiere. In questo caso il file `Program.cs` diventerebbe molto grande con moltissime righe di codice. Per evitare di dover gestire tutto il codice all'interno del file `Program.cs` useremo una tecnica basata sulla scrittura di metodi di estensione. Questo non è il metodo migliore in assoluto, ma è sicuramente uno dei più semplice. Ad esempio, esistono altri meccanismi più complessi basati sulla reflection, che permettono di ridurre ulteriormente il codice inserito nel file `Program.cs`, ma richiedono alcune competenze avanzate di programmazione relative alla reflection delle classi.
 
 #### Il file `Program.cs` finale
 
@@ -720,10 +731,13 @@ builder.Services.AddDbContext<AziendaDbContext>(
 var app = builder.Build();
 //app.UseHttpsRedirection();
 
-//adding middleware for Swagger
+//adding middleware for Swagger and OpenAPI
 if (app.Environment.IsDevelopment())
 {
-    app.UseOpenApi();
+    //adding middleware for OpenAPI
+	app.MapOpenApi();
+	//adding middleware for Swagger
+	app.UseOpenApi();
     app.UseSwaggerUi(config =>
 
     {
@@ -756,9 +770,9 @@ app.MapSviluppaProdottoEndpoints();
 app.Run();
 ```
 
-##### Gestione degli Endpoint (Handlers)
+#### Gestione degli Endpoint (Handlers)
 
-Creiamo la cartella `Endpoints` con al suo interno i file seguenti:
+Si crei la cartella `Endpoints` con al suo interno i file seguenti:
 
 ```cs
 //file AziendaEndpoints.cs
@@ -1161,6 +1175,213 @@ public static class SviluppaProdottiEndpoints
 
 }
 ```
+
+### Creazione di account specifici per MySQL/MariaDb
+
+Sebbene sia possibile eseguire tutte le attività su tutti i database gestiti da MySQL/MariaDb con l'account `root`, ciò non è opportuno dal punto di vista della sicurezza. Infatti, se un utente malevolo riuscisse a sfruttare una vulnerabilità dell'applicazione con i privilegi di ``root`, potrebbe eseguire qualsiasi attività, compresa la cancellazione o modifica di tutti i dati, su tutti i database gestiti dal DBMS.**È considerata una buona pratica creare account limitati per singola applicazione**. Ciascun account viene utilizzato per effettuare la connessione al database dall'applicazione web e ha i **permessi minimi**, necessari per il corretto funzionamento dell'app. Si applica il cosiddetto **"principio del minimo privilegio"**: *un'applicazione deve avere i permessi strettamente necessari per il suo funzionamento, nulla di più.*
+
+La gestione degli account con MySQL/MariaDb è stata già trattata nelle [note relative dell'SQL relative alla sicurezza](../../../../sql/sql-docs/sql-p4/index.md); in questo paragrafo verranno mostrati alcuni esempi di creazione di utenze specifiche per web app, supponendo che il DBMS sia gestito mediante container Docker.
+
+Se si volesse creare un account limitato che permetta ad un'applicazione Web di poter effettuare CRUD operations su un database (`Create, Read, Update, Delete`), avendo i permessi minimi richiesti (*principio del minimo privilegio*) si potrebbe creare un account come il seguente:
+
+```sql
+CREATE USER IF NOT EXISTS 'azienda_api_user'@'%' IDENTIFIED BY 'my_password';
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON azienda_api.* TO 'azienda_api_user'@'%';
+
+FLUSH PRIVILEGES;
+
+```
+
+Supponendo che il database utilizzato dalla Web Application si chiami myapp_database.
+
+- La `SELECT` è richiesta per poter leggere dati
+
+- La `INSERT` è richiesta per poter inserire nuovi dati
+
+- La `UPDATE` è richiesta per poter modificare dati già inseriti
+
+- La `DELETE` è richiesta per poter cancellare dati dal database
+
+Questi indicati sopra sono i permessi minimi necessari per far funzionare la web application, supponendo che il database sia già stato creato.
+
+In effetti, **dal punto di vista della sicurezza sarebbe meglio affidare la creazione del database (con eventuale migrazione) ad un account di MariaDb con i permessi necessari per la creazione del database e di tutte le strutture necessarie (ad esempio Index, Trigger, Temporary Table, etc.) e poi usare un account limitato con solo i permessi sopra indicati per il servizio ordinario.**
+
+:memo: :warning: Si noti che se si volesse effettuare la migrazione del database con l'account `azienda_api_user`@`%` si otterrebbe un errore, poiché l'account non ha tutti i permessi necessari per eseguire una migration. In tal caso i permessi da dare all'utente sarebbero:
+
+- **Creare e modificare schemi**:
+
+    - `CREATE`
+    - `ALTER`
+- **Gestire tabelle**:
+
+    - `INSERT`
+    - `UPDATE`
+    - `DELETE`
+    - `SELECT`
+    - `DROP`
+- **Gestire indici**:
+
+    - `INDEX`
+- **Gestire il database (opzionale, solo se il database non esiste)**:
+
+    - `CREATE` (a livello globale o sul database, per creare il database). MySQL/MariaDB non permettono di concedere il permesso di creare solo un database specifico. Il permesso `CREATE` è globale e si applica a tutti i database sul server. Questo è un potenziale rischio per la sicurezza
+
+Il comando per la creazione dell'utente sarebbe in questo caso:
+
+```sql
+GRANT CREATE, ALTER, INSERT, UPDATE, DELETE, SELECT, DROP, INDEX ON azienda_api.* TO 'azienda_api_user'@'%';
+
+-- se l'utente deve anche creare il database:
+-- Concedere CREATE a livello globale permette all'utente di creare qualsiasi database, quindi è una concessione da fare con cautela. Se possibile, crea il database manualmente per evitare rischi.
+GRANT CREATE ON *.* TO 'azienda_api_user'@'%';
+
+FLUSH PRIVILEGES;
+
+```
+
+Con l'account creato, il file di configurazione `appsettings.json` diventerebbe:
+
+```json
+{
+  "ConnectionStrings": {
+    "AziendaAPIConnection": "Server=localhost;Port=3306;Database=azienda_api;User Id=azienda_api_user;Password=my_password;"
+  },
+
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*"
+}
+```
+
+### Creazione del database mediante uno script SQL (in produzione)
+
+Supponendo di aver eseguito la migrazione del database e che si voglia generare uno script SQL per la creazione del database a partire dall'ultima migrazione, si può utilizzare il comando seguente, descritto nella [documentazione Microsoft](https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/applying?tabs=dotnet-core-cli):
+
+```ps1
+ dotnet ef migrations script -o ./Scripts/InitialMigrate_script.sql
+```
+
+L'opzione `-o` permette di indicare il nome del file dove inserire lo script. Nell'esempio precedente lo script viene creato nella cartella `Scripts` all'interno della cartella del progetto, ma è ovviamente possibile crearlo in un'altra cartella.
+
+Il file prodotto dal comando `dotnet ef migrations script` può essere impiegato per ricreare il database con codice SQL, come quest'ultimo venisse creato a partire da una migrazione. Nello script sono presenti solo le istruzioni per creare le tabelle, pertanto se se volesse usare lo script SQL per creare il database da capo, occorrerebbe aggiungere in testa al file le relative istruzioni, come mostrato nell'esempio seguente:
+
+```sql
+CREATE DATABASE IF NOT EXISTS `azienda_api`; -- 👈 da aggiungere allo script
+USE `azienda_api`; -- 👈 da aggiungere allo script
+
+CREATE TABLE IF NOT EXISTS `__EFMigrationsHistory` (
+    `MigrationId` varchar(150) CHARACTER SET utf8mb4 NOT NULL,
+    `ProductVersion` varchar(32) CHARACTER SET utf8mb4 NOT NULL,
+    CONSTRAINT `PK___EFMigrationsHistory` PRIMARY KEY (`MigrationId`)
+) CHARACTER SET=utf8mb4;
+
+START TRANSACTION;
+
+ALTER DATABASE CHARACTER SET utf8mb4;
+
+CREATE TABLE `Aziende` (
+    `Id` int NOT NULL AUTO_INCREMENT,
+    `Nome` nvarchar(100) NOT NULL,
+    `Indirizzo` nvarchar(100) NULL,
+    CONSTRAINT `PK_Aziende` PRIMARY KEY (`Id`)
+) CHARACTER SET=utf8mb4;
+
+CREATE TABLE `Prodotti` (
+    `Id` int NOT NULL AUTO_INCREMENT,
+    `AziendaId` int NOT NULL,
+    `Nome` nvarchar(100) NOT NULL,
+    `Descrizione` nvarchar(200) NULL,
+    CONSTRAINT `PK_Prodotti` PRIMARY KEY (`Id`),
+    CONSTRAINT `FK_Prodotti_Aziende_AziendaId` FOREIGN KEY (`AziendaId`) REFERENCES `Aziende` (`Id`) ON DELETE CASCADE
+) CHARACTER SET=utf8mb4;
+
+CREATE TABLE `Sviluppatori` (
+    `Id` int NOT NULL AUTO_INCREMENT,
+    `AziendaId` int NOT NULL,
+    `Nome` nvarchar(40) NOT NULL,
+    `Cognome` nvarchar(40) NOT NULL,
+    CONSTRAINT `PK_Sviluppatori` PRIMARY KEY (`Id`),
+    CONSTRAINT `FK_Sviluppatori_Aziende_AziendaId` FOREIGN KEY (`AziendaId`) REFERENCES `Aziende` (`Id`) ON DELETE CASCADE
+) CHARACTER SET=utf8mb4;
+
+CREATE TABLE `SviluppaProdotti` (
+    `ProdottoId` int NOT NULL,
+    `SviluppatoreId` int NOT NULL,
+    CONSTRAINT `PK_SviluppaProdotti` PRIMARY KEY (`SviluppatoreId`, `ProdottoId`),
+    CONSTRAINT `FK_SviluppaProdotti_Prodotti_ProdottoId` FOREIGN KEY (`ProdottoId`) REFERENCES `Prodotti` (`Id`) ON DELETE RESTRICT,
+    CONSTRAINT `FK_SviluppaProdotti_Sviluppatori_SviluppatoreId` FOREIGN KEY (`SviluppatoreId`) REFERENCES `Sviluppatori` (`Id`) ON DELETE RESTRICT
+) CHARACTER SET=utf8mb4;
+
+INSERT INTO `Aziende` (`Id`, `Indirizzo`, `Nome`)
+VALUES (1, 'One Microsoft Way, Redmond, WA 98052, Stati Uniti', 'Microsoft'),
+(2, '1600 Amphitheatre Pkwy, Mountain View, CA 94043, Stati Uniti', 'Google'),
+(3, '1 Apple Park Way Cupertino, California, 95014-0642 United States', 'Apple');
+
+INSERT INTO `Prodotti` (`Id`, `AziendaId`, `Descrizione`, `Nome`)
+VALUES (1, 1, 'Applicazione per la gestione delle Note', 'SuperNote'),
+(2, 1, 'Applicazione per la visione di film in streaming', 'My Cinema'),
+(3, 2, 'Applicazione per il cad 3d', 'SuperCad');
+
+INSERT INTO `Sviluppatori` (`Id`, `AziendaId`, `Cognome`, `Nome`)
+VALUES (1, 1, 'Rossi', 'Mario'),
+(2, 1, 'Verdi', 'Giulio'),
+(3, 2, 'Bianchi', 'Leonardo');
+
+INSERT INTO `SviluppaProdotti` (`ProdottoId`, `SviluppatoreId`)
+VALUES (1, 1),
+(1, 2),
+(3, 3);
+
+CREATE INDEX `IX_Prodotti_AziendaId` ON `Prodotti` (`AziendaId`);
+
+CREATE INDEX `IX_SviluppaProdotti_ProdottoId` ON `SviluppaProdotti` (`ProdottoId`);
+
+CREATE INDEX `IX_Sviluppatori_AziendaId` ON `Sviluppatori` (`AziendaId`);
+
+INSERT INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
+VALUES ('20241129084855_InitialMigrate', '9.0.0-preview.1.24081.2');
+
+COMMIT;
+
+```
+
+## Microsoft SQL Server
+
+[Microsoft SQL Server](https://www.microsoft.com/en-us/sql-server) è un database relazionale multipiattaforma, sviluppato da Microsoft. SQL Server esiste in [diverse versioni](https://learn.microsoft.com/en-us/sql/sql-server/editions-and-components-of-sql-server-2022#sql-server-editions), alcune a pagamento e altre che possono essere usate liberamente. Tra le versioni free ci sono la `Express Edition` e la `Developer Edition`. La `Developer Edition` ha tutte le funzionalità di SQL Server, ma può essere usata solo a scopo di sviluppo e testing, ma non in produzione. La `Express Edition` è una versione ridotta di SQL Server, che può essere usata liberamente anche in produzione per piccoli progetti.
+
+Microsoft SQL Server può essere scaricato e installato nelle sue diverse versioni, utilizzando gli installer che sono disponibili [sul sito di SQL server](https://www.microsoft.com/en-us/sql-server/sql-server-downloads). Tuttavia, in questo corso verranno utilizzati container Docker per eseguire istanze di Microsoft SQL Server.
+
+### Documentazione di riferimento per Microsoft SQL Server in Docker Container
+
+La documentazione di riferimento per il deployment di Microsoft SQL Server in container Docker sono:
+
+- La pagina della [Immagine Ubuntu di Microsoft SQL Server su Docker Hub](https://hub.docker.com/_/microsoft-mssql-server)
+- La guida rapida per [l'installazione e la connessione di container con Microsoft SQL Server](https://learn.microsoft.com/en-us/sql/linux/quickstart-install-connect-docker)
+- La [guida completa al deployment di Microsoft SQL Server su container Docker](https://learn.microsoft.com/en-us/sql/linux/sql-server-linux-docker-container-deployment)
+- La [guida agli strumenti di sviluppo per Microsoft SQL Server](https://www.microsoft.com/en-us/sql-server/developer-tools/)
+
+### Installazione di Microsoft SQL Server in Docker Container
+
+L'immagine di Microsoft SQL Server si ottiene con il comando:
+
+```sh
+docker pull mcr.microsoft.com/mssql/server:2022-latest
+```
+
+Si può installare una versione di SQL Server (Express, Developer, etc), semplicemente impostando il valore della variabile `MSSQL_PID`, come riportato sulla [pagina di Microsoft SQL Server di Docker Hub](https://hub.docker.com/_/microsoft-mssql-server). Se non si imposta il valore della variabile d'ambiente `MSSQL_PID`, si installa la versione `Developer`.
+
+Si crei per prima cosa il volume dove verranno salvati i dati di Microsoft SQL Server:
+
+```sh
+docker volume create ms_sql_volume1
+```
+
+Si assuma che sia stata già creata una Docker network di tipo bridge, chiamata `my-net`
 
 [^1]: https://github.com/PomeloFoundation/Pomelo.EntityFrameworkCore.MySql/wiki/Character-Sets-and-Collations
 

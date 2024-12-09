@@ -35,9 +35,12 @@ var app = builder.Build();
 
 //app.UseHttpsRedirection();
 
-//adding middleware for Swagger
+//adding middleware for Swagger and OpenAPI
 if (app.Environment.IsDevelopment())
 {
+	//adding middleware for OpenAPI
+	app.MapOpenApi();
+	//adding middleware for Swagger
 	app.UseOpenApi();
 	app.UseSwaggerUi(config =>
 
