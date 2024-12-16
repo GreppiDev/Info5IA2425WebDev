@@ -647,7 +647,7 @@ ease-of-use, MySQL has become the leading database choice for web-based applicat
 entire range from personal projects and websites, via e-commerce and information services, all the
 way to high profile web properties including Facebook, Twitter, YouTube, Yahoo! and many more.*
 
-Per far partire un container con MySQL possiamo lanciare un comando come il seguente:
+Per far partire un container con MySQL si può lanciare un comando come il seguente:
 
 ```sh
 docker run --name mysql-server1 -e MYSQL_ROOT_PASSWORD=my-secret-pw -d -p 3306:3306 mysql:latest
@@ -659,7 +659,7 @@ docker run --name mysql-server1 -e MYSQL_ROOT_PASSWORD=my-secret-pw -d -p 3306:3
 docker run --name mysql-server1 -e MYSQL_ROOT_PASSWORD=my-secret-pw -d -p 3306:3306 mysql:9.0.1
 ```
 
-per connettersi a MySQL si può procedere in diversi modi:
+Per connettersi a MySQL si può procedere in diversi modi:
 
 1) si lancia una shell bash direttamente sul container del server di MySQL:
 si apre un'altra finestra del terminale su WSL (Ubuntu) e si digita il comando seguente:
@@ -745,8 +745,7 @@ si apre un'altra finestra del terminale su WSL (Ubuntu) e si digita il comando s
         sudo apt-get update -y
         ```
 
-    3) Si utilizza l'applicativo `MySQL Workbench` installato sul computer (se disponibile) e si fa la connessione con i parametri richiesti (username e password), specificando come host l'indirizzo `127.0.0.1`
-    MySQL Workbench può essere scaricato da [questa pagina](https://dev.mysql.com/downloads/workbench/). Si potrebbe utilizzare anche il programma `mysql.exe` per Windows che viene distribuito nella versione di MySQL per Windows, ma in tal caso, occorrerebbe utilizzare una versione del client che supporta il plugin per la sicurezza `caching_sha2_password`, oppure bisogna procedere come descritto in questa [pagina](https://chrisshennan.com/blog/fixing-authentication-plugin-cachingsha2password-cannot-be-loaded-errors)
+    3) Si utilizza l'applicativo `MySQL Workbench` installato sul computer (se disponibile) e si fa la connessione con i parametri richiesti (username e password), specificando come host l'indirizzo `127.0.0.1`. MySQL Workbench può essere scaricato da [questa pagina](https://dev.mysql.com/downloads/workbench/). Si potrebbe utilizzare anche il programma `mysql.exe` per Windows che viene distribuito nella versione di MySQL per Windows, ma in tal caso, occorrerebbe utilizzare una versione del client che supporta il plugin per la sicurezza `caching_sha2_password`, oppure bisogna procedere come descritto in questa [pagina](https://chrisshennan.com/blog/fixing-authentication-plugin-cachingsha2password-cannot-be-loaded-errors)
 
 3) Si effettua la connessione da un altro container docker. In questo caso si può scegliere tra diverse
 opzioni:

@@ -351,7 +351,6 @@ modelBuilder.Entity<Sviluppatore>()
 .HasMany(s => s.Prodotti)
 .WithMany(p => p.Sviluppatori)
 .UsingEntity<SviluppaProdotto>();
-*/
 ```
 
 Nel caso che si debba configurare qualche opzione differente dalle impostazioni di default di EF Core, occorre scrivere altro codice nel metodo `OnModelCreating`. Ad esempio, nel caso in cui si debba stabilire l'opzione `ON DELETE RESTRICT` sulle chiavi esterne, occorre aggiungere anche il codice seguente:
@@ -1178,7 +1177,7 @@ public static class SviluppaProdottiEndpoints
 
 ### Creazione di account specifici per MySQL/MariaDb
 
-Sebbene sia possibile eseguire tutte le attività su tutti i database gestiti da MySQL/MariaDb con l'account `root`, ciò non è opportuno dal punto di vista della sicurezza. Infatti, se un utente malevolo riuscisse a sfruttare una vulnerabilità dell'applicazione con i privilegi di ``root`, potrebbe eseguire qualsiasi attività, compresa la cancellazione o modifica di tutti i dati, su tutti i database gestiti dal DBMS.**È considerata una buona pratica creare account limitati per singola applicazione**. Ciascun account viene utilizzato per effettuare la connessione al database dall'applicazione web e ha i **permessi minimi**, necessari per il corretto funzionamento dell'app. Si applica il cosiddetto **"principio del minimo privilegio"**: *un'applicazione deve avere i permessi strettamente necessari per il suo funzionamento, nulla di più.*
+Sebbene sia possibile eseguire tutte le attività su tutti i database gestiti da MySQL/MariaDb con l'account `root`, ciò non è opportuno dal punto di vista della sicurezza. Infatti, se un utente malevolo riuscisse a sfruttare una vulnerabilità dell'applicazione con i privilegi di ``root`, potrebbe eseguire qualsiasi attività, compresa la cancellazione o modifica di tutti i dati, su tutti i database gestiti dal DBMS. **È considerata una buona pratica creare account limitati per singola applicazione**. Ciascun account viene utilizzato per effettuare la connessione al database dall'applicazione web e ha i **permessi minimi**, necessari per il corretto funzionamento dell'app. Si applica il cosiddetto **"principio del minimo privilegio"**: *un'applicazione deve avere i permessi strettamente necessari per il suo funzionamento, nulla di più.*
 
 La gestione degli account con MySQL/MariaDb è stata già trattata nelle [note relative dell'SQL relative alla sicurezza](../../../../sql/sql-docs/sql-p4/index.md); in questo paragrafo verranno mostrati alcuni esempi di creazione di utenze specifiche per web app, supponendo che il DBMS sia gestito mediante container Docker.
 
@@ -1233,7 +1232,7 @@ Il comando per la creazione dell'utente sarebbe in questo caso:
 GRANT CREATE, ALTER, INSERT, UPDATE, DELETE, SELECT, DROP, INDEX ON azienda_api.* TO 'azienda_api_user'@'%';
 
 -- se l'utente deve anche creare il database:
--- Concedere CREATE a livello globale permette all'utente di creare qualsiasi database, quindi è una concessione da fare con cautela. Se possibile, crea il database manualmente per evitare rischi.
+-- Concedere CREATE a livello globale permette all'utente di creare qualsiasi database, quindi è una concessione da fare con cautela. Se possibile, creare il database manualmente per evitare rischi.
 GRANT CREATE ON *.* TO 'azienda_api_user'@'%';
 
 FLUSH PRIVILEGES;
@@ -1360,8 +1359,8 @@ Microsoft SQL Server può essere scaricato e installato nelle sue diverse versio
 
 La documentazione di riferimento per il deployment di Microsoft SQL Server in container Docker sono:
 
-- La pagina della [Immagine Ubuntu di Microsoft SQL Server su Docker Hub](https://hub.docker.com/_/microsoft-mssql-server)
-- La guida rapida per [l'installazione e la connessione di container con Microsoft SQL Server](https://learn.microsoft.com/en-us/sql/linux/quickstart-install-connect-docker)
+- La [pagina della Immagine Ubuntu di Microsoft SQL Server su Docker Hub](https://hub.docker.com/_/microsoft-mssql-server)
+- La [guida rapida per l'installazione e la connessione di container con Microsoft SQL Server](https://learn.microsoft.com/en-us/sql/linux/quickstart-install-connect-docker)
 - La [guida completa al deployment di Microsoft SQL Server su container Docker](https://learn.microsoft.com/en-us/sql/linux/sql-server-linux-docker-container-deployment)
 - La [guida agli strumenti di sviluppo per Microsoft SQL Server](https://www.microsoft.com/en-us/sql-server/developer-tools/)
 
@@ -1378,10 +1377,24 @@ Si può installare una versione di SQL Server (Express, Developer, etc), semplic
 Si crei per prima cosa il volume dove verranno salvati i dati di Microsoft SQL Server:
 
 ```sh
-docker volume create ms_sql_volume1
+docker volume create sqlserver1_vol
 ```
 
 Si assuma che sia stata già creata una Docker network di tipo bridge, chiamata `my-net`
+
+```sh
+docker run \
+-e "ACCEPT_EULA=Y" \
+-e "MSSQL_SA_PASSWORD=PasswordForte1" \
+-e "MSSQL_PID=Developer" \
+-p 1433:1433 \
+--name sqlserver1 \
+--hostname sqlserver1 \
+--network my-net \
+--restart unless-stopped \
+-v sqlserver1_vol:/var/opt/mssql \
+-d mcr.microsoft.com/mssql/server:2022-latest
+```
 
 [^1]: https://github.com/PomeloFoundation/Pomelo.EntityFrameworkCore.MySql/wiki/Character-Sets-and-Collations
 
