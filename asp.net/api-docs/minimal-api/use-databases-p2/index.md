@@ -25,10 +25,10 @@
   - [Microsoft SQL Server](#microsoft-sql-server)
     - [Documentazione di riferimento per Microsoft SQL Server in Docker Container](#documentazione-di-riferimento-per-microsoft-sql-server-in-docker-container)
     - [Installazione di Microsoft SQL Server in Docker Container](#installazione-di-microsoft-sql-server-in-docker-container)
+    - [Connessione a SQL Server da VS Code con `mssql`](#connessione-a-sql-server-da-vs-code-con-mssql)
     - [Concetti di base di Microsoft SQL Server e differenze con MariaDB/MySQL](#concetti-di-base-di-microsoft-sql-server-e-differenze-con-mariadbmysql)
       - [Database](#database)
       - [Schema](#schema)
-      - [Analogia](#analogia)
       - [Confronto diretto](#confronto-diretto)
       - [Esempio pratico](#esempio-pratico)
         - [Creazione di un database](#creazione-di-un-database)
@@ -38,8 +38,8 @@
       - [Concetto di "Schema" in MySQL/MariaDB](#concetto-di-schema-in-mysqlmariadb)
       - [Differenza tra MySQL/MariaDB e altri DBMS](#differenza-tra-mysqlmariadb-e-altri-dbms)
         - [In SQL Server](#in-sql-server)
-        - [In Oracle](#in-oracle)
-      - [Confronto diretto: MySQL/MariaDB vs SQL Server/Oracle](#confronto-diretto-mysqlmariadb-vs-sql-serveroracle)
+        - [MySQL/MariaDB](#mysqlmariadb)
+      - [Confronto diretto: MySQL/MariaDB vs SQL Server](#confronto-diretto-mysqlmariadb-vs-sql-server)
     - [Istruzione `Use Master;` di SQL Server](#istruzione-use-master-di-sql-server)
       - [Perché `USE master`?](#perché-use-master)
     - [Gestione dei permessi in SQL Server](#gestione-dei-permessi-in-sql-server)
@@ -53,7 +53,6 @@
         - [Visualizzare i membri dei ruoli del database](#visualizzare-i-membri-dei-ruoli-del-database)
         - [Mostrare i permessi a livello di server](#mostrare-i-permessi-a-livello-di-server)
         - [Permessi di SQL Server a confronto con MariaDB/MySQL](#permessi-di-sql-server-a-confronto-con-mariadbmysql)
-    - [Connessione a SQL Server da VS Code con `mssql`](#connessione-a-sql-server-da-vs-code-con-mssql)
     - [Utilizzo di SQL Server con applicazioni ASP.NET Core](#utilizzo-di-sql-server-con-applicazioni-aspnet-core)
       - [Esempio `AziendaApi` con SQL Server](#esempio-aziendaapi-con-sql-server)
 
@@ -1491,6 +1490,41 @@ Ad esempio:
 
 Si noti che l'utente `root`, nel caso di SQL Server, si chiama `sa`.
 
+### Connessione a SQL Server da VS Code con `mssql`
+
+Con il plugin per Microsoft SQL Server (mssql) è possibile connettersi a Microsoft SQL Server, passando come parametri per la connessione:
+
+- Server name: localhost,1433
+- Database Name: `premere invio` per accettare `default`
+- Authentication Type: `SQL Login`
+- User name: `sa`
+- Password: `PasswordForte1`
+- Save Password: `Yes`
+- Optional display name for connection profile: `sql-server-docker-local`
+- Accettare il certificato del server
+
+![Immagine che mostra il messaggio per "Enable Trust Server Certificate"](enable-trust-server-certificate-message.png)
+
+Otteniamo:
+
+![Immagine che mostra l'esplora risorse dei database in SQL Server](sql-server-database-explorer.png)
+
+Provare ad eseguire lo script di prova:
+
+```sh
+USE master;
+CREATE DATABASE TestDB;
+GO
+SELECT Name from sys.databases;
+GO
+USE TestDB;
+CREATE TABLE Inventory (id INT, name NVARCHAR(50), quantity INT);
+INSERT INTO Inventory VALUES (1, 'banana', 150); INSERT INTO Inventory VALUES (2, 'orange', 154);
+GO
+SELECT * FROM Inventory WHERE quantity > 152;
+GO
+```
+
 ### Concetti di base di Microsoft SQL Server e differenze con MariaDB/MySQL
 
 In Microsoft SQL Server, **schema** e **database** sono concetti distinti ma strettamente correlati. Ecco una spiegazione chiara delle differenze tra i due:
@@ -1506,29 +1540,21 @@ In Microsoft SQL Server, **schema** e **database** sono concetti distinti ma str
 - **Esempio**:
   Un database chiamato `SalesDB` potrebbe contenere dati relativi a vendite, clienti e prodotti.
 
----
-
 #### Schema
 
 - **Definizione**: Uno schema è un livello di organizzazione all'interno di un database. Serve per raggruppare logicamente gli oggetti come tabelle, viste e procedure memorizzate.
-- **Funzione**: Fornisce un modo per gestire la sicurezza e organizzare gli oggetti all'interno di un database.
+- **Funzionalità**: Fornisce un modo per gestire la sicurezza e organizzare gli oggetti all'interno di un database.
 - **Caratteristiche**:
   - Ogni database può avere più schemi.
   - Ogni oggetto (es. una tabella) appartiene a uno schema specifico.
-  - Lo schema predefinito in SQL Server è `dbo` (abbreviazione di *database owner*).
+  - **Lo schema predefinito in SQL Server è `dbo` (abbreviazione di *database owner*).** Se non viene specificato alcuno schema, i database objects, ad esempio le tabelle, verranno automaticamente inseriti nello schema `dbo`
   - Gli schemi aiutano a segmentare e isolare logicamente i dati.
 - **Esempio**:
   Nel database `SalesDB`, potresti avere:
   - Uno schema `Accounting` con tabelle relative alla contabilità.
   - Uno schema `Marketing` con tabelle relative alle campagne di marketing.
 
----
-
-#### Analogia
-
 Si può pensare al database come a un archivio fisico, mentre gli schemi sono le cartelle all'interno dell'archivio che organizzano i documenti (oggetti come tabelle, viste, ecc.).
-
----
 
 #### Confronto diretto
 
@@ -1539,8 +1565,6 @@ Si può pensare al database come a un archivio fisico, mentre gli schemi sono le
 | **Esempio di nome**      | `SalesDB`                                        | `SalesDB.Accounting` o `SalesDB.Marketing`    |
 | **Isolamento**           | Ogni database è separato dagli altri.            | Gli schemi non sono isolati, ma organizzano logicamente gli oggetti. |
 | **Accesso e sicurezza**  | I permessi possono essere impostati sull'intero database. | I permessi possono essere assegnati per ogni schema. |
-
----
 
 #### Esempio pratico
 
@@ -1581,16 +1605,13 @@ Con questa configurazione:
 - `Accounting.Invoices` è una tabella nello schema `Accounting` del database `SalesDB`.
 - `Marketing.Campaigns` è una tabella nello schema `Marketing` dello stesso database.
 
-
 In **MySQL/MariaDB**, i termini **database** e **schema** sono spesso usati in modo intercambiabile, ma ci sono alcune differenze concettuali e pratiche, soprattutto se confrontati con altri DBMS come **Oracle** o **SQL Server**.
-
----
 
 #### Concetto di "Database" in MySQL/MariaDB
 
 - Un **database** in MySQL/MariaDB è un contenitore logico per oggetti come tabelle, viste, procedure, funzioni, trigger, ecc.
 - Quando si crea un database con `CREATE DATABASE`, si crea uno spazio separato per organizzare i dati.
-- Internamente, MySQL tratta un database come una directory sul filesystem del server in cui vengono memorizzati i file delle tabelle e altri oggetti.
+- Internamente, MySQL/MariaDB tratta un database come una directory sul filesystem del server in cui vengono memorizzati i file delle tabelle e altri oggetti.
 
 Esempio:
 
@@ -1633,25 +1654,23 @@ In altri DBMS (come SQL Server o Oracle), i termini **database** e **schema** ha
     CREATE TABLE HR.Orders (EmployeeID INT);
     ```
 
-##### In Oracle
+##### MySQL/MariaDB
 
-- Un **database** rappresenta l'intero sistema di gestione dei dati.
-- Uno **schema** è l'insieme di oggetti (tabelle, viste, ecc.) appartenenti a un utente specifico. Ogni utente ha il proprio schema predefinito.
+- I termini **database** e **schema** sono sinonimi.
+- In **MySQL/MariaDB**, **database** e **schema** sono lo stesso concetto e non c'è alcuna differenza pratica tra i due termini. Questo è diverso rispetto a SQL Server o Oracle, dove i due termini rappresentano concetti distinti.
 
-#### Confronto diretto: MySQL/MariaDB vs SQL Server/Oracle
+#### Confronto diretto: MySQL/MariaDB vs SQL Server
 
-| **Caratteristica**       | **MySQL/MariaDB**            | **SQL Server**                   | **Oracle**                       |
-|--------------------------|-----------------------------|----------------------------------|----------------------------------|
-| **Database**             | Sinonimo di schema          | Contenitore indipendente         | L'intero sistema di dati         |
-| **Schema**               | Sinonimo di database        | Namespace logico nel database    | Oggetti appartenenti a un utente |
-| **Namespace separati**   | No                          | Sì                               | Sì                               |
-| **Permessi distinti**    | Solo a livello di database  | Sì, a livello di schema          | Sì, a livello di schema          |
-
-In **MySQL/MariaDB**, **database** e **schema** sono lo stesso concetto e non c'è alcuna differenza pratica tra i due termini. Questo è diverso rispetto a SQL Server o Oracle, dove i due termini rappresentano concetti distinti.
-
-L'istruzione **`USE master;`** è necessaria quando vuoi creare un database in SQL Server perché **il contesto corrente determina dove vengono eseguiti i comandi SQL**. Ecco il motivo e una spiegazione dettagliata:
+| **Caratteristica**       | **MySQL/MariaDB**            | **SQL Server**                  |
+|--------------------------|-----------------------------|----------------------------------|
+| **Database**             | Sinonimo di schema          | Contenitore indipendente         |
+| **Schema**               | Sinonimo di database        | Namespace logico nel database    |
+| **Namespace separati**   | No                          | Sì                               |
+| **Permessi distinti**    | Solo a livello di database  | Sì, a livello di schema          |
 
 ### Istruzione `Use Master;` di SQL Server
+
+L'istruzione **`USE master;`** è necessaria quando si vuole creare un database in SQL Server perché **il contesto corrente determina dove vengono eseguiti i comandi SQL**.
 
 - Ogni sessione SQL si trova in un **contesto di database** specifico.
 - Il contesto determina:
@@ -1667,7 +1686,7 @@ L'istruzione **`USE master;`** è necessaria quando vuoi creare un database in S
 - Se il contesto corrente non è `master`, SQL Server potrebbe generare errori o eseguire il comando in modo non previsto.
 
 Esempio:
-Se sei nel database `SalesDB` e provi a creare un nuovo database:
+Se sei nel database `SalesDB` e si prova a creare un nuovo database:
 
 ```sql
 CREATE DATABASE TestDB;
@@ -1702,8 +1721,6 @@ Se si lavora con un'interfaccia come SQL Server Management Studio (SSMS), si pu�
 - Nella barra degli strumenti, si sceglie `master` come database predefinito prima di eseguire i comandi.
 - Se si usa uno script, si può sempre includere `USE master;` per sicurezza.
 
----
-
 In sintesi: `USE master;` è necessario perché il database `master` gestisce i metadati relativi ai database nell'istanza di SQL Server, ed è il contesto appropriato per eseguire comandi come `CREATE DATABASE`.
 
 ### Gestione dei permessi in SQL Server
@@ -1722,8 +1739,6 @@ In sintesi:
 
 - In SQL Server, **Login** ≈ autenticazione (server-level), mentre **User** ≈ autorizzazione (database-level).
 - In MariaDB/MySQL, non esiste questa separazione; un utente è definito con nome, password e privilegi su uno o più database.
-
----
 
 #### Passaggi per creare un utente in SQL Server
 
@@ -1751,13 +1766,11 @@ CREATE USER myUser FOR LOGIN myLogin;
 
 Questo collega il login `myLogin` con un utente chiamato `myUser` all'interno del database `MyDatabase`.
 
----
+c. **Assegnare permessi all'utente**
 
-c. Assegnare permessi all'utente
+A questo punto si può concedere i permessi sulle tabelle o altri oggetti all'interno del database:
 
-Ora si può concedere permessi sulle tabelle o altri oggetti all'interno del database:
-
-1. **Permesso su tutte le tabelle**:
+1. **Permessi su tutte le tabelle**:
 
    ```sql
    GRANT SELECT, INSERT, UPDATE, DELETE ON SCHEMA::dbo TO myUser;
@@ -1826,7 +1839,7 @@ GRANT SELECT, INSERT ON dbo.MyTable TO myUser;
 
 #### Visualizzazione dei permessi
 
-In **SQL Server**, per mostrare i permessi di un utente specifico (ad esempio, `myUser`), si possono utilizzare alcune query per ottenere informazioni dai cataloghi di sistema. 
+In **SQL Server**, per mostrare i permessi di un utente specifico (ad esempio, `myUser`), si possono utilizzare alcune query per ottenere informazioni dai cataloghi di sistema.
 
 ##### Query per mostrare i permessi specifici assegnati all'utente
 
@@ -1860,8 +1873,6 @@ Questa query:
 - Estrae le informazioni sul nome dell'utente (`dp.name`).
 - Mostra i permessi (`p.permission_name`) e il loro stato (`p.state_desc`, ad esempio *GRANT* o *DENY*).
 - Indica a quale oggetto (tabella, vista, ecc.) si applicano i permessi (`o.name` e `o.type_desc`).
-
----
 
 ##### Visualizzare i membri dei ruoli del database
 
@@ -1919,42 +1930,7 @@ In MariaDB/MySQL, per ottenere i permessi di un utente specifico, si può usare:
 SHOW GRANTS FOR 'myUser'@'localhost';
 ```
 
-In SQL Server, la gestione dei permessi è più frammentata (a livello di server e database), quindi non esiste un comando diretto equivalente a `SHOW GRANTS`. 
-
-### Connessione a SQL Server da VS Code con `mssql`
-
-Con il plugin per Microsoft SQL Server (mssql) è possibile connettersi a Microsoft SQL Server, passando come parametri per la connessione:
-
-- Server name: localhost,1433
-- Database Name: `premere invio` per accettare `default`
-- Authentication Type: `SQL Login`
-- User name: `sa`
-- Password: `PasswordForte1`
-- Save Password: `Yes`
-- Optional display name for connection profile: `sql-server-docker-local`
-- Accettare il certificato del server
-
-![Immagine che mostra il messaggio per "Enable Trust Server Certificate"](enable-trust-server-certificate-message.png)
-
-Otteniamo:
-
-![Immagine che mostra l'esplora risorse dei database in SQL Server](sql-server-database-explorer.png)
-
-Provare ad eseguire lo script di prova:
-
-```sh
-USE master;
-CREATE DATABASE TestDB;
-GO
-SELECT Name from sys.databases;
-GO
-USE TestDB;
-CREATE TABLE Inventory (id INT, name NVARCHAR(50), quantity INT);
-INSERT INTO Inventory VALUES (1, 'banana', 150); INSERT INTO Inventory VALUES (2, 'orange', 154);
-GO
-SELECT * FROM Inventory WHERE quantity > 152;
-GO
-```
+In SQL Server, la gestione dei permessi è più frammentata (a livello di server e database), quindi non esiste un comando diretto equivalente a `SHOW GRANTS`.
 
 ### Utilizzo di SQL Server con applicazioni ASP.NET Core
 
@@ -1964,7 +1940,7 @@ Per utilizzare SQL Server con le applicazioni ASP.NET Core è sufficiente:
 
     ```json
     "ConnectionStrings": {
-        "DefaultConnection": "Server=localhost,1433;Database=NomeDB;User Id=sa;Password=PasswordForte1;TrustServerCertificate=True;MultipleActiveResultSets=true;"
+    "DefaultConnection": "Server=localhost,1433;Database=NomeDB;User Id=sa;Password=PasswordForte1;TrustServerCertificate=True;MultipleActiveResultSets=true;"
     }
     ```
 
@@ -1987,19 +1963,19 @@ Per utilizzare SQL Server con le applicazioni ASP.NET Core è sufficiente:
     //altro codice
     ```
 
-4. Effettuare la migrazione per SQL Server (`CLI`)
+4. Effettuare la migrazione per SQL Server
 
     ```sh
     dotnet ef migrations add ToSQLServerMigration
     ```
 
-5. Aggiornare il database con l'istruzione (`CLI`)
+5. Aggiornare il database con l'istruzione
 
     ```sh
     dotnet ef database update
     ```
 
-questa istruzione può non essere necessaria se si è impostato la migrazione da codice con l'istruzione `context.Database.Migrate();`
+Questa istruzione può non essere necessaria se si è impostata la migrazione da codice con l'istruzione `context.Database.Migrate();`
 
 #### Esempio `AziendaApi` con SQL Server
 
@@ -2013,17 +1989,16 @@ Si effettuino le seguenti modifiche:
 
     ```json
     {
-      "ConnectionStrings": {
-        //"AziendaAPIConnection": "Server=localhost;port=3306;Database=aziendaapi;User Id=root;Password=root;"
-        "AziendaAPIConnection": "Server=localhost,1433;Database=NomeDB;User Id=sa;Password=PasswordForte1;TrustServerCertificate=True;MultipleActiveResultSets=true;"
-      },
-      "Logging": {
-        "LogLevel": {
-          "Default": "Information",
-          "Microsoft.AspNetCore": "Warning"
-        }
-      },
-      "AllowedHosts": "*"
+    "ConnectionStrings": {
+        "AziendaAPIConnection": "Server=localhost,1433;Database=azienda_api;User Id=sa;Password=PasswordForte1;TrustServerCertificate=True;MultipleActiveResultSets=true;"
+    },
+    "Logging": {
+        "LogLevel": {
+        "Default": "Information",
+        "Microsoft.AspNetCore": "Warning"
+        }
+    },
+    "AllowedHosts": "*"
     }
     ```
 
@@ -2040,6 +2015,8 @@ Si effettuino le seguenti modifiche:
 
 4.	Effettuare la migrazione
 
+    **Nel caso siano già state fatte delle migrazioni per un database differente ,ad esempio per MariaDb, è opportuno cancellare la cartella `Migrations` e ricrearla da capo per evitare problemi di incompatibilità tra le vecchie migrazioni per MariaDB/MySQL e le nuove per SQL Server**; in alternativa è anche possibile mantenere differenti migrazioni per differenti database providers, ma, in questo caso, occorre procedere come indicato nella documentazione di EF Core [*"Migrations with Multiple Providers"*](https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/providers?tabs=dotnet-core-cli) e quindi definire differenti contesti per differenti database providers, oppure un solo contesto, ma [differenti progetti di migrazione per ciascun database provider](https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/providers?tabs=dotnet-core-cli#using-one-context-type). In questo caso l'applicazione della migration andrebbe fatta utilizzando il comando `dotnet ef update database --context <DBContextName>` nel caso di differenti database context, oppure con il comando `dotnet ef update --project <PROJECT>` nel caso di un solo contesto, ma diversi progetti.
+
     ```sh
     dotnet ef migrations add ToSQLServerMigration
     ```
@@ -2050,7 +2027,7 @@ Si effettuino le seguenti modifiche:
     dotnet ef database update
     ```
 
-6.	Testare l’applicazione
+6.	Testare l'applicazione
 
 [^1]: https://github.com/PomeloFoundation/Pomelo.EntityFrameworkCore.MySql/wiki/Character-Sets-and-Collations
 
