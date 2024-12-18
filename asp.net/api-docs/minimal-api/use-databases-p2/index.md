@@ -1,4 +1,4 @@
-# Minimal API con MariaDB e Microsoft SQL Server: Progetto `AziendaAPI` con EF Core
+# Minimal API con MariaDB e Microsoft SQL Server: [Progetto `AziendaAPI`](../../../api-samples/minimal-api/AziendaAPI/) con EF Core
 
 - [Minimal API con MariaDB e Microsoft SQL Server: Progetto `AziendaAPI` con EF Core](#minimal-api-con-mariadb-e-microsoft-sql-server-progetto-aziendaapi-con-ef-core)
   - [Traccia del progetto](#traccia-del-progetto)
@@ -29,25 +29,25 @@
     - [Concetti di base di Microsoft SQL Server e differenze con MariaDB/MySQL](#concetti-di-base-di-microsoft-sql-server-e-differenze-con-mariadbmysql)
       - [Database](#database)
       - [Schema](#schema)
-      - [Confronto diretto](#confronto-diretto)
-      - [Esempio pratico](#esempio-pratico)
+      - [Confronto tra i concetti di `database` e `schema` in SQL Server](#confronto-tra-i-concetti-di-database-e-schema-in-sql-server)
+      - [Esempio pratico di creazione di un database e dei suoi schemi in SQL Server](#esempio-pratico-di-creazione-di-un-database-e-dei-suoi-schemi-in-sql-server)
         - [Creazione di un database](#creazione-di-un-database)
         - [Creazione di schemi all'interno del database](#creazione-di-schemi-allinterno-del-database)
         - [Creazione di tabelle negli schemi](#creazione-di-tabelle-negli-schemi)
-      - [Concetto di "Database" in MySQL/MariaDB](#concetto-di-database-in-mysqlmariadb)
-      - [Concetto di "Schema" in MySQL/MariaDB](#concetto-di-schema-in-mysqlmariadb)
+      - [Concetto di "database" in MySQL/MariaDB](#concetto-di-database-in-mysqlmariadb)
+      - [Concetto di "schema" in MySQL/MariaDB](#concetto-di-schema-in-mysqlmariadb)
       - [Differenza tra MySQL/MariaDB e altri DBMS](#differenza-tra-mysqlmariadb-e-altri-dbms)
         - [In SQL Server](#in-sql-server)
-        - [MySQL/MariaDB](#mysqlmariadb)
+        - [In MySQL/MariaDB](#in-mysqlmariadb)
       - [Confronto diretto: MySQL/MariaDB vs SQL Server](#confronto-diretto-mysqlmariadb-vs-sql-server)
-    - [Istruzione `Use Master;` di SQL Server](#istruzione-use-master-di-sql-server)
+    - [Istruzione `USE master;` di SQL Server](#istruzione-use-master-di-sql-server)
       - [Perché `USE master`?](#perché-use-master)
     - [Gestione dei permessi in SQL Server](#gestione-dei-permessi-in-sql-server)
-      - [Differenza tra Login e Database User](#differenza-tra-login-e-database-user)
+      - [Differenza tra `Login` e `Database User`](#differenza-tra-login-e-database-user)
       - [Passaggi per creare un utente in SQL Server](#passaggi-per-creare-un-utente-in-sql-server)
       - [Confronto con MariaDB/MySQL](#confronto-con-mariadbmysql)
       - [Esempio completo in SQL Server](#esempio-completo-in-sql-server)
-        - [Creare un login, un user e assegnare permessi su una tabella](#creare-un-login-un-user-e-assegnare-permessi-su-una-tabella)
+        - [Creare un login, uno user e assegnare permessi su una tabella](#creare-un-login-uno-user-e-assegnare-permessi-su-una-tabella)
       - [Visualizzazione dei permessi](#visualizzazione-dei-permessi)
         - [Query per mostrare i permessi specifici assegnati all'utente](#query-per-mostrare-i-permessi-specifici-assegnati-allutente)
         - [Visualizzare i membri dei ruoli del database](#visualizzare-i-membri-dei-ruoli-del-database)
@@ -1556,7 +1556,7 @@ In Microsoft SQL Server, **schema** e **database** sono concetti distinti ma str
 
 Si può pensare al database come a un archivio fisico, mentre gli schemi sono le cartelle all'interno dell'archivio che organizzano i documenti (oggetti come tabelle, viste, ecc.).
 
-#### Confronto diretto
+#### Confronto tra i concetti di `database` e `schema` in SQL Server
 
 | **Caratteristica**       | **Database**                                      | **Schema**                                     |
 |---------------------------|--------------------------------------------------|-----------------------------------------------|
@@ -1566,7 +1566,7 @@ Si può pensare al database come a un archivio fisico, mentre gli schemi sono le
 | **Isolamento**           | Ogni database è separato dagli altri.            | Gli schemi non sono isolati, ma organizzano logicamente gli oggetti. |
 | **Accesso e sicurezza**  | I permessi possono essere impostati sull'intero database. | I permessi possono essere assegnati per ogni schema. |
 
-#### Esempio pratico
+#### Esempio pratico di creazione di un database e dei suoi schemi in SQL Server
 
 ##### Creazione di un database
 
@@ -1607,7 +1607,7 @@ Con questa configurazione:
 
 In **MySQL/MariaDB**, i termini **database** e **schema** sono spesso usati in modo intercambiabile, ma ci sono alcune differenze concettuali e pratiche, soprattutto se confrontati con altri DBMS come **Oracle** o **SQL Server**.
 
-#### Concetto di "Database" in MySQL/MariaDB
+#### Concetto di "database" in MySQL/MariaDB
 
 - Un **database** in MySQL/MariaDB è un contenitore logico per oggetti come tabelle, viste, procedure, funzioni, trigger, ecc.
 - Quando si crea un database con `CREATE DATABASE`, si crea uno spazio separato per organizzare i dati.
@@ -1624,7 +1624,7 @@ CREATE TABLE my_table (id INT, name VARCHAR(50));
 
 Qui `my_database` è il database, e `my_table` è una tabella contenuta in esso.
 
-#### Concetto di "Schema" in MySQL/MariaDB
+#### Concetto di "schema" in MySQL/MariaDB
 
 - In MySQL/MariaDB, il termine **schema** è **un sinonimo di database**.
 - Se si utilizza il comando `SHOW SCHEMAS;`, in realtà è equivalente a `SHOW DATABASES;` e mostra l'elenco dei database.
@@ -1638,7 +1638,7 @@ CREATE SCHEMA my_schema;  -- È lo stesso di CREATE DATABASE my_schema;
 
 #### Differenza tra MySQL/MariaDB e altri DBMS
 
-In altri DBMS (come SQL Server o Oracle), i termini **database** e **schema** hanno significati distinti:
+In altri DBMS (come SQL Server), i termini **database** e **schema** hanno significati distinti:
 
 ##### In SQL Server
 
@@ -1654,7 +1654,7 @@ In altri DBMS (come SQL Server o Oracle), i termini **database** e **schema** ha
     CREATE TABLE HR.Orders (EmployeeID INT);
     ```
 
-##### MySQL/MariaDB
+##### In MySQL/MariaDB
 
 - I termini **database** e **schema** sono sinonimi.
 - In **MySQL/MariaDB**, **database** e **schema** sono lo stesso concetto e non c'è alcuna differenza pratica tra i due termini. Questo è diverso rispetto a SQL Server o Oracle, dove i due termini rappresentano concetti distinti.
@@ -1668,7 +1668,7 @@ In altri DBMS (come SQL Server o Oracle), i termini **database** e **schema** ha
 | **Namespace separati**   | No                          | Sì                               |
 | **Permessi distinti**    | Solo a livello di database  | Sì, a livello di schema          |
 
-### Istruzione `Use Master;` di SQL Server
+### Istruzione `USE master;` di SQL Server
 
 L'istruzione **`USE master;`** è necessaria quando si vuole creare un database in SQL Server perché **il contesto corrente determina dove vengono eseguiti i comandi SQL**.
 
@@ -1727,7 +1727,7 @@ In sintesi: `USE master;` è necessario perché il database `master` gestisce i 
 
 La gestione degli utenti in **SQL Server** è diversa rispetto a **MariaDB/MySQL**, anche se ci sono alcune somiglianze. La differenza principale sta nella separazione tra **login** (a livello di server) e **database user** (a livello di database).
 
-#### Differenza tra Login e Database User
+#### Differenza tra `Login` e `Database User`
 
 | **Concetto**       | **SQL Server**                                     | **MariaDB/MySQL**                               |
 |---------------------|---------------------------------------------------|------------------------------------------------|
@@ -1804,7 +1804,7 @@ Differenze principali:
    - SQL Server separa autenticazione (login) da autorizzazione (user).
    - In MariaDB/MySQL, il concetto di user include entrambe le funzionalità.
 
-2. **Scope**:
+2. **Ambito di utilizzo**:
    - In SQL Server, i permessi di accesso al database si definiscono per ogni database associando il login al user.
    - In MariaDB/MySQL, i permessi sono definiti globalmente o per database/tabelle specifiche.
 
@@ -1814,7 +1814,7 @@ Differenze principali:
 
 #### Esempio completo in SQL Server
 
-##### Creare un login, un user e assegnare permessi su una tabella
+##### Creare un login, uno user e assegnare permessi su una tabella
 
 ```sql
 -- 1. Creare un login
@@ -1977,11 +1977,11 @@ Per utilizzare SQL Server con le applicazioni ASP.NET Core è sufficiente:
 
 Questa istruzione può non essere necessaria se si è impostata la migrazione da codice con l'istruzione `context.Database.Migrate();`
 
-#### Esempio `AziendaApi` con SQL Server
+#### Esempio [`AziendaApi` con SQL Server](../../../api-samples/minimal-api/AziendaAPISQLServer/)
 
-L'esempio precedentemente svolto con MariaDB come database può essere facilmente convertito per l'utilizzo di SQL Server LocalDB.
+L'esempio precedentemente svolto con MariaDB come database può essere facilmente convertito per l'utilizzo di SQL Server.
 
-Per evitare confusione tra la migrazione effettuata con MariaDb e la migrazione che faremo con SQL Server si cancelli la cartella Migrations che contiene le istruzioni necessarie per effettuare la migrazione verso MariaDB.
+**Per evitare confusione tra la migrazione effettuata con MariaDb e la migrazione con SQL Server si cancelli la cartella `Migrations` che contiene le istruzioni necessarie per effettuare la migrazione verso MariaDB.**
 
 Si effettuino le seguenti modifiche:
 
@@ -2002,7 +2002,7 @@ Si effettuino le seguenti modifiche:
     }
     ```
 
-2. Installazione del pacchetto Microsoft.EntityFrameworkCore.SqlServer
+2. Installazione del pacchetto `Microsoft.EntityFrameworkCore.SqlServer`
 
 3. Cambio del provider di connessione al database per il `DBContext` nella classe `Program.cs`
 
@@ -2015,13 +2015,13 @@ Si effettuino le seguenti modifiche:
 
 4.	Effettuare la migrazione
 
-    **Nel caso siano già state fatte delle migrazioni per un database differente ,ad esempio per MariaDb, è opportuno cancellare la cartella `Migrations` e ricrearla da capo per evitare problemi di incompatibilità tra le vecchie migrazioni per MariaDB/MySQL e le nuove per SQL Server**; in alternativa è anche possibile mantenere differenti migrazioni per differenti database providers, ma, in questo caso, occorre procedere come indicato nella documentazione di EF Core [*"Migrations with Multiple Providers"*](https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/providers?tabs=dotnet-core-cli) e quindi definire differenti contesti per differenti database providers, oppure un solo contesto, ma [differenti progetti di migrazione per ciascun database provider](https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/providers?tabs=dotnet-core-cli#using-one-context-type). In questo caso l'applicazione della migration andrebbe fatta utilizzando il comando `dotnet ef update database --context <DBContextName>` nel caso di differenti database context, oppure con il comando `dotnet ef update --project <PROJECT>` nel caso di un solo contesto, ma diversi progetti.
-
     ```sh
     dotnet ef migrations add ToSQLServerMigration
     ```
 
-5.	Aggiornare il database (non necessario se abbiamo impostato la migrazione da codice)
+    :memo: :warning: **Nel caso siano già state fatte delle migrazioni per un database differente ,ad esempio per MariaDb, è opportuno cancellare la cartella `Migrations` e ricrearla da capo per evitare problemi di incompatibilità tra le vecchie migrazioni per MariaDB/MySQL e le nuove per SQL Server**; in alternativa è anche possibile mantenere differenti migrazioni per differenti database providers, ma, in questo caso, occorre procedere come indicato nella documentazione di EF Core [*"Migrations with Multiple Providers"*](https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/providers?tabs=dotnet-core-cli) e quindi definire differenti contesti per differenti database providers, oppure un solo contesto, ma [differenti progetti di migrazione per ciascun database provider](https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/providers?tabs=dotnet-core-cli#using-one-context-type). In questo caso l'applicazione della migration andrebbe fatta utilizzando il comando `dotnet ef update database --context <DBContextName>` nel caso di differenti database context, oppure con il comando `dotnet ef update --project <PROJECT>` nel caso di un solo contesto, ma diversi progetti.
+
+5.	Aggiornare il database (non necessario nel caso in cui sia stata impostata la migrazione da codice)
 
     ```sh
     dotnet ef database update
