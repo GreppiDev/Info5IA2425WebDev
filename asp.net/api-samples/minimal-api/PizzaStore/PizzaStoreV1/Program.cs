@@ -13,6 +13,7 @@ builder.Services.AddOpenApi();
 //adding API explorer
 builder.Services.AddEndpointsApiExplorer();
 //adding OpenAPI configuration
+//questa configurazione è richiesta solo nel caso in cui si voglia il supporto a Swagger tramite NSwag
 builder.Services.AddOpenApiDocument(config =>
 {
 	config.DocumentName = "PizzaStoreAPIv1";
@@ -42,6 +43,7 @@ if (app.Environment.IsDevelopment())
 	app.MapOpenApi();
 	//adding middleware for Swagger
 	app.UseOpenApi();
+	//adding web UI for Swagger with NSwag
 	app.UseSwaggerUi(config =>
 
 	{

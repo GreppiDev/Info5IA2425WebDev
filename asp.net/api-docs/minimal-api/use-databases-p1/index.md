@@ -412,22 +412,22 @@ Si installino (dalla shell posizionata sulla cartella del nuovo progetto) i pacc
 :memo: :warning: :fire: **Attenzione**: Nel momento in cui si scrivono queste note la versione del pacchetto `Pomelo.EntityFrameworkCore.MySql` che funziona con `net9.0` è una versione di pre-release e, di conseguenza, anche i pacchetti relativi a `EntityFrameworkCore` devono essere portati ad una versione specifica, affinché `EF Core` possa correttamente effettuare la migrazione e l'aggiornamento del database.
 
 ```ps1
-# 👈 serve per avere informazioni diagnostiche per EntityFrameworkCore
+# 👇 serve per avere informazioni diagnostiche per EntityFrameworkCore
 # è usato quando si utilizzano i middleware come:
 #   app.UseDeveloperExceptionPage();
 #   app.UseDatabaseErrorPage();
  dotnet add package Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore
 
-# 👈 serve per il supporto a OpenApi, ma se si utilizza il template webapi, oppure il Dev Kit per creare il progetto è già installato
+# 👇 serve per il supporto a OpenApi, ma se si utilizza il template webapi, oppure il Dev Kit per creare il progetto è già installato
  dotnet add package Microsoft.AspNetCore.OpenApi 
 
 # 👈 serve per il supporto a Swagger
  dotnet add package NSwag.AspNetCore 
 
-# 👈 serve per effettuare il Design, ossia il progetto del database, ad esempio, mediante una migrazione
+# 👇 serve per effettuare il Design, ossia il progetto del database, ad esempio, mediante una migrazione
  dotnet add package Microsoft.EntityFrameworkCore.Design
 
-# 👈 serve per poter utilizzare MySQL oppure MariaDb come database provider di EF Core
+# 👇 serve per poter utilizzare MySQL oppure MariaDb come database provider di EF Core
 # https://github.com/PomeloFoundation/Pomelo.EntityFrameworkCore.MySql
 # https://learn.microsoft.com/en-us/ef/core/providers/?tabs=dotnet-core-cli
 dotnet add package Pomelo.EntityFrameworkCore.MySql

@@ -883,7 +883,7 @@ Per far in modo che il browser parta in automatico, direttamente sulla documenta
 }
 ```
 
-Il progetto `TodoApi` nel tutorial Microsoft con le aggiunte indicate nella documentazione di NSag diventa, ad esempio:
+Il progetto `TodoApi` nel tutorial Microsoft con le aggiunte indicate nella documentazione di NSwag diventa, ad esempio:
 
 ```cs
 using System.ComponentModel;

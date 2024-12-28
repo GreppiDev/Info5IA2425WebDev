@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PizzaStoreV1", "PizzaStoreV
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PizzaStoreV2", "PizzaStoreV2\PizzaStoreV2.csproj", "{CACD0509-2DDB-4B5E-8FCD-4288DC490CF7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PizzaStoreV3", "PizzaStoreV3\PizzaStoreV3.csproj", "{4717063C-4D4D-47EE-B1C2-1783B6F5FCC0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{CACD0509-2DDB-4B5E-8FCD-4288DC490CF7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CACD0509-2DDB-4B5E-8FCD-4288DC490CF7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CACD0509-2DDB-4B5E-8FCD-4288DC490CF7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4717063C-4D4D-47EE-B1C2-1783B6F5FCC0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4717063C-4D4D-47EE-B1C2-1783B6F5FCC0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4717063C-4D4D-47EE-B1C2-1783B6F5FCC0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4717063C-4D4D-47EE-B1C2-1783B6F5FCC0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

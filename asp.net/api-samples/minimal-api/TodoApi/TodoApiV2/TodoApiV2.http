@@ -1,0 +1,39 @@
+@TodoApiV2_HostAddress = http://localhost:5170
+
+GET {{TodoApiV2_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
+# Get all todo items
+GET {{TodoApiV2_HostAddress}}/todoitems
+Accept: application/json
+    
+###
+# Get a specific todo item by id
+GET {{TodoApiV2_HostAddress}}/todoitems/1
+Accept: application/json
+
+###
+# Create a new todo item
+POST {{TodoApiV2_HostAddress}}/todoitems
+Content-Type: application/json
+
+{
+    "name": "Sample Todo 1",
+    "isComplete": false
+}
+
+###
+# Update an existing todo item
+PUT {{TodoApiV2_HostAddress}}/todoitems/1
+Content-Type: application/json
+
+{
+    "id": 1,
+    "name": "Updated Todo",
+    "isComplete": true
+}
+
+###
+# Delete a todo item
+DELETE {{TodoApiV2_HostAddress}}/todoitems/1
