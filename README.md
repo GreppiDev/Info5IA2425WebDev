@@ -20,4 +20,5 @@
     2. [Utilizzo dei database in ASP.NET con EF Core](./asp.net/api-docs/minimal-api/use-databases-p1/index.md)
     3. [Minimal API con MariaDB e Microsoft SQL Server: Progetto `AziendaAPI` con EF Core](./asp.net/api-docs/minimal-api/use-databases-p2/index.md)
     4. [Minimal API: OpenAPI Support, Route Handling, Error Handling](./asp.net/api-docs/minimal-api/configure-api-p1/index.md)
-    5. [Minimal API: Filters and Middlewares, Data Binding, Response Types, Service Lifetimes](./asp.net/api-docs/minimal-api/configure-api-p2/index.md)
+    5. [Minimal API: Middlewares, Routing, Filters](./asp.net/api-docs/minimal-api/configure-api-p2/index.md)
+    6. [Minimal API: Data Binding, Response Types, Service Lifetimes](asp.net/api-docs/minimal-api/configure-api-p3/index.md)

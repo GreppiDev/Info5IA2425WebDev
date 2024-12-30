@@ -773,7 +773,6 @@ app.MapGet("/", handler);
 app.Run();
 ```
 
-
 #### [Local function](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/route-handlers#local-function)
 
 ```cs
@@ -1159,19 +1158,13 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.MapGroup("/public/todos")
 	.MapTodosApi()
 	.WithTags("Public");
 
 app.MapGroup("/private/todos")
 	.MapTodosApi()
-	.WithTags("Private")
-	.AddEndpointFilter((context, next) =>
-	{
-		app.Logger.LogInformation("filtro sulle api private; nelle prossime lezioni vedremo i filtri!");
-		return next(context);
-	});
+	.WithTags("Private");
 //.RequireAuthorization();
 
 //alcuni esempi di rotte con gruppi presi dalla documentazione con qualche adattamento
@@ -1185,28 +1178,12 @@ user.MapGet("", (string org, string user) => $"{org}/{user}");
 var outer = app.MapGroup("/outer");
 var inner = outer.MapGroup("/inner");
 
-inner.AddEndpointFilter((context, next) =>
-{
-    app.Logger.LogInformation("/inner group filter");
-    return next(context);
-});
 //rotte di /outer
-outer.MapGet("/say-hello", () => "say hello!").AddEndpointFilter((context, next) =>
-{
-    app.Logger.LogInformation("/outer group filter");
-    return next(context);
-});
-outer.MapGet("/hand-shake", () => "give a firm handshake!").AddEndpointFilter((context, next) =>
-{
-    app.Logger.LogInformation("/outer group filter");
-    return next(context);
-});
+outer.MapGet("/say-hello", () => "say hello!");
+outer.MapGet("/hand-shake", () => "give a firm handshake!");
 //rotte di inner, quindi in /outer/inner
-inner.MapGet("/make-appointment", () => "See you tomorrow at 6pm!").AddEndpointFilter((context, next) =>
-{
-    app.Logger.LogInformation("MapGet filter");
-    return next(context);
-});
+inner.MapGet("/make-appointment", () => "See you tomorrow at 6pm!");
+app.MapGet("/",()=>Console.WriteLine("Ciao mondo"));
 
 app.Run();
 ```
@@ -1219,7 +1196,7 @@ Il risultato è:
 
 ### [Exceptions](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/handle-errors#exceptions)
 
-In a Minimal API app, there are two different built-in centralized mechanisms to handle unhandled exceptions:
+In a Minimal API app there are two different built-in centralized mechanisms to handle unhandled exceptions:
 
 - [Developer Exception Page middleware](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/handle-errors?view=aspnetcore-9.0#developer-exception-page) (For use in the **Development environment only**.)
 - [Exception handler middleware](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/handle-errors?view=aspnetcore-9.0#exception-handler)

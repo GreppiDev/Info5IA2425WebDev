@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TodoApiV2;
+using TodoApiV2.Filters;
+using TodoApiV2.Middlewares;
 //creation of Web application builder
 var builder = WebApplication.CreateBuilder(args);
 //adding services to the container
@@ -41,19 +43,13 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.MapGroup("/public/todos")
 	.MapTodosApi()
 	.WithTags("Public");
 
 app.MapGroup("/private/todos")
 	.MapTodosApi()
-	.WithTags("Private")
-	.AddEndpointFilter((context, next) =>
-	{
-		app.Logger.LogInformation("filtro sulle api private; nelle prossime lezioni vedremo i filtri!");
-		return next(context);
-	});
+	.WithTags("Private");
 //.RequireAuthorization();
 
 //alcuni esempi di rotte con gruppi presi dalla documentazione con qualche adattamento
@@ -67,27 +63,100 @@ user.MapGet("", (string org, string user) => $"{org}/{user}");
 var outer = app.MapGroup("/outer");
 var inner = outer.MapGroup("/inner");
 
-inner.AddEndpointFilter((context, next) =>
-{
-    app.Logger.LogInformation("/inner group filter");
-    return next(context);
-});
 //rotte di /outer
-outer.MapGet("/say-hello", () => "say hello!").AddEndpointFilter((context, next) =>
-{
-    app.Logger.LogInformation("/outer group filter");
-    return next(context);
-});
-outer.MapGet("/hand-shake", () => "give a firm handshake!").AddEndpointFilter((context, next) =>
-{
-    app.Logger.LogInformation("/outer group filter");
-    return next(context);
-});
+outer.MapGet("/say-hello", () => "say hello!");
+outer.MapGet("/hand-shake", () => "give a firm handshake!");
 //rotte di inner, quindi in /outer/inner
-inner.MapGet("/make-appointment", () => "See you tomorrow at 6pm!").AddEndpointFilter((context, next) =>
+inner.MapGet("/make-appointment", () => "See you tomorrow at 6pm!");
+//rotte con default tag
+//app.MapGet("/",()=>Console.WriteLine("Ciao mondo"));
+app.MapGet("/", () =>
+	{
+		app.Logger.LogInformation("Endpoint with route /: delegate execution");
+		
+		return "Test of endpoint with filters";
+	})
+	.AddEndpointFilter<PerformanceFilter>()
+	.AddEndpointFilter(async (efiContext, next) =>
+	{
+		app.Logger.LogInformation("Before inline filter 1");
+		var result = await next(efiContext);
+		app.Logger.LogInformation("After inline filter 1");
+		return result;
+	})
+	.AddEndpointFilter(async (efiContext, next) =>
+	{
+		app.Logger.LogInformation("Before inline filter 2");
+		var result = await next(efiContext);
+		app.Logger.LogInformation("After inline filter 2");
+		return result;
+	})
+	.AddEndpointFilter(async (efiContext, next) =>
+	{
+		app.Logger.LogInformation("Before inline filter 3");
+		var result = await next(efiContext);
+		app.Logger.LogInformation("After inline filter 3");
+		return result;
+	});
+//local function
+static string ColorName(string color) => $"Color specified: {color}!";
+//nel caso in cui il colore richiesto sia Red viene restituito un messaggio d'errore 
+//in tutti gli altri casi viene restituito il colore richiesto
+app.MapGet("/colorSelector/{color}", ColorName)
+	.AddEndpointFilter(async (invocationContext, next) =>
+	{
+		app.Logger.LogInformation("Inline filter on color before delegate execution");
+		//accesso al primo argomento passato all'endpoint delegate
+		var color = invocationContext.GetArgument<string>(0);
+
+		if (color == "Red")
+		{
+			return Results.Problem("Red not allowed!");
+		}
+		var result = await next(invocationContext);
+		app.Logger.LogInformation("Inline filter on color after delegate execution");
+		return result;
+	});
+
+//aggiunta di custom middleware. Attenzione: l'ordine conta!
+//👇 custom middleware 1
+app.Use(async (context, next) =>
 {
-    app.Logger.LogInformation("MapGet filter");
-    return next(context);
+	app.Logger.LogInformation("Middleware 1: Prima della richiesta");
+	await next(); // Passa al middleware successivo
+	app.Logger.LogInformation("Middleware 1: Dopo la risposta");
+	
 });
+//👇 custom middleware 2
+app.Use(async (context, next) =>
+{
+
+	app.Logger.LogInformation("Middleware 2: Prima della richiesta");
+	await next(); // Passa al middleware successivo
+	app.Logger.LogInformation("Middleware 2: Dopo la risposta");
+
+});
+//👇 custom middleware 3
+app.Use(async (context, next) =>
+{
+
+	app.Logger.LogInformation("Middleware 3: Prima della richiesta");
+	app.Logger.LogInformation("Path: {context.Request.Path}", context.Request.Path);
+	app.Logger.LogInformation("Method: {context.Request.Method}", context.Request.Method);
+	var currentEndpoint = context.GetEndpoint();
+	if (currentEndpoint is null)
+	{
+		await next(context);
+		return;
+	}
+
+	app.Logger.LogInformation("Endpoint: {currentEndpoint.DisplayName}", currentEndpoint.DisplayName);
+	await next(context); // Passa al middleware successivo
+	app.Logger.LogInformation("Middleware 3: Dopo la risposta");
+
+});
+
+//👇 aggiunta del middleware LoggingMiddleware alla pipeline
+app.UseMiddleware<LoggingMiddleware>();
 
 app.Run();
