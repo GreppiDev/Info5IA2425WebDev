@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Get Todos</title>
+
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+<!-- Navigation Bar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="index.html">Todo App</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="index.html">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="todos.html">Get All</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="get-todo.html">Todo Detail</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mb-10">
+        <div class="row justify-content-center">
+           <div class="col-md-6">
+            <!-- Existing content -->
+                        <h1>Get Todo</h1>
+                        <input type="number" id="todo-id" placeholder="Enter Todo ID">
+                        <input type="submit" id="fetch-todo" value="Fetch Todo">
+                        <div id="todo-container" class="card-container"></div>
+            <!-- Existing content -->
+            </div>
+        </div> 
+    </div>
+
+
+    <script>
+        //recupera l'oggetto todo tramite l'id
+        function fetchTodoById(todoId) {
+                if (todoId) {
+                    fetch(`/todos/${todoId}`)
+                        .then(response => {
+                            if (response.status === 404) {
+                                const container = document.getElementById('todo-container');
+                                container.innerHTML = '<p>Nessun oggetto trovato</p>';
+                                throw new Error('Todo not found');
+                            }
+                            return response.json();
+                        })
+                        .then(todo => {
+                            const container = document.getElementById('todo-container');
+                            container.innerHTML = ''; // Clear previous content
+                            const card = document.createElement('div');
+                            card.className = 'card';
+                            card.innerHTML = `
+                            <div class="text-center">
+                                <h2>Name: ${todo.name}</h2>
+                                <p>Visibility: ${todo.visibility === 0 ? 'Public': 'Private' }</p>
+                                <p>Attachment: ${todo.attachment ? todo.attachment : 'non presente'} <input type="submit" id="download-attachment" value="Download Attachment" class="btn btn-primary" ${todo.attachment ? '' : 'disabled'}></p>
+                                <p>
+                                    <input type="submit" id="edit-todo" value="Edit Todo" class="btn btn-warning">
+                                    <input type="submit" id="delete-todo" value="Delete Todo" class="btn btn-danger">
+                                </p>
+                            </div>
+                        `;
+                            container.appendChild(card);
+                            document.getElementById('delete-todo').addEventListener('click', function () {
+                                window.location.href = `delete-todo.html?id=${todo.id}`;
+                            });
+                            document.getElementById('edit-todo').addEventListener('click', function () {
+                                window.location.href = `update-todo.html?id=${todo.id}`;
+                            });
+
+                            document.getElementById('download-attachment').addEventListener('click', function () {
+                                fetch(`/todos/${todoId}/attachment`)
+                                    .then(response => response.blob())
+                                    .then(blob => {
+                                        const url = window.URL.createObjectURL(blob);
+                                        const a = document.createElement('a');
+                                        a.style.display = 'none';
+                                        a.href = url;
+                                        a.download = todo.attachment;
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        window.URL.revokeObjectURL(url);
+                                    })
+                                    .catch(error => console.error('Error downloading attachment:', error));
+                            });
+                            //questa versione del codice per il download permette di scaricare il file in locale
+                            //chiedendo all'utente di scegliere la cartella di destinazione
+
+                            // document.getElementById('download-attachment').addEventListener('click', async function () {
+                            //     try {
+                            //         const response = await fetch(`/todos/${todoId}/attachment`);
+                            //         const blob = await response.blob();
+                            //         if (window.showSaveFilePicker) {
+                            //             const fileHandle = await window.showSaveFilePicker({
+                            //                 suggestedName: todo.attachment,
+                            //                 types: [{
+                            //                     description: 'All Files',
+                            //                     accept: { '*/*': ['.pdf', '.jpg', '.png'] }
+                            //                 }]
+                            //             });
+                            //             const writableStream = await fileHandle.createWritable();
+                            //             await writableStream.write(blob);
+                            //             await writableStream.close();
+                            //         } else {
+                            //             const url = URL.createObjectURL(blob);
+                            //             const a = document.createElement('a');
+                            //             a.href = url;
+                            //             a.download = todo.attachment;
+                            //             document.body.appendChild(a);
+                            //             a.click();
+                            //             document.body.removeChild(a);
+                            //             URL.revokeObjectURL(url);
+                            //         }
+                            //     } catch (error) {
+                            //         console.error('Error downloading attachment:', error);
+                            //     }
+                            // });
+                        })
+                        .catch(error => console.error('Error fetching todo:', error));
+                } else {
+                    alert('Please enter a valid Todo ID');
+                }
+        }
+        //aggiorna la query string con l'id del todo
+        function updateQueryStringParameter(key, value) {
+                const url = new URL(window.location);
+                url.searchParams.set(key, value);
+                window.history.pushState({}, '', url);
+            }
+        //recupera l'id del todo dalla query string e lo utilizza per recuperare il todo
+        document.addEventListener('DOMContentLoaded',  function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const todoId = urlParams.get('id');
+            if (todoId) {
+                document.getElementById('todo-id').value = todoId;
+                fetchTodoById(todoId);
+            }
+        });
+        
+        //quando l'utente clicca sul pulsante Fetch Todo
+        //se l'id del todo è diverso da quello attuale nella query string
+        //aggiorna la query string
+        document.getElementById('fetch-todo').addEventListener('click', function () {
+            const todoId = document.getElementById('todo-id').value;
+            const currentTodoIdInQueryString = new URLSearchParams(window.location.search).get('id');
+            //controlla se l'id del todo è diverso da quello attuale nella query string
+            //se è diverso aggiorna la query string
+            if (todoId !== currentTodoIdInQueryString && todoId) {
+                updateQueryStringParameter('id', todoId);
+            }
+            //recupera il todo
+            fetchTodoById(todoId);
+        });
+    </script>
+</body>
+</html>
