@@ -5,6 +5,7 @@ namespace FilmAPI.ModelDTO;
 
 public class ProiezioneDTO
 {
+	public int Id { get; set; }
 	public int CinemaId { get; set; }
 	public int FilmId { get; set; }
 	public DateOnly Data { get; set; }
@@ -16,6 +17,6 @@ public class ProiezioneDTO
 	}
 	public ProiezioneDTO(Proiezione p)
 	{
-		(CinemaId, FilmId, Data, Ora)= (p.CinemaId, p.FilmId, p.Data, p.Ora);
+		(Id,CinemaId, FilmId, Data, Ora)= (p.Id,p.CinemaId, p.FilmId, p.Data, p.Ora);
 	}
 }

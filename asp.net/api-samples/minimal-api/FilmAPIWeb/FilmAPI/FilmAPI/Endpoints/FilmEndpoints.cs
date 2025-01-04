@@ -8,15 +8,15 @@ namespace FilmAPI.Endpoints;
 
 public static class FilmEndpoints
 {
-	public static void MapFilmEndpoints(this WebApplication app)
+	public static RouteGroupBuilder MapFilmEndpoints(this RouteGroupBuilder group)
 	{
 		//GET /films
 		//restituisce tutti i film
-		app.MapGet("/films", async (FilmDbContext db)=> Results.Ok(await db.Films.ToListAsync()));
+		group.MapGet("/films", async (FilmDbContext db)=> Results.Ok(await db.Films.Select(f =>new FilmDTO(f)).ToListAsync()));
 
 		//GET /films/{id}
 		//restituisce il film con l'id specificato
-		app.MapGet("/films/{id}", async (FilmDbContext db, int id)=>
+		group.MapGet("/films/{id}", async (FilmDbContext db, int id)=>
 		{
 			Film? film = await db.Films.FindAsync(id);
 			if(film is null)
@@ -28,7 +28,7 @@ public static class FilmEndpoints
 
 		//PUT /films/{id} 
 		//modifica il film con l'id specificato
-		app.MapPut("/films/{id}", async (FilmDbContext db, int id, FilmDTO filmDTO)=>
+		group.MapPut("/films/{id}", async (FilmDbContext db, int id, FilmDTO filmDTO)=>
 		{
 			//verifico che il film con l'id specificato esista
 			Film? film = await db.Films.FindAsync(id);
@@ -50,18 +50,18 @@ public static class FilmEndpoints
 		
 		//POST /films
 		//crea un nuovo film
-		app.MapPost("/films", async (FilmDbContext db, FilmDTO filmDTO)=>
+		group.MapPost("/films", async (FilmDbContext db, FilmDTO filmDTO)=>
 		{
 			//creo un nuovo film
 			Film film = new()
-            {
+			{
 				Titolo = filmDTO.Titolo,
 				RegistaId = filmDTO.RegistaId,
 				Durata = filmDTO.Durata,
 				DataProduzione = filmDTO.DataProduzione
 			};
 			//aggiungo il film al database
-			db.Add(film);
+			db.Films.Add(film);
 			await db.SaveChangesAsync();
 			//restituisco la risposta
 			return Results.Created($"/films/{film.Id}", new FilmDTO(film));
@@ -69,7 +69,7 @@ public static class FilmEndpoints
 
 		//DELETE /films/{id}
 		//elimina il film con l'id specificato
-		app.MapDelete("/films/{id}", async (FilmDbContext db, int id) => 
+		group.MapDelete("/films/{id}", async (FilmDbContext db, int id) => 
 		{
 			//verifico che il film con l'id specificato esista
 			Film? film = await db.Films.FindAsync(id);
@@ -83,6 +83,8 @@ public static class FilmEndpoints
 			//restituisco la risposta
 			return Results.NoContent();
 		});
+		
+		return group;
 	}
 
 }

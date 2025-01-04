@@ -11,14 +11,16 @@ builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 //configura il servizio OpenAPI
 builder.Services.AddOpenApiDocument(config =>
-	
 	{
 		config.Title = "FilmAPI di Malafronte v1";
 		config.DocumentName= "Film API di Malafronte";
 		config.Version = "v1";	
 	}
 );
-
+if (builder.Environment.IsDevelopment())
+{
+	builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+}
 //accediamo alla stringa di connessione
 var connectionString = builder.Configuration.GetConnectionString("FilmAPIConnection");
 var serverVersion = ServerVersion.AutoDetect(connectionString);
@@ -29,10 +31,7 @@ builder.Services.AddDbContext<FilmDbContext>(
 	.EnableSensitiveDataLogging()
 	.EnableDetailedErrors()
 	);
-if(builder.Environment.IsDevelopment())
-{
-	builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-}
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -52,51 +51,37 @@ if (app.Environment.IsDevelopment())
 		config.DocExpansion = "list";
 	});
 }
-
+//altri middleware
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-//--------------------ENDPOINTS management--------------------
-app.MapRegistaEndpoints();
-app.MapFilmEndpoints();
-app.MapProiezioniEndpoints();
-app.MapCinemaEndpoints();
-//--------------------ENDPOINTS management--------------------
-
-//----------- Start of page management ------------
-//basic page routing
-app.MapGet("", () => Results.Redirect("/index.html"));
-
-app.MapGet("/{page}", (HttpContext context, string? page = "index.html") =>
+if (app.Environment.IsDevelopment())
 {
-	var filePath = Path.Combine("wwwroot", page!);
-	if (!File.Exists(filePath))
-	{
-		//return Results.NotFound();
-		//Andrebbe fatta una redirect alla pagina di errore.
-		//In questo esempio, per semplicità, si fa una redirect alla index.html (home page)
-		return Results.Redirect("/index.html");
-	}
+	app.UseDeveloperExceptionPage();
+}
 
-	var isTextFile = page!.EndsWith(".html") || page.EndsWith(".css") || page.EndsWith(".js") || page.EndsWith(".txt");
+// routing per le API
+//--------------------ENDPOINTS management--------------------
+app
+.MapGroup("/api")
+.MapRegistaEndpoints()
+.MapFilmEndpoints()
+.MapProiezioniEndpoints()
+.MapCinemaEndpoints()
+.WithOpenApi()
+.WithTags("Public API");
 
-	if (isTextFile)
-	{
-		var content = File.ReadAllText(filePath);
-		var contentType = page.EndsWith(".html") ? "text/html" :
-						  page.EndsWith(".css") ? "text/css" :
-						  page.EndsWith(".js") ? "application/javascript" :
-						  "text/plain";
-		return Results.Content(content, contentType);
-	}
-	else
-	{
-		var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-		var contentType = "application/octet-stream";
-		return Results.File(fileStream, contentType, enableRangeProcessing: true);
-	}
-});
+//--------------------ENDPOINTS management--------------------
+
+
+//routing per le pagine web
+//----------- Start of page management ------------
+app
+.MapGroup("")
+.MapPagesEndpoints()
+.WithOpenApi()
+.WithTags("Web Pages");
 //----------- End of page management ------------
-
+//avvia l'applicazione
 app.Run();
 
 

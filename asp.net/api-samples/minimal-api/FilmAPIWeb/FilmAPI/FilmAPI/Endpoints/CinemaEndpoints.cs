@@ -1,4 +1,3 @@
-using System;
 using FilmAPI.Data;
 using FilmAPI.Model;
 using FilmAPI.ModelDTO;
@@ -8,20 +7,20 @@ namespace FilmAPI.Endpoints;
 
 public static class CinemaEndpoints
 {
-	public static void MapCinemaEndpoints(this WebApplication app)
+	public static RouteGroupBuilder MapCinemaEndpoints(this RouteGroupBuilder group)
 	{
 		//gestione cinema
 		// GET / cinemas
 		// - restituisce la lista dei cinema usando cinemaDTO;
-		app.MapGet("/cinemas", async (FilmDbContext db) =>
+		group.MapGet("/cinemas", async (FilmDbContext db) =>
 		{
 			var cinemas = await db.Cinemas.Select(c => new CinemaDTO(c)).ToListAsync();
 			return Results.Ok(cinemas);
 		});
-		
+
 		// GET / cinemas / {id}
 		// - restituisce il cinema con l'id specificato usando cinemaDTO;
-		app.MapGet("/cinemas/{id}", async (FilmDbContext db, int id) =>
+		group.MapGet("/cinemas/{id}", async (FilmDbContext db, int id) =>
 		{
 			var cinema = await db.Cinemas.FindAsync(id);
 			if (cinema is null)
@@ -30,25 +29,25 @@ public static class CinemaEndpoints
 			}
 			return Results.Ok(new CinemaDTO(cinema));
 		});
-		
+
 		// POST / cinemas
 		// - per creare un nuovo cinema;
-		app.MapPost("/cinemas", async (FilmDbContext db, CinemaDTO cinemaDto) =>
+		group.MapPost("/cinemas", async (FilmDbContext db, CinemaDTO cinemaDto) =>
 		{
 			var cinema = new Cinema
 			{
 				Nome = cinemaDto.Nome,
-				Città = cinemaDto.Città,
+				Città = cinemaDto.Citta,
 				Indirizzo = cinemaDto.Indirizzo
 			};
 			db.Cinemas.Add(cinema);
 			await db.SaveChangesAsync();
 			return Results.Created($"/cinemas/{cinema.Id}", cinema);
 		});
-		
+
 		// PUT / cinemas / {id}
 		// - per modificare un cinema esistente;
-		app.MapPut("/cinemas/{id}", async (FilmDbContext db, int id, CinemaDTO cinemaDto) =>
+		group.MapPut("/cinemas/{id}", async (FilmDbContext db, int id, CinemaDTO cinemaDto) =>
 		{
 			var cinema = await db.Cinemas.FindAsync(id);
 			if (cinema is null)
@@ -56,15 +55,15 @@ public static class CinemaEndpoints
 				return Results.NotFound();
 			}
 			cinema.Nome = cinemaDto.Nome;
-			cinema.Città = cinemaDto.Città;
+			cinema.Città = cinemaDto.Citta;
 			cinema.Indirizzo = cinemaDto.Indirizzo;
 			await db.SaveChangesAsync();
 			return Results.NoContent();
 		});
-		
+
 		// DELETE / cinemas / {id}
 		// - per eliminare un cinema esistente;
-		app.MapDelete("/cinemas/{id}", async (FilmDbContext db, int id) =>
+		group.MapDelete("/cinemas/{id}", async (FilmDbContext db, int id) =>
 		{
 			var cinema = await db.Cinemas.FindAsync(id);
 			if (cinema is null)
@@ -76,6 +75,7 @@ public static class CinemaEndpoints
 			return Results.NoContent();
 		});
 
+		return group;
 
 	}
 }

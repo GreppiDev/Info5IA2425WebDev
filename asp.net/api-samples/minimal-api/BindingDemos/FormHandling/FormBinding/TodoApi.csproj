@@ -7,8 +7,11 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="9.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
+    <PackageReference Include="NSwag.AspNetCore" Version="14.2.0" />
+
   </ItemGroup>
   <ItemGroup>
-    <None Include="wwwroot\**\*.*" />
+    <None Include="wwwroot\user-content\**\*.*" />
   </ItemGroup>
 </Project>

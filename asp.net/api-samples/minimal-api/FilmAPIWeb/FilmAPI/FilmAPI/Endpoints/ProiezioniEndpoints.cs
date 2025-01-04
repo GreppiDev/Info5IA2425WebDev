@@ -9,11 +9,11 @@ namespace FilmAPI.Endpoints;
 
 public static class ProiezioniEndpoints
 {
-	public static void MapProiezioniEndpoints(this WebApplication app)
+	public static RouteGroupBuilder MapProiezioniEndpoints(this RouteGroupBuilder group)
 	{
 		//POST /proiezioni/
 		// crea una nuova proiezione;
-		app.MapPost("/proiezioni/", async (FilmDbContext db, ProiezioneDTO proiezioneDTO) =>
+		group.MapPost("/proiezioni/", async (FilmDbContext db, ProiezioneDTO proiezioneDTO) =>
 		{
 			//codice che controlla l'integrità referenziale
 			Film? film = await db.Films.FindAsync(proiezioneDTO.FilmId);
@@ -41,15 +41,15 @@ public static class ProiezioniEndpoints
 		
 		//GET /proiezioni/
 		// restituisce tutte le proiezioni
-		app.MapGet("/proiezioni/", async (FilmDbContext db) => Results.Ok(await db.Proiezioni.ToListAsync()));
+		group.MapGet("/proiezioni/", async (FilmDbContext db) => Results.Ok(await db.Proiezioni.Select(p => new ProiezioneDTO(p)).ToListAsync()));
 		
 		//GET /proiezioni/{filmId}/{cinemaId}
 		// restituisce la proiezione con il filmId e il cinemaId specificati
 		// se vengono specificate le date iniziale e finale, restituisce le proiezioni comprese tra quelle date
 		// se viene specificata solo la data iniziale, restituisce le proiezioni successive a quella data
 		// se viene specificata solo la data finale, restituisce le proiezioni precedenti a quella data
-		// se non esiste nessuna proiezione che soddisfi i criteri, restituisce NotFound
-		app.MapGet("/proiezioni/{filmId}/{cinemaId}", async (FilmDbContext db, int filmId, int cinemaId, [FromQuery(Name = "dataIniziale")] DateOnly? dataIniziale, [FromQuery(Name = "dataFinale")] DateOnly? dataFinale) =>
+		// se non esiste nessuna proiezione che soddisfi i criteri, restituisce una lista vuota
+		group.MapGet("/proiezioni/{filmId}/{cinemaId}", async (FilmDbContext db, int filmId, int cinemaId, [FromQuery(Name = "dataIniziale")] DateOnly? dataIniziale, [FromQuery(Name = "dataFinale")] DateOnly? dataFinale) =>
 		{
 			IQueryable<Proiezione> query = db.Proiezioni.Where(p => p.FilmId == filmId && p.CinemaId == cinemaId);
 
@@ -65,11 +65,6 @@ public static class ProiezioniEndpoints
 
 			List<Proiezione> proiezioni = await query.ToListAsync();
 
-			if (proiezioni.Count == 0)
-			{
-				return Results.NotFound();
-			}
-
 			List<ProiezioneDTO> proiezioniDTO = proiezioni.Select(p => new ProiezioneDTO(p)).ToList();
 
 			return Results.Ok(proiezioniDTO);
@@ -78,7 +73,7 @@ public static class ProiezioniEndpoints
 		////GET /proiezioni/{id}
 		// restituisce la proiezione con l'id specificato
 		// se non esiste nessuna proiezione con l'id specificato, restituisce NotFound
-		app.MapGet("/proiezioni/{id}", async (FilmDbContext db, int id) =>
+		group.MapGet("/proiezioni/{id}", async (FilmDbContext db, int id) =>
 		{
 			Proiezione? proiezione = await db.Proiezioni.FindAsync(id);
 			if (proiezione is null)
@@ -87,6 +82,8 @@ public static class ProiezioniEndpoints
 			}
 			return Results.Ok(new ProiezioneDTO(proiezione));
 		});
+		
+		return group;
 	}
 	
 }

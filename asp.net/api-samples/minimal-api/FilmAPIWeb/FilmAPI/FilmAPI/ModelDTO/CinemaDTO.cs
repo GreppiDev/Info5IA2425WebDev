@@ -8,14 +8,14 @@ public class CinemaDTO
 	public int Id { get; set; }
 	public string Nome { get; set; } = null!;
 	public string Indirizzo { get; set; } = null!;
-	public string Città { get; set; } = null!;
-	
+	public string Citta { get; set; } = null!;
+
 	public CinemaDTO()
 	{
-		
+
 	}
 	public CinemaDTO(Cinema c)
 	{
-		(Id,Nome,Indirizzo,Città)= (c.Id, c.Nome, c.Indirizzo, c.Città);
+		(Id, Nome, Indirizzo, Citta) = (c.Id, c.Nome, c.Indirizzo, c.Città);
 	}
 }

@@ -9,15 +9,15 @@ public class RegistaDTO
 	public string Nome { get; set; } = null!;
 	public string Cognome { get; set; } = null!;
 	public string Nazionalità { get; set; } = null!;
-	
+
 	public RegistaDTO()
 	{
-		
+
 	}
-	
+
 	public RegistaDTO(Regista regista)
 	{
 		(Id, Nome, Cognome, Nazionalità) = (regista.Id, regista.Nome, regista.Cognome, regista.Nazionalità);
 	}
-	
+
 }

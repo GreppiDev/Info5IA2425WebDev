@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FilmAPI.Model;
 
@@ -14,7 +15,7 @@ public class Film
 	public Regista Regista { get; set; }=null!;
 	//durata in minuti
 	public int Durata { get; set; }
-	public List<Proiezione> Proiezioni { get; set; } = null!;
-	public List<Cinema> Cinemas { get; set; }=null!;
+	public List<Proiezione> Proiezioni { get; set; } = [];
+	public List<Cinema> Cinemas { get; set; }= [];
 
 }
