@@ -30,4 +30,4 @@
    4. [CSS](./web/web-docs/css/index.md)
    5. [JS](./web/web-docs/js/index.md)
    6. [Web forms handling](./web/web-docs/web-forms/index.md)
-   7. [JavaScript Web API](./web/web-docs/)
+   7. [JavaScript Web API](./web/web-docs/js-web-api/index.md)
