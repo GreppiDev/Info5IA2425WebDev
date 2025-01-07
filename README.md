@@ -22,3 +22,12 @@
     4. [Minimal API: OpenAPI Support, Route Handling, Error Handling](./asp.net/api-docs/minimal-api/configure-api-p1/index.md)
     5. [Minimal API: Middlewares, Routing, Filters](./asp.net/api-docs/minimal-api/configure-api-p2/index.md)
     6. [Minimal API: Data Binding, Response Types, Service Lifetimes](asp.net/api-docs/minimal-api/configure-api-p3/index.md)
+
+4. Web Architecture
+   1. [Web mechanics](./web/web-docs/web-mechanics/index.md)
+   2. [HTTP protocol](./web/web-docs/http-protocol/index.md)
+   3. [HTML](./web/web-docs/html/index.md)
+   4. [CSS](./web/web-docs/css/index.md)
+   5. [JS](./web/web-docs/js/index.md)
+   6. [Web forms handling](./web/web-docs/web-forms/index.md)
+   7. [JavaScript Web API](./web/web-docs/)

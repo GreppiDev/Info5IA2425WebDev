@@ -341,7 +341,7 @@ info: TodoApiV2[0]
       Middleware 1: Dopo la risposta
 ```
 
-:memo: **si osservi l'ordine di esecuzione dei middleware rispetto all'esecuzione del delegato relativo all'endpoint selezionato. I middleware vengono eseguiti nell'ordine in cui sono stati inseriti nella pipeline dell'applicazione: dal primo all'ultimo in fase di richiesta (executed in order of First In, First Out (FIFO) order) e, dopo aver eseguito il delegato relativo all'endpoint, dall'ultimo al primo in fase di risposta (executed in order of First In, Last Out (FILO) order).**
+:memo: **Si osservi l'ordine di esecuzione dei middleware rispetto all'esecuzione del delegato relativo all'endpoint selezionato. I middleware vengono eseguiti nell'ordine in cui sono stati inseriti nella pipeline dell'applicazione: dal primo all'ultimo in fase di richiesta (executed in order of First In, First Out (FIFO) order) e, dopo aver eseguito il delegato relativo all'endpoint, dall'ultimo al primo in fase di risposta (executed in order of First In, Last Out (FILO) order).**
 
 #### Middleware pipeline nel caso di Minimal API
 
