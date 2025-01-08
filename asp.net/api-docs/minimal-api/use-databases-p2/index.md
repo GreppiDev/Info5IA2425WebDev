@@ -34,6 +34,7 @@
         - [Creazione di un database](#creazione-di-un-database)
         - [Creazione di schemi all'interno del database](#creazione-di-schemi-allinterno-del-database)
         - [Creazione di tabelle negli schemi](#creazione-di-tabelle-negli-schemi)
+        - [Cancellazione di un database](#cancellazione-di-un-database)
       - [Concetto di "database" in MySQL/MariaDB](#concetto-di-database-in-mysqlmariadb)
       - [Concetto di "schema" in MySQL/MariaDB](#concetto-di-schema-in-mysqlmariadb)
       - [Differenza tra MySQL/MariaDB e altri DBMS](#differenza-tra-mysqlmariadb-e-altri-dbms)
@@ -1607,6 +1608,15 @@ Con questa configurazione:
 
 In **MySQL/MariaDB**, i termini **database** e **schema** sono spesso usati in modo intercambiabile, ma ci sono alcune differenze concettuali e pratiche, soprattutto se confrontati con altri DBMS come **Oracle** o **SQL Server**.
 
+##### Cancellazione di un database
+
+```sql
+USE master;
+GO
+DROP DATABASE IF EXISTS <nome_database>;
+GO
+```
+
 #### Concetto di "database" in MySQL/MariaDB
 
 - Un **database** in MySQL/MariaDB è un contenitore logico per oggetti come tabelle, viste, procedure, funzioni, trigger, ecc.
@@ -1900,7 +1910,7 @@ Questa query:
 
 ##### Mostrare i permessi a livello di server
 
-Se si vuole analizzare i permessi assegnati al login associato (`myLogin`), è possibile eseguire la query:
+Per analizzare i permessi assegnati al login associato (`myLogin`), è possibile eseguire la query:
 
 ```sql
 SELECT 

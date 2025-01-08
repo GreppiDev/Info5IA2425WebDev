@@ -118,10 +118,10 @@ Quando un **form HTML** utilizza la codifica **`application/x-www-form-urlencode
             ```
 
    4. Punti chiave
-            - **Formato Chiave-Valore:** Ogni coppia è nel formato `nomeCampo=valore`.
-            - **Separatore `&`:** Le coppie chiave-valore sono separate dal simbolo `&`.
-            - **Codifica URL:** Se i valori contengono spazi o caratteri speciali, vengono codificati secondo le regole **percent-encoding**.
-                - Esempio: `Mario Rossi` → `Mario%20Rossi`
+         - **Formato Chiave-Valore:** Ogni coppia è nel formato `nomeCampo=valore`.
+         - **Separatore `&`:** Le coppie chiave-valore sono separate dal simbolo `&`.
+         - **Codifica URL:** Se i valori contengono spazi o caratteri speciali, vengono codificati secondo le regole **percent-encoding**.
+             - Esempio: `Mario Rossi` → `Mario%20Rossi`
 
    5. Spiegazione dei campi inviati
       1. `username=MarioRossi` → Il campo `username` ha il valore `"MarioRossi"`.

@@ -1,5 +1,28 @@
+/* Assicura che il layout occupi l'intera altezza della finestra */
+html, body {
+    height: 100%;
+    margin: 0;
+}
+/* Struttura principale con flexbox */
 body {
     font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Il contenuto principale occupa lo spazio disponibile */
+main {
+    flex: 1;
+    padding: 20px; /* Spazio intorno al contenuto */
+    overflow-y: auto; /* Permette lo scorrimento verticale se il contenuto è troppo grande */
+}
+
+/* Stile base del footer */
+footer {
+    background-color: #f8f9fa; /* Colore leggero di sfondo */
+    text-align: center;
+    padding: 10px 0;
+    border-top: 1px solid #eaeaea;
 }
 
 .card {

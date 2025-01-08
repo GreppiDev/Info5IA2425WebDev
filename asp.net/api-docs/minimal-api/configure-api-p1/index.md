@@ -67,7 +67,7 @@ Il pacchetto richiesto per il supporto alla documentazione OpenAPI in ASP.NET Co
 dotnet add package Microsoft.AspNetCore.OpenApi
 ```
 
-Tuttavia, epr avere anche il supporto alla versione grafica della documentazione mediante l'interfaccia `Swagger`, è opportuno installare anche il pacchetto:
+Tuttavia, per avere anche il supporto alla versione grafica della documentazione mediante l'interfaccia `Swagger`, è opportuno installare anche il pacchetto:
 
 ```sh
 dotnet add package NSwag.AspNetCore
