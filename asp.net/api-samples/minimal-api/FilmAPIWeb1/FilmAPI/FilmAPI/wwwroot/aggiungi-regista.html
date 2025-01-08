@@ -11,7 +11,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
         crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="/styles.css">
     <title>Aggiungi regista</title>
 </head>
 
@@ -20,7 +20,7 @@
         <!-- Navigation Bar -->
         <nav class="navbar navbar-expand-lg navbar-light bg-light">
             <div class="container-fluid">
-                <a class="navbar-brand" href="index.html">Film API Web</a>
+                <a class="navbar-brand" href="/index.html">Film API Web</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                     aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
@@ -28,16 +28,16 @@
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav">
                         <li class="nav-item">
-                            <a class="nav-link" href="index.html">Home</a>
+                            <a class="nav-link" href="/index.html">Home</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="film.html">Film</a>
+                            <a class="nav-link" href="/film.html">Film</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="registi.html">Registi</a>
+                            <a class="nav-link" href="/registi.html">Registi</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="cinema.html">Cinema</a>
+                            <a class="nav-link" href="/cinema.html">Cinema</a>
                         </li>
                     </ul>
                 </div>
@@ -67,10 +67,8 @@
 
 
     <!-- Footer -->
-    <footer class="bg-light text-center text-lg-start"></footer>
-    <div class="container p-4">
-        <p class="text-center">&copy; 2025 Your Company. All rights reserved.</p>
-    </div>
+    <footer class="bg-light text-center text-lg-start">
+        <p class="text-center pt-2">&copy; 2025 Your Company. All rights reserved.</p>
     </footer>
 
     <script>
@@ -80,7 +78,7 @@
             const nome = document.getElementById('nome').value;
             const cognome = document.getElementById('cognome').value;
             const nazionalità = document.getElementById('nazionalità').value;
-            fetch('api/registi', {
+            fetch('/api/registi', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

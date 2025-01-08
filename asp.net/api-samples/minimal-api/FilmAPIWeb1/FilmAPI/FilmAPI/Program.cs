@@ -60,7 +60,7 @@ if (app.Environment.IsDevelopment())
 }
 
 // routing per le API
-//--------------------ENDPOINTS management--------------------
+//--------------------Endpoints management--------------------
 app
 .MapGroup("/api")
 .MapRegistaEndpoints()
@@ -70,18 +70,16 @@ app
 .WithOpenApi()
 .WithTags("Public API");
 
-//--------------------ENDPOINTS management--------------------
-
+//--------------------Endpoints management--------------------
 
 //routing per le pagine web
 //----------- Start of page management ------------
-app
-.MapGroup("")
-.MapPagesEndpoints()
-.WithOpenApi()
-.WithTags("Web Pages");
+app.MapGroup("/")
+   .MapStaticPagesEndpoints();
+
 //----------- End of page management ------------
 //avvia l'applicazione
 app.Run();
+
 
 
