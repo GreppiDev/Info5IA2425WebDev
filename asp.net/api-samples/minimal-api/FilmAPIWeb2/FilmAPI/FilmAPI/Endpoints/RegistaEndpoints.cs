@@ -23,7 +23,7 @@ public static class RegistaEndpoints
 				return Results.NotFound();
 			}
 			//il regista esiste e recupero i suoi films
-			var filmsDelRegista = await db.Films.Where(f => f.RegistaId == regista.Id).Select(f => new FilmDTO(f)).ToListAsync();
+			var filmsDelRegista = await db.Films.Where(f => f.RegistaId == regista.Id).Select(f => new FilmDTO(f)).AsNoTracking().ToListAsync();
 			return Results.Ok(filmsDelRegista);
 		});
 
@@ -60,9 +60,9 @@ public static class RegistaEndpoints
 		{
 			if (cognome is not null)
 			{
-				return Results.Ok(await db.Registi.Where(r => r.Cognome.Contains(cognome)).Select(r => new RegistaDTO(r)).ToListAsync());
+				return Results.Ok(await db.Registi.Where(r => r.Cognome.Contains(cognome)).Select(r => new RegistaDTO(r)).AsNoTracking().ToListAsync());
 			}
-			return Results.Ok(await db.Registi.Select(r => new RegistaDTO(r)).ToListAsync());
+			return Results.Ok(await db.Registi.Select(r => new RegistaDTO(r)).AsNoTracking().ToListAsync());
 		});
 
 

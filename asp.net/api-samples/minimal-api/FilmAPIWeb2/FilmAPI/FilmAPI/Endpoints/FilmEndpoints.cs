@@ -12,7 +12,7 @@ public static class FilmEndpoints
 	{
 		//GET /films
 		//restituisce tutti i film
-		group.MapGet("/films", async (FilmDbContext db)=> Results.Ok(await db.Films.Select(f =>new FilmDTO(f)).ToListAsync()));
+		group.MapGet("/films", async (FilmDbContext db)=> Results.Ok(await db.Films.Select(f =>new FilmDTO(f)).AsNoTracking().ToListAsync()));
 
 		//GET /films/{id}
 		//restituisce il film con l'id specificato

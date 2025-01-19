@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flexbox Layout Example</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Header con navigazione -->
+    <header class="header">
+        <div class="logo">Logo</div>
+        <button class="hamburger" aria-label="Menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <nav class="nav">
+            <a href="#">Home</a>
+            <a href="#">Chi Siamo</a>
+            <a href="#">Servizi</a>
+            <a href="#">Contatti</a>
+        </nav>
+    </header>
+
+    <!-- Contenuto principale con sidebar -->
+    <main class="main-container">
+        <aside class="sidebar">
+            <h2>Menu Laterale</h2>
+            <p>Questa è una sidebar che mantiene una larghezza fissa di 250px</p>
+        </aside>
+
+        <section class="content">
+            <h1>Contenuto Principale</h1>
+            <p>Questo è il contenuto principale che si espande per occupare lo spazio disponibile.</p>
+
+            <!-- Container delle card -->
+            <div class="card-container">
+                <div class="card">
+                    <h3>Card 1</h3>
+                    <p>Contenuto della prima card che si adatta al layout flessibile.</p>
+                </div>
+                <div class="card">
+                    <h3>Card 2</h3>
+                    <p>Contenuto della seconda card che si adatta al layout flessibile.</p>
+                </div>
+                <div class="card">
+                    <h3>Card 3</h3>
+                    <p>Contenuto della terza card che si adatta al layout flessibile.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer con tre colonne -->
+    <footer class="footer">
+        <div class="footer-column">
+            <h3>Chi Siamo</h3>
+            <p>Informazioni sulla nostra azienda</p>
+        </div>
+        <div class="footer-column">
+            <h3>Servizi</h3>
+            <p>I nostri servizi principali</p>
+        </div>
+        <div class="footer-column">
+            <h3>Contatti</h3>
+            <p>Le nostre informazioni di contatto</p>
+        </div>
+    </footer>
+
+    <script>
+        // Seleziona gli elementi del DOM necessari
+        const hamburger = document.querySelector('.hamburger');
+        const nav = document.querySelector('.nav');
+
+        // Event listener per il click sull'hamburger menu
+        // Toggle delle classi active per mostrare/nascondere il menu
+        hamburger.addEventListener('click', () => {
+            hamburger.classList.toggle('active');
+            nav.classList.toggle('active');
+        });
+
+        // Event listener per ogni link nel menu
+        // Chiude il menu mobile quando si clicca su un link
+        document.querySelectorAll('.nav a').forEach(link => {
+            link.addEventListener('click', () => {
+                hamburger.classList.remove('active');
+                nav.classList.remove('active');
+            });
+        });
+
+        // Event listener sul documento
+        // Chiude il menu quando si clicca fuori dal menu e dall'hamburger
+        document.addEventListener('click', (e) => {
+            if (!hamburger.contains(e.target) && !nav.contains(e.target)) {
+                hamburger.classList.remove('active');
+                nav.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -14,7 +14,7 @@ public static class CinemaEndpoints
 		// - restituisce la lista dei cinema usando cinemaDTO;
 		group.MapGet("/cinemas", async (FilmDbContext db) =>
 		{
-			var cinemas = await db.Cinemas.Select(c => new CinemaDTO(c)).ToListAsync();
+			var cinemas = await db.Cinemas.Select(c => new CinemaDTO(c)).AsNoTracking().ToListAsync();
 			return Results.Ok(cinemas);
 		});
 

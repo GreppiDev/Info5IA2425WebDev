@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <title>Responsive Navigation</title>
+    <link rel="stylesheet" href="styles.css">
+
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">Logo</div>
+            <button class="hamburger" title="Toggle navigation menu">
+                <div></div>
+                <div></div>
+                <div></div>
+            </button>
+            <ul class="nav-links">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#services">Services</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero">
+            <h1>CodeMaster Pro</h1>
+            <p class="tagline">The intelligent IDE that thinks with you</p>
+        </section>
+
+        <section class="features">
+            <h2>Key Features</h2>
+            <div class="features-grid">
+                <div class="feature">
+                    <i class="fas fa-brain"></i>
+                    <h3>AI Assistance</h3>
+                    <p>Smart code completion and suggestions</p>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-bolt"></i>
+                    <h3>Lightning Fast</h3>
+                    <p>Optimized performance for large projects</p>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-code-branch"></i>
+                    <h3>Git Integration</h3>
+                    <p>Seamless version control workflow</p>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-shield-alt"></i>
+                    <h3>Security</h3>
+                    <p>Built-in vulnerability scanning</p>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-puzzle-piece"></i>
+                    <h3>Extensions</h3>
+                    <p>Rich ecosystem of plugins</p>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-sync"></i>
+                    <h3>Auto Updates</h3>
+                    <p>Always stay up to date</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="pricing">
+            <h2>Pricing Plans</h2>
+            <div class="pricing-grid">
+                <div class="plan">
+                    <h3>Free</h3>
+                    <p class="price">$0</p>
+                    <ul>
+                        <li>Basic Features</li>
+                        <li>Community Support</li>
+                    </ul>
+                </div>
+                <div class="plan featured">
+                    <h3>Pro</h3>
+                    <p class="price">$9.99/mo</p>
+                    <ul>
+                        <li>All Features</li>
+                        <li>Priority Support</li>
+                    </ul>
+                </div>
+                <div class="plan">
+                    <h3>Enterprise</h3>
+                    <p class="price">Contact Us</p>
+                    <ul>
+                        <li>Custom Solutions</li>
+                        <li>24/7 Support</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta">
+            <h2>Ready to start?</h2>
+            <button class="download-btn">Download Now</button>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Your Company</p>
+    </footer>
+
+    <script>
+        const hamburger = document.querySelector('.hamburger');
+        const navLinks = document.querySelector('.nav-links');
+
+        hamburger.addEventListener('click', () => {
+            hamburger.classList.toggle('active');
+            navLinks.classList.toggle('active');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!hamburger.contains(e.target) && !navLinks.contains(e.target)) {
+                hamburger.classList.remove('active');
+                navLinks.classList.remove('active');
+            }
+        });
+
+        navLinks.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                hamburger.classList.remove('active');
+                navLinks.classList.remove('active');
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const planUrls = {
+                'Free': 'https://example.com/free-plan',
+                'Pro': 'https://example.com/pro-plan',
+                'Enterprise': 'https://example.com/enterprise-plan'
+            };
+
+            document.querySelectorAll('.plan').forEach(plan => {
+                plan.addEventListener('click', function() {
+                    const planTitle = this.querySelector('h3').textContent;
+                    const url = planUrls[planTitle];
+                    if (url) {
+                        window.location.href = url;
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

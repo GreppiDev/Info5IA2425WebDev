@@ -31,3 +31,6 @@
    5. [JS](./web/web-docs/js/index.md)
    6. [Web forms handling](./web/web-docs/web-forms/index.md)
    7. [JavaScript Web API](./web/web-docs/js-web-api/index.md)
+
+5. Frontend Development
+   1. [Responsive User Interface](./web/web-docs/responsive-ui/index.md)

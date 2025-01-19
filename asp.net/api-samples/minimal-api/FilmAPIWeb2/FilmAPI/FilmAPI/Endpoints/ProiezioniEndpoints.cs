@@ -41,7 +41,7 @@ public static class ProiezioniEndpoints
 		
 		//GET /proiezioni/
 		// restituisce tutte le proiezioni
-		group.MapGet("/proiezioni/", async (FilmDbContext db) => Results.Ok(await db.Proiezioni.Select(p => new ProiezioneDTO(p)).ToListAsync()));
+		group.MapGet("/proiezioni/", async (FilmDbContext db) => Results.Ok(await db.Proiezioni.Select(p => new ProiezioneDTO(p)).AsNoTracking().ToListAsync()));
 		
 		//GET /proiezioni/{filmId}/{cinemaId}
 		// restituisce la proiezione con il filmId e il cinemaId specificati
@@ -62,11 +62,7 @@ public static class ProiezioniEndpoints
 			{
 				query = query.Where(p => p.Data <= dataFinale.Value);
 			}
-
-			List<Proiezione> proiezioni = await query.ToListAsync();
-
-			List<ProiezioneDTO> proiezioniDTO = proiezioni.Select(p => new ProiezioneDTO(p)).ToList();
-
+			List<ProiezioneDTO> proiezioniDTO = await  query.Select(p => new ProiezioneDTO(p)).AsNoTracking().ToListAsync();
 			return Results.Ok(proiezioniDTO);
 		});
 

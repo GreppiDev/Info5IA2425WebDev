@@ -125,7 +125,7 @@ Per creare un account che si possa connettere al server di MariaDB o di MySQL da
 
   Quando un pacchetto arriva al container da una macchina esterna al **bridge** (ad esempio dall' host o da un'altra macchina sulla rete esterna), Docker usa il **Network Address Translation (NAT)** per tradurre l'indirizzo IP di origine. Quindi, nel caso in cui ci si connetta dall'esterno (ad esempio dall'host) al container che esegue MySQL/MariaDb, il server MySQL/MariaDb vedrà l'indirizzo del Gateway della rete bridge come indirizzo sorgente dei pacchetti, non l'indirizzo della macchina esterna.
 
-  Per ottenere l'indirizzo IP del Gateway della rete a cui sono connessi i container è possibile usare il comando `docker inspect` in combinazione con il comando `jp` (nella WSL Ubuntu).
+  Per ottenere l'indirizzo IP del Gateway della rete a cui sono connessi i container è possibile usare il comando `docker inspect` in combinazione con il comando `jq` (nella WSL Ubuntu).
 
   Supponendo che la bridge network di Docker si chiami `my-net`, è possibile ottenere l'indirizzo IP del Gateway con il comando:
   

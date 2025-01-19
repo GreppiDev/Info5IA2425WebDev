@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grid Layout Responsivo</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <header>
+        <nav class="navbar">
+            <button class="hamburger" title="Menu" aria-label="Toggle navigation menu">
+                <div></div>
+                <div></div>
+                <div></div>
+            </button>
+            <ul class="nav-links">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#about">Chi Siamo</a></li>
+                <li><a href="#services">Servizi</a></li>
+                <li><a href="#contact">Contatti</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="grid-container">
+            <div class="grid-item">1</div>
+            <div class="grid-item">2</div>
+            <div class="grid-item">3</div>
+            <div class="grid-item">4</div>
+            <div class="grid-item">5</div>
+            <div class="grid-item">6</div>
+            <div class="grid-item">7</div>
+            <div class="grid-item">8</div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>Chi Siamo</h3>
+                <p>La nostra azienda si impegna a fornire soluzioni innovative e di alta qualità per i nostri clienti.
+                </p>
+            </div>
+            <div class="footer-section">
+                <h3>Link Utili</h3>
+                <ul>
+                    <li><a href="#privacy">Privacy Policy</a></li>
+                    <li><a href="#terms">Termini e Condizioni</a></li>
+                    <li><a href="#faq">FAQ</a></li>
+                    <li><a href="#support">Supporto</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Seguici</h3>
+                <div class="social-links">
+                    <a href="#facebook" aria-label="Facebook">FB</a>
+                    <a href="#twitter" aria-label="Twitter">TW</a>
+                    <a href="#instagram" aria-label="Instagram">IG</a>
+                    <a href="#linkedin" aria-label="LinkedIn">IN</a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 La Tua Azienda. Tutti i diritti riservati.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Seleziona elementi DOM necessari
+        const hamburger = document.querySelector('.hamburger');
+        const navLinks = document.querySelector('.nav-links');
+
+        // Aggiungi event listener per il click sull'hamburger
+        hamburger.addEventListener('click', () => {
+            // Toggle della classe active per mostrare/nascondere il menu
+            navLinks.classList.toggle('active');
+        });
+
+        // Event listener per ogni link nel menu
+            // Chiude il menu mobile quando si clicca su un link
+            document.querySelectorAll('.nav-links li a').forEach(link => {
+                link.addEventListener('click', () => {
+                    navLinks.classList.remove('active');
+                });
+            });
+
+            // Event listener sul documento
+            // Chiude il menu quando si clicca fuori dal menu e dall'hamburger
+            document.addEventListener('click', (e) => {
+                if (!navLinks.contains(e.target) && !hamburger.contains(e.target)) {
+                    navLinks.classList.remove('active');
+                }
+            });
+    </script>
+</body>
+
+</html>

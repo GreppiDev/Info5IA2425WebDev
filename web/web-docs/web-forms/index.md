@@ -14,7 +14,7 @@
         - [Invio dati con con codifica `application/octet-stream`](#invio-dati-con-con-codifica-applicationoctet-stream)
         - [Invio Dati con codifica `application/xml`](#invio-dati-con-codifica-applicationxml)
         - [Invio Dati con codifica `multipart/related`](#invio-dati-con-codifica-multipartrelated)
-    - [**Differenze le varie codifiche**](#differenze-le-varie-codifiche)
+    - [**Differenze tra le varie codifiche**](#differenze-tra-le-varie-codifiche)
     - [**Tabella Riepilogativa delle Modalità di Invio Dati**](#tabella-riepilogativa-delle-modalità-di-invio-dati)
     - [**Codifiche in base al tipo di applicazione**](#codifiche-in-base-al-tipo-di-applicazione)
   - [Security issues in HTML forms](#security-issues-in-html-forms)
@@ -46,7 +46,7 @@ I **web form tradizionali** supportano principalmente tre tipi di **codifiche (`
 
     > :memo: **Se non si specifica l'attributo `enctype`, il form utilizza **`application/x-www-form-urlencoded`** come impostazione predefinita.**
 
-2. `multipart/form-data`**
+2. `multipart/form-data`
 
    - ✅ Usata quando il form include **file upload** (`<input type="file">`).
    - ✅ Adatta per inviare **dati misti** (file, testo, numeri).
@@ -56,7 +56,7 @@ I **web form tradizionali** supportano principalmente tre tipi di **codifiche (`
   
    >:memo: **Obbligatoria quando si utilizza `<input type="file">.`**
   
-3. `text/plain`**
+3. `text/plain`
 
    - ✅ Invia i dati come **testo semplice** nel body della richiesta HTTP.
    - ✅ Ogni coppia chiave-valore è separata da una nuova riga (`\n`).
@@ -305,7 +305,7 @@ La codifica **`text/plain`** è un'opzione meno comune per l'invio di dati da un
 
 3. Spiegazione Dettagliata
 
-   1. Header HTTP**
+   1. Header HTTP
 
       - **`POST /submit HTTP/1.1`**
 
@@ -872,7 +872,7 @@ Content-Disposition: attachment; filename="file.pdf"
 - Parsing complesso lato server.
 - Richiede gestione avanzata dei boundary.
 
-### **Differenze le varie codifiche**
+### **Differenze tra le varie codifiche**
 
 | **Caratteristica** | **text/plain** | **application/x-www-form-urlencoded** | **multipart/form-data** | **application/json** |
 | --- |  --- |  --- |  --- |  --- |

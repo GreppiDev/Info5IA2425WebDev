@@ -1,0 +1,205 @@
+/* Reset base e stili generali */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Stili header e navigazione */
+        header {
+            background-color: #333;
+            padding: 1rem;
+            position: relative;
+        }
+
+        /* Stili base della navbar */
+        .navbar {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        /* Stili dei link della navigation */
+        .nav-links {
+            display: flex;
+            list-style: none;
+        }
+
+        .nav-links li a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            transition: background-color 0.3s ease;
+        }
+
+        /* Effetto hover sui link */
+        .nav-links li a:hover {
+            background-color: #555;
+            border-radius: 4px;
+        }
+
+        /* Stili hamburger menu (nascosto di default) */
+        .hamburger {
+            display: none;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0.5rem;
+        }
+
+        .hamburger div {
+            width: 25px;
+            height: 3px;
+            background-color: white;
+            margin: 5px 0;
+            transition: all 0.3s ease;
+        }
+
+        /* Grid Container principale */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            padding: 20px;
+            background-color: #f0f0f0;
+            flex: 1; /* Fa occupare tutto lo spazio disponibile */
+            border: solid coral 5px;
+        }
+
+        .grid-item {
+            padding: 30px;
+            background-color: #e74c3c;
+            color: white;
+            text-align: center;
+            border-radius: 4px;
+        }
+
+        /* Stili Footer */
+        footer {
+            background-color: #333;
+            color: white;
+            padding: 2rem 0;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .footer-section {
+            padding: 0 1rem;
+        }
+
+        .footer-section h3 {
+            margin-bottom: 1rem;
+            color: #e74c3c;
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section ul li {
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-section a {
+            color: white;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: #e74c3c;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .social-links a {
+            display: inline-block;
+            padding: 0.5rem;
+            background-color: #555;
+            border-radius: 50%;
+            transition: background-color 0.3s ease;
+        }
+
+        .social-links a:hover {
+            background-color: #e74c3c;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            margin-top: 2rem;
+            border-top: 1px solid #555;
+        }
+
+        /* Media query per layout responsive */
+        @media (max-width: 768px) {
+
+            /* Mostra hamburger menu */
+            .hamburger {
+                display: block;
+            }
+
+            /* Nascondi nav links di default */
+            .nav-links {
+                display: none;
+                width: 100%;
+                flex-direction: column;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                text-align: right;  /* Allinea il testo a destra */
+                padding-right: 2rem;  /* Aggiunge padding a destra */
+                background-color: #333;
+            }
+
+            /* Classe per mostrare menu quando attivo */
+            .nav-links.active {
+                display: flex;
+            }
+
+            /* Adatta grid a layout mobile */
+            .grid-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            /* Stili link per mobile */
+            .nav-links li {
+                width: 100%;
+                padding: 1rem 0;
+            }          
+
+            /* Footer responsive */
+            .footer-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .social-links {
+                justify-content: center;
+            }
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            padding: 20px;
+            min-height: 70vh;
+            border: solid coral 5px;
+        }

@@ -8,8 +8,14 @@ public static class StaticPagesEndpoints
 		group.MapGet("{*path}", HandleStaticFile)
 			 .AddEndpointFilter(async (context, next) =>
 			 {
-				 // Se il percorso inizia con /api, salta questo handler
+				 // Se il percorso inizia con /swagger, salta questo handler
 				 var path = context.HttpContext.Request.Path.Value ?? "";
+				 if (path.StartsWith("/swagger", StringComparison.OrdinalIgnoreCase))
+				 {
+					 return await next(context);
+				 }
+				 // Se il percorso inizia con /api, restituisce Empty perché la rotta /api 
+				 //dovrebbe essere già gestita con priorità più elevata.
 				 if (path.StartsWith("/api", StringComparison.OrdinalIgnoreCase))
 				 {
 					 return Results.Empty;
@@ -44,7 +50,7 @@ public static class StaticPagesEndpoints
 
 		if (validPath == null)
 		{
-			// Qui puoi implementare la logica per la pagina di errore 404
+			// Qui si può implementare la logica per la pagina di errore 404
 			return Results.Redirect("/index.html");
 			// Alternativa: return Results.NotFound();
 		}
@@ -88,8 +94,48 @@ public static class StaticPagesEndpoints
 			[".xls"] = "application/vnd.ms-excel",
 			[".xlsx"] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 			[".ppt"] = "application/vnd.ms-powerpoint",
-			[".pptx"] = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
-			
+			[".pptx"] = "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+			[".mpg"] = "video/mpeg",
+			[".mpeg"] = "video/mpeg",
+			[".webp"] = "image/webp",
+			[".bmp"] = "image/bmp",
+			[".tiff"] = "image/tiff",
+			[".tif"] = "image/tiff",
+			[".avi"] = "video/x-msvideo",
+			[".wmv"] = "video/x-ms-wmv",
+			[".flv"] = "video/x-flv",
+			[".csv"] = "text/csv",
+			[".tsv"] = "text/tab-separated-values",
+			[".rtf"] = "application/rtf",
+			[".weba"] = "audio/webm",
+			[".woff"] = "font/woff",
+			[".woff2"] = "font/woff2",
+			[".eot"] = "application/vnd.ms-fontobject",
+			[".otf"] = "font/otf",
+			[".ttf"] = "font/ttf",
+			[".svgz"] = "image/svg+xml",
+			[".apk"] = "application/vnd.android.package-archive",
+			[".exe"] = "application/x-msdownload",
+			[".psd"] = "image/vnd.adobe.photoshop",
+			[".ai"] = "application/postscript",
+			[".eps"] = "application/postscript",
+			[".ps"] = "application/postscript",
+			[".flac"] = "audio/flac",
+			[".m4a"] = "audio/mp4",
+			[".m4v"] = "video/mp4",
+			[".webmanifest"] = "application/manifest+json",
+			[".manifest"] = "text/cache-manifest",
+			[".appcache"] = "text/cache-manifest",
+			[".vcf"] = "text/vcard",
+			[".vcard"] = "text/vcard",
+			[".ics"] = "text/calendar",
+			[".ical"] = "text/calendar",
+			[".epub"] = "application/epub+zip",
+			[".mobi"] = "application/x-mobipocket-ebook",
+			[".djvu"] = "image/vnd.djvu",
+			[".djv"] = "image/vnd.djvu",
+			[".md"] = "text/markdown",
+			[".markdown"] = "text/markdown"
 		};
 
 		// Verifica se è un file di testo

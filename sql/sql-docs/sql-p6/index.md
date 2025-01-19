@@ -767,6 +767,8 @@ Si supponga di avere una base di dati il cui schema Entity/Relationship (ER) sia
 
 ![Schema del database campionato_calcio](schema-campionato-calcio.png)
 
+La creazione del database può essere ottenuta a partire dal seguente [script](../../sql-scripts/05-campionato-calcio/campionato_calcio.sql).
+
 Si supponga di dover rispondere alla seguente query: *stampare i risultati delle partite giocate in una certa data del campionato; per la squadra di casa si riporti il nome della squadra, la sua città e lo stadio, mentre per la squadra in trasferta si riporti solo la città di provenienza.*
 
 Per eseguire la query è sufficiente creare due alias della tabella squadre, una per rappresentare la squadra di casa e una per rappresentare la squadra in trasferta.

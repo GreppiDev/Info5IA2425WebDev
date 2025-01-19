@@ -8,8 +8,14 @@ public static class StaticPagesEndpoints
 		group.MapGet("{*path}", HandleStaticFile)
 			 .AddEndpointFilter(async (context, next) =>
 			 {
-				 // Se il percorso inizia con /api, salta questo handler
+				 // Se il percorso inizia con /swagger, salta questo handler
 				 var path = context.HttpContext.Request.Path.Value ?? "";
+				 if (path.StartsWith("/swagger", StringComparison.OrdinalIgnoreCase))
+				 {
+					 return await next(context);
+				 }
+				 // Se il percorso inizia con /api, restituisce Empty perché la rotta /api 
+				 //dovrebbe essere già gestita con priorità più elevata.
 				 if (path.StartsWith("/api", StringComparison.OrdinalIgnoreCase))
 				 {
 					 return Results.Empty;

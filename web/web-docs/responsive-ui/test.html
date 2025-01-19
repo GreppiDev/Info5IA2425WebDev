@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tema Chiaro/Scuro Demo</title>
+    <style>
+        /* Definiamo le variabili per il tema chiaro */
+        :root {
+            /* Colori di base */
+            --colore-sfondo: #ffffff;
+            --colore-testo: #333333;
+            --colore-primario: #007bff;
+            --colore-secondario: #6c757d;
+
+            /* Colori specifici dei componenti */
+            --colore-card: #f8f9fa;
+            --colore-bordo: #dee2e6;
+
+            /* Transizioni per rendere fluido il cambio di tema */
+            --transizione-base: all 0.3s ease-in-out;
+        }
+
+        /* Variabili per il tema scuro */
+        [data-theme="dark"] {
+            --colore-sfondo: #1a1a1a;
+            --colore-testo: #ffffff;
+            --colore-primario: #4dabf7;
+            --colore-secondario: #adb5bd;
+            --colore-card: #2d2d2d;
+            --colore-bordo: #404040;
+        }
+
+        /* Stili base */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            background-color: var(--colore-sfondo);
+            color: var(--colore-testo);
+            transition: var(--transizione-base);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        /* Stile per il bottone del tema */
+        .theme-toggle {
+            background-color: var(--colore-primario);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: var(--transizione-base);
+        }
+
+        .theme-toggle:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        /* Stile per la card di esempio */
+        .card {
+            background-color: var(--colore-card);
+            border: 1px solid var(--colore-bordo);
+            border-radius: 12px;
+            padding: 1.5rem;
+            width: 100%;
+            max-width: 500px;
+            transition: var(--transizione-base);
+        }
+
+        .card h2 {
+            color: var(--colore-primario);
+            margin-top: 0;
+        }
+
+        .card p {
+            color: var(--colore-secondario);
+            line-height: 1.6;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <button class="theme-toggle" onclick="toggleTheme()">
+            Cambia Tema
+        </button>
+
+        <div class="card">
+            <h2>Esempio di Card</h2>
+            <p>
+                Questo è un esempio di come il tema influenza l'aspetto dei componenti.
+                Il testo, lo sfondo e i bordi cambiano colore in base al tema selezionato.
+                La transizione tra i temi è fluida grazie all'uso delle variabili CSS.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Funzione per gestire il cambio di tema
+        function toggleTheme() {
+            // Otteniamo il tema corrente
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+
+            // Determiniamo il nuovo tema
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+            // Applichiamo il nuovo tema
+            document.documentElement.setAttribute('data-theme', newTheme);
+
+            // Salviamo la preferenza dell'utente
+            localStorage.setItem('theme', newTheme);
+        }
+
+        // Funzione per caricare il tema salvato
+        function loadSavedTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                document.documentElement.setAttribute('data-theme', savedTheme);
+            }
+        }
+
+        // Carichiamo il tema salvato quando la pagina si carica
+        loadSavedTheme();
+    </script>
+</body>
+
+</html>

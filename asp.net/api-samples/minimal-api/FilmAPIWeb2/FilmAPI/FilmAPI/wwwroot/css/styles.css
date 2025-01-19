@@ -14,15 +14,15 @@ body {
 
 /* Contenuto principale */
 main {
+     /* flex-grow: 1, flex-shrink: 0, flex-basis: auto */
     flex: 1 0 auto;
-    /* flex-grow: 1, flex-shrink: 0, flex-basis: auto */
     padding: 20px;
 }
 
 /* Footer che si comporta dinamicamente */
 footer {
-    flex-shrink: 0;
     /* Impedisce al footer di rimpicciolirsi */
+    flex-shrink: 0;
     background-color: #f8f9fa;
     text-align: center;
     padding: 2px 0;
