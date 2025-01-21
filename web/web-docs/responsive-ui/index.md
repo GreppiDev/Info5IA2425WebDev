@@ -41,7 +41,9 @@
     - [CSS tricks - CSS Media Queries Guide](#css-tricks---css-media-queries-guide)
   - [Variabili in CSS](#variabili-in-css)
     - [Un esempio di pagina con tema chiaro/scuro, utilizzando le variabili CSS e JavaScript - versione con toggle button](#un-esempio-di-pagina-con-tema-chiaroscuro-utilizzando-le-variabili-css-e-javascript---versione-con-toggle-button)
+      - [Spiegazione del codice nella pagina con tema chiaro/scuro](#spiegazione-del-codice-nella-pagina-con-tema-chiaroscuro)
     - [Un esempio di pagina con tema chiaro/scuro, utilizzando le variabili CSS e JavaScript - versione con dropdown list](#un-esempio-di-pagina-con-tema-chiaroscuro-utilizzando-le-variabili-css-e-javascript---versione-con-dropdown-list)
+      - [Spiegazione del codice nella pagina con più temi selezionabili da dropdown list](#spiegazione-del-codice-nella-pagina-con-più-temi-selezionabili-da-dropdown-list)
   - [CSS FlexBox](#css-flexbox)
     - [Mozilla - introduction to CSS Flexbox](#mozilla---introduction-to-css-flexbox)
     - [W3schools - CSS FlexBox](#w3schools---css-flexbox)
@@ -813,7 +815,10 @@ JavaScript offre diverse proprietà per navigare le relazioni tra elementi del D
 
 ```javascript
 // Accesso al genitore
+//HTML DOM Node types: https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType
+//Il nodo genitore diretto di elemento, che può essere un qualsiasi nodo del DOM, come un nodo elemento (Element), un nodo testo (Text), o un nodo documento (Document).
 const parent = elemento.parentNode;
+//Il nodo genitore diretto di elemento, ma solo se questo è un nodo elemento (Element). Se il nodo genitore non è un elemento (ad esempio un nodo testo), restituisce null.
 const parentElement = elemento.parentElement;
 
 // Accesso ai figli
@@ -864,7 +869,7 @@ const allSiblings = document.querySelectorAll('.reference ~ .siblings');
 
 ### Gestione delle Collezioni di Elementi
 
-È importante notare che getElementsBy* restituisce una HTMLCollection mentre querySelectorAll restituisce una NodeList. Ecco come iterare su entrambe:
+È importante notare che `getElementsBy` restituisce una [`HTMLCollection`](https://www.w3schools.com/jsref/dom_obj_htmlcollection.asp) mentre `querySelectorAll` restituisce una [`NodeList`](https://www.w3schools.com/jsref/dom_obj_html_nodelist.asp). Ecco come iterare su entrambe:
 
 ```javascript
 // Iterazione su HTMLCollection
@@ -1181,6 +1186,65 @@ Il sistema di variabili CSS continua ad evolversi con l'introduzione di nuove fu
 </html>
 ```
 
+#### Spiegazione del codice nella pagina con tema chiaro/scuro
+
+1. Tipo di selettore: `[data-theme="dark"]`
+
+    Il selettore `[data-theme="dark"]` è un **selettore di attributo**. In CSS, i selettori di attributo vengono utilizzati per applicare stili agli elementi HTML che possiedono un determinato attributo con un valore specifico.
+
+    Nello specifico:
+
+    - `[data-theme="dark"]` seleziona qualsiasi elemento che ha l'attributo `data-theme` impostato al valore `dark`.
+    - In questo caso, viene applicato allo pseudoelemento `:root`, che rappresenta l'elemento più alto del documento HTML (equivalente a `<html>`).
+    - Questo selettore viene usato per definire le variabili CSS (custom properties) specifiche per il tema scuro.
+
+2. Come funziona l'oggetto `documentElement`
+
+    L'oggetto `documentElement` è una proprietà dell'oggetto globale `document` in JavaScript. Restituisce una rappresentazione del nodo radice del documento, che corrisponde all'elemento `<html>`. Le caratteristiche principali di `document.documentElement` sono:
+
+    1. **Permette l'accesso al nodo radice (`<html>`)**:
+
+        - È utile per manipolare direttamente l'elemento `<html>`, ad esempio per aggiungere o modificare attributi, come nel tuo codice con `setAttribute`.
+        - `document.documentElement.setAttribute('data-theme', newTheme)`:
+          - Imposta l'attributo `data-theme` sull'elemento `<html>`.
+          - Questo cambiamento è rilevato dal selettore `[data-theme="dark"]`, che applica i valori delle variabili CSS per il tema scuro.
+
+    2. **Differenza con altri metodi**:
+
+        - `document.documentElement` accede direttamente al nodo `<html>`.
+        - Altri metodi come `document.body` accedono al nodo `<body>`.
+
+    3. **Compatibilità**: È supportato da tutti i browser moderni e viene usato comunemente per modifiche a livello globale (ad esempio, temi, lingue o stili).
+
+3. Nell'esempio precedente:
+
+   - La funzione `toggleTheme()` modifica l'attributo `data-theme` sull'elemento `<html>` utilizzando `document.documentElement`.
+   - Le variabili CSS definite in `[data-theme="dark"]` o `:root` si aggiornano automaticamente grazie al meccanismo del cascading.
+   - La preferenza dell'utente viene salvata in `localStorage` per mantenere il tema scelto tra i vari caricamenti della pagina.
+   - Quando JavaScript cambia l'attributo data-theme su <html> a light, succede quanto segue:
+       - Non esiste un selettore CSS per [data-theme="light"].
+       - Di conseguenza, le variabili definite in `:root` rimangono attive perché non vengono sovrascritte da altre regole CSS.
+
+        ```js
+        document.documentElement.setAttribute('data-theme', 'light');
+        ```
+
+      - Questo aggiunge l'attributo `data-theme="light"` all'elemento <html>. Tuttavia, poiché non esiste un selettore [data-theme="light"] nel CSS, non ci sono effetti aggiuntivi. Le variabili CSS definite in `:root` continuano a essere utilizzate.
+      - Si potrebbe aggiungere una configurazione esplicita per il tema chiaro al posto di fare affidamento sul tema di default (che è già quello chiaro) e aggiungere nel css:
+  
+        ```css
+            [data-theme="light"] {
+            --colore-sfondo: #ffffff;
+            --colore-testo: #333333;
+            --colore-primario: #007bff;
+            --colore-secondario: #6c757d;
+            --colore-card: #f8f9fa;
+            --colore-bordo: #dee2e6;
+            }
+        ```
+
+    Questo non cambierebbe il risultato finale che sarà sempre quello di passare dal tema chiaro a quello scuro e viceversa.
+
 ### Un esempio di pagina con tema chiaro/scuro, utilizzando le variabili CSS e JavaScript - versione con dropdown list
 
 ```html
@@ -1420,6 +1484,33 @@ Il sistema di variabili CSS continua ad evolversi con l'introduzione di nuove fu
 
 </html>
 ```
+
+#### Spiegazione del codice nella pagina con più temi selezionabili da dropdown list
+
+Questo esempio implementa un sistema di temi multipli (chiaro, scuro, sepia, e nord) utilizzando variabili CSS, selettori di attributo e JavaScript. Ecco come funziona in dettaglio:
+
+Ogni tema è associato a un valore specifico dell'attributo `data-theme` sull'elemento `<html>`. Per ogni valore, viene definito un set di variabili CSS:
+
+   - **Tema predefinito (chiaro):** Definito in `:root`. Questi valori vengono utilizzati se non ci sono temi attivi o se il valore del tema non è specificato.
+
+Questi temi cambiano le variabili CSS utilizzate per personalizzare colori e stili della pagina.
+
+Il selettore `<select>` permette all'utente di scegliere un tema. Quando l'utente seleziona un tema, la funzione `changeTheme()` viene chiamata tramite l'evento `onchange`.
+
+Quando l'utente seleziona un tema, questa funzione:
+
+1. Cambia l'attributo `data-theme` sull'elemento `<html>` per applicare il tema corrispondente.
+2. Salva la preferenza del tema nel localStorage per la persistenza:
+
+Questa funzione viene eseguita al caricamento della pagina per garantire che il tema selezionato precedentemente venga applicato automaticamente.
+
+Le variabili CSS definite nei diversi temi vengono utilizzate per lo stile della pagina.
+
+Quando il valore di `data-theme` cambia, il browser aggiorna automaticamente le variabili e quindi lo stile, senza bisogno di ulteriori interventi JavaScript.
+
+L'uso della proprietà `transition` nelle variabili garantisce un cambio di tema fluido.
+
+Questa transizione viene applicata a tutti gli elementi che usano le variabili CSS, rendendo il passaggio tra temi più piacevole per l'utente.
 
 ## CSS FlexBox
 
@@ -1688,7 +1779,7 @@ Di seguito è riportato un esempio pratico di Float Layout, anche se, come già 
             border: 1px solid #ccc;
             padding: 15px;
             /* Clearfix per contenere gli elementi flottanti */
-            overflow: hidden;
+            overflow: auto;
         }
 
         .image-left {
