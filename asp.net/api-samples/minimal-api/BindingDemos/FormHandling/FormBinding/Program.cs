@@ -30,6 +30,8 @@ var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 //qui mettiamo i middleware
+app.UseHttpsRedirection();
+
 if (app.Environment.IsDevelopment())
 {
 	//permette di ottenere una rotta dove vedere la documentazione delle API secondo lo standard OpenAPI
@@ -45,10 +47,18 @@ if (app.Environment.IsDevelopment())
 		config.DocExpansion = "list";
 	});
 }
-//altri middleware
 
-app.UseHttpsRedirection();
+// Serve static files after Swagger
+
+// Middleware per file statici
+
+// 1. Configura il middleware per servire index.html dalla cartella root
+app.UseDefaultFiles();
+
+// 2. Middleware per file statici in wwwroot (CSS, JS, ecc.)
 app.UseStaticFiles();
+
+
 if (app.Environment.IsDevelopment())
 {
 	app.UseDeveloperExceptionPage();
@@ -61,14 +71,6 @@ app
 .WithTags("Public API");
 //-------- End of API management ------------
 
-//routing per le pagine web
-//----------- Start of page management ------------
-app
-.MapGroup("")
-.MapPagesEndpoints()
-.WithOpenApi()
-.WithTags("Web Pages");
-//----------- End of page management ------------
 //avvia l'applicazione
 app.Run();
 
