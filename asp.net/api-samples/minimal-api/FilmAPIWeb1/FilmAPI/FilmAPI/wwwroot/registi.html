@@ -1,8 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="it">
 
 <head>
     <meta charset="utf-8">
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    <link rel="icon" type="image/webp" href="/assets/favicon.webp">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <!-- Bootstrap CSS -->
@@ -56,20 +58,20 @@
             </div>
 
             <h2 class="mt-4">Elenco Registi</h2>
-            <table id="id-tabella-registi" class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nome</th>
-                        <th>Cognome</th>
-                        <th>Nazionalità</th>
-                        <th class="my-td-text-right">Azioni</th>
-                    </tr>
-                </thead>
-                <tbody id="registi-table-body">
-                    <!-- Rows will be populated by JavaScript -->
-                </tbody>
-            </table>
+            <div class="table-responsive-sm">
+                <table id="id-tabella-registi" class="table table-striped table-sm">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nome</th>
+                            <th>Cognome</th>
+                            <th>Nazionalità</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody id="registi-table-body"></tbody>
+                </table>
+            </div>
         </div>
     </main>
 
@@ -81,16 +83,16 @@
 
     <script>
         function loadRegistiTable(searchValue = '') {
-                const url = searchValue ? `/api/registi/?cognome=${searchValue}` : '/api/registi';
+            const url = searchValue ? `/api/registi/?cognome=${searchValue}` : '/api/registi';
 
-                fetch(url)
-                    .then(response => response.json())
-                    .then(data => {
-                        const tableBody = document.getElementById('registi-table-body');
-                        tableBody.innerHTML = '';
-                        data.forEach(regista => {
-                            const row = document.createElement('tr');
-                            row.innerHTML = `
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.getElementById('registi-table-body');
+                    tableBody.innerHTML = '';
+                    data.forEach(regista => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
                             <td>${regista.id}</td>
                             <td>${regista.nome}</td>
                             <td>${regista.cognome}</td>
@@ -100,26 +102,26 @@
                                 <a href="cancella-regista.html?id=${regista.id}" class="btn btn-danger btn-sm">Cancella</a>
                             </td>
                         `;
-                            tableBody.appendChild(row);
-                        });
-                    })
-                    .catch(error => console.error('Error fetching registi:', error));
-            }
-
-            document.addEventListener('DOMContentLoaded', async function () {
-
-                // inizializza la tabella dei registi
-                loadRegistiTable();
-
-                // Aggiungi event listener per la ricerca
-                const searchInput = document.getElementById('search-cognome');
-                if (searchInput) {
-                    searchInput.addEventListener('keyup', function (e) {
-                        const searchValue = e.target.value.trim();
-                        loadRegistiTable(searchValue);
+                        tableBody.appendChild(row);
                     });
-                }
-            });
+                })
+                .catch(error => console.error('Error fetching registi:', error));
+        }
+
+        document.addEventListener('DOMContentLoaded', async function () {
+
+            // inizializza la tabella dei registi
+            loadRegistiTable();
+
+            // Aggiungi event listener per la ricerca
+            const searchInput = document.getElementById('search-cognome');
+            if (searchInput) {
+                searchInput.addEventListener('keyup', function (e) {
+                    const searchValue = e.target.value.trim();
+                    loadRegistiTable(searchValue);
+                });
+            }
+        });
     </script>
 </body>
 
