@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="it">
+
+<head>
+    <meta charset="utf-8">
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    <link rel="icon" type="image/webp" href="/assets/favicon.webp">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <title>Films</title>
+</head>
+<body>
+    <div id="header-container"></div>
+    <main>
+        <div class="container mb-10">
+            <div class="mb-4 d-flex align-items-center">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" id="viewToggle">
+                    <label class="form-check-label" for="viewToggle">
+                        <span id="toggleLabel">Show TMDB Search</span>
+                    </label>
+                </div>
+            </div>
+
+            <div id="searchSection" class="d-none">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Search TMDB Movies</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="searchForm" class="row g-3">
+                            <div class="col-md-12">
+                                <input type="text" class="form-control" id="searchQuery" placeholder="Search for movies...">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="releaseYear" class="form-label">Release Year</label>
+                                <input type="number" class="form-control" id="releaseYear" min="1900" max="2100">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="language" class="form-label">Language</label>
+                                <select class="form-select" id="language">
+                                    <option value="">All Languages</option>
+                                    <option value="en-US">English</option>
+                                    <option value="it-IT">Italian</option>
+                                    <option value="fr-FR">French</option>
+                                    <option value="es-ES">Spanish</option>
+                                    <option value="de-DE">German</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">Search</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div id="loading" class="text-center d-none">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+
+                <div id="error" class="alert alert-danger d-none" role="alert">
+                </div>
+
+                <div id="results" class="table-responsive d-none">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Director</th>
+                                <th>Release Year</th>
+                                <th>Language</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="localFilmsSection" class="d-none">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Local Films</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Director</th>
+                                        <th>Release Date</th>
+                                        <th>Duration</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="localFilmsBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit Film Modal -->
+            <div class="modal fade" id="editFilmModal" tabindex="-1" aria-labelledby="editFilmModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editFilmModalLabel">Modifica Film</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="editFilmForm">
+                                <input type="hidden" id="editFilmId">
+                                <div class="mb-3">
+                                    <label for="editTitolo" class="form-label">Titolo</label>
+                                    <input type="text" class="form-control" id="editTitolo" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="editDataProduzione" class="form-label">Data di Produzione</label>
+                                    <input type="date" class="form-control" id="editDataProduzione" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="editDurata" class="form-label">Durata (minuti)</label>
+                                    <input type="number" class="form-control" id="editDurata" min="1" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="editRegistaId" class="form-label">Regista</label>
+                                    <select class="form-select" id="editRegistaId" required>
+                                    </select>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+                            <button type="button" class="btn btn-primary" id="saveEditFilmBtn">Salva Modifiche</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <div id="footer-container"></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+    crossorigin="anonymous">
+    </script>
+    <script src="/js/template-loader.js"></script>
+    <script src="search.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function () {
+            await TemplateLoader.initializeTemplates();
+        });
+    </script>
+</body>
+</html>

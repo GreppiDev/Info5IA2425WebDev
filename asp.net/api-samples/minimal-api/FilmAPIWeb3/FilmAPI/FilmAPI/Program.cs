@@ -1,7 +1,7 @@
 using FilmAPI.Data;
 using FilmAPI.Endpoints;
 using Microsoft.EntityFrameworkCore;
-
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,8 +13,8 @@ builder.Services.AddEndpointsApiExplorer();
 //configura il servizio OpenAPI
 builder.Services.AddOpenApiDocument(config =>
 	{
-		config.Title = "FilmAPI di Malafronte v1";
-		config.DocumentName = "Film API di Malafronte";
+		config.Title = "FilmAPI v1";
+		config.DocumentName = "Film API";
 		config.Version = "v1";
 	}
 );
@@ -46,7 +46,7 @@ if (app.Environment.IsDevelopment())
 	//permette di configurare l'interfaccia SwaggerUI (l'interfaccia grafica web di Swagger (NSwag) che permette di interagire con le API)
 	app.UseSwaggerUi(config =>
 	{
-		config.DocumentTitle = "Film API di Malafronte v1";
+		config.DocumentTitle = "Film API v1";
 		config.Path = "/swagger";
 		config.DocumentPath = "/swagger/{documentName}/swagger.json";
 		config.DocExpansion = "list";
@@ -61,7 +61,7 @@ app.UseHttpsRedirection();
 // Configure Swagger UI before static files
 app.UseSwaggerUi(config =>
 {
-	config.DocumentTitle = "Film API di Malafronte v1";
+	config.DocumentTitle = "Film API v1";
 	config.Path = "/swagger";
 	config.DocumentPath = "/swagger/{documentName}/swagger.json";
 	config.DocExpansion = "list";
@@ -71,13 +71,25 @@ app.UseSwaggerUi(config =>
 
 // Middleware per file statici
 
-// 1. Configura il middleware per servire index.html dalla cartella root
-app.UseDefaultFiles();
+// 1. Configura il middleware per servire index.html dalla cartella pages alla root
+app.UseDefaultFiles(new DefaultFilesOptions
+{
+	FileProvider = new PhysicalFileProvider(
+		Path.Combine(builder.Environment.WebRootPath, "pages")
+	),
+	RequestPath = ""
+});
 
 // 2. Middleware per file statici in wwwroot (CSS, JS, ecc.)
 app.UseStaticFiles();
 
-
+// 3. Middleware di fallback per cercare file in wwwroot/pages
+app.UseStaticFiles(new StaticFileOptions
+{
+	FileProvider = new PhysicalFileProvider(
+		Path.Combine(builder.Environment.WebRootPath, "pages")
+	)
+});
 
 // routing per le API
 //--------------------Endpoints management--------------------
@@ -87,9 +99,12 @@ app
 .MapFilmEndpoints()
 .MapProiezioniEndpoints()
 .MapCinemaEndpoints()
+.MapTMDBProxyEndpoints()
 .WithOpenApi()
 .WithTags("Public API");
 
 //--------------------Endpoints management--------------------
 
 app.Run();
+
+

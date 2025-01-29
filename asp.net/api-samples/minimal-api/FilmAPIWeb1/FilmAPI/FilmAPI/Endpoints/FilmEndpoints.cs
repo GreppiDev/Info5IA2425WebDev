@@ -42,7 +42,6 @@ public static class FilmEndpoints
 			film.Durata = filmDTO.Durata;
 			film.DataProduzione = filmDTO.DataProduzione;
 			//salvo il film modificato
-			db.Add(film);
 			await db.SaveChangesAsync();
 			//restituisco la risposta
 			return Results.NoContent();
