@@ -10,6 +10,10 @@
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.1" />
 	</ItemGroup>
 	
+	<PropertyGroup>
+		<UserSecretsId>OpenStreetMaps-42fe3837-6f44-48dd-ac09-b8a6462b91fc</UserSecretsId>
+	</PropertyGroup>
+	
 	<!-- Ensure wwwroot files are copied to output -->
 	<ItemGroup>
 		<Content Update="wwwroot\**">

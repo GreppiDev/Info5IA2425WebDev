@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Mappa 3D - OpenStreetMap</title>
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+	
+	<link rel="stylesheet" href="styles3d.css">
+	<script src="https://cesium.com/downloads/cesiumjs/releases/1.116/Build/Cesium/Cesium.js"></script>
+	<link href="https://cesium.com/downloads/cesiumjs/releases/1.116/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+	
+</head>
+<body>
+	<div class="container-fluid h-100">
+		<div class="row h-100">
+			<div class="col-lg-8 col-md-7 map-section p-0">
+				<div id="cesiumContainer"></div>
+				<div id="errorMessage" class="error-message"></div>
+			</div>
+			<div class="col-lg-4 col-md-5 control-panel">
+				<header>
+					<h1>Mappa 3D Terrain</h1>
+				</header>
+
+				<div class="control-group">
+					<h3>Ricerca Indirizzo</h3>
+					<input type="text" id="addressInput" placeholder="Inserisci indirizzo">
+					<div class="control-buttons">
+						<button id="searchAddress">Cerca</button>
+						<button id="convertAddress">Converti in Coordinate</button>
+					</div>
+					<div id="coordinatesOutput" class="coordinates-output"></div>
+				</div>
+
+				<div class="control-group">
+					<h3>Controlli Mappa</h3>
+					<div class="control-buttons">
+						<button id="zoomIn">Più vicino</button>
+						<button id="zoomOut">Più lontano</button>
+						<button id="pitchUp">Inclina su</button>
+						<button id="pitchDown">Inclina giù</button>
+						<button id="panLeft">Guarda a sinistra</button>
+						<button id="panRight">Guarda a destra</button>
+					</div>
+				</div>
+
+				<div class="control-group" id="currentMarker">
+					<h3>Marker Corrente</h3>
+					<div>Nessun marker inserito</div>
+					<div class="control-buttons full-width">
+						<button id="removeMarker">Rimuovi marker</button>
+					</div>
+				</div>
+				
+				<div class="control-group">
+					<div class="control-buttons full-width">
+						<button onclick="window.location.href='index.html'">
+							Torna alla Mappa 2D
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+	<script src="maps3d.js"></script>
+</body>
+</html>

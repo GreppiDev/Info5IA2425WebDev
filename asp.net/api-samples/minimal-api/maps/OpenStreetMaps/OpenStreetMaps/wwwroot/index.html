@@ -1,92 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenStreetMap - Address & Coordinates Lookup</title>
-    
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="styles.css">
-    
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>OpenStreetMap - Address & Coordinates Lookup</title>
+	
+	<!-- Bootstrap 5 CSS -->
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+	
+	<!-- Leaflet CSS -->
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+	<link rel="stylesheet" href="styles.css">
+	
+	<!-- Leaflet JS -->
+	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
-    <div class="container-fluid p-0">
-        <div class="row g-0">
-            <div class="col-12 col-lg-8 map-section">
-                <div id="myMap" ></div>
-                <div id="loadingMessage" class="loading-overlay">Loading map...</div>
-                <div id="errorMessage" class="error-message"></div>
-            </div>
+	<div class="container-fluid p-0">
+		<div class="row g-0">
+			<div class="col-12 col-lg-8 map-section">
+				<div id="myMap" ></div>
+				<div id="loadingMessage" class="loading-overlay">Loading map...</div>
+				<div id="errorMessage" class="error-message"></div>
+			</div>
 
-            <div class="col-12 col-lg-4 control-panel">
-                <div class="p-3">
-                    <h2 class="mb-4">Map Controls</h2>
+			<div class="col-12 col-lg-4 control-panel">
+				<div class="p-3">
+					<h2 class="mb-4">Map Controls</h2>
 
-                    <!-- Address Search -->
-                    <div class="card mb-4">
-                        <div class="card-body">
-                            <h3 class="card-title h5">Address Search</h3>
-                            <div class="mb-3">
-                                <input type="text" id="searchAddress" class="form-control mb-2" placeholder="Enter address...">
-                                <button onclick="searchAddress()" class="btn btn-primary w-100">Search</button>
-                            </div>
-                            <div id="searchResults" class="results small"></div>
-                        </div>
-                    </div>
+					<!-- Address Search -->
+					<div class="card mb-4">
+						<div class="card-body">
+							<h3 class="card-title h5">Address Search</h3>
+							<div class="mb-3">
+								<input type="text" id="searchAddress" class="form-control mb-2" placeholder="Enter address...">
+								<button onclick="searchAddress()" class="btn btn-primary w-100">Search</button>
+							</div>
+							<div id="searchResults" class="results small"></div>
+						</div>
+					</div>
 
-                    <!-- Address to Coordinates -->
-                    <div class="card mb-4">
-                        <div class="card-body">
-                            <h3 class="card-title h5">Address to Coordinates</h3>
-                            <div class="mb-3">
-                                <input type="text" id="addressInput" class="form-control mb-2" placeholder="Enter address...">
-                                <button onclick="convertAddressToCoords()" class="btn btn-primary w-100">Convert</button>
-                            </div>
-                            <div id="coordResults" class="results small">
-                                <div class="coord-display">
-                                    <span>Latitude: <span id="latitude">-</span></span>
-                                    <span>Longitude: <span id="longitude">-</span></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+					<!-- Address to Coordinates -->
+					<div class="card mb-4">
+						<div class="card-body">
+							<h3 class="card-title h5">Address to Coordinates</h3>
+							<div class="mb-3">
+								<input type="text" id="addressInput" class="form-control mb-2" placeholder="Enter address...">
+								<button onclick="convertAddressToCoords()" class="btn btn-primary w-100">Convert</button>
+							</div>
+							<div id="coordResults" class="results small">
+								<div class="coord-display">
+									<span>Latitude: <span id="latitude">-</span></span>
+									<span>Longitude: <span id="longitude">-</span></span>
+								</div>
+							</div>
+						</div>
+					</div>
 
-                    <!-- Coordinates to Address -->
-                    <div class="card mb-4">
-                        <div class="card-body">
-                            <h3 class="card-title h5">Coordinates to Address</h3>
-                            <div class="mb-3">
-                                <input type="number" id="latInput" class="form-control mb-2" placeholder="Latitude" step="0.000001">
-                                <input type="number" id="lngInput" class="form-control mb-2" placeholder="Longitude" step="0.000001">
-                                <button onclick="convertCoordsToAddress()" class="btn btn-primary w-100">Convert</button>
-                            </div>
-                            <div id="addressResult" class="results small"></div>
-                        </div>
-                    </div>
+					<!-- Coordinates to Address -->
+					<div class="card mb-4">
+						<div class="card-body">
+							<h3 class="card-title h5">Coordinates to Address</h3>
+							<div class="mb-3">
+								<input type="number" id="latInput" class="form-control mb-2" placeholder="Latitude" step="0.000001">
+								<input type="number" id="lngInput" class="form-control mb-2" placeholder="Longitude" step="0.000001">
+								<button onclick="convertCoordsToAddress()" class="btn btn-primary w-100">Convert</button>
+							</div>
+							<div id="addressResult" class="results small"></div>
+						</div>
+					</div>
 
-                    <!-- Current Marker -->
-                    <div class="card">
-                        <div class="card-body">
-                            <h3 class="card-title h5">Current Marker</h3>
-                            <div id="currentMarker" class="results small mb-2">
-                                No marker placed
-                            </div>
-                            <button onclick="clearMarkers()" class="btn btn-secondary w-100">Clear Markers</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+					<!-- Current Marker -->
+					<div class="card mb-4">
+						<div class="card-body">
+							<h3 class="card-title h5">Current Marker</h3>
+							<div id="currentMarker" class="results small mb-2">
+								No marker placed
+							</div>
+							<button onclick="clearMarkers()" class="btn btn-secondary w-100">Clear Markers</button>
+						</div>
+					</div>
+					
+					<!-- 3D View Button in separate div -->
+					<div class="card p-3">
+						<a href="map3d.html" class="btn btn-primary w-100">View in 3D</a>
+					</div>
+				</div>
 
-    <!-- Bootstrap 5 JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="maps.js"></script>
+				
+			</div>
+		</div>
+	</div>
+
+	<!-- Bootstrap 5 JS Bundle -->
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+	<script src="maps.js"></script>
 </body>
 </html>

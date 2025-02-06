@@ -34,3 +34,6 @@
 
 5. Frontend Development
    1. [Responsive User Interface](./web/web-docs/responsive-ui/index.md)
+
+6. ASP.NET Configuration and Secrets Management
+   1. [ASP.NET Secrets](./asp.net/docs/secrets/index.md)

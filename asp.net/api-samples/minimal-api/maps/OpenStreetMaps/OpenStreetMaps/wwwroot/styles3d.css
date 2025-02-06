@@ -1,0 +1,112 @@
+body {
+    padding: 0;
+    margin: 0;
+    height: 100vh;
+}
+
+.map-section {
+    height: 100vh;
+    position: relative;
+}
+
+#cesiumContainer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.control-panel {
+    background-color: #f5f5f5;
+    padding: 20px;
+}
+
+.control-group {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: white;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.control-group h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.control-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.control-buttons.full-width {
+    grid-template-columns: 1fr;
+}
+
+.control-buttons button {
+    padding: 8px;
+    border: none;
+    border-radius: 3px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+}
+
+.control-buttons button:hover {
+    background-color: #0056b3;
+}
+
+.control-buttons button.active {
+    background-color: #0056b3;
+}
+
+.error-message {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(220, 53, 69, 0.9);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    z-index: 1000;
+    display: none;
+}
+
+.coordinates-output {
+    margin-top: 10px;
+    padding: 8px;
+    background-color: #f8f9fa;
+    border-radius: 3px;
+}
+
+input {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+
+@media (max-width: 991px) {
+    body {
+        height: auto;
+        overflow-y: auto;
+    }
+
+    .map-section {
+        height: 50vh;
+    }
+
+    #cesiumContainer {
+        position: absolute;
+        height: 100%;
+    }
+
+    .control-panel {
+        height: auto;
+        border-top: 1px solid #dee2e6;
+    }
+}

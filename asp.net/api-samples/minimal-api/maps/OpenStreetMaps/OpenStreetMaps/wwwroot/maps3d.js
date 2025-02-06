@@ -1,67 +1,136 @@
 let viewer;
 let currentMarker;
-let mapTilerKey;
+let currentMarkerClickHandler;
 
-// Get API key from backend
-fetch("/api/maps/map-tiler-key")
-  .then((response) => response.json())
-  .then((data) => {
-    mapTilerKey = data.key;
+// Function to fetch the Cesium Ion token from the server
+async function getCesiumIonToken() {
+  try {
+    const response = await fetch("/api/maps/cesium-ion-token");
+    if (!response.ok) {
+      throw new Error("Failed to fetch Cesium Ion token");
+    }
+    const token = await response.json();
+    return token.token;
+  } catch (error) {
+    console.error("Error fetching Cesium Ion token:", error);
+    throw error;
+  }
+}
 
-    // Initialize Cesium viewer
-    viewer = new Cesium.Viewer("cesiumContainer", {
-      animation: false,
-      baseLayerPicker: false, // Disable the base layer picker
-      navigationHelpButton: false,
-      sceneModePicker: false,
-      homeButton: false,
-      geocoder: false,
-      fullscreenButton: false,
-      infoBox: false,
-      timeline: false,
-      baseLayer: new Cesium.ImageryLayer(
-        new Cesium.UrlTemplateImageryProvider({
-          url: `https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=${mapTilerKey}`,
-          minimumLevel: 0,
-          maximumLevel: 20,
-          tileWidth: 512,
-          tileHeight: 512,
-          credit: new Cesium.Credit(
-            '<a href="https://www.maptiler.com/copyright/" target="_blank">© MapTiler</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">© OpenStreetMap contributors</a>',
-            true
-          ),
-        })
-      ),
-      terrain: new Cesium.Terrain(
-        Cesium.CesiumTerrainProvider.fromUrl(
-          `https://api.maptiler.com/tiles/terrain-quantized-mesh-v2/?key=${mapTilerKey}`,
-          {
-            credit: new Cesium.Credit(
-              '<a href="https://www.maptiler.com/copyright/" target="_blank">© MapTiler</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">© OpenStreetMap contributors</a>',
-              true
-            ),
-            requestVertexNormals: true,
-          }
-        )
-      ),
-    });
+// Initialize the Cesium viewer
+async function initializeMap() {
+  try {
+    // Get the Cesium Ion token before initializing the map
+    const token = await getCesiumIonToken();
 
-    // Coordinates of Istituto Alessandro Greppi di Monticello Brianza
-    const targetLon = 9.306995;
-    const targetLat = 45.703205;
+    // Set Cesium Ion token
+    Cesium.Ion.defaultAccessToken = token;
+    // Create imagery provider view models
+    const imageryViewModels = [];
 
-    // Set initial view
-    const destination = Cesium.Cartesian3.fromDegrees(
-      targetLon,
-      targetLat - 0.005, // Offset slightly south for better view
-      1000 // Initial height at 1000m
+    // OpenStreetMap layer
+    imageryViewModels.push(
+      new Cesium.ProviderViewModel({
+        name: "Open Street Map",
+        iconUrl: Cesium.buildModuleUrl(
+          "Widgets/Images/ImageryProviders/openStreetMap.png"
+        ),
+        tooltip: "OpenStreetMap",
+        category: "Imaginary layers",
+        creationFunction: function () {
+          return new Cesium.OpenStreetMapImageryProvider({
+            url: "https://tile.openstreetmap.org/",
+          });
+        },
+      })
     );
 
+    // ESRI Satellite layer
+    imageryViewModels.push(
+      new Cesium.ProviderViewModel({
+        name: "ESRI World Imagery",
+        iconUrl: Cesium.buildModuleUrl(
+          "Widgets/Images/ImageryProviders/naturalEarthII.png"
+        ),
+        tooltip: "ESRI World Imagery",
+        category: "Imaginary layers",
+        creationFunction: function () {
+          return new Cesium.UrlTemplateImageryProvider({
+            url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+            maximumLevel: 19,
+          });
+        },
+      })
+    );
+
+    // Create terrain provider view models
+    const terrainViewModels = [];
+
+    // WGS84 Ellipsoid
+    terrainViewModels.push(
+      new Cesium.ProviderViewModel({
+        name: "WGS84 Ellipsoid",
+        iconUrl: Cesium.buildModuleUrl(
+          "Widgets/Images/TerrainProviders/Ellipsoid.png"
+        ),
+        tooltip: "WGS84 standard terrain",
+        category: "Terrain",
+        creationFunction: function () {
+          return new Cesium.EllipsoidTerrainProvider();
+        },
+      })
+    );
+
+    // Cesium World Terrain
+    terrainViewModels.push(
+      new Cesium.ProviderViewModel({
+        name: "Cesium World Terrain",
+        iconUrl: Cesium.buildModuleUrl(
+          "Widgets/Images/TerrainProviders/CesiumWorldTerrain.png"
+        ),
+        tooltip: "High-resolution global terrain",
+        category: "Terrain",
+        creationFunction: async function () {
+          try {
+            return await Cesium.createWorldTerrainAsync({
+              requestWaterMask: true,
+              requestVertexNormals: true,
+            });
+          } catch (error) {
+            console.error("Error creating terrain provider:", error);
+            return new Cesium.EllipsoidTerrainProvider();
+          }
+        },
+      })
+    );
+
+    // Initialize Cesium viewer with customized base layer picker
+    viewer = new Cesium.Viewer("cesiumContainer", {
+      baseLayerPicker: true,
+      geocoder: false,
+      homeButton: false,
+      sceneModePicker: false,
+      navigationHelpButton: false,
+      animation: false,
+      timeline: false,
+      fullscreenButton: false,
+      infoBox: false,
+      imageryProviderViewModels: imageryViewModels,
+      selectedImageryProviderViewModel: imageryViewModels[1], // Select ESRI by default
+      terrainProviderViewModels: terrainViewModels,
+      selectedTerrainProviderViewModel: terrainViewModels[1], // Cesium World Terrain by default
+    });
+
+    // Remove credits display
+    //viewer.scene.globe.enableLighting = false;
+    //viewer.cesiumWidget.creditContainer.style.display = "none";
+
+    // Set initial camera position (Istituto Alessandro Greppi di Monticello Brianza)
     viewer.camera.setView({
-      destination: destination,
+      destination: Cesium.Cartesian3.fromDegrees(9.306995, 45.698205, 1000),
       orientation: {
-        heading: Cesium.Math.toRadians(0), // Looking north
-        pitch: Cesium.Math.toRadians(-45), // 45-degree angle looking down
+        heading: Cesium.Math.toRadians(0),
+        pitch: Cesium.Math.toRadians(-45),
         roll: 0,
       },
     });
@@ -71,7 +140,7 @@ fetch("/api/maps/map-tiler-key")
 
     // Disable default mouse wheel zoom
     viewer.scene.screenSpaceCameraController.zoomEventTypes = [];
-    
+
     // Add custom mouse wheel zoom handling
     const screenSpaceEventHandler = new Cesium.ScreenSpaceEventHandler(
       viewer.scene.canvas
@@ -80,21 +149,22 @@ fetch("/api/maps/map-tiler-key")
       const cameraPosition = viewer.camera.positionCartographic;
       const terrainHeight = viewer.scene.globe.getHeight(cameraPosition);
       const distanceFromSurface = cameraPosition.height - (terrainHeight || 0);
-      
+
       // Zoom in or out based on wheel direction
       const zoomAmount = movement * (distanceFromSurface * 0.0002);
-      
+
       // If zooming in and too close to surface, prevent zoom
       if (zoomAmount > 0 && distanceFromSurface <= 100) {
         return;
       }
-      
+
       viewer.camera.zoomIn(zoomAmount);
     }, Cesium.ScreenSpaceEventType.WHEEL);
-  })
-  .catch((error) => {
-    console.error("Error fetching API key:", error);
-  });
+  } catch (error) {
+    console.error("Error initializing map:", error);
+    showAlert("Error initializing map. Please try again later.");
+  }
+}
 
 function showAlert(message) {
   const errorMessage = document.getElementById("errorMessage");
@@ -206,7 +276,9 @@ function initControls() {
 
 function searchAddress(address) {
   fetch(
-    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`,
+    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+      address
+    )}&limit=1`,
     {
       headers: {
         "User-Agent": "MapApp/1.0",
@@ -320,10 +392,10 @@ function addMarker(lon, lat) {
   }
 
   const markerSvg = `data:image/svg+xml;base64,${btoa(`
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32">
-            <path fill="#dc3545" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-        </svg>
-    `)}`;
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32">
+						<path fill="#dc3545" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+				</svg>
+		`)}`;
 
   currentMarker = viewer.entities.add({
     position: Cesium.Cartesian3.fromDegrees(lon, lat),
@@ -336,60 +408,68 @@ function addMarker(lon, lat) {
   });
 
   currentMarker.markerLocation = { lon, lat };
+// Remove previous event listener if it exists
+if (currentMarkerClickHandler) {
+  viewer.selectedEntityChanged.removeEventListener(currentMarkerClickHandler);
+}
 
-  viewer.selectedEntityChanged.addEventListener((selectedEntity) => {
-    if (selectedEntity === currentMarker) {
-      reverseGeocode(lon, lat)
-        .then((address) => {
-          document.getElementById("currentMarker").innerHTML = `
-                        <h3>Marker Corrente</h3>
-                        <div>${address}</div>
-                        <div class="control-buttons" style="margin-top: 10px; display: block;">
-                            <button id="removeMarker" style="width: 100%">Rimuovi marker</button>
-                        </div>
-                    `;
-          const button = document.getElementById("removeMarker");
-          if (button) {
-            button.addEventListener("click", function removeMarkerHandler() {
-              if (currentMarker && viewer.entities.contains(currentMarker)) {
-                try {
-                  viewer.entities.remove(currentMarker);
-                  currentMarker = null;
-                  document.getElementById("currentMarker").innerHTML = `
-                                        <h3>Marker Corrente</h3>
-                                        <div>Nessun marker inserito</div>
-                                        <div class="control-buttons" style="margin-top: 10px; display: block;">
-                                            <button id="removeMarker" style="width: 100%">Rimuovi marker</button>
-                                        </div>
-                                    `;
-                } catch (error) {
-                  console.error("Error removing marker:", error);
-                }
+// Add new event listener
+currentMarkerClickHandler = (selectedEntity) => {
+  if (selectedEntity === currentMarker) {
+    reverseGeocode(lon, lat)
+      .then((address) => {
+        document.getElementById("currentMarker").innerHTML = `
+<h3>Marker Corrente</h3>
+<div>${address}</div>
+<div class="control-buttons" style="margin-top: 10px; display: block;">
+<button id="removeMarker" style="width: 100%">Rimuovi marker</button>
+</div>
+`;
+        const button = document.getElementById("removeMarker");
+        if (button) {
+          button.addEventListener("click", function removeMarkerHandler() {
+            if (currentMarker && viewer.entities.contains(currentMarker)) {
+              try {
+                viewer.entities.remove(currentMarker);
+                currentMarker = null;
+                document.getElementById("currentMarker").innerHTML = `
+<h3>Marker Corrente</h3>
+<div>Nessun marker inserito</div>
+<div class="control-buttons" style="margin-top: 10px; display: block;">
+<button id="removeMarker" style="width: 100%">Rimuovi marker</button>
+</div>
+`;
+              } catch (error) {
+                console.error("Error removing marker:", error);
               }
-            });
-          }
-        })
-        .catch((error) => {
-          console.error("Error getting address:", error);
-          document.getElementById("currentMarker").innerHTML = `
-                        <h3>Marker Corrente</h3>
-                        <div>Indirizzo non disponibile</div>
-                        <div class="control-buttons" style="margin-top: 10px; display: block;">
-                            <button id="removeMarker" style="width: 100%">Rimuovi marker</button>
-                        </div>
-                    `;
-        });
-    }
-  });
+            }
+          });
+        }
+      })
+      .catch((error) => {
+        console.error("Error getting address:", error);
+        document.getElementById("currentMarker").innerHTML = `
+<h3>Marker Corrente</h3>
+<div>Indirizzo non disponibile</div>
+<div class="control-buttons" style="margin-top: 10px; display: block;">
+<button id="removeMarker" style="width: 100%">Rimuovi marker</button>
+</div>
+`;
+      });
+  }
+};
+
+// Register the event listener
+viewer.selectedEntityChanged.addEventListener(currentMarkerClickHandler);
 
   // Initial display with coordinates
   document.getElementById("currentMarker").innerHTML = `
-        <h3>Marker Corrente</h3>
-        <div>Lat: ${lat.toFixed(6)}, Lon: ${lon.toFixed(6)}</div>
-        <div class="control-buttons" style="margin-top: 10px; display: block;">
-            <button id="removeMarker" style="width: 100%">Rimuovi marker</button>
-        </div>
-    `;
+				<h3>Marker Corrente</h3>
+				<div>Lat: ${lat.toFixed(6)}, Lon: ${lon.toFixed(6)}</div>
+				<div class="control-buttons" style="margin-top: 10px; display: block;">
+						<button id="removeMarker" style="width: 100%">Rimuovi marker</button>
+				</div>
+		`;
 
   const button = document.getElementById("removeMarker");
   if (button) {
@@ -399,12 +479,12 @@ function addMarker(lon, lat) {
           viewer.entities.remove(currentMarker);
           currentMarker = null;
           document.getElementById("currentMarker").innerHTML = `
-                        <h3>Marker Corrente</h3>
-                        <div>Nessun marker inserito</div>
-                        <div class="control-buttons" style="margin-top: 10px; display: block;">
-                            <button id="removeMarker" style="width: 100%">Rimuovi marker</button>
-                        </div>
-                    `;
+												<h3>Marker Corrente</h3>
+												<div>Nessun marker inserito</div>
+												<div class="control-buttons" style="margin-top: 10px; display: block;">
+														<button id="removeMarker" style="width: 100%">Rimuovi marker</button>
+												</div>
+										`;
         } catch (error) {
           console.error("Error removing marker:", error);
         }
@@ -412,3 +492,6 @@ function addMarker(lon, lat) {
     });
   }
 }
+
+// Initialize the map
+initializeMap();
