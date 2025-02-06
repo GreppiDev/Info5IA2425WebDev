@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenStreetMap Examples</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .map-container {
+            margin-bottom: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .map-container>h2 {
+            text-align: center;
+        }
+
+        .address, .params-explanation {
+            width: 100%;
+            max-width: 512px;
+            text-align: left;
+        }
+
+        .params-explanation {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+        .params-explanation code {
+            background-color: #e0e0e0;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+
+        .params-explanation ul {
+            margin: 5px 0;
+            padding-left: 20px;
+        }
+
+        .params-explanation h3 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        .map {
+            width: 100%;
+            height: 400px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .static-map-container {
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            image-rendering: -webkit-optimize-contrast;
+            overflow: hidden;
+        }
+
+        .static-map {
+            width: 512px;
+            height: 512px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .address {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .map {
+                height: 300px;
+            }
+
+            .map-container {
+                max-width: 100%;
+            }
+
+            .static-map-container,
+            .static-map {
+                max-width: 100%;
+                height: auto;
+            }
+
+            h2 {
+                font-size: 1.2em;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="map-container">
+            <h2>Static map 512x512</h2>
+            <img id="static-map-1" alt="Colosseum Map" class="static-map">
+            <div class="address">Piazza del Colosseo, 1, 00184 Roma RM, Italy</div>
+            <div class="params-explanation">
+                <h3>2x2 Grid Tile Map Generation:</h3>
+                <p>The 512x512 map is composed of four 256x256 OpenStreetMap tiles arranged in a 2x2 grid:</p>
+                
+                <h4>1. Coordinate Conversion:</h4>
+                <ul>
+                    <li>Input: latitude = 41.8902°N, longitude = 12.4922°E, zoom = 17</li>
+                    <li>Convert to tile coordinates using Web Mercator formulas:
+                        <ul>
+                            <li><code>x = floor(((lon + 180) / 360) * 2^zoom)</code></li>
+                            <li><code>y = floor((1 - log(tan(lat) + 1/cos(lat)) / π) / 2 * 2^zoom)</code></li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <h4>2. Tile Assembly:</h4>
+                <ul>
+                    <li>Creates a 2x2 grid of adjacent tiles:</li>
+                    <li>Top row: (x,y) and (x+1,y)</li>
+                    <li>Bottom row: (x,y+1) and (x+1,y+1)</li>
+                    <li>Each tile is 256x256 pixels</li>
+                </ul>
+
+                <h4>3. Grid Container:</h4>
+                <ul>
+                    <li>Uses CSS Grid: <code>grid-template-columns: repeat(2, 256px)</code></li>
+                    <li>Total dimensions: 512x512 pixels</li>
+                    <li>Tiles are placed in reading order (left-to-right, top-to-bottom)</li>
+                </ul>
+
+                <p>The result is a seamless 512x512 pixel map centered on the Colosseum, composed of four adjacent OpenStreetMap tiles.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="simple3.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>OpenStreetMap Examples</title>
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+	<style>
+		body {
+			margin: 0;
+			padding: 20px;
+			font-family: Arial, sans-serif;
+		}
+
+		.container {
+			max-width: 1200px;
+			margin: 0 auto;
+		}
+
+		.map-container {
+		margin-bottom: 40px;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		}
+		
+		.map-container > h2 {
+		text-align: center;
+		}
+		
+		.params-explanation {
+		max-width: 800px;
+		width: 100%;
+		text-align: left;
+		}
+
+		.static-map {
+		    width: 256px;
+		    height: 256px;
+		    border-radius: 8px;
+		    margin-bottom: 10px;
+		    border: 1px solid #ddd;
+		}
+
+		.satellite-map {
+		    width: 100%;
+		    max-width: 800px;
+		    height: 400px;
+		    border-radius: 8px;
+		    margin-bottom: 10px;
+		    border: 1px solid #333;
+		    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+		    object-fit: cover;
+		}
+
+		.address, .params-explanation {
+		    margin-top: 10px;
+		    padding: 10px;
+		    background-color: #f5f5f5;
+		    border-radius: 4px;
+		}
+
+		.params-explanation {
+		    font-size: 0.9em;
+		    line-height: 1.5;
+		}
+
+		.params-explanation code {
+		    background-color: #e0e0e0;
+		    padding: 2px 4px;
+		    border-radius: 3px;
+		    font-family: monospace;
+		}
+
+		.params-explanation ul {
+		    margin: 5px 0;
+		    padding-left: 20px;
+		}
+
+		h2 {
+			color: #333;
+			margin-bottom: 15px;
+		}
+
+		@media (max-width: 768px) {
+			body {
+				padding: 10px;
+			}
+
+			.map {
+				height: 300px;
+			}
+
+			h2 {
+				font-size: 1.2em;
+			}
+		}
+	</style>
+</head>
+
+<body>
+	<div class="container">
+		<div class="map-container">
+			<h2>Static map 256x256</h2>
+			<!-- <img src="https://tile.openstreetmap.org/15/17292/11632.png" alt="Colosseum Map" class="static-map"> -->
+			<img id="static-map-1" alt="Colosseum Map" class="static-map">
+			<div class="address">Piazza del Colosseo, 1, 00184 Roma RM, Italy</div>
+			<div class="params-explanation">
+			    <h3>OpenStreetMap Tile URL Structure:</h3>
+			    <p><code>https://tile.openstreetmap.org/15/17292/11632.png</code></p>
+			    <ul>
+			        <li><code>15</code> - Zoom level (0-19, where 19 is maximum detail)</li>
+			        <li><code>17292</code> - X coordinate of the tile</li>
+			        <li><code>11632</code> - Y coordinate of the tile</li>
+			        <li><code>.png</code> - Image format</li>
+			    </ul>
+			
+			    <h3>The Mercator Projection in Tile Mapping:</h3>
+			    <p>OpenStreetMap uses the Web Mercator projection (EPSG:3857) to convert spherical coordinates to a flat map:</p>
+			    <ul>
+			        <li>Mercator projection is a cylindrical map projection</li>
+			        <li>It preserves angles and shapes of small objects (conformal projection)</li>
+			        <li>Areas are increasingly distorted as you move away from the equator</li>
+			        <li>Limited to latitudes between approximately -85.05° to 85.05°</li>
+			    </ul>
+			
+			    <h3>How Tiles Are Generated from Coordinates:</h3>
+			    <p>The code converts latitude/longitude to tile coordinates using these steps:</p>
+			    <ol>
+			        <li>X tile calculation:
+			            <ul>
+			                <li><code>x = floor(((lon + 180) / 360) * 2^zoom)</code></li>
+			                <li>Shifts longitude from [-180,180] to [0,360]</li>
+			                <li>Normalizes to [0,1] and scales by 2^zoom</li>
+			            </ul>
+			        </li>
+			        <li>Y tile calculation:
+			            <ul>
+			                <li><code>y = floor((1 - log(tan(lat) + 1/cos(lat)) / π) / 2 * 2^zoom)</code></li>
+			                <li>Uses Web Mercator projection formula</li>
+			                <li>Converts latitude to Y coordinate in tile space</li>
+			            </ul>
+			        </li>
+			    </ol>
+			
+			    <h3>Further Reading:</h3>
+			    <ul>
+			        <li><a href="https://en.wikipedia.org/wiki/Web_Mercator_projection" target="_blank" rel="noopener">Web Mercator Projection (Wikipedia)</a></li>
+			        <li><a href="https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames" target="_blank" rel="noopener">OpenStreetMap Wiki: Tile Naming</a></li>
+			        <li><a href="https://www.maptiler.com/google-maps-coordinates-tile-bounds-projection/" target="_blank" rel="noopener">MapTiler: Understanding Tile Coordinates</a></li>
+			        <li><a href="https://developers.google.com/maps/documentation/javascript/coordinates" target="_blank" rel="noopener">Google Maps: Understanding Map Coordinates</a></li>
+			    </ul>
+			
+			    <p>For example, with coordinates (41.8902, 12.4922) and zoom 17:</p>
+			    <ul>
+			        <li>These formulas convert the Colosseum's position to specific tile coordinates</li>
+			        <li>Each tile is 256x256 pixels</li>
+			        <li>Higher zoom levels (like 17) provide more detail but require more tiles</li>
+			    </ul>
+			</div>
+			</div>
+
+		<div class="map-container">
+			<h2>ESRI Satellite Static map with bbox model</h2>
+			<img src="https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/export?bbox=12.4529,41.9012,12.4549,41.9032&size=800,400&format=png&bboxSR=4326&imageSR=4326&f=image"
+			    alt="St. Peter's Basilica Satellite View" class="satellite-map">
+			<div class="params-explanation">
+			    <h3>ESRI REST API Parameters Explanation:</h3>
+			    <ul>
+			        <li><code>bbox=12.4529,41.9012,12.4549,41.9032</code> - Geographic bounding box coordinates:
+			            <ul>
+			                <li>These are geographic coordinates (latitude/longitude), not tile coordinates</li>
+			                <li>Format: minLon,minLat,maxLon,maxLat (in decimal degrees)</li>
+			                <li>Southwest corner: longitude=12.4529°E, latitude=41.9012°N</li>
+			                <li>Northeast corner: longitude=12.4549°E, latitude=41.9032°N</li>
+			                <li>Using WGS84 coordinate system (EPSG:4326)</li>
+			                <li>Unlike tile coordinates, these are actual geographic positions</li>
+			                <li>The small difference between min/max values (0.002°) creates a zoomed-in view</li>
+			                <li>This bbox defines the precise geographic area of St. Peter's Basilica in Rome</li>
+			            </ul>
+			        </li>
+			        <li><code>size=800,400</code> - Output image dimensions in pixels (width x height)</li>
+			        <li><code>format=png</code> - Output image format</li>
+			        <li><code>bboxSR=4326</code> - Spatial reference of the bounding box (EPSG:4326 - WGS84 latitude/longitude)</li>
+			        <li><code>imageSR=4326</code> - Spatial reference for the output image</li>
+			        <li><code>f=image</code> - Response format (returns the raw image)</li>
+			    </ul>
+			</div>
+			</div>
+	</div>
+
+	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+	<script src="simple2.js"></script>
+</body>
+
+</html>
