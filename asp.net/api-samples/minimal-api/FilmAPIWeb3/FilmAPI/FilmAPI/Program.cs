@@ -1,9 +1,29 @@
 using FilmAPI.Data;
+using FilmAPI.Services;
 using FilmAPI.Endpoints;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Register TMDB HTTP client service as a singleton
+builder.Services.AddSingleton<ITMDBHttpClientService, TMDBHttpClientService>();
+builder.Services.AddSingleton<IRequestValidationService, RequestValidationService>();
+
+// Configure rate limiting
+builder.Services.AddRateLimiter(options =>
+{
+	options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+	options.AddFixedWindowLimiter("TMDBPolicy", configure =>
+	{
+		configure.PermitLimit = 100;
+		configure.Window = TimeSpan.FromMinutes(1);
+		configure.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+		configure.QueueLimit = 2;
+	});
+});
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -91,6 +111,7 @@ app.UseStaticFiles(new StaticFileOptions
 	)
 });
 
+app.UseRateLimiter();
 // routing per le API
 //--------------------Endpoints management--------------------
 app
@@ -106,5 +127,3 @@ app
 //--------------------Endpoints management--------------------
 
 app.Run();
-
-

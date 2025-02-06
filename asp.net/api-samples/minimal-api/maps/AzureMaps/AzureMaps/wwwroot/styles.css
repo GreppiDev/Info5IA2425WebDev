@@ -1,0 +1,124 @@
+/* Custom styles overrides for Bootstrap 5 maps page */
+body {
+  font-family: "Segoe UI", sans-serif;
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+}
+
+.container-fluid {
+  height: 100%;
+}
+
+.row {
+  height: 100%;
+}
+
+/* Map section */
+.map-section {
+  height: 100vh;
+  background-color: #e9ecef;
+}
+
+@media (max-width: 768px) {
+  .map-section {
+    height: 50vh;
+  }
+}
+
+/* Control panel */
+.control-panel {
+  background-color: #f8f9fa;
+  border-left: 1px solid #dee2e6;
+  padding: 1rem;
+}
+
+.control-panel h3 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: #343a40;
+}
+
+/* Adjust spacing for form controls */
+.control-panel .form-control {
+  margin-bottom: 1rem;
+}
+
+/* Button customization */
+.btn-primary {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+/* Loading and error messages */
+.loading-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.9);
+  padding: 1rem 2rem;
+  border-radius: 4px;
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: none;
+}
+
+.error-message {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #dc3545;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: opacity 0.3s ease;
+  display: none;
+  opacity: 1;
+}
+
+/* Results display */
+.results {
+  word-break: break-word;
+}
+
+.coord-display {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 991px) { /* Bootstrap lg breakpoint */
+  body {
+    overflow-y: auto;
+  }
+
+  .container-fluid {
+    min-height: 100vh;
+  }
+
+  .row {
+    height: auto !important;
+  }
+
+  .map-section {
+    height: 50vh !important;
+  }
+
+  .control-panel {
+    height: auto;
+    min-height: 50vh;
+    border-left: none;
+    border-top: 1px solid #dee2e6;
+  }
+
+  /* Ensure error message is visible on mobile */
+  .error-message {
+    bottom: 10px;
+    max-width: 90%;
+  }
+}
