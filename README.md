@@ -37,3 +37,5 @@
 
 6. ASP.NET Configuration and Secrets Management
    1. [ASP.NET Secrets](./asp.net/docs/secrets/index.md)
+7. Aspetti di sicurezza nelle API
+   1. [Sicurezza basata sull'API Key: approcci possibili](./web/web-docs/security/api-key/index.md)
