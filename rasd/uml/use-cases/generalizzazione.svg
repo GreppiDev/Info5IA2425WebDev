@@ -33,7 +33,7 @@
     <!-- Generalization Relationships -->
     <defs>
         <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
-            <path d="M0,0 L0,10 L9,5 z" fill="black" stroke="black"/>
+            <path d="M0,0 L0,10 L9,5 z" fill="none" stroke="black"/>
         </marker>
     </defs>
 

@@ -38,6 +38,7 @@
 			- [Note sulla Progettazione](#note-sulla-progettazione)
 	- [Esempio completo: "Prenota il tuo tavolo con app"](#esempio-completo-prenota-il-tuo-tavolo-con-app)
 	- [Raffinamento delle Entità e del Modello E/R](#raffinamento-delle-entità-e-del-modello-er)
+		- [Conclusione](#conclusione)
 	- [Esempio completo: web app per prenotazioni al ristorante](#esempio-completo-web-app-per-prenotazioni-al-ristorante)
 		- [Traccia di Input](#traccia-di-input)
 		- [Casi d'uso](#casi-duso)
@@ -48,17 +49,16 @@
 			- [Caso d'Uso: UC5 - Verifica Disponibilità](#caso-duso-uc5---verifica-disponibilità)
 			- [Caso d'Uso: UC6 - Invia Conferma](#caso-duso-uc6---invia-conferma)
 			- [Caso d'Uso: UC7 - Gestisce Pagamento](#caso-duso-uc7---gestisce-pagamento)
-		- [Modello E/R Iniziale (Progettazione Concettuale)](#modello-er-iniziale-progettazione-concettuale-1)
-			- [Entità Iniziali](#entità-iniziali-1)
-			- [Relazioni Iniziali](#relazioni-iniziali-1)
-			- [Diagramma E/R Iniziale](#diagramma-er-iniziale-1)
-		- [Integrazione e Raffinamento del Modello E/R](#integrazione-e-raffinamento-del-modello-er-1)
-		- [Modello E/R Raffinato](#modello-er-raffinato-1)
-			- [Entità Raffinate](#entità-raffinate-1)
-			- [Relazioni Raffinate](#relazioni-raffinate-1)
-			- [Diagramma E/R Raffinato](#diagramma-er-raffinato-1)
-		- [Schema Logico SQL (MariaDB)](#schema-logico-sql-mariadb)
-
+		- [Modello E/R Iniziale (Progettazione Concettuale - prenotazioni ristorante)](#modello-er-iniziale-progettazione-concettuale---prenotazioni-ristorante)
+			- [Entità Iniziali - prenotazioni ristorante](#entità-iniziali---prenotazioni-ristorante)
+			- [Relazioni Iniziali - prenotazioni ristorante](#relazioni-iniziali---prenotazioni-ristorante)
+			- [Diagramma E/R Iniziale - prenotazioni ristorante](#diagramma-er-iniziale---prenotazioni-ristorante)
+		- [Integrazione e Raffinamento del Modello E/R - prenotazioni ristorante](#integrazione-e-raffinamento-del-modello-er---prenotazioni-ristorante)
+		- [Modello E/R Raffinato - prenotazioni ristorante](#modello-er-raffinato---prenotazioni-ristorante)
+			- [Entità Raffinate - prenotazioni ristorante](#entità-raffinate---prenotazioni-ristorante)
+			- [Relazioni Raffinate - prenotazioni ristorante](#relazioni-raffinate---prenotazioni-ristorante)
+			- [Diagramma E/R Raffinato - prenotazioni ristorante](#diagramma-er-raffinato---prenotazioni-ristorante)
+		- [Schema Logico SQL (MariaDB) - prenotazioni ristorante](#schema-logico-sql-mariadb---prenotazioni-ristorante)
 
 ## Collegamento tra Casi d'Uso, Analisi dei Requisiti e Progettazione Concettuale
 
@@ -319,7 +319,7 @@ Basandoci sui requisiti di dato e sui casi d'uso, iniziamo a definire un modello
 
 #### Diagramma E/R Iniziale
 
-(Mermaid - semplificato, senza attributi dettagliati per chiarezza)
+(semplificato, senza attributi dettagliati per chiarezza)
 
 ```mermaid
 erDiagram
@@ -778,13 +778,13 @@ GROUP BY s.matricola_studente, s.nome, s.cognome;
 
 1. **Avvio:** L'Utente App avvia il caso d'uso selezionando l'opzione "Prenota Tavolo" dall'interfaccia dell'applicazione (tipicamente dalla pagina di dettaglio del ristorante).
 2. **Inserimento Dettagli Prenotazione:** Il sistema presenta una schermata per l'inserimento dei dettagli:
-		* **Data Prenotazione**: L'Utente App seleziona la data desiderata per la prenotazione.
-		* **Ora Prenotazione**: L'Utente App seleziona l'ora desiderata per la prenotazione (es. tramite un selettore di orario o fasce orarie disponibili).
-		* **Numero di Persone**: L'Utente App indica il numero di persone per cui vuole prenotare il tavolo.
+   * **Data Prenotazione**: L'Utente App seleziona la data desiderata per la prenotazione.
+   * **Ora Prenotazione**: L'Utente App seleziona l'ora desiderata per la prenotazione (es. tramite un selettore di orario o fasce orarie disponibili).
+   * **Numero di Persone**: L'Utente App indica il numero di persone per cui vuole prenotare il tavolo.
 3. **Verifica Disponibilità Tavoli:** Il sistema riceve i dettagli della prenotazione e verifica la disponibilità di tavoli nel ristorante selezionato per la data e ora richieste, considerando il numero di persone.
 4. **Tavolo Disponibile:** Se il sistema trova un tavolo disponibile:
-		* **Richiesta Dati Utente (se necessario):** Se l'utente non ha già fornito dati di contatto (es. in fase di registrazione o profilo), il sistema richiede Nome e Numero di Telefono (o altri dati necessari per la prenotazione).
-		* **Conferma Prenotazione:** Il sistema visualizza un riepilogo della prenotazione (ristorante, data, ora, numero persone, dati utente) e richiede conferma all'Utente App.
+   * **Richiesta Dati Utente (se necessario):** Se l'utente non ha già fornito dati di contatto (es. in fase di registrazione o profilo), il sistema richiede Nome e Numero di Telefono (o altri dati necessari per la prenotazione).
+   * **Conferma Prenotazione:** Il sistema visualizza un riepilogo della prenotazione (ristorante, data, ora, numero persone, dati utente) e richiede conferma all'Utente App.
 5. **Conferma Utente:** L'Utente App conferma la prenotazione.
 6. **Registrazione Prenotazione:** Il sistema registra la prenotazione nel database, associandola al ristorante, all'utente, e ai dettagli forniti (data, ora, numero persone, stato iniziale "in attesa di conferma" o "confermata").
 7. **Notifica di Conferma (Utente):** Il sistema invia una notifica di conferma all'Utente App (es. notifica push, email, o messaggio in-app) con i dettagli della prenotazione.
@@ -793,24 +793,24 @@ GROUP BY s.matricola_studente, s.nome, s.cognome;
 **Flussi Alternativi (Scenari di Fallimento o Variazioni):**
 
 * **4a. Tavolo NON Disponibile:** Se il sistema non trova tavoli disponibili per la data e ora richieste:
-		* **Suggerimento Alternative:** Il sistema può offrire all'Utente App opzioni alternative:
-				* **Orari Alternativi:** Proporre orari vicini con disponibilità.
-				* **Date Alternative:** Proporre date vicine con disponibilità.
-				* **Lista d'Attesa (se supportata):** Offrire la possibilità di essere inserito in lista d'attesa (caso d'uso "Iscriversi a Lista d'Attesa").
-		* **Notifica di Non Disponibilità:** Il sistema notifica all'Utente App che non ci sono tavoli disponibili per la selezione attuale e presenta le opzioni alternative (o comunica semplicemente la non disponibilità se non ci sono alternative).
-		* Il caso d'uso termina con fallimento (per la selezione originale), ma potrebbe riprendere con una selezione alternativa.
+* **Suggerimento Alternative:** Il sistema può offrire all'Utente App opzioni alternative:
+  * **Orari Alternativi:** Proporre orari vicini con disponibilità.
+  * **Date Alternative:** Proporre date vicine con disponibilità.
+  * **Lista d'Attesa (se supportata):** Offrire la possibilità di essere inserito in lista d'attesa (caso d'uso "Iscriversi a Lista d'Attesa").
+  * **Notifica di Non Disponibilità:** Il sistema notifica all'Utente App che non ci sono tavoli disponibili per la selezione attuale e presenta le opzioni alternative (o comunica semplicemente la non disponibilità se non ci sono alternative).
+  * Il caso d'uso termina con fallimento (per la selezione originale), ma potrebbe riprendere con una selezione alternativa.
 
 * **5a. Annullamento Prenotazione da Utente:** Prima della conferma (passo 5), l'Utente App può decidere di annullare la prenotazione (es. cliccando un pulsante "Annulla").  Il caso d'uso termina con fallimento (annullato dall'utente).
 
 * **6a. Errore di Sistema:** Durante qualsiasi passo del flusso principale, potrebbe verificarsi un errore di sistema (es. errore di connessione al database, errore nel servizio di verifica disponibilità).
-		* **Notifica di Errore:** Il sistema notifica all'Utente App che si è verificato un errore e che la prenotazione non può essere completata.
-		* Il caso d'uso termina con fallimento (errore tecnico).
+  * **Notifica di Errore:** Il sistema notifica all'Utente App che si è verificato un errore e che la prenotazione non può essere completata.
+  * Il caso d'uso termina con fallimento (errore tecnico).
 
 * **(Opzionale) 5b. Richiesta Acconto/Prepagamento:** Per alcuni ristoranti o in determinate fasce orarie, il sistema potrebbe richiedere un acconto o un prepagamento per confermare la prenotazione.
-		* Dopo il passo 4 (Tavolo Disponibile), prima della conferma (passo 5), il sistema **richiede il pagamento**.
-		* L'Utente App viene reindirizzato al sistema di pagamento esterno (o integrato).
-		* **5b.1 Pagamento Successo:** Se il pagamento va a buon fine, si prosegue con il passo 5 (Conferma Utente, etc.).
-		* **5b.2 Pagamento Fallito/Annullato:** Se il pagamento fallisce o l'utente annulla il pagamento, la prenotazione non viene completata. Il sistema informa l'Utente App e il caso d'uso termina con fallimento (pagamento non riuscito).
+  * Dopo il passo 4 (Tavolo Disponibile), prima della conferma (passo 5), il sistema **richiede il pagamento**.
+  * L'Utente App viene reindirizzato al sistema di pagamento esterno (o integrato).
+  * **5b.1 Pagamento Successo:** Se il pagamento va a buon fine, si prosegue con il passo 5 (Conferma Utente, etc.).
+  * **5b.2 Pagamento Fallito/Annullato:** Se il pagamento fallisce o l'utente annulla il pagamento, la prenotazione non viene completata. Il sistema informa l'Utente App e il caso d'uso termina con fallimento (pagamento non riuscito).
 
 **Diagramma dei Casi d'Uso per "Prenotare Tavolo":**
 
@@ -916,7 +916,7 @@ erDiagram
 * **Entità PagamentoPrenotazione (Opzionale)**: Per gestire la parte dei pagamenti, se richiesta.
 * **Relazioni Raffinate**:  Definite relazioni più precise, incluse quelle per la disponibilità e i tavoli.
 
-**Conclusione**
+### Conclusione
 
 Questo sviluppo dettagliato del caso d'uso "Prenotare Tavolo" ha mostrato come si può partire da una descrizione semplificata, espanderla in flussi dettagliati (principale e alternativi), disegnare diagrammi dei casi d'uso per visualizzare le interazioni, e infine raffinare il modello E/R per supportare pienamente la funzionalità e i requisiti emersi.  Il processo iterativo di analisi dei casi d'uso e del modello dati permette di arrivare a una progettazione più completa e robusta del sistema informativo.
 
@@ -939,13 +939,16 @@ Il sistema di prenotazione ristoranti deve gestire le prenotazioni di tavoli per
 **Scopo:** Permettere al Cliente di cercare un ristorante nel sistema in base a vari criteri (nome, posizione, tipo di cucina, etc.).
 
 **Precondizioni:**
+
 * Il Cliente ha accesso al sistema di prenotazione
 
 **Postcondizioni:**
+
 * **Caso di Successo:** Il sistema mostra al Cliente una lista di ristoranti che corrispondono ai criteri di ricerca
 * **Caso di Fallimento:** Il sistema informa il Cliente che nessun ristorante corrisponde ai criteri di ricerca
 
 **Flusso Principale:**
+
 1. Il Cliente accede alla funzione di ricerca ristoranti
 2. Il sistema presenta l'interfaccia di ricerca con vari filtri disponibili
 3. Il Cliente inserisce uno o più criteri di ricerca:
@@ -957,6 +960,7 @@ Il sistema di prenotazione ristoranti deve gestire le prenotazioni di tavoli per
 5. Il Cliente può visualizzare i dettagli di ciascun ristorante nei risultati
 
 **Flussi Alternativi:**
+
 * **4a. Nessun Risultato:**
 	* Il sistema informa il Cliente che non ci sono ristoranti corrispondenti ai criteri
 	* Suggerisce di modificare i criteri di ricerca
@@ -971,14 +975,17 @@ Il sistema di prenotazione ristoranti deve gestire le prenotazioni di tavoli per
 **Scopo:** Permettere al Cliente di prenotare un tavolo presso il ristorante selezionato.
 
 **Precondizioni:**
+
 * Il Cliente è autenticato nel sistema
 * Il Cliente ha selezionato un ristorante
 
 **Postcondizioni:**
+
 * **Caso di Successo:** La prenotazione viene registrata nel sistema e confermata
 * **Caso di Fallimento:** La prenotazione non viene effettuata
 
 **Flusso Principale:**
+
 1. Il Cliente seleziona l'opzione di prenotazione
 2. Il sistema richiede:
 	 * Data della prenotazione
@@ -991,6 +998,7 @@ Il sistema di prenotazione ristoranti deve gestire le prenotazioni di tavoli per
 7. Il sistema invia una conferma al Cliente
 
 **Flussi Alternativi:**
+
 * **3a. Tavolo Non Disponibile:**
 	* Il sistema propone orari/date alternative
 	* Il Cliente può scegliere un'alternativa o annullare
@@ -1009,13 +1017,16 @@ Il sistema di prenotazione ristoranti deve gestire le prenotazioni di tavoli per
 **Scopo:** Permettere al Ristoratore di gestire la disponibilità dei tavoli nel proprio ristorante.
 
 **Precondizioni:**
+
 * Il Ristoratore è autenticato nel sistema
 
 **Postcondizioni:**
+
 * **Caso di Successo:** Le disponibilità dei tavoli vengono aggiornate nel sistema
 * **Caso di Fallimento:** Le disponibilità rimangono invariate
 
 **Flusso Principale:**
+
 1. Il Ristoratore accede alla gestione disponibilità
 2. Il sistema mostra il calendario delle prenotazioni
 3. Il Ristoratore può:
@@ -1026,6 +1037,7 @@ Il sistema di prenotazione ristoranti deve gestire le prenotazioni di tavoli per
 5. Il sistema aggiorna la disponibilità visibile ai clienti
 
 **Flussi Alternativi:**
+
 * **4a. Errore di Salvataggio:**
 	* Il sistema notifica l'errore al Ristoratore
 	* Le modifiche non vengono salvate
@@ -1040,18 +1052,22 @@ Il sistema di prenotazione ristoranti deve gestire le prenotazioni di tavoli per
 **Scopo:** Verificare l'identità dell'utente per l'accesso al sistema.
 
 **Precondizioni:**
+
 * L'utente ha un account nel sistema
 
 **Postcondizioni:**
+
 * **Caso di Successo:** L'utente viene autenticato e ottiene l'accesso al sistema
 * **Caso di Fallimento:** L'accesso viene negato
 
 **Flusso Principale:**
+
 1. L'utente inserisce le credenziali (email/username e password)
 2. Il sistema verifica le credenziali
 3. Il sistema concede l'accesso
 
 **Flussi Alternativi:**
+
 * **2a. Credenziali Errate:**
 	* Il sistema notifica l'errore
 	* L'utente può riprovare o richiedere il reset della password
@@ -1065,19 +1081,23 @@ Il sistema di prenotazione ristoranti deve gestire le prenotazioni di tavoli per
 **Scopo:** Verificare la disponibilità di tavoli per una specifica data e ora.
 
 **Precondizioni:**
+
 * Data, ora e numero di persone sono stati specificati
 
 **Postcondizioni:**
+
 * **Caso di Successo:** Il sistema conferma la disponibilità dei tavoli
 * **Caso di Fallimento:** Il sistema segnala la non disponibilità
 
 **Flusso Principale:**
+
 1. Il sistema riceve la richiesta di verifica
 2. Il sistema controlla il database delle prenotazioni
 3. Il sistema verifica la capacità dei tavoli disponibili
 4. Il sistema comunica il risultato
 
 **Flussi Alternativi:**
+
 * **3a. Nessun Tavolo Disponibile:**
 	* Il sistema cerca disponibilità in orari/date alternative
 	* Il sistema propone le alternative trovate
@@ -1091,18 +1111,22 @@ Il sistema di prenotazione ristoranti deve gestire le prenotazioni di tavoli per
 **Scopo:** Inviare la conferma della prenotazione al cliente.
 
 **Precondizioni:**
+
 * La prenotazione è stata effettuata con successo
 
 **Postcondizioni:**
+
 * **Caso di Successo:** La conferma viene inviata al cliente
 * **Caso di Fallimento:** La conferma non viene inviata ma la prenotazione rimane valida
 
 **Flusso Principale:**
+
 1. Il sistema prepara il messaggio di conferma con i dettagli
 2. Il sistema invia la conferma via email/SMS
 3. Il sistema registra l'invio della conferma
 
 **Flussi Alternativi:**
+
 * **2a. Errore di Invio:**
 	* Il sistema ritenta l'invio
 	* Se il nuovo tentativo fallisce, registra l'errore
@@ -1117,14 +1141,17 @@ Il sistema di prenotazione ristoranti deve gestire le prenotazioni di tavoli per
 **Scopo:** Gestire il pagamento anticipato o la caparra per la prenotazione.
 
 **Precondizioni:**
+
 * La prenotazione è stata iniziata
 * Il pagamento anticipato è richiesto
 
 **Postcondizioni:**
+
 * **Caso di Successo:** Il pagamento viene processato e la prenotazione confermata
 * **Caso di Fallimento:** Il pagamento non viene completato e la prenotazione non viene confermata
 
 **Flusso Principale:**
+
 1. Il sistema calcola l'importo da pagare
 2. Il sistema reindirizza al gateway di pagamento
 3. Il Cliente inserisce i dati di pagamento
@@ -1133,6 +1160,7 @@ Il sistema di prenotazione ristoranti deve gestire le prenotazioni di tavoli per
 6. Il sistema completa la prenotazione
 
 **Flussi Alternativi:**
+
 * **4a. Pagamento Rifiutato:**
 	* Il sistema notifica il fallimento al Cliente
 	* Il Cliente può riprovare o annullare
@@ -1141,9 +1169,9 @@ Il sistema di prenotazione ristoranti deve gestire le prenotazioni di tavoli per
 	* Se il pagamento è andato a buon fine, procede
 	* Se il pagamento non è confermato, annulla la prenotazione
 
-### Modello E/R Iniziale (Progettazione Concettuale)
+### Modello E/R Iniziale (Progettazione Concettuale - prenotazioni ristorante)
 
-#### Entità Iniziali
+#### Entità Iniziali - prenotazioni ristorante
 
 * **Ristorante**: (IDRistorante, Nome, Indirizzo, TipoCucina, FasciaPrezzo, Descrizione)
 * **Tavolo**: (IDTavolo, Numero, Capacità, Stato)
@@ -1153,7 +1181,7 @@ Il sistema di prenotazione ristoranti deve gestire le prenotazioni di tavoli per
 * **Ristoratore**: (IDRistoratore, Nome, Cognome, Email, Password)
 * **FasciaOraria**: (IDFasciaOraria, DataInizio, DataFine, Stato)
 
-#### Relazioni Iniziali
+#### Relazioni Iniziali - prenotazioni ristorante
 
 * **Ristorante - Tavolo**: Un Ristorante *possiede* molti Tavoli. Un Tavolo *appartiene a* un Ristorante. (Relazione Uno-a-Molti)
 * **Ristorante - Ristoratore**: Un Ristorante *è gestito da* un Ristoratore. Un Ristoratore *gestisce* un Ristorante. (Relazione Uno-a-Uno)
@@ -1162,7 +1190,7 @@ Il sistema di prenotazione ristoranti deve gestire le prenotazioni di tavoli per
 * **Prenotazione - Pagamento**: Una Prenotazione *può avere* un Pagamento. Un Pagamento *è associato a* una Prenotazione. (Relazione Uno-a-Uno)
 * **Ristorante - FasciaOraria**: Un Ristorante *definisce* molte FasceOrarie. Una FasciaOraria *è definita per* un Ristorante. (Relazione Uno-a-Molti)
 
-#### Diagramma E/R Iniziale
+#### Diagramma E/R Iniziale - prenotazioni ristorante
 
 ```mermaid
 erDiagram
@@ -1227,7 +1255,7 @@ erDiagram
     Prenotazione ||--|| Pagamento : "può avere"
 ```
 
-### Integrazione e Raffinamento del Modello E/R
+### Integrazione e Raffinamento del Modello E/R - prenotazioni ristorante
 
 Analizziamo alcuni aspetti che possono essere migliorati:
 
@@ -1250,9 +1278,9 @@ Analizziamo alcuni aspetti che possono essere migliorati:
    - Aggiungiamo enum per gli stati possibili della prenotazione
    - Aggiungiamo attributi per gestire modifiche/cancellazioni
 
-### Modello E/R Raffinato
+### Modello E/R Raffinato - prenotazioni ristorante
 
-#### Entità Raffinate
+#### Entità Raffinate - prenotazioni ristorante
 
 * **Ristorante**: (IDRistorante PK, Nome, Indirizzo, TipoCucina, FasciaPrezzo, Descrizione, OrarioApertura, OrarioChiusura, GiorniApertura, TempoMedioServizio)
 * **Tavolo**: (IDTavolo PK, Numero, Capacità, Stato, Posizione, Note, IDRistorante FK)
@@ -1266,7 +1294,7 @@ Analizziamo alcuni aspetti che possono essere migliorati:
 * **Recensione**: (IDRecensione PK, Valutazione, Commento, DataRecensione, IDCliente FK, IDRistorante FK)
 * **Allergia**: (IDAllergia PK, Nome, Descrizione)
 
-#### Relazioni Raffinate
+#### Relazioni Raffinate - prenotazioni ristorante
 
 * **Ristorante - Tavolo**: (Uno-a-Molti, invariata)
 * **Ristorante - Ristoratore**: (Uno-a-Uno, invariata)
@@ -1280,7 +1308,7 @@ Analizziamo alcuni aspetti che possono essere migliorati:
 * **Cliente - Recensione**: (Uno-a-Molti)
 * **Ristorante - Recensione**: (Uno-a-Molti)
 
-#### Diagramma E/R Raffinato
+#### Diagramma E/R Raffinato - prenotazioni ristorante
 
 ```mermaid
 erDiagram
@@ -1395,7 +1423,7 @@ erDiagram
     Ristorante ||--o{ Recensione : "riceve"
 ```
 
-### Schema Logico SQL (MariaDB)
+### Schema Logico SQL (MariaDB) - prenotazioni ristorante
 
 Di seguito è riportato lo schema logico del database in SQL per MariaDB, comprensivo di vincoli e relazioni:
 

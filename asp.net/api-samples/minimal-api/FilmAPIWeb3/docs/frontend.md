@@ -19,32 +19,7 @@
 
 ## Diagramma dei Casi d'Uso
 
-```mermaid
-graph TB
-    subgraph "Sistema FilmAPI"
-        subgraph "Gestione Film TMDB"
-            UC1[Ricerca Film TMDB]
-            UC2[Visualizza Dettagli Film]
-            UC3[Salva Film nel DB]
-            UC4[Gestione Regista]
-        end
-        
-        subgraph "Gestione Film Locali"
-            UC5[Visualizza Film Locali]
-            UC6[Modifica Film]
-            UC7[Elimina Film]
-        end
-        
-        Actor((Utente))
-        Actor -->|Interagisce| UC1
-        UC1 -->|Estende| UC2
-        UC2 -->|Estende| UC3
-        UC3 -->|Include| UC4
-        Actor -->|Interagisce| UC5
-        UC5 -->|Estende| UC6
-        UC5 -->|Estende| UC7
-    end
-```
+![filmAPI - use case](frontend-use-case1.svg)
 
 ## Gestione File Statici
 

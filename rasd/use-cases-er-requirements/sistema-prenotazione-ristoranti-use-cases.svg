@@ -78,7 +78,7 @@
 
     <!-- UC2 -> UC5 -->
     <line x1="620" y1="335" x2="680" y2="465" stroke="black" stroke-dasharray="5,5" marker-end="url(#arrowhead)"/>
-    <text x="680" y="400" style="font-size: 14px;">«include»</text>
+    <text x="650" y="400" style="font-size: 14px;">«include»</text>
 
     <!-- UC2 -> UC6 -->
     <line x1="650" y1="330" x2="830" y2="475" stroke="black" stroke-dasharray="5,5" marker-end="url(#arrowhead)"/>

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="1200" height="800"
+    xmlns="http://www.w3.org/2000/svg">
+    <!-- Sistema FilmAPI box -->
+    <rect x="150" y="50" width="900" height="700" fill="none" stroke="black"/>
+    <text x="160" y="80" font-family="Arial" font-size="16">Sistema FilmAPI</text>
+
+    <!-- Gestione Film TMDB subsystem -->
+    <rect x="170" y="100" width="400" height="600" fill="none" stroke="black" stroke-dasharray="5,5"/>
+    <text x="180" y="120" font-family="Arial" font-size="14">Gestione Film TMDB</text>
+
+    <!-- Gestione Film Locali subsystem -->
+    <rect x="600" y="100" width="400" height="600" fill="none" stroke="black" stroke-dasharray="5,5"/>
+    <text x="610" y="120" font-family="Arial" font-size="14">Gestione Film Locali</text>
+
+    <!-- Actor with better proportions -->
+    <g id="actor">
+        <!-- Head -->
+        <circle cx="80" cy="300" r="15" fill="none" stroke="black"/>
+        <!-- Body -->
+        <line x1="80" y1="315" x2="80" y2="355" stroke="black" stroke-width="2"/>
+        <!-- Arms -->
+        <line x1="50" y1="335" x2="110" y2="335" stroke="black" stroke-width="2"/>
+        <!-- Legs -->
+        <line x1="80" y1="355" x2="50" y2="385" stroke="black" stroke-width="2"/>
+        <line x1="80" y1="355" x2="110" y2="385" stroke="black" stroke-width="2"/>
+        <text x="60" y="410" font-family="Arial" font-size="12">Utente</text>
+    </g>
+
+    <!-- Use Cases -->
+    <ellipse cx="300" cy="200" rx="70" ry="25" fill="white" stroke="black"/>
+    <text x="250" y="205" font-family="Arial" font-size="12">Ricerca Film TMDB</text>
+
+    <ellipse cx="300" cy="300" rx="70" ry="25" fill="white" stroke="black"/>
+    <text x="250" y="305" font-family="Arial" font-size="12">Visualizza Dettagli Film</text>
+
+    <ellipse cx="300" cy="400" rx="70" ry="25" fill="white" stroke="black"/>
+    <text x="260" y="405" font-family="Arial" font-size="12">Salva Film nel DB</text>
+
+    <ellipse cx="450" cy="300" rx="70" ry="25" fill="white" stroke="black"/>
+    <text x="410" y="305" font-family="Arial" font-size="12">Gestione Regista</text>
+
+    <ellipse cx="750" cy="200" rx="70" ry="25" fill="white" stroke="black"/>
+    <text x="700" y="205" font-family="Arial" font-size="12">Visualizza Film Locali</text>
+
+    <ellipse cx="750" cy="300" rx="70" ry="25" fill="white" stroke="black"/>
+    <text x="720" y="305" font-family="Arial" font-size="12">Modifica Film</text>
+
+    <ellipse cx="750" cy="400" rx="70" ry="25" fill="white" stroke="black"/>
+    <text x="720" y="405" font-family="Arial" font-size="12">Elimina Film</text>
+
+    <!-- Relationships -->
+    <!-- Actor associations (solid lines) -->
+    <line x1="110" y1="300" x2="230" y2="200" stroke="black" stroke-width="1.5"/>
+    <line x1="110" y1="300" x2="680" y2="200" stroke="black" stroke-width="1.5"/>
+
+    <!-- Extends relationships (dashed lines with V-shaped arrows) -->
+    <g id="extends1">
+        <line x1="300" y1="275" x2="300" y2="225" stroke="black" stroke-dasharray="5,5"/>
+        <text x="310" y="250" font-family="Arial" font-size="10">&lt;&lt;extend&gt;&gt;</text>
+        <!-- V-shaped arrowhead -->
+        <polyline points="295,235 300,225 305,235" fill="none" stroke="black"/>
+    </g>
+
+    <g id="extends2">
+        <line x1="300" y1="375" x2="300" y2="325" stroke="black" stroke-dasharray="5,5"/>
+        <text x="310" y="350" font-family="Arial" font-size="10">&lt;&lt;extend&gt;&gt;</text>
+        <!-- V-shaped arrowhead -->
+        <polyline points="295,335 300,325 305,335" fill="none" stroke="black"/>
+    </g>
+
+    <g id="extends3">
+        <line x1="750" y1="275" x2="750" y2="225" stroke="black" stroke-dasharray="5,5"/>
+        <text x="760" y="250" font-family="Arial" font-size="10">&lt;&lt;extend&gt;&gt;</text>
+        <!-- V-shaped arrowhead -->
+        <polyline points="745,235 750,225 755,235" fill="none" stroke="black"/>
+    </g>
+
+    <g id="extends4">
+        <line x1="750" y1="375" x2="750" y2="325" stroke="black" stroke-dasharray="5,5"/>
+        <text x="760" y="350" font-family="Arial" font-size="10">&lt;&lt;extend&gt;&gt;</text>
+        <!-- V-shaped arrowhead -->
+        <polyline points="745,335 750,325 755,335" fill="none" stroke="black"/>
+    </g>
+
+    <!-- Include relationship -->
+    <g id="include1">
+        <line x1="370" y1="400" x2="450" y2="325" stroke="black" stroke-dasharray="5,5"/>
+        <text x="390" y="350" font-family="Arial" font-size="10">&lt;&lt;include&gt;&gt;</text>
+        <!-- V-shaped arrowhead -->
+        <polyline points="440,330 450,325 445,335" fill="none" stroke="black"/>
+    </g>
+</svg>
