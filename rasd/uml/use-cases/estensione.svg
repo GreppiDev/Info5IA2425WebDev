@@ -1,0 +1,22 @@
+<svg width="600" height="200"
+    xmlns="http://www.w3.org/2000/svg">
+    <!-- Use Cases -->
+    <ellipse cx="140" cy="100" rx="110" ry="30" fill="none" stroke="black" stroke-width="2"/>
+    <text x="140" y="105" text-anchor="middle" fill="black" font-family="Arial">Filtra Prodotti per Categoria</text>
+
+    <ellipse cx="420" cy="100" rx="110" ry="30" fill="none" stroke="black" stroke-width="2"/>
+    <text x="420" y="105" text-anchor="middle" fill="black" font-family="Arial">Navigare Catalogo Prodotti</text>
+
+    <!-- Extend Relationship -->
+    <defs>
+        <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3" orient="auto">
+            <path d="M 0 0 L 9 3 L 0 6" fill="none" stroke="black" stroke-width="1"/>
+        </marker>
+    </defs>
+
+    <!-- Dashed line with arrow -->
+    <path d="M250,100 L310,100" stroke="black" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrow)"/>
+
+    <!-- Extend stereotype -->
+    <text x="280" y="90" text-anchor="middle" fill="black" font-family="Arial">«extend»</text>
+</svg>

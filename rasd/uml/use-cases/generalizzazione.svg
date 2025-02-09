@@ -1,0 +1,43 @@
+<svg width="600" height="300"
+    xmlns="http://www.w3.org/2000/svg">
+    <!-- Parent Actor (Cliente) -->
+    <g transform="translate(300,80)">
+        <circle cx="0" cy="-30" r="10" fill="none" stroke="black" stroke-width="2"/>
+        <line x1="0" y1="-20" x2="0" y2="10" stroke="black" stroke-width="2"/>
+        <line x1="-15" y1="-10" x2="15" y2="-10" stroke="black" stroke-width="2"/>
+        <line x1="0" y1="10" x2="-15" y2="35" stroke="black" stroke-width="2"/>
+        <line x1="0" y1="10" x2="15" y2="35" stroke="black" stroke-width="2"/>
+        <text x="0" y="55" text-anchor="middle" fill="black" font-family="Arial">Cliente</text>
+    </g>
+
+    <!-- Child Actor (Cliente Registrato) -->
+    <g transform="translate(200,220)">
+        <circle cx="0" cy="-30" r="10" fill="none" stroke="black" stroke-width="2"/>
+        <line x1="0" y1="-20" x2="0" y2="10" stroke="black" stroke-width="2"/>
+        <line x1="-15" y1="-10" x2="15" y2="-10" stroke="black" stroke-width="2"/>
+        <line x1="0" y1="10" x2="-15" y2="35" stroke="black" stroke-width="2"/>
+        <line x1="0" y1="10" x2="15" y2="35" stroke="black" stroke-width="2"/>
+        <text x="0" y="55" text-anchor="middle" fill="black" font-family="Arial">Cliente Registrato</text>
+    </g>
+
+    <!-- Child Actor (Cliente Ospite) -->
+    <g transform="translate(400,220)">
+        <circle cx="0" cy="-30" r="10" fill="none" stroke="black" stroke-width="2"/>
+        <line x1="0" y1="-20" x2="0" y2="10" stroke="black" stroke-width="2"/>
+        <line x1="-15" y1="-10" x2="15" y2="-10" stroke="black" stroke-width="2"/>
+        <line x1="0" y1="10" x2="-15" y2="35" stroke="black" stroke-width="2"/>
+        <line x1="0" y1="10" x2="15" y2="35" stroke="black" stroke-width="2"/>
+        <text x="0" y="55" text-anchor="middle" fill="black" font-family="Arial">Cliente Ospite</text>
+    </g>
+
+    <!-- Generalization Relationships -->
+    <defs>
+        <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+            <path d="M0,0 L0,10 L9,5 z" fill="black" stroke="black"/>
+        </marker>
+    </defs>
+
+    <!-- Lines with arrows -->
+    <path d="M200,180 L280,135" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
+    <path d="M400,180 L320,135" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
+</svg>

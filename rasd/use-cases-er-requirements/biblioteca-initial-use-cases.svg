@@ -1,0 +1,80 @@
+<svg width="1200" height="800"
+    xmlns="http://www.w3.org/2000/svg">
+    <!-- System Boundary -->
+    <rect x="150" y="50" width="900" height="700" fill="none" stroke="black" stroke-width="2"/>
+    <text x="600" y="80" text-anchor="middle" fill="black" font-family="Arial" font-size="20">Sistema Biblioteca Universitaria</text>
+
+    <!-- Actors -->
+    <!-- Studente -->
+    <g transform="translate(80,400)">
+        <circle cx="0" cy="-30" r="10" fill="none" stroke="black" stroke-width="2"/>
+        <line x1="0" y1="-20" x2="0" y2="10" stroke="black" stroke-width="2"/>
+        <line x1="-15" y1="-10" x2="15" y2="-10" stroke="black" stroke-width="2"/>
+        <line x1="0" y1="10" x2="-15" y2="35" stroke="black" stroke-width="2"/>
+        <line x1="0" y1="10" x2="15" y2="35" stroke="black" stroke-width="2"/>
+        <text x="0" y="55" text-anchor="middle" fill="black" font-family="Arial">Studente</text>
+    </g>
+
+    <!-- Bibliotecario -->
+    <g transform="translate(1120,400)">
+        <circle cx="0" cy="-30" r="10" fill="none" stroke="black" stroke-width="2"/>
+        <line x1="0" y1="-20" x2="0" y2="10" stroke="black" stroke-width="2"/>
+        <line x1="-15" y1="-10" x2="15" y2="-10" stroke="black" stroke-width="2"/>
+        <line x1="0" y1="10" x2="-15" y2="35" stroke="black" stroke-width="2"/>
+        <line x1="0" y1="10" x2="15" y2="35" stroke="black" stroke-width="2"/>
+        <text x="0" y="55" text-anchor="middle" fill="black" font-family="Arial">Bibliotecario</text>
+    </g>
+
+    <!-- Student Use Cases (Left Side) -->
+    <ellipse cx="300" cy="150" rx="70" ry="25" fill="none" stroke="black" stroke-width="2"/>
+    <text x="300" y="155" text-anchor="middle" fill="black" font-family="Arial">Consultare Catalogo</text>
+
+    <ellipse cx="300" cy="220" rx="70" ry="25" fill="none" stroke="black" stroke-width="2"/>
+    <text x="300" y="225" text-anchor="middle" fill="black" font-family="Arial">Visualizzare Dettagli</text>
+
+    <ellipse cx="300" cy="290" rx="70" ry="25" fill="none" stroke="black" stroke-width="2"/>
+    <text x="300" y="295" text-anchor="middle" fill="black" font-family="Arial">Prendere in Prestito</text>
+
+    <ellipse cx="300" cy="360" rx="70" ry="25" fill="none" stroke="black" stroke-width="2"/>
+    <text x="300" y="365" text-anchor="middle" fill="black" font-family="Arial">Restituire Libro</text>
+
+    <ellipse cx="300" cy="430" rx="70" ry="25" fill="none" stroke="black" stroke-width="2"/>
+    <text x="300" y="435" text-anchor="middle" fill="black" font-family="Arial">Prenotare Libro</text>
+
+    <ellipse cx="300" cy="500" rx="70" ry="25" fill="none" stroke="black" stroke-width="2"/>
+    <text x="300" y="505" text-anchor="middle" fill="black" font-family="Arial">Visualizzare Prestiti</text>
+
+    <!-- Librarian Use Cases (Right Side) -->
+    <ellipse cx="900" cy="150" rx="70" ry="25" fill="none" stroke="black" stroke-width="2"/>
+    <text x="900" y="155" text-anchor="middle" fill="black" font-family="Arial">Gestire Catalogo</text>
+
+    <!-- Sub use cases for Gestire Catalogo -->
+    <ellipse cx="700" cy="120" rx="60" ry="20" fill="none" stroke="black" stroke-width="2"/>
+    <text x="700" y="125" text-anchor="middle" fill="black" font-family="Arial" font-size="12">Aggiungere Libro</text>
+
+    <ellipse cx="700" cy="170" rx="60" ry="20" fill="none" stroke="black" stroke-width="2"/>
+    <text x="700" y="175" text-anchor="middle" fill="black" font-family="Arial" font-size="12">Modificare Libro</text>
+
+    <!-- More use cases would be added here -->
+
+    <!-- Association lines for Student -->
+    <line x1="95" y1="400" x2="230" y2="150" stroke="black" stroke-width="1"/>
+    <line x1="95" y1="400" x2="230" y2="220" stroke="black" stroke-width="1"/>
+    <line x1="95" y1="400" x2="230" y2="290" stroke="black" stroke-width="1"/>
+    <line x1="95" y1="400" x2="230" y2="360" stroke="black" stroke-width="1"/>
+    <line x1="95" y1="400" x2="230" y2="430" stroke="black" stroke-width="1"/>
+    <line x1="95" y1="400" x2="230" y2="500" stroke="black" stroke-width="1"/>
+
+    <!-- Association lines for Librarian -->
+    <line x1="1105" y1="400" x2="970" y2="150" stroke="black" stroke-width="1"/>
+
+    <!-- Generalization relationships (with hollow triangles) -->
+    <defs>
+        <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+            <path d="M0,0 L0,10 L9,5 z" fill="black" stroke="black"/>
+        </marker>
+    </defs>
+
+    <path d="M760,120 L830,150" stroke="black" stroke-width="1" marker-end="url(#arrow)"/>
+    <path d="M760,170 L830,150" stroke="black" stroke-width="1" marker-end="url(#arrow)"/>
+</svg>

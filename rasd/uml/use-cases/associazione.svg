@@ -1,0 +1,24 @@
+<svg width="500" height="200"
+    xmlns="http://www.w3.org/2000/svg">
+    <!-- Actor (stick figure) -->
+    <g transform="translate(100,100)">
+        <!-- Head -->
+        <circle cx="0" cy="-30" r="10" fill="none" stroke="black" stroke-width="2"/>
+        <!-- Body -->
+        <line x1="0" y1="-20" x2="0" y2="10" stroke="black" stroke-width="2"/>
+        <!-- Arms -->
+        <line x1="-15" y1="-10" x2="15" y2="-10" stroke="black" stroke-width="2"/>
+        <!-- Legs -->
+        <line x1="0" y1="10" x2="-15" y2="35" stroke="black" stroke-width="2"/>
+        <line x1="0" y1="10" x2="15" y2="35" stroke="black" stroke-width="2"/>
+        <!-- Label -->
+        <text x="0" y="55" text-anchor="middle" fill="black" font-family="Arial">Cliente</text>
+    </g>
+
+    <!-- Use Case -->
+    <ellipse cx="350" cy="100" rx="80" ry="30" fill="none" stroke="black" stroke-width="2"/>
+    <text x="350" y="105" text-anchor="middle" fill="black" font-family="Arial">Effettuare Checkout</text>
+
+    <!-- Association Line -->
+    <line x1="120" y1="100" x2="270" y2="100" stroke="black" stroke-width="2"/>
+</svg>

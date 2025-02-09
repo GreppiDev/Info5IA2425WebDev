@@ -1,0 +1,28 @@
+<svg width="800" height="400"
+    xmlns="http://www.w3.org/2000/svg">
+    <!-- Parent Use Case -->
+    <ellipse cx="400" cy="80" rx="80" ry="30" fill="none" stroke="black" stroke-width="2"/>
+    <text x="400" y="85" text-anchor="middle" fill="black" font-family="Arial">Effettuare Pagamento</text>
+
+    <!-- Child Use Cases -->
+    <ellipse cx="200" cy="250" rx="100" ry="30" fill="none" stroke="black" stroke-width="2"/>
+    <text x="200" y="255" text-anchor="middle" fill="black" font-family="Arial">Pagamento con Carta</text>
+
+    <ellipse cx="400" cy="250" rx="80" ry="30" fill="none" stroke="black" stroke-width="2"/>
+    <text x="400" y="255" text-anchor="middle" fill="black" font-family="Arial">Pagamento PayPal</text>
+
+    <ellipse cx="600" cy="250" rx="90" ry="30" fill="none" stroke="black" stroke-width="2"/>
+    <text x="600" y="255" text-anchor="middle" fill="black" font-family="Arial">Pagamento Bonifico</text>
+
+    <!-- Generalization Relationships -->
+    <defs>
+        <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+            <polygon points="0,0 9,5 0,10" fill="none" stroke="black" stroke-width="1"/>
+        </marker>
+    </defs>
+
+    <!-- Lines with arrows -->
+    <path d="M200,220 L360,110" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
+    <path d="M400,220 L400,110" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
+    <path d="M600,220 L440,110" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
+</svg>

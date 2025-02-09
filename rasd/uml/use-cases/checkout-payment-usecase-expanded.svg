@@ -1,0 +1,36 @@
+<svg viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
+    <!-- Sistema (rettangolo esterno più grande) -->
+    <rect x="100" y="50" width="600" height="400" fill="none" stroke="black" stroke-width="2"/>
+    <text x="120" y="80" font-family="Arial" font-size="16">Sistema E-commerce</text>
+    
+    <!-- Sottosistema Checkout -->
+    <rect x="150" y="100" width="500" height="300" fill="none" stroke="black" stroke-width="1" stroke-dasharray="5,5"/>
+    <text x="170" y="130" font-family="Arial" font-size="14" font-style="italic">Sottosistema di Checkout</text>
+    
+    <!-- Caso d'uso Checkout -->
+    <ellipse cx="300" cy="250" rx="80" ry="30" fill="white" stroke="black"/>
+    <text x="250" y="255" font-family="Arial" font-size="14">Effettuare Checkout</text>
+
+    <!-- Caso d'uso Verifica Pagamento -->
+    <ellipse cx="500" cy="250" rx="80" ry="30" fill="white" stroke="black"/>
+    <text x="440" y="255" font-family="Arial" font-size="14">Verifica Dati di Pagamento</text>
+
+    <!-- Linea tratteggiata per include -->
+    <path d="M380 250 L420 250" stroke="black" stroke-dasharray="5,5"/>
+    <!-- Freccia -->
+    <polygon points="420,250 410,245 410,255" fill="black"/>
+    
+    <!-- Testo «include» -->
+    <text x="370" y="240" font-family="Arial" font-size="12" font-style="italic">«include»</text>
+
+    <!-- Attore Cliente -->
+    <circle cx="50" cy="250" r="10" fill="white" stroke="black"/>
+    <line x1="50" y1="260" x2="50" y2="290" stroke="black"/>
+    <line x1="30" y1="275" x2="70" y2="275" stroke="black"/>
+    <line x1="50" y1="290" x2="30" y2="320" stroke="black"/>
+    <line x1="50" y1="290" x2="70" y2="320" stroke="black"/>
+    <text x="30" y="340" font-family="Arial" font-size="14">Cliente</text>
+
+    <!-- Linea di associazione tra Cliente e Checkout -->
+    <line x1="70" y1="250" x2="220" y2="250" stroke="black"/>
+</svg>

@@ -1,0 +1,51 @@
+<svg viewBox="0 0 800 700" xmlns="http://www.w3.org/2000/svg">
+    <!-- Sistema (rettangolo esterno) -->
+    <rect x="200" y="50" width="500" height="600" fill="none" stroke="black" stroke-width="2"/>
+    <text x="220" y="80" font-family="Arial" font-size="16">Funzionalità Social Media</text>
+    
+    <!-- Attore Utente -->
+    <circle cx="100" cy="350" r="10" fill="white" stroke="black"/>
+    <line x1="100" y1="360" x2="100" y2="390" stroke="black"/>
+    <line x1="80" y1="375" x2="120" y2="375" stroke="black"/>
+    <line x1="100" y1="390" x2="80" y2="420" stroke="black"/>
+    <line x1="100" y1="390" x2="120" y2="420" stroke="black"/>
+    <text x="60" y="440" font-family="Arial" font-size="14">Utente Social Media</text>
+
+    <!-- Casi d'uso (ellissi) -->
+    <!-- UC1: Creare Post -->
+    <ellipse cx="450" cy="120" rx="100" ry="30" fill="white" stroke="black"/>
+    <text x="410" y="125" font-family="Arial" font-size="14">Creare Post</text>
+
+    <!-- UC2: Visualizzare Feed -->
+    <ellipse cx="450" cy="200" rx="100" ry="30" fill="white" stroke="black"/>
+    <text x="390" y="205" font-family="Arial" font-size="14">Visualizzare Feed</text>
+
+    <!-- UC3: Interagire con Post -->
+    <ellipse cx="450" cy="280" rx="100" ry="30" fill="white" stroke="black"/>
+    <text x="380" y="285" font-family="Arial" font-size="14">Interagire con Post</text>
+
+    <!-- UC4: Seguire Utente -->
+    <ellipse cx="450" cy="360" rx="100" ry="30" fill="white" stroke="black"/>
+    <text x="400" y="365" font-family="Arial" font-size="14">Seguire Utente</text>
+
+    <!-- UC5: Cercare Utenti/Hashtag -->
+    <ellipse cx="450" cy="440" rx="100" ry="30" fill="white" stroke="black"/>
+    <text x="370" y="445" font-family="Arial" font-size="14">Cercare Utenti o Hashtag</text>
+
+    <!-- UC6: Gestire Profilo -->
+    <ellipse cx="450" cy="520" rx="100" ry="30" fill="white" stroke="black"/>
+    <text x="380" y="525" font-family="Arial" font-size="14">Gestire Profilo Sociale</text>
+
+    <!-- UC7: Inviare Messaggio -->
+    <ellipse cx="450" cy="600" rx="100" ry="30" fill="white" stroke="black"/>
+    <text x="370" y="605" font-family="Arial" font-size="14">Inviare Messaggio Privato</text>
+
+    <!-- Linee di associazione -->
+    <line x1="120" y1="350" x2="350" y2="120" stroke="black"/>
+    <line x1="120" y1="350" x2="350" y2="200" stroke="black"/>
+    <line x1="120" y1="350" x2="350" y2="280" stroke="black"/>
+    <line x1="120" y1="350" x2="350" y2="360" stroke="black"/>
+    <line x1="120" y1="350" x2="350" y2="440" stroke="black"/>
+    <line x1="120" y1="350" x2="350" y2="520" stroke="black"/>
+    <line x1="120" y1="350" x2="350" y2="600" stroke="black"/>
+</svg>

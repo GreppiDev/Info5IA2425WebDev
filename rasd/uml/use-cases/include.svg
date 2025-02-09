@@ -1,0 +1,22 @@
+<svg width="550" height="200"
+	xmlns="http://www.w3.org/2000/svg">
+	<!-- Use Cases -->
+	<ellipse cx="150" cy="100" rx="80" ry="30" fill="none" stroke="black" stroke-width="2"/>
+	<text x="150" y="105" text-anchor="middle" fill="black" font-family="Arial">Effettuare Checkout</text>
+
+	<ellipse cx="405" cy="100" rx="100" ry="30" fill="none" stroke="black" stroke-width="2"/>
+	<text x="410" y="105" text-anchor="middle" fill="black" font-family="Arial">Verifica Dati di Pagamento</text>
+
+	<!-- Include Relationship -->
+	<defs>
+		<marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3" orient="auto">
+			<path d="M 0 0 L 9 3 L 0 6" fill="none" stroke="black" stroke-width="1"/>
+		</marker>
+	</defs>
+	<!-- Dashed line with arrow -->
+	<path d="M230,100 L320,100" stroke="black" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrow)"/>
+
+
+	<!-- Include stereotype -->
+	<text x="265" y="90" text-anchor="middle" fill="black" font-family="Arial">«include»</text>
+</svg>

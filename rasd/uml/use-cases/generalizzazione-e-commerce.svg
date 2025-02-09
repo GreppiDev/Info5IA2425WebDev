@@ -1,0 +1,23 @@
+<svg width="600" height="300"
+    xmlns="http://www.w3.org/2000/svg">
+    <!-- Use Cases -->
+    <ellipse cx="300" cy="80" rx="60" ry="30" fill="#333" stroke="white" stroke-width="2"/>
+    <text x="300" y="85" text-anchor="middle" fill="white" font-family="Arial">Cliente</text>
+
+    <ellipse cx="200" cy="200" rx="80" ry="30" fill="#1a1a1a" stroke="white" stroke-width="2"/>
+    <text x="200" y="205" text-anchor="middle" fill="white" font-family="Arial">Cliente Registrato</text>
+
+    <ellipse cx="400" cy="200" rx="70" ry="30" fill="#1a1a1a" stroke="white" stroke-width="2"/>
+    <text x="400" y="205" text-anchor="middle" fill="white" font-family="Arial">Cliente Ospite</text>
+
+    <!-- Generalization Relationships -->
+    <defs>
+        <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+            <path d="M0,0 L0,10 L9,5 z" fill="white" stroke="white"/>
+        </marker>
+    </defs>
+
+    <!-- Lines with arrows -->
+    <path d="M200,170 L280,110" stroke="white" stroke-width="2" marker-end="url(#arrow)"/>
+    <path d="M400,170 L320,110" stroke="white" stroke-width="2" marker-end="url(#arrow)"/>
+</svg>

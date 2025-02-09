@@ -1,0 +1,54 @@
+<svg viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
+    <!-- Sistema (rettangolo esterno) -->
+    <rect x="200" y="50" width="400" height="400" fill="none" stroke="black" stroke-width="2"/>
+    <text x="220" y="80" font-family="Arial" font-size="16">App Social Media Mobile</text>
+    
+    <!-- Attori -->
+    <!-- Utente -->
+    <circle cx="100" cy="150" r="10" fill="white" stroke="black"/>
+    <line x1="100" y1="160" x2="100" y2="190" stroke="black"/>
+    <line x1="80" y1="175" x2="120" y2="175" stroke="black"/>
+    <line x1="100" y1="190" x2="80" y2="220" stroke="black"/>
+    <line x1="100" y1="190" x2="120" y2="220" stroke="black"/>
+    <text x="60" y="240" font-family="Arial" font-size="14">Utente Social</text>
+
+    <!-- Moderatore -->
+    <circle cx="100" cy="350" r="10" fill="white" stroke="black"/>
+    <line x1="100" y1="360" x2="100" y2="390" stroke="black"/>
+    <line x1="80" y1="375" x2="120" y2="375" stroke="black"/>
+    <line x1="100" y1="390" x2="80" y2="420" stroke="black"/>
+    <line x1="100" y1="390" x2="120" y2="420" stroke="black"/>
+    <text x="70" y="440" font-family="Arial" font-size="14">Moderatore</text>
+
+    <!-- Servizio Notifiche -->
+    <circle cx="700" cy="250" r="10" fill="white" stroke="black"/>
+    <line x1="700" y1="260" x2="700" y2="290" stroke="black"/>
+    <line x1="680" y1="275" x2="720" y2="275" stroke="black"/>
+    <line x1="700" y1="290" x2="680" y2="320" stroke="black"/>
+    <line x1="700" y1="290" x2="720" y2="320" stroke="black"/>
+    <text x="650" y="340" font-family="Arial" font-size="14">Servizio Notifiche</text>
+
+    <!-- Casi d'uso (ellissi) -->
+    <!-- Gestione Post -->
+    <ellipse cx="400" cy="150" rx="80" ry="30" fill="white" stroke="black"/>
+    <text x="350" y="155" font-family="Arial" font-size="14">Gestione Post</text>
+
+    <!-- Moderazione Contenuti -->
+    <ellipse cx="400" cy="250" rx="80" ry="30" fill="white" stroke="black"/>
+    <text x="330" y="255" font-family="Arial" font-size="14">Moderazione Contenuti</text>
+
+    <!-- Gestione Notifiche -->
+    <ellipse cx="400" cy="350" rx="80" ry="30" fill="white" stroke="black"/>
+    <text x="340" y="355" font-family="Arial" font-size="14">Gestione Notifiche</text>
+
+    <!-- Linee di associazione -->
+    <!-- Utente -->
+    <line x1="120" y1="150" x2="320" y2="150" stroke="black"/>
+    <line x1="120" y1="150" x2="320" y2="350" stroke="black"/>
+
+    <!-- Moderatore -->
+    <line x1="120" y1="350" x2="320" y2="250" stroke="black"/>
+
+    <!-- Servizio Notifiche -->
+    <line x1="680" y1="250" x2="480" y2="350" stroke="black"/>
+</svg>
