@@ -4,6 +4,21 @@ let currentMarker = null;
 const loadingMessage = document.getElementById("loadingMessage");
 const errorMessage = document.getElementById("errorMessage");
 
+// Function to fetch the ArcGIS Location Platform token from the server
+async function getArcGISLocationPlatformToken() {
+  try {
+    const response = await fetch("/api/maps/arcgis-token");
+    if (!response.ok) {
+      throw new Error("Failed to fetch ArcGIS token");
+    }
+    const token = await response.json();
+    return token.token;
+  } catch (error) {
+    console.error("Error fetching ArcGIS Location Platform token:", error);
+    throw error;
+  }
+}
+
 // Show/hide loading message
 function toggleLoading(show) {
   loadingMessage.style.display = show ? "block" : "none";
@@ -36,16 +51,22 @@ async function initializeMap() {
       maxZoom: 19
     });
 
+    // Get ESRI token
+    const accessToken = await getArcGISLocationPlatformToken();
+
     // Define base layers
     const baseMapLayers = {
-      "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      OpenStreetMap: L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+          maxZoom: 18,
+          attribution: "© OpenStreetMap contributors",
+        }
+      ),
+      Satellite: L.esri.Vector.vectorBasemapLayer("arcgis/imagery/standard", {
+        token: accessToken,
         maxZoom: 19,
-        attribution: '© OpenStreetMap contributors'
       }),
-      "Satellite": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        maxZoom: 19,
-        attribution: 'Imagery © ESRI'
-      })
     };
 
     // Add default layer
@@ -71,7 +92,11 @@ async function initializeMap() {
 
   } catch (error) {
     console.error("Error initializing map:", error);
-    showError("Failed to initialize map: " + error.message);
+    if (error.message.includes("ArcGIS token")) {
+      showError("Failed to initialize satellite layer: " + error.message);
+    } else {
+      showError("Failed to initialize map: " + error.message);
+    }
     toggleLoading(false);
   }
 }

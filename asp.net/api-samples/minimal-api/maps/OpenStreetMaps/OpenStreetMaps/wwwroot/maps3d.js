@@ -408,59 +408,59 @@ function addMarker(lon, lat) {
   });
 
   currentMarker.markerLocation = { lon, lat };
-// Remove previous event listener if it exists
-if (currentMarkerClickHandler) {
-  viewer.selectedEntityChanged.removeEventListener(currentMarkerClickHandler);
-}
+  // Remove previous event listener if it exists
+  if (currentMarkerClickHandler) {
+    viewer.selectedEntityChanged.removeEventListener(currentMarkerClickHandler);
+  }
 
-// Add new event listener
-currentMarkerClickHandler = (selectedEntity) => {
-  if (selectedEntity === currentMarker) {
-    reverseGeocode(lon, lat)
-      .then((address) => {
-        document.getElementById("currentMarker").innerHTML = `
+  // Add new event listener
+  currentMarkerClickHandler = (selectedEntity) => {
+    if (selectedEntity === currentMarker) {
+      reverseGeocode(lon, lat)
+        .then((address) => {
+          document.getElementById("currentMarker").innerHTML = `
 <h3>Marker Corrente</h3>
 <div>${address}</div>
 <div class="control-buttons" style="margin-top: 10px; display: block;">
 <button id="removeMarker" style="width: 100%">Rimuovi marker</button>
 </div>
 `;
-        const button = document.getElementById("removeMarker");
-        if (button) {
-          button.addEventListener("click", function removeMarkerHandler() {
-            if (currentMarker && viewer.entities.contains(currentMarker)) {
-              try {
-                viewer.entities.remove(currentMarker);
-                currentMarker = null;
-                document.getElementById("currentMarker").innerHTML = `
+          const button = document.getElementById("removeMarker");
+          if (button) {
+            button.addEventListener("click", function removeMarkerHandler() {
+              if (currentMarker && viewer.entities.contains(currentMarker)) {
+                try {
+                  viewer.entities.remove(currentMarker);
+                  currentMarker = null;
+                  document.getElementById("currentMarker").innerHTML = `
 <h3>Marker Corrente</h3>
 <div>Nessun marker inserito</div>
 <div class="control-buttons" style="margin-top: 10px; display: block;">
 <button id="removeMarker" style="width: 100%">Rimuovi marker</button>
 </div>
 `;
-              } catch (error) {
-                console.error("Error removing marker:", error);
+                } catch (error) {
+                  console.error("Error removing marker:", error);
+                }
               }
-            }
-          });
-        }
-      })
-      .catch((error) => {
-        console.error("Error getting address:", error);
-        document.getElementById("currentMarker").innerHTML = `
+            });
+          }
+        })
+        .catch((error) => {
+          console.error("Error getting address:", error);
+          document.getElementById("currentMarker").innerHTML = `
 <h3>Marker Corrente</h3>
 <div>Indirizzo non disponibile</div>
 <div class="control-buttons" style="margin-top: 10px; display: block;">
 <button id="removeMarker" style="width: 100%">Rimuovi marker</button>
 </div>
 `;
-      });
-  }
-};
+        });
+    }
+  };
 
-// Register the event listener
-viewer.selectedEntityChanged.addEventListener(currentMarkerClickHandler);
+  // Register the event listener
+  viewer.selectedEntityChanged.addEventListener(currentMarkerClickHandler);
 
   // Initial display with coordinates
   document.getElementById("currentMarker").innerHTML = `
