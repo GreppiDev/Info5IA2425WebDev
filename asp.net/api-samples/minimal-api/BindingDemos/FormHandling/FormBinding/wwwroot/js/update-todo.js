@@ -33,13 +33,6 @@ function fillFormForUpdate(todo) {
     const visibilityInput = document.getElementById('visibility-input-id');
     visibilityInput.value = todo.visibility === 0 ? 'Public':'Private';
 
-    //const attachmentInput = document.getElementById('attachment-input-id');
-    // onsubmit="submitForm(this);return false;" nel form rende inutile questo codice commentato
-    //const form = document.getElementById('update-form-id');
-    // form.addEventListener('submit', function (event) {
-    //     event.preventDefault();
-    //     submitForm(form);
-    // });
 }
             
 document.addEventListener("DOMContentLoaded", function () {

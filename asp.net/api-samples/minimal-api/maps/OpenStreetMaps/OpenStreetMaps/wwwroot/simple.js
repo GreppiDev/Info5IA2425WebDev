@@ -52,7 +52,7 @@ async function initMap2() {
 		});
 
 		vectorBasemap.addTo(map2);
-
+		
 		// Add custom marker at St. Peter's Basilica
 		const vaticanMarker = L.marker([41.9022, 12.4539])
 			.bindPopup("St. Peter's Basilica")
@@ -79,6 +79,25 @@ async function initMap2() {
 
 // Initialize map2
 initMap2().catch((error) => console.error("Error initializing map2:", error));
+
+//con le vecchie mappe Raster di ESRI la mappa con Leaflet potrebbe essere creata con
+// 1) L.esri.basemapLayer (che ora è deprecato) :
+// Map 2: ESRI Satellite with custom marker and coordinates
+// const map2 = L.map("map2").setView([41.9022, 12.4539], 16);
+// L.esri.basemapLayer("Imagery").addTo(map2);
+
+//oppure come:
+//2) utilizzo diretto del tile layer raster di ArcGiS
+// const map2 = L.map("map2", {
+//   minZoom: 3,
+//   maxZoom: 18,
+// }).setView([41.9022, 12.4539], 15);
+// L.tileLayer(
+//   "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}.png",
+//   {
+//     attribution: "© ESRI © OpenStreetMap contributors",
+//   }
+// ).addTo(map2);
 
 // Map 3: Rome Historic Center with GeoJSON
 const map3 = L.map("map3", {

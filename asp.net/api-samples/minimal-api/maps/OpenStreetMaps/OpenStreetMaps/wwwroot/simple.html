@@ -2,343 +2,410 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Esempi di OpenStreetMap</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-    <style>
-        body {
-            margin: 0;
-            padding: 20px;
-            font-family: Arial, sans-serif;
-        }
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Esempi di OpenStreetMap</title>
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+	<style>
+		body {
+			margin: 0;
+			padding: 20px;
+			font-family: Arial, sans-serif;
+		}
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+		.container {
+			max-width: 1200px;
+			margin: 0 auto;
+		}
 
-        .map-container {
-            margin-bottom: 40px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+		.map-container {
+			margin-bottom: 40px;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+		}
 
-        .map-container > h2 {
-            text-align: center;
-        }
+		.map-container>h2 {
+			text-align: center;
+		}
 
-        .map-container > .params-explanation {
-            max-width: 800px;
-            width: 100%;
-            text-align: left;
-        }
+		.map-container>.params-explanation {
+			max-width: 800px;
+			width: 100%;
+			text-align: left;
+		}
 
-        .map {
-            width: 100%;
-            height: 400px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-        }
+		.map {
+			width: 100%;
+			height: 400px;
+			border-radius: 8px;
+			margin-bottom: 10px;
+		}
 
-        .static-map {
-            width: 100%;
-            max-width: 100%;
-            height: auto;
-            border-radius: 8px;
-            margin-bottom: 10px;
-        }
+		.static-map {
+			width: 100%;
+			max-width: 100%;
+			height: auto;
+			border-radius: 8px;
+			margin-bottom: 10px;
+		}
 
-        .address, .params-explanation {
-            margin-top: 10px;
-            padding: 10px;
-            background-color: #f5f5f5;
-            border-radius: 4px;
-        }
+		.address,
+		.params-explanation {
+			margin-top: 10px;
+			padding: 10px;
+			background-color: #f5f5f5;
+			border-radius: 4px;
+		}
 
-        .params-explanation {
-            font-size: 0.9em;
-            line-height: 1.5;
-        }
+		.params-explanation {
+			font-size: 0.9em;
+			line-height: 1.5;
+		}
 
-        .params-explanation code {
-            background-color: #e0e0e0;
-            padding: 2px 4px;
-            border-radius: 3px;
-            font-family: monospace;
-        }
+		.params-explanation code {
+			background-color: #e0e0e0;
+			padding: 2px 4px;
+			border-radius: 3px;
+			font-family: monospace;
+		}
 
-        .params-explanation ul {
-            margin: 5px 0;
-            padding-left: 20px;
-        }
+		.params-explanation ul {
+			margin: 5px 0;
+			padding-left: 20px;
+		}
 
-        .params-explanation h3 {
-            margin-top: 0;
-            color: #333;
-        }
+		.params-explanation h3 {
+			margin-top: 0;
+			color: #333;
+		}
 
-        .params-explanation a {
-            color: #0366d6;
-            text-decoration: none;
-        }
+		.params-explanation a {
+			color: #0366d6;
+			text-decoration: none;
+		}
 
-        .params-explanation a:hover {
-            text-decoration: underline;
-        }
+		.params-explanation a:hover {
+			text-decoration: underline;
+		}
 
-        h2 {
-            color: #333;
-            margin-bottom: 15px;
-        }
+		h2 {
+			color: #333;
+			margin-bottom: 15px;
+		}
 
-        @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
+		@media (max-width: 768px) {
+			body {
+				padding: 10px;
+			}
 
-            .map {
-                height: 300px;
-            }
+			.map {
+				height: 300px;
+			}
 
-            h2 {
-                font-size: 1.2em;
-            }
-        }
-    </style>
+			h2 {
+				font-size: 1.2em;
+			}
+		}
+	</style>
 </head>
 
 <body>
-    <div class="container">
-        <div class="map-container">
-            <h2>Mappa con Marcatore all'Indirizzo</h2>
-            <div id="map1" alt="Colosseum Map" class="map"></div>
-            <div class="address">Piazza del Colosseo, 1, 00184 Roma RM, Italy</div>
-            <div class="params-explanation">
-                <h3>Implementazione della Mappa con Leaflet.js:</h3>
-                <p>Questa mappa è creata usando Leaflet.js con i seguenti componenti:</p>
+	<div class="container">
+		<div class="map-container">
+			<h2>Mappa con Marcatore all'Indirizzo</h2>
+			<div id="map1" alt="Colosseum Map" class="map"></div>
+			<div class="address">Piazza del Colosseo, 1, 00184 Roma RM, Italy</div>
+			<div class="params-explanation">
+				<h3>Implementazione della Mappa con Leaflet.js:</h3>
+				<p>Questa mappa è creata usando Leaflet.js con i seguenti componenti:</p>
 
-                <h4>1. Inizializzazione della Mappa:</h4>
-                <ul>
-                    <li><code>L.map("map1", { minZoom: 3, maxZoom: 18 }).setView([41.8902, 12.4922], 15)</code>
-                        <ul>
-                            <li>Crea una mappa centrata sul Colosseo</li>
-                            <li>Il livello di zoom 15 fornisce dettagli a livello di quartiere</li>
-                            <li>I limiti di zoom (3-18) assicurano un rendering affidabile delle tile per OpenStreetMap</li>
-                            <li>See: <a href="https://leafletjs.com/reference.html#map-example" target="_blank" rel="noopener">Map initialization documentation</a></li>
-                        </ul>
-                    </li>
-                </ul>
+				<h4>1. Inizializzazione della Mappa:</h4>
+				<ul>
+					<li><code>L.map("map1", { minZoom: 3, maxZoom: 18 }).setView([41.8902, 12.4922], 15)</code>
+						<ul>
+							<li>Crea una mappa centrata sul Colosseo</li>
+							<li>Il livello di zoom 15 fornisce dettagli a livello di quartiere</li>
+							<li>I limiti di zoom (3-18) assicurano un rendering affidabile delle tile per OpenStreetMap
+							</li>
+							<li>Si veda: <a href="https://leafletjs.com/reference.html#map-example" target="_blank"
+									rel="noopener">Map initialization documentation</a></li>
+						</ul>
+					</li>
+				</ul>
 
-                <h4>2. Livello delle Tile:</h4>
-                <ul>
-                    <li><code>L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png")</code>
-                        <ul>
-                            <li>Aggiunge le tile di OpenStreetMap come livello base</li>
-                            <li>{s}: Subdomain for load balancing</li>
-                            <li>{z}: Zoom level</li>
-                            <li>{x},{y}: Tile coordinates</li>
-                            <li>See: <a href="https://leafletjs.com/reference.html#tilelayer" target="_blank" rel="noopener">TileLayer documentation</a></li>
-                        </ul>
-                    </li>
-                </ul>
+				<h4>2. Livello delle Tile:</h4>
+				<ul>
+					<li><code>L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png")</code>
+						<ul>
+							<li>Aggiunge le tile di OpenStreetMap come livello base</li>
+							<li>{s}: Subdomain for load balancing</li>
+							<li>{z}: Zoom level</li>
+							<li>{x},{y}: Tile coordinates</li>
+							<li>Si veda: <a href="https://leafletjs.com/reference.html#tilelayer" target="_blank"
+									rel="noopener">TileLayer documentation</a></li>
+						</ul>
+					</li>
+				</ul>
 
-                <h4>3. Marcatore:</h4>
-                <ul>
-                    <li><code>L.marker([41.8902, 12.4922]).bindPopup(address)</code>
-                        <ul>
-                            <li>Aggiunge un marcatore cliccabile nella posizione del Colosseo</li>
-                            <li>Il popup mostra l'indirizzo completo al clic</li>
-                            <li>See: <a href="https://leafletjs.com/reference.html#marker" target="_blank" rel="noopener">Marker documentation</a></li>
-                            <li>See: <a href="https://leafletjs.com/reference.html#popup" target="_blank" rel="noopener">Popup documentation</a></li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-        </div>
+				<h4>3. Marcatore:</h4>
+				<ul>
+					<li><code>L.marker([41.8902, 12.4922]).bindPopup(address)</code>
+						<ul>
+							<li>Aggiunge un marcatore cliccabile nella posizione del Colosseo</li>
+							<li>Il popup mostra l'indirizzo completo al clic</li>
+							<li>Si veda: <a href="https://leafletjs.com/reference.html#marker" target="_blank"
+									rel="noopener">Marker documentation</a></li>
+							<li>Si veda: <a href="https://leafletjs.com/reference.html#popup" target="_blank"
+									rel="noopener">Popup documentation</a></li>
+						</ul>
+					</li>
+				</ul>
+			</div>
+		</div>
 
-        <div class="map-container">
-            <h2>Mappa Satellitare ESRI con Marcatore di Posizione</h2>
-            <div id="map2" class="map"></div>
-            <div id="coordinates2" class="address"></div>
-            <div class="params-explanation">
-                <h3>Implementazione della Mappa Satellitare ESRI:</h3>
-                <p>Questa mappa combina Leaflet.js con le immagini satellitari di ESRI e aggiunge funzionalità interattive:</p>
+		<div class="map-container">
+			<h2>Mappa Satellitare ESRI con Marcatore di Posizione</h2>
+			<div id="map2" class="map"></div>
+			<div id="coordinates2" class="address"></div>
+			<div class="params-explanation">
+				<h3>Implementazione della Mappa Satellitare ESRI:</h3>
+				<p>Questa mappa combina Leaflet.js con le immagini satellitari di ESRI e aggiunge funzionalità
+					interattive:</p>
 
-                <h4>1. Impostazione della Mappa:</h4>
-                <ul>
-                    <li><code>L.map("map2", { minZoom: 3, maxZoom: 19 }).setView([41.9022, 12.4539], 16)</code>
-                        <ul>
-                            <li>Crea una mappa centrata sulla Basilica di San Pietro</li>
-                            <li>Il livello di zoom 16 fornisce una vista dettagliata degli edifici</li>
-                            <li>I limiti di zoom (3-19) prevengono errori API e corrispondono alle capacità di imagery di ESRI</li>
-                            <li>See: <a href="https://leafletjs.com/reference.html#map-example" target="_blank" rel="noopener">Leaflet Map documentation</a></li>
-                        </ul>
-                    </li>
-                </ul>
+				<h4>1. Impostazione della Mappa:</h4>
+				<ul>
+					<li><code>L.map("map2", { minZoom: 3, maxZoom: 19 }).setView([41.9022, 12.4539], 16)</code>
+						<ul>
+							<li>Crea una mappa centrata sulla Basilica di San Pietro</li>
+							<li>Il livello di zoom 16 fornisce una vista dettagliata degli edifici</li>
+							<li>I limiti di zoom (3-19) prevengono errori API e corrispondono alle capacità di imagery
+								di ESRI</li>
+							<li>Si veda: <a href="https://leafletjs.com/reference.html#map-example" target="_blank"
+									rel="noopener">Leaflet Map documentation</a></li>
+						</ul>
+					</li>
+				</ul>
 
-                <h4>2. Livello Basemap Vettoriale ESRI:</h4>
-                <ul>
-                    <li><code>L.esri.Vector.vectorBasemapLayer("arcgis/imagery", { token: accessToken })</code>
-                        <ul>
-                            <li>Utilizza tile vettoriali moderne invece delle tradizionali tile raster</li>
-                            <li>Fornisce una risoluzione più alta e aggiornamenti più frequenti</li>
-                            <li>Richiede l'autenticazione con una chiave API di ArcGIS</li>
-                            <li>Supporta lo styling dinamico e molteplici stili di basemap</li>
-                            <li>Part of the esri-leaflet-vector plugin</li>
-                            <li>See: <a href="https://developers.arcgis.com/esri-leaflet/api-reference/layers/vector-basemap/" target="_blank" rel="noopener">Vector Basemap Layer documentation</a></li>
-                        </ul>
-                    </li>
-                </ul>
+				<h4>2. Livello Basemap Vettoriale ESRI:</h4>
+				<ul>
+					<li><code>L.esri.Vector.vectorBasemapLayer("arcgis/imagery", { token: accessToken })</code>
+						<ul>
+							<li>Utilizza tile vettoriali moderne invece delle tradizionali tile raster</li>
+							<li>Fornisce una risoluzione più alta e aggiornamenti più frequenti</li>
+							<li>Richiede l'autenticazione con una chiave API di ArcGIS</li>
+							<li>Supporta lo styling dinamico e molteplici stili di basemap</li>
+							<li>Part of the esri-leaflet-vector plugin</li>
+							<li>Si veda: <a
+									href="https://developers.arcgis.com/esri-leaflet/api-reference/layers/vector-basemap/"
+									target="_blank" rel="noopener">Vector Basemap Layer documentation</a></li>
+						</ul>
+					</li>
+				</ul>
 
-                <h4>Nota sui Tipi di Livello ESRI:</h4>
-                <p>Ci sono due approcci principali per utilizzare le basemap ESRI:</p>
-                <ol>
-                    <li>Traditional Tile Layer:
-                        <ul>
-                            <li><code>L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}')</code></li>
-                            <li>Utilizza i servizi REST di ArcGIS gratuiti</li>
-                            <li>Fornisce tile raster senza autenticazione</li>
-                            <li>Risoluzione inferiore e aggiornamenti meno frequenti</li>
-                            <li>Limitato a specifici stili di basemap</li>
-                        </ul>
-                    </li>
-                    <li>Vector Basemap Layer (usate qui):
-                        <ul>
-                            <li>Approccio moderno con tile vettoriali</li>
-                            <li>Richiede una chiave API ma fornisce una qualità migliore</li>
-                            <li>Più flessibile con le opzioni di styling</li>
-                            <li>Aggiornamenti e miglioramenti regolari</li>
-                        </ul>
-                    </li>
-                </ol>
+				<h4>Nota sui Tipi di Livello ESRI:</h4>
+				<p>Ci sono due approcci principali per utilizzare le basemap ESRI:</p>
+				<ol>
+					<li>Traditional Raster Tile Layer:
+						<ul>
+							<li><code>L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}')</code>
+							</li>
+							<li>Utilizza i servizi REST di ArcGIS gratuiti</li>
+							<li>Fornisce tile raster senza autenticazione</li>
+							<li>Risoluzione inferiore e aggiornamenti meno frequenti</li>
+							<li>Limitato a specifici stili di basemap</li>
+						</ul>
+					</li>
+					<li>Vector Basemap Layer (usate qui):
+						<ul>
+							<li>Approccio moderno con tile vettoriali</li>
+							<li>Richiede una chiave API ma fornisce una qualità migliore</li>
+							<li>Più flessibile con le opzioni di styling</li>
+							<li>Aggiornamenti e miglioramenti regolari</li>
+						</ul>
+					</li>
+				</ol>
 
-                <h4>3. Autenticazione:</h4>
-                <ul>
-                    <li><code>await getArcGISLocationPlatformToken()</code>
-                        <ul>
-                            <li>Recupera un token ArcGIS Location Platform dal server</li>
-                            <li>Richiesto per accedere al servizio di stili basemap di ArcGIS</li>
-                            <li>See: <a href="https://developers.arcgis.com/documentation/mapping-apis-and-services/security/" target="_blank" rel="noopener">ArcGIS Authentication documentation</a></li>
-                        </ul>
-                    </li>
-                </ul>
+				<h4>3. Autenticazione:</h4>
+				<ul>
+					<li><code>await getArcGISLocationPlatformToken()</code>
+						<ul>
+							<li>Recupera un token ArcGIS Location Platform dal server</li>
+							<li>Richiesto per accedere al servizio di stili basemap di ArcGIS</li>
+							<li>Si veda: <a
+									href="https://developers.arcgis.com/documentation/mapping-apis-and-services/security/"
+									target="_blank" rel="noopener">ArcGIS Authentication documentation</a></li>
+						</ul>
+					</li>
+				</ul>
 
-                <h4>3. Funzionalità Interattive:</h4>
-                <ul>
-                    <li>Marker with Popup:
-                        <ul>
-                            <li><code>L.marker([41.9022, 12.4539]).bindPopup("St. Peter's Basilica")</code></li>
-                            <li>Posiziona un marcatore nella posizione esatta</li>
-                            <li>See: <a href="https://leafletjs.com/reference.html#marker" target="_blank" rel="noopener">Marker documentation</a></li>
-                        </ul>
-                    </li>
-                    <li>Live Coordinates Display:
-                        <ul>
-                            <li><code>map2.on('moveend', function() { ... })</code></li>
-                            <li>Aggiorna le coordinate quando il movimento della mappa termina</li>
-                            <li>Uses .toFixed(4) for 4 decimal precision</li>
-                            <li>See: <a href="https://leafletjs.com/reference.html#map-event" target="_blank" rel="noopener">Map Events documentation</a></li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-            <div class="params-explanation">
-                <h3>ArcGIS Location Platform</h3>
-                <p>ArcGIS Location Platform fornisce vari servizi per la mappatura e le applicazioni basate sulla posizione. Ecco alcuni link utili:</p>
-                <ul>
-                    <li><a href="https://location.arcgis.com/" target="_blank" rel="noopener">ArcGIS Location Platform</a> - Overview of the platform.</li>
-                    <li><a href="https://location.arcgis.com/sign-up/" target="_blank" rel="noopener">ArcGIS Location Platform Account Creation</a> - Sign up for a new account.</li>
-                    <li><a href="https://location.arcgis.com/pricing/" target="_blank" rel="noopener">ArcGIS Location Platform Pricing</a> - Information about pricing plans.</li>
-                    <li><a href="https://location.arcgis.com/dashboard/" target="_blank" rel="noopener">ArcGIS Location Platform Dashboard</a> - Administration dashboard for services and keys.</li>
-                </ul>
-                <h3>ESRI Developer Documentation</h3>
-                <p>The ESRI Developer Documentation provides resources for developers using ArcGIS products. Here are some useful links:</p>
-                <ul>
-                    <li><a href="https://developers.arcgis.com/documentation/" target="_blank" rel="noopener">ESRI Developer Documentation</a> - Main documentation page.</li>
-                    <li><a href="https://developers.arcgis.com/esri-leaflet/samples/showing-a-basemap/" target="_blank" rel="noopener">Esri Leaflet - Showing a Basemap</a> - Example of showing a basemap using Esri Leaflet.</li>
-                    <li><a href="https://developers.arcgis.com/documentation/mapping-and-location-services/mapping/basemap-layers/" target="_blank" rel="noopener">Basemap Layers</a> - Information about basemap layers.</li>
-                    <li><a href="https://developers.arcgis.com/rest/basemap-styles/" target="_blank" rel="noopener">Basemap Styles</a> - Information about basemap styles.</li>
-                </ul>
-            </div>
-        </div>
+				<h4>4. Funzionalità Interattive:</h4>
+				<ul>
+					<li>Marker with Popup:
+						<ul>
+							<li><code>L.marker([41.9022, 12.4539]).bindPopup("St. Peter's Basilica")</code></li>
+							<li>Posiziona un marcatore nella posizione esatta</li>
+							<li>Si veda: <a href="https://leafletjs.com/reference.html#marker" target="_blank"
+									rel="noopener">Marker documentation</a></li>
+						</ul>
+					</li>
+					<li>Live Coordinates Display:
+						<ul>
+							<li><code>map2.on('moveend', function() { ... })</code></li>
+							<li>Aggiorna le coordinate quando il movimento della mappa termina</li>
+							<li>Usa .toFixed(4) per precisione decimale a 4 cifre</li>
+							<li>Si veda: <a href="https://leafletjs.com/reference.html#map-event" target="_blank"
+									rel="noopener">Map Events documentation</a></li>
+						</ul>
+					</li>
+				</ul>
 
-        <div class="map-container">
-            <h2>Mappa Regionale con Overlay GeoJSON</h2>
-            <div id="map3" class="map"></div>
-            <div class="params-explanation">
-                <h3>Implementazione della Mappa GeoJSON:</h3>
-                <p>Questa mappa visualizza il centro storico di Roma utilizzando GeoJSON per definire il confine dell'area:</p>
+				<h4>5. Implementazioni ESRI Raster API:</h4>
+				<p>Ci sono due approcci principali per implementare le mappe raster ESRI:</p>
+				<ul>
+					<li>Approccio 1 - Usando esri-leaflet:
+						<ul>
+							<li><code>const map2 = L.map("map2").setView([41.9022, 12.4539], 16);
+L.esri.basemapLayer("Imagery").addTo(map2);</code></li>
+							<li>Utilizza il plugin esri-leaflet per una facile integrazione</li>
+							<li>Supporta vari tipi di basemap predefiniti</li>
+							<li>Non richiede un URL diretto al servizio tile</li>
+							<li>Richiede: <code>leaflet.css; leaflet.js; esri-leaflet.js</code></li>
+						</ul>
+					</li>
+					<li>Approccio 2 - URL Diretto al Servizio Tile:
+						<ul>
+							<li><code>const map2 = L.map("map2", {
+   minZoom: 3,
+   maxZoom: 18,
+ }).setView([41.9022, 12.4539], 15);
+ L.tileLayer(
+   "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}.png",
+   {
+	 attribution: "© ESRI © OpenStreetMap contributors",
+   }
+ ).addTo(map2);</code></li>
+							<li>Utilizza direttamente l'URL del servizio tile ESRI</li>
+							<li>Maggiore controllo sulla configurazione del layer</li>
+							<li>Non richiede librerie aggiuntive oltre a Leaflet</li>
+						</ul>
+					</li>
+				</ul>
+			</div>
+			<div class="params-explanation">
+				<h3>ArcGIS Location Platform</h3>
+				<p>ArcGIS Location Platform fornisce vari servizi per la mappatura e le applicazioni basate sulla
+					posizione. Ecco alcuni link utili:</p>
+				<ul>
+					<li><a href="https://location.arcgis.com/" target="_blank" rel="noopener">ArcGIS Location
+							Platform</a> - Overview of the platform.</li>
+					<li><a href="https://location.arcgis.com/sign-up/" target="_blank" rel="noopener">ArcGIS Location
+							Platform Account Creation</a> - Sign up for a new account.</li>
+					<li><a href="https://location.arcgis.com/pricing/" target="_blank" rel="noopener">ArcGIS Location
+							Platform Pricing</a> - Information about pricing plans.</li>
+					<li><a href="https://location.arcgis.com/dashboard/" target="_blank" rel="noopener">ArcGIS Location
+							Platform Dashboard</a> - Administration dashboard for services and keys.</li>
+				</ul>
+				<h3>ESRI Developer Documentation</h3>
+				<p>The ESRI Developer Documentation provides resources for developers using ArcGIS products. Here are
+					some useful links:</p>
+				<ul>
+					<li><a href="https://developers.arcgis.com/documentation/" target="_blank" rel="noopener">ESRI
+							Developer Documentation</a> - Main documentation page.</li>
+					<li><a href="https://developers.arcgis.com/esri-leaflet/samples/showing-a-basemap/" target="_blank"
+							rel="noopener">Esri Leaflet - Showing a Basemap</a> - Example of showing a basemap using
+						Esri Leaflet.</li>
+					<li><a href="https://developers.arcgis.com/documentation/mapping-and-location-services/mapping/basemap-layers/"
+							target="_blank" rel="noopener">Basemap Layers</a> - Information about basemap layers.</li>
+					<li><a href="https://developers.arcgis.com/rest/basemap-styles/" target="_blank"
+							rel="noopener">Basemap Styles</a> - Information about basemap styles.</li>
+				</ul>
+			</div>
+		</div>
 
-                <h4>1. Impostazione della Mappa:</h4>
-                <ul>
-                    <li><code>L.map("map3", { minZoom: 3, maxZoom: 18 }).setView([41.9028, 12.4964], 13)</code>
-                        <ul>
-                            <li>Crea una mappa centrata sul centro storico di Roma</li>
-                            <li>Il livello di zoom 13 fornisce una panoramica del quartiere</li>
-                            <li>I limiti di zoom (3-18) assicurano un rendering affidabile delle tile per OpenStreetMap</li>
-                            <li>See: <a href="https://leafletjs.com/reference.html#map-example" target="_blank" rel="noopener">Map initialization documentation</a></li>
-                        </ul>
-                    </li>
-                </ul>
+		<div class="map-container">
+			<h2>Mappa regionale con overlay GeoJSON</h2>
+			<div id="map3" class="map"></div>
+			<div class="params-explanation">
+				<h3>Implementazione della mappa GeoJSON:</h3>
+				<p>Questa mappa visualizza il centro storico di Roma utilizzando GeoJSON per definire il confine
+					dell'area:</p>
 
-                <h4>2. Struttura GeoJSON:</h4>
-                <ul>
-                    <li>Feature Type:
-                        <ul>
-                            <li><code>type: "Feature"</code> - Single GeoJSON feature</li>
-                            <li><code>properties: { name: "Rome Historic Center" }</code> - Feature metadata</li>
-                            <li><code>geometry: { type: "Polygon" }</code> - Closed shape definition</li>
-                            <li>See: <a href="https://geojson.org/" target="_blank" rel="noopener">GeoJSON Format Specification</a></li>
-                        </ul>
-                    </li>
-                    <li>Coordinates Array:
-                        <ul>
-                            <li>Otto coppie di coordinate che formano un poligono</li>
-                            <li>Formato: [longitudine, latitudine] per ogni punto</li>
-                            <li>First and last points match to close the polygon</li>
-                            <li>See: <a href="https://leafletjs.com/examples/geojson/" target="_blank" rel="noopener">Leaflet GeoJSON examples</a></li>
-                        </ul>
-                    </li>
-                </ul>
+				<h4>1. Impostazione della Mappa:</h4>
+				<ul>
+					<li><code>L.map("map3", { minZoom: 3, maxZoom: 18 }).setView([41.9028, 12.4964], 13)</code>
+						<ul>
+							<li>Crea una mappa centrata sul centro storico di Roma</li>
+							<li>Il livello di zoom 13 fornisce una panoramica del quartiere</li>
+							<li>I limiti di zoom (3-18) assicurano un rendering affidabile delle tile per OpenStreetMap
+							</li>
+							<li>Si veda: <a href="https://leafletjs.com/reference.html#map-example" target="_blank"
+									rel="noopener">Map initialization documentation</a></li>
+						</ul>
+					</li>
+				</ul>
 
-                <h4>3. Livello GeoJSON:</h4>
-                <ul>
-                    <li><code>L.geoJSON(historicCenterGeoJSON, { style: {...} })</code>
-                        <ul>
-                            <li>Renderizza il poligono GeoJSON sulla mappa</li>
-                            <li>Style options:
-                                <ul>
-                                    <li>color: #ff7800 (orange border)</li>
-                                    <li>weight: 3 (border thickness)</li>
-                                    <li>opacity: 0.7 (border transparency)</li>
-                                    <li>fillOpacity: 0.2 (fill transparency)</li>
-                                </ul>
-                            </li>
-                            <li>See: <a href="https://leafletjs.com/reference.html#geojson" target="_blank" rel="noopener">GeoJSON Layer documentation</a></li>
-                        </ul>
-                    </li>
-                </ul>
+				<h4>2. Struttura GeoJSON:</h4>
+				<ul>
+					<li>Feature Type:
+						<ul>
+							<li><code>type: "Feature"</code> - Single GeoJSON feature</li>
+							<li><code>properties: { name: "Rome Historic Center" }</code> - Feature metadata</li>
+							<li><code>geometry: { type: "Polygon" }</code> - Closed shape definition</li>
+							<li>Si veda: <a href="https://geojson.org/" target="_blank" rel="noopener">GeoJSON Format
+									Specification</a></li>
+						</ul>
+					</li>
+					<li>Coordinates Array:
+						<ul>
+							<li>Otto coppie di coordinate che formano un poligono</li>
+							<li>Formato: [longitudine, latitudine] per ogni punto</li>
+							<li>First and last points match to close the polygon</li>
+							<li>Si veda: <a href="https://leafletjs.com/examples/geojson/" target="_blank"
+									rel="noopener">Leaflet GeoJSON examples</a></li>
+						</ul>
+					</li>
+				</ul>
 
-                <h4>4. Funzionalità Interattive:</h4>
-                <ul>
-                    <li>Associazione Popup: <code>.bindPopup("Centro Storico di Roma - Sito Patrimonio Mondiale UNESCO")</code></li>
-                    <li>Auto-zoom: <code>map3.fitBounds(geoJsonLayer.getBounds())</code>
-                        <ul>
-                            <li>Adatta automaticamente la vista mappa ai confini del poligono</li>
-                            <li>See: <a href="https://leafletjs.com/reference.html#map-fitbounds" target="_blank" rel="noopener">fitBounds documentation</a></li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </div>
+				<h4>3. Livello GeoJSON:</h4>
+				<ul>
+					<li><code>L.geoJSON(historicCenterGeoJSON, { style: {...} })</code>
+						<ul>
+							<li>Renderizza il poligono GeoJSON sulla mappa</li>
+							<li>Style options:
+								<ul>
+									<li>color: #ff7800 (orange border)</li>
+									<li>weight: 3 (border thickness)</li>
+									<li>opacity: 0.7 (border transparency)</li>
+									<li>fillOpacity: 0.2 (fill transparency)</li>
+								</ul>
+							</li>
+							<li>Si veda: <a href="https://leafletjs.com/reference.html#geojson" target="_blank"
+									rel="noopener">GeoJSON Layer documentation</a></li>
+						</ul>
+					</li>
+				</ul>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/esri-leaflet@3.0.14/dist/esri-leaflet.js"></script>
-    <script src="https://unpkg.com/esri-leaflet-vector@4.2.7/dist/esri-leaflet-vector.js" crossorigin=""></script>
-    <script src="simple.js"></script>
+				<h4>4. Funzionalità Interattive:</h4>
+				<ul>
+					<li>Associazione Popup:
+						<code>.bindPopup("Centro Storico di Roma - Sito Patrimonio Mondiale UNESCO")</code></li>
+					<li>Auto-zoom: <code>map3.fitBounds(geoJsonLayer.getBounds())</code>
+						<ul>
+							<li>Adatta automaticamente la vista mappa ai confini del poligono</li>
+							<li>Si veda: <a href="https://leafletjs.com/reference.html#map-fitbounds" target="_blank"
+									rel="noopener">fitBounds documentation</a></li>
+						</ul>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</div>
+
+	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+	<script src="https://unpkg.com/esri-leaflet@3.0.14/dist/esri-leaflet.js"></script>
+	<script src="https://unpkg.com/esri-leaflet-vector@4.2.7/dist/esri-leaflet-vector.js" crossorigin=""></script>
+	<script src="simple.js"></script>
 </body>
 
 </html>
