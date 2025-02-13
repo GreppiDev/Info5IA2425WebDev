@@ -16,12 +16,12 @@ public static class RegistaEndpoints
 		//restituisce il regista con il TmdbId specificato
 		group.MapGet("/registi/tmdb/{tmdbId}", async (FilmDbContext db, int tmdbId) =>
 		{
-		    var regista = await db.Registi.FirstOrDefaultAsync(r => r.TmdbId == tmdbId);
-		    if (regista is null)
-		    {
-		        return Results.NotFound();
-		    }
-		    return Results.Ok(new RegistaDTO(regista));
+			var regista = await db.Registi.FirstOrDefaultAsync(r => r.TmdbId == tmdbId);
+			if (regista is null)
+			{
+				return Results.NotFound();
+			}
+			return Results.Ok(new RegistaDTO(regista));
 		});
 		
 		//GET /registi/{id}/films
@@ -94,25 +94,24 @@ public static class RegistaEndpoints
 		//crea un nuovo regista
 		group.MapPost("/registi", async (FilmDbContext db, RegistaDTO registaDTO) =>
 		{
-			//non faccio la validazione dell'input
 			//creo il regista a partire da RegistaDTO
 			Regista regista = new()
 			{
-			    Nome = registaDTO.Nome,
-			    Cognome = registaDTO.Cognome,
-			    Nazionalità = registaDTO.Nazionalità,
-			    TmdbId = registaDTO.TmdbId
+				Nome = registaDTO.Nome,
+				Cognome = registaDTO.Cognome,
+				Nazionalità = registaDTO.Nazionalità,
+				TmdbId = registaDTO.TmdbId
 			};
 			
 			// Check if director with same TmdbId already exists
 			if (registaDTO.TmdbId.HasValue)
 			{
-			    var existingRegista = await db.Registi
-			        .FirstOrDefaultAsync(r => r.TmdbId == registaDTO.TmdbId);
-			    if (existingRegista != null)
-			    {
-			        return Results.Conflict($"Director with TmdbId {registaDTO.TmdbId} already exists");
-			    }
+				var existingRegista = await db.Registi
+					.FirstOrDefaultAsync(r => r.TmdbId == registaDTO.TmdbId);
+				if (existingRegista != null)
+				{
+					return Results.Conflict($"Director with TmdbId {registaDTO.TmdbId} already exists");
+				}
 			}
 			//aggiungo il regista al DB
 			db.Registi.Add(regista);
@@ -134,6 +133,17 @@ public static class RegistaEndpoints
 			regista.Nome = registaDTO.Nome;
 			regista.Cognome = registaDTO.Cognome;
 			regista.Nazionalità = registaDTO.Nazionalità;
+			// Check if director with same TmdbId already exists
+			if (registaDTO.TmdbId.HasValue)
+			{
+				var existingRegista = await db.Registi
+					.FirstOrDefaultAsync(r => r.TmdbId == registaDTO.TmdbId);
+				if (existingRegista != null)
+				{
+					return Results.Conflict($"Director with TmdbId {registaDTO.TmdbId} already exists");
+				}
+			}
+			regista.TmdbId = registaDTO.TmdbId;
 			//salvo le modifiche
 			await db.SaveChangesAsync();
 			return Results.NoContent();

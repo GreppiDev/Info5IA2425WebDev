@@ -14,12 +14,12 @@ public static class FilmEndpoints
 		//restituisce il film con il TmdbId specificato
 		group.MapGet("/films/tmdb/{tmdbId}", async (FilmDbContext db, int tmdbId) =>
 		{
-		    var film = await db.Films.FirstOrDefaultAsync(f => f.TmdbId == tmdbId);
-		    if (film is null)
-		    {
-		        return Results.NotFound();
-		    }
-		    return Results.Ok(new FilmDTO(film));
+			var film = await db.Films.FirstOrDefaultAsync(f => f.TmdbId == tmdbId);
+			if (film is null)
+			{
+				return Results.NotFound();
+			}
+			return Results.Ok(new FilmDTO(film));
 		});
 		
 		//GET /films
@@ -53,6 +53,17 @@ public static class FilmEndpoints
 			film.RegistaId = filmDTO.RegistaId;
 			film.Durata = filmDTO.Durata;
 			film.DataProduzione = filmDTO.DataProduzione;
+			if(filmDTO.TmdbId.HasValue)
+			{
+				// Check if film with same TmdbId already exists
+				var existingFilm = await db.Films
+					.FirstOrDefaultAsync(f => f.TmdbId == filmDTO.TmdbId);
+				if (existingFilm != null)
+				{
+					return Results.Conflict($"Film with TmdbId {filmDTO.TmdbId} already exists in the database");
+				}
+			}
+			film.TmdbId = filmDTO.TmdbId;
 			//salvo il film modificato
 			await db.SaveChangesAsync();
 			//restituisco la risposta
@@ -63,31 +74,31 @@ public static class FilmEndpoints
 		//crea un nuovo film
 		group.MapPost("/films", async (FilmDbContext db, FilmDTO filmDTO)=>
 		{
-		    // Check if film with same TmdbId already exists
-		    if (filmDTO.TmdbId.HasValue)
-		    {
-		        var existingFilm = await db.Films
-		            .FirstOrDefaultAsync(f => f.TmdbId == filmDTO.TmdbId);
-		        if (existingFilm != null)
-		        {
-		            return Results.Conflict($"Film with TmdbId {filmDTO.TmdbId} already exists in the database");
-		        }
-		    }
+			// Check if film with same TmdbId already exists
+			if (filmDTO.TmdbId.HasValue)
+			{
+				var existingFilm = await db.Films
+					.FirstOrDefaultAsync(f => f.TmdbId == filmDTO.TmdbId);
+				if (existingFilm != null)
+				{
+					return Results.Conflict($"Film with TmdbId {filmDTO.TmdbId} already exists in the database");
+				}
+			}
 		
-		    //creo un nuovo film
-		    Film film = new()
-		    {
-		        Titolo = filmDTO.Titolo,
-		        RegistaId = filmDTO.RegistaId,
-		        Durata = filmDTO.Durata,
-		        DataProduzione = filmDTO.DataProduzione,
-		        TmdbId = filmDTO.TmdbId
-		    };
-		    //aggiungo il film al database
-		    db.Films.Add(film);
-		    await db.SaveChangesAsync();
-		    //restituisco la risposta
-		    return Results.Created($"/films/{film.Id}", new FilmDTO(film));
+			//creo un nuovo film
+			Film film = new()
+			{
+				Titolo = filmDTO.Titolo,
+				RegistaId = filmDTO.RegistaId,
+				Durata = filmDTO.Durata,
+				DataProduzione = filmDTO.DataProduzione,
+				TmdbId = filmDTO.TmdbId
+			};
+			//aggiungo il film al database
+			db.Films.Add(film);
+			await db.SaveChangesAsync();
+			//restituisco la risposta
+			return Results.Created($"/films/{film.Id}", new FilmDTO(film));
 		});
 
 		//DELETE /films/{id}

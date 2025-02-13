@@ -1,23 +1,23 @@
 # Casi d'uso e progettazione concettuale
 
 - [Casi d'uso e progettazione concettuale](#casi-duso-e-progettazione-concettuale)
-  - [Collegamento tra Casi d'Uso, Analisi dei Requisiti e Progettazione Concettuale](#collegamento-tra-casi-duso-analisi-dei-requisiti-e-progettazione-concettuale)
-  - [Fase di Analisi dei Requisiti: Il Ruolo dei Casi d'Uso](#fase-di-analisi-dei-requisiti-il-ruolo-dei-casi-duso)
-  - [Come i Casi d'Uso Aiutano nell'Analisi dei Vincoli](#come-i-casi-duso-aiutano-nellanalisi-dei-vincoli)
-  - [Progettazione Concettuale e Modello Entity/Relationship (E/R)](#progettazione-concettuale-e-modello-entityrelationship-er)
-  - [Il Legame Diretto tra Casi d'Uso e Modello E/R](#il-legame-diretto-tra-casi-duso-e-modello-er)
-  - [Processo Metodologico: Dai Casi d'Uso al Modello E/R](#processo-metodologico-dai-casi-duso-al-modello-er)
+  - [Collegamento tra casi d'uso, analisi dei requisiti e progettazione concettuale](#collegamento-tra-casi-duso-analisi-dei-requisiti-e-progettazione-concettuale)
+  - [Fase di analisi dei requisiti: Il ruolo dei casi d'uso](#fase-di-analisi-dei-requisiti-il-ruolo-dei-casi-duso)
+  - [Come i casi d'Uso aiutano nell'analisi dei vincoli](#come-i-casi-duso-aiutano-nellanalisi-dei-vincoli)
+  - [Progettazione concettuale e modello Entity/Relationship (E/R)](#progettazione-concettuale-e-modello-entityrelationship-er)
+  - [Il Legame diretto tra casi d'uso e modello E/R](#il-legame-diretto-tra-casi-duso-e-modello-er)
+  - [Processo Metodologico: Dai casi d'uso al Modello E/R](#processo-metodologico-dai-casi-duso-al-modello-er)
   - [Esempio semplificato: Applicazione Mobile di Prenotazione Ristoranti](#esempio-semplificato-applicazione-mobile-di-prenotazione-ristoranti)
   - [Esempio completo: Sistema di Gestione di una Biblioteca Universitaria](#esempio-completo-sistema-di-gestione-di-una-biblioteca-universitaria)
     - [Documento di Specifica Testuale (Traccia)](#documento-di-specifica-testuale-traccia)
     - [Analisi dei Requisiti Funzionali e di Dato](#analisi-dei-requisiti-funzionali-e-di-dato)
       - [Requisiti Funzionali](#requisiti-funzionali)
       - [Requisiti di Dato](#requisiti-di-dato)
-    - [Definizione dei Casi d'Uso](#definizione-dei-casi-duso)
+    - [Definizione dei casi d'uso](#definizione-dei-casi-duso)
       - [Attori](#attori)
-      - [Casi d'Uso per Studente](#casi-duso-per-studente)
-      - [Casi d'Uso per Bibliotecario](#casi-duso-per-bibliotecario)
-      - [Diagramma dei Casi d'Uso Iniziale](#diagramma-dei-casi-duso-iniziale)
+      - [casi d'uso per Studente](#casi-duso-per-studente)
+      - [casi d'uso per Bibliotecario](#casi-duso-per-bibliotecario)
+      - [Diagramma dei casi d'uso Iniziale](#diagramma-dei-casi-duso-iniziale)
     - [Modello E/R Iniziale (Progettazione Concettuale)](#modello-er-iniziale-progettazione-concettuale)
       - [Entità Iniziali](#entità-iniziali)
       - [Relazioni Iniziali](#relazioni-iniziali)
@@ -42,13 +42,13 @@
   - [Esempio completo: web app per prenotazioni al ristorante](#esempio-completo-web-app-per-prenotazioni-al-ristorante)
     - [Traccia di Input](#traccia-di-input)
     - [Casi d'uso](#casi-duso)
-      - [Caso d'Uso: UC1 - Cerca Ristorante](#caso-duso-uc1---cerca-ristorante)
-      - [Caso d'Uso: UC2 - Effettua Prenotazione](#caso-duso-uc2---effettua-prenotazione)
-      - [Caso d'Uso: UC3 - Gestisce Disponibilità](#caso-duso-uc3---gestisce-disponibilità)
-      - [Caso d'Uso: UC4 - Autentica Utente](#caso-duso-uc4---autentica-utente)
-      - [Caso d'Uso: UC5 - Verifica Disponibilità](#caso-duso-uc5---verifica-disponibilità)
-      - [Caso d'Uso: UC6 - Invia Conferma](#caso-duso-uc6---invia-conferma)
-      - [Caso d'Uso: UC7 - Gestisce Pagamento](#caso-duso-uc7---gestisce-pagamento)
+      - [Caso d'uso: UC1 - Cerca Ristorante](#caso-duso-uc1---cerca-ristorante)
+      - [Caso d'uso: UC2 - Effettua Prenotazione](#caso-duso-uc2---effettua-prenotazione)
+      - [Caso d'uso: UC3 - Gestisce Disponibilità](#caso-duso-uc3---gestisce-disponibilità)
+      - [Caso d'uso: UC4 - Autentica Utente](#caso-duso-uc4---autentica-utente)
+      - [Caso d'uso: UC5 - Verifica Disponibilità](#caso-duso-uc5---verifica-disponibilità)
+      - [Caso d'uso: UC6 - Invia Conferma](#caso-duso-uc6---invia-conferma)
+      - [Caso d'uso: UC7 - Gestisce Pagamento](#caso-duso-uc7---gestisce-pagamento)
     - [Modello E/R Iniziale (Progettazione Concettuale - prenotazioni ristorante)](#modello-er-iniziale-progettazione-concettuale---prenotazioni-ristorante)
       - [Entità Iniziali - prenotazioni ristorante](#entità-iniziali---prenotazioni-ristorante)
       - [Relazioni Iniziali - prenotazioni ristorante](#relazioni-iniziali---prenotazioni-ristorante)
@@ -60,33 +60,33 @@
       - [Diagramma E/R Raffinato - prenotazioni ristorante](#diagramma-er-raffinato---prenotazioni-ristorante)
     - [Schema Logico SQL (MariaDB) - prenotazioni ristorante](#schema-logico-sql-mariadb---prenotazioni-ristorante)
 
-## Collegamento tra Casi d'Uso, Analisi dei Requisiti e Progettazione Concettuale
+## Collegamento tra casi d'uso, analisi dei requisiti e progettazione concettuale
 
 I **diagrammi dei casi d'uso** sono nati proprio per essere un ponte tra le esigenze degli stakeholder (utenti, clienti, esperti di dominio, ecc.) e la progettazione tecnica di un sistema informativo. Essi si inseriscono perfettamente nella fase di **analisi dei requisiti** e preparano il terreno per la **progettazione concettuale**.
 
-## Fase di Analisi dei Requisiti: Il Ruolo dei Casi d'Uso
+## Fase di analisi dei requisiti: Il ruolo dei casi d'uso
 
 La fase di analisi dei requisiti è il momento in cui si cerca di comprendere a fondo **cosa deve fare il sistema**. Si raccolgono informazioni dalle diverse fonti, si identificano le esigenze degli utenti, si definiscono le funzionalità attese e si prendono in considerazione i **vincoli** (tecnici, economici, di tempo, di sicurezza, legali, ecc.).
 
 I casi d'uso sono uno strumento **potente e versatile** per questa fase perché:
 
-1. **Focalizzazione sull'Utente**: I casi d'uso sono centrati sull'utente (attore) e sul valore che il sistema deve fornirgli. Questo aiuta a mantenere l'attenzione sulle **vere esigenze** e non perdersi in dettagli implementativi prematuri.
-2. **Comunicazione Efficace**: I diagrammi dei casi d'uso sono facilmente comprensibili da persone con background diversi (tecnici e non tecnici). Sono un ottimo strumento per la **comunicazione e la validazione** dei requisiti con gli stakeholder.
-3. **Strutturazione dei Requisiti Funzionali**: I casi d'uso organizzano i requisiti funzionali in unità discrete e significative (i casi d'uso stessi). Questo facilita la **gestione della complessità** e la suddivisione del lavoro.
-4. **Identificazione dei Confini del Sistema**: La distinzione tra attori (esterni) e sistema (interno) aiuta a **definire i confini** del sistema in modo chiaro.
-5. **Base per la Progettazione**: I casi d'uso non sono solo un documento statico di requisiti. Essi forniscono una solida **base per le fasi di progettazione** successive, inclusa la progettazione concettuale.
+1. **Focalizzazione sull'utente**: I casi d'uso sono centrati sull'utente (attore) e sul valore che il sistema deve fornirgli. Questo aiuta a mantenere l'attenzione sulle **vere esigenze** e non perdersi in dettagli implementativi prematuri.
+2. **Comunicazione efficace**: I diagrammi dei casi d'uso sono facilmente comprensibili da persone con background diversi (tecnici e non tecnici). Sono un ottimo strumento per la **comunicazione e la validazione** dei requisiti con gli stakeholder.
+3. **Strutturazione dei requisiti funzionali**: I casi d'uso organizzano i requisiti funzionali in unità discrete e significative (i casi d'uso stessi). Questo facilita la **gestione della complessità** e la suddivisione del lavoro.
+4. **Identificazione dei confini del sistema**: La distinzione tra attori (esterni) e sistema (interno) aiuta a **definire i confini** del sistema in modo chiaro.
+5. **Base per la progettazione**: I casi d'uso non sono solo un documento statico di requisiti. Essi forniscono una solida **base per le fasi di progettazione** successive, inclusa la progettazione concettuale.
 
-## Come i Casi d'Uso Aiutano nell'Analisi dei Vincoli
+## Come i casi d'Uso aiutano nell'analisi dei vincoli
 
 Oltre ai requisiti funzionali, è fondamentale considerare i **vincoli**. I casi d'uso possono aiutare anche in questo aspetto:
 
-* **Vincoli di Performance/Scalabilità**: Alcuni casi d'uso, come "Gestire un elevato numero di transazioni simultanee" (per un sistema di e-commerce) o "Elaborare dati in tempo reale" (per un'applicazione di monitoraggio), possono evidenziare vincoli di performance e scalabilità che devono essere presi in considerazione nella progettazione.
-* **Vincoli di Sicurezza**: Casi d'uso come "Autenticare Utente", "Autorizzare Accesso a Risorse", "Proteggere dati sensibili" fanno emergere i requisiti di sicurezza e i vincoli correlati (es: protocolli di sicurezza da utilizzare, politiche di accesso).
-* **Vincoli di Usabilità**: I casi d'uso descrivono le interazioni utente-sistema. Una buona analisi dei casi d'uso, magari con l'aiuto di prototipi o storyboard, può far emergere vincoli di usabilità, come la necessità di interfacce intuitive, accessibilità per utenti con disabilità, ecc.
-* **Vincoli Tecnici e Piattaforma**: La scelta delle tecnologie e della piattaforma può essere influenzata dai casi d'uso. Ad esempio, se ci sono molti casi d'uso che richiedono elaborazioni intensive lato server, si potrebbe optare per architetture cloud-based o tecnologie server-side specifiche. Se l'applicazione deve essere disponibile su dispositivi mobili, i casi d'uso influenzeranno la progettazione dell'interfaccia utente mobile-first.
-* **Vincoli di Budget e Tempi**: La priorità e la complessità dei casi d'uso possono influenzare la pianificazione dei costi e dei tempi di sviluppo. Casi d'uso critici o complessi potrebbero richiedere più risorse e tempo.
+* **Vincoli di performance/scalabilità**: Alcuni casi d'uso, come "Gestire un elevato numero di transazioni simultanee" (per un sistema di e-commerce) o "Elaborare dati in tempo reale" (per un'applicazione di monitoraggio), possono evidenziare vincoli di performance e scalabilità che devono essere presi in considerazione nella progettazione.
+* **Vincoli di sicurezza**: Casi d'uso come "Autenticare Utente", "Autorizzare Accesso a Risorse", "Proteggere dati sensibili" fanno emergere i requisiti di sicurezza e i vincoli correlati (es: protocolli di sicurezza da utilizzare, politiche di accesso).
+* **Vincoli di usabilità**: I casi d'uso descrivono le interazioni utente-sistema. Una buona analisi dei casi d'uso, magari con l'aiuto di prototipi o storyboard, può far emergere vincoli di usabilità, come la necessità di interfacce intuitive, accessibilità per utenti con disabilità, ecc.
+* **Vincoli tecnici e piattaforma**: La scelta delle tecnologie e della piattaforma può essere influenzata dai casi d'uso. Ad esempio, se ci sono molti casi d'uso che richiedono elaborazioni intensive lato server, si potrebbe optare per architetture cloud-based o tecnologie server-side specifiche. Se l'applicazione deve essere disponibile su dispositivi mobili, i casi d'uso influenzeranno la progettazione dell'interfaccia utente mobile-first.
+* **Vincoli di budget e tempi**: La priorità e la complessità dei casi d'uso possono influenzare la pianificazione dei costi e dei tempi di sviluppo. Casi d'uso critici o complessi potrebbero richiedere più risorse e tempo.
 
-## Progettazione Concettuale e Modello Entity/Relationship (E/R)
+## Progettazione concettuale e modello Entity/Relationship (E/R)
 
 Una volta definiti i casi d'uso e compresi i requisiti e i vincoli, si passa alla **progettazione concettuale**. Questa fase si concentra sulla definizione **dell'architettura dei dati** del sistema, ovvero su **quali dati** il sistema deve gestire, **come sono strutturati** e **quali relazioni** esistono tra loro.
 
@@ -96,34 +96,34 @@ La tecnica più diffusa per la progettazione concettuale di basi di dati è il m
 * **Attributi**: Sono le **caratteristiche** o **proprietà** delle entità (es: per l'entità "Cliente", gli attributi potrebbero essere Nome, Cognome, Indirizzo, Email).
 * **Relazioni**: Descrivono le **associazioni** o **legami** tra le entità (es: un "Cliente" *effettua* uno o più "Ordini"; un "Ordine" *contiene* uno o più "Prodotti"). Sono i **verbi** che collegano le entità.
 
-## Il Legame Diretto tra Casi d'Uso e Modello E/R
+## Il Legame diretto tra casi d'uso e modello E/R
 
 Ecco come i casi d'uso guidano la creazione del modello E/R:
 
-1. **Identificazione delle Entità dai Nomi e dai Verbi nei Casi d'Uso**: I **nomi** che compaiono nella descrizione dei casi d'uso (attori, oggetti manipolati) spesso suggeriscono le **entità** principali del sistema. I **verbi** che descrivono le azioni nei casi d'uso possono indicare le **relazioni** tra queste entità.
+1. **Identificazione delle entità dai nomi e dai verbi nei casi d'uso**: I **nomi** che compaiono nella descrizione dei casi d'uso (attori, oggetti manipolati) spesso suggeriscono le **entità** principali del sistema. I **verbi** che descrivono le azioni nei casi d'uso possono indicare le **relazioni** tra queste entità.
 
-	 * **Esempio Caso d'Uso (E-commerce):** "Cliente *effettua* un *Ordine* e *aggiunge* *Prodotti* al *Carrello*".
+	 * **Esempio caso d'uso (E-commerce):** "Cliente *effettua* un *Ordine* e *aggiunge* *Prodotti* al *Carrello*".
 		 * **Entità suggerite**: Cliente, Ordine, Prodotto, Carrello
 		 * **Relazioni suggerite**: Cliente - Ordine ("effettua"), Ordine - Prodotto ("contiene"), Cliente - Carrello ("possiede", implicitamente)
 
-2. **Analisi dei Flussi dei Casi d'Uso per Scoprire gli Attributi**: La descrizione dettagliata dei **flussi principali e alternativi** di un caso d'uso spesso rivela quali **informazioni** sono necessarie per eseguire il caso d'uso stesso. Queste informazioni diventano candidati per gli **attributi** delle entità.
+2. **Analisi dei flussi dei Casi d'uso per Scoprire gli Attributi**: La descrizione dettagliata dei **flussi principali e alternativi** di un caso d'uso spesso rivela quali **informazioni** sono necessarie per eseguire il caso d'uso stesso. Queste informazioni diventano candidati per gli **attributi** delle entità.
 
-	 * **Esempio Caso d'Uso: "Effettuare Checkout"**:
+	 * **Esempio Caso d'uso: "Effettuare Checkout"**:
 		 * Flusso principale: Cliente inserisce *dati di spedizione*, *dati di pagamento*, *conferma ordine*. Sistema *verifica dati di pagamento*, *crea ordine*, *invia email di conferma*.
 		 * **Attributi potenziali**: Per l'entità "Ordine": DataOrdine, IndirizzoSpedizione, TotaleOrdine, MetodoPagamento, StatoOrdine. Per l'entità "Cliente": IndirizzoFatturazione, DatiCartaCredito (se gestiti direttamente, altrimenti riferimento a sistema esterno).
 
-3. **Relazioni tra Casi d'Uso e Cardinalità delle Relazioni E/R**: Le **relazioni** tra i casi d'uso (include, extend, generalizzazione) possono riflettersi nelle **cardinalità** delle relazioni del modello E/R. Ad esempio, se un caso d'uso "Effettuare Checkout" *include* "Verifica Dati di Pagamento", questo suggerisce una dipendenza tra i dati dell'ordine e i dati di pagamento, che potrebbe influenzare la progettazione delle relazioni E/R (anche se più a livello logico/fisico che concettuale). Più direttamente, le associazioni tra attori e casi d'uso non si traducono direttamente in relazioni E/R, ma aiutano a capire *chi* interagisce con *quali* dati.
+3. **Relazioni tra casi d'uso e Cardinalità delle Relazioni E/R**: Le **relazioni** tra i casi d'uso (include, extend, generalizzazione) possono riflettersi nelle **cardinalità** delle relazioni del modello E/R. Ad esempio, se un caso d'uso "Effettuare Checkout" *include* "Verifica Dati di Pagamento", questo suggerisce una dipendenza tra i dati dell'ordine e i dati di pagamento, che potrebbe influenzare la progettazione delle relazioni E/R (anche se più a livello logico/fisico che concettuale). Più direttamente, le associazioni tra attori e casi d'uso non si traducono direttamente in relazioni E/R, ma aiutano a capire *chi* interagisce con *quali* dati.
 
-4. **Vincoli emersi dai Casi d'Uso e Vincoli nel Modello E/R**: I vincoli identificati durante l'analisi dei casi d'uso (performance, sicurezza, usabilità, ecc.) possono influenzare le decisioni di progettazione del modello E/R, sebbene non siano direttamente rappresentati nel diagramma E/R concettuale. Ad esempio, vincoli di performance potrebbero portare a scelte di denormalizzazione (a livelli successivi di progettazione logica e fisica) o a ottimizzazioni nell'accesso ai dati, che sono indirettamente influenzate dal modello concettuale. Vincoli di sicurezza possono influenzare la scelta di quali dati criptare, quali informazioni tenere separate, ecc., influenzando la granularità delle entità e delle relazioni.
+4. **Vincoli emersi dai casi d'uso e Vincoli nel Modello E/R**: I vincoli identificati durante l'analisi dei casi d'uso (performance, sicurezza, usabilità, ecc.) possono influenzare le decisioni di progettazione del modello E/R, sebbene non siano direttamente rappresentati nel diagramma E/R concettuale. Ad esempio, vincoli di performance potrebbero portare a scelte di denormalizzazione (a livelli successivi di progettazione logica e fisica) o a ottimizzazioni nell'accesso ai dati, che sono indirettamente influenzate dal modello concettuale. Vincoli di sicurezza possono influenzare la scelta di quali dati criptare, quali informazioni tenere separate, ecc., influenzando la granularità delle entità e delle relazioni.
 
-## Processo Metodologico: Dai Casi d'Uso al Modello E/R
+## Processo Metodologico: Dai casi d'uso al Modello E/R
 
 Un tipico flusso metodologico che collega i casi d'uso alla progettazione concettuale con E/R potrebbe essere:
 
 1. **Raccolta dei Requisiti e Identificazione degli Attori**: Incontri con gli stakeholder, interviste, workshop, analisi di documenti esistenti per comprendere le esigenze e identificare gli attori principali.
-2. **Definizione dei Casi d'Uso**: Per ogni attore, identificare i casi d'uso principali, ovvero le funzionalità che il sistema deve fornire per soddisfare gli obiettivi dell'attore. Descrivere brevemente ogni caso d'uso (nome, attore primario, breve descrizione, precondizioni, postcondizioni, flusso principale, flussi alternativi). Disegnare il diagramma dei casi d'uso per avere una visione d'insieme.
-3. **Analisi Dettagliata dei Casi d'Uso**: Per ogni caso d'uso, approfondire i flussi, identificare i dati manipolati, le informazioni necessarie, i vincoli specifici (performance, sicurezza, ecc.). Spesso si utilizza una *descrizione testuale* più dettagliata del caso d'uso (scenario).
-4. **Estrazione delle Entità, Attributi e Relazioni dai Casi d'Uso**: Analizzare i nomi, i verbi, i flussi e i dati menzionati nelle descrizioni dei casi d'uso per identificare le entità principali, i loro attributi e le relazioni tra loro. Creare una prima bozza del diagramma E/R.
+2. **Definizione dei casi d'uso**: Per ogni attore, identificare i casi d'uso principali, ovvero le funzionalità che il sistema deve fornire per soddisfare gli obiettivi dell'attore. Descrivere brevemente ogni caso d'uso (nome, attore primario, breve descrizione, precondizioni, postcondizioni, flusso principale, flussi alternativi). Disegnare il diagramma dei casi d'uso per avere una visione d'insieme.
+3. **Analisi Dettagliata dei casi d'uso**: Per ogni caso d'uso, approfondire i flussi, identificare i dati manipolati, le informazioni necessarie, i vincoli specifici (performance, sicurezza, ecc.). Spesso si utilizza una *descrizione testuale* più dettagliata del caso d'uso (scenario).
+4. **Estrazione delle Entità, Attributi e Relazioni dai casi d'uso**: Analizzare i nomi, i verbi, i flussi e i dati menzionati nelle descrizioni dei casi d'uso per identificare le entità principali, i loro attributi e le relazioni tra loro. Creare una prima bozza del diagramma E/R.
 5. **Raffinamento e Validazione del Modello E/R**: Rivedere e raffinare il modello E/R, normalizzare le entità (per ridurre la ridondanza), definire i tipi di dati, le chiavi primarie, le chiavi esterne, le cardinalità delle relazioni, etc. Validare il modello E/R con gli stakeholder, magari ripercorrendo i casi d'uso e verificando se il modello dati supporta correttamente le funzionalità descritte. Iterare se necessario.
 6. **Documentazione del Modello E/R**: Documentare il modello E/R in modo chiaro e completo, includendo la descrizione delle entità, degli attributi, delle relazioni e dei vincoli di integrità.
 
@@ -132,7 +132,7 @@ flowchart TB
     R1[Raccolta Requisiti] --> A1[Analisi Requisiti Funzionali]
     R1 --> A2[Analisi Requisiti di Dato]
     
-    A1 --> UC[Casi d'Uso]
+    A1 --> UC[casi d'uso]
     A2 --> ER[Modello E/R iniziale]
     
     UC --> V1[Validazione Funzionale]
@@ -165,7 +165,7 @@ flowchart TB
 
 Riprendiamo l'esempio dell'applicazione mobile di prenotazione ristoranti.
 
-* **Caso d'Uso:** "Prenotare Tavolo" (per l'attore "Utente App").
+* **Caso d'uso:** "Prenotare Tavolo" (per l'attore "Utente App").
 	* Descrizione semplificata del flusso principale: Utente seleziona *ristorante*, *data*, *ora*, *numero di persone*. Sistema verifica disponibilità, richiede *dati utente* (nome, telefono), conferma prenotazione.
 	* Dati impliciti: Ristorante (nome, indirizzo, cucina, orari, capacità tavoli), Prenotazione (data, ora, numero persone, stato), Utente (nome, telefono).
 
@@ -249,16 +249,16 @@ Il sistema dovrà essere accessibile tramite un'**interfaccia web**."
 * **Prestito**: DataInizioPrestito, DataScadenzaPrestito, DataRestituzione (null se non restituito), StatoPrestito (in corso, restituito, scaduto).
 * **Prenotazione**: DataPrenotazione, StatoPrenotazione (in attesa, confermata, cancellata, completata).
 
-### Definizione dei Casi d'Uso
+### Definizione dei casi d'uso
 
-Identifichiamo gli **Attori** e i **Casi d'Uso** per ciascun attore, basandoci sui requisiti funzionali:
+Identifichiamo gli **Attori** e i **casi d'uso** per ciascun attore, basandoci sui requisiti funzionali:
 
 #### Attori
 
 * **Studente**
 * **Bibliotecario**
 
-#### Casi d'Uso per Studente
+#### casi d'uso per Studente
 
 * **CU1: Consultare Catalogo Libri**
 * **CU2: Visualizzare Dettagli Libro**
@@ -268,7 +268,7 @@ Identifichiamo gli **Attori** e i **Casi d'Uso** per ciascun attore, basandoci s
 * **CU6: Visualizzare Situazione Prestiti**
 * **CU7: Gestire Profilo Utente** (Modificare Password, Email)
 
-#### Casi d'Uso per Bibliotecario
+#### casi d'uso per Bibliotecario
 
 * **CU8: Gestire Catalogo Libri** (Caso d'uso genitore che include i seguenti):
 	* **CU8.1: Aggiungere Libro**
@@ -290,7 +290,7 @@ Identifichiamo gli **Attori** e i **Casi d'Uso** per ciascun attore, basandoci s
 	* **CU12.2: Generare Report Libri in Ritardo**
 	* **CU12.3: Generare Report Situazione Prestiti Studente**
 
-#### Diagramma dei Casi d'Uso Iniziale
+#### Diagramma dei casi d'uso Iniziale
 
 ![use case iniziale biblioteca](biblioteca-initial-use-cases.svg)
 
@@ -756,7 +756,7 @@ GROUP BY s.matricola_studente, s.nome, s.cognome;
 
 ## Esempio completo: "Prenota il tuo tavolo con app"
 
-**Nome del Caso d'Uso:** Prenotare Tavolo
+**Nome del Caso d'uso:** Prenotare Tavolo
 
 **Attore Primario:** Utente App
 
@@ -812,7 +812,7 @@ GROUP BY s.matricola_studente, s.nome, s.cognome;
   * **5b.1 Pagamento Successo:** Se il pagamento va a buon fine, si prosegue con il passo 5 (Conferma Utente, etc.).
   * **5b.2 Pagamento Fallito/Annullato:** Se il pagamento fallisce o l'utente annulla il pagamento, la prenotazione non viene completata. Il sistema informa l'Utente App e il caso d'uso termina con fallimento (pagamento non riuscito).
 
-**Diagramma dei Casi d'Uso per "Prenotare Tavolo":**
+**Diagramma dei casi d'uso per "Prenotare Tavolo":**
 
 ![prenotazioni tavolo - use cases](prenotazioni-tavolo-app-use-cases.svg)
 
@@ -930,7 +930,7 @@ Il sistema di prenotazione ristoranti deve gestire le prenotazioni di tavoli per
 
 ![sistema prenotazione ristoranti](sistema-prenotazione-ristoranti-use-cases.svg)
 
-#### Caso d'Uso: UC1 - Cerca Ristorante
+#### Caso d'uso: UC1 - Cerca Ristorante
 
 **Attore Primario:** Cliente
 
@@ -966,7 +966,7 @@ Il sistema di prenotazione ristoranti deve gestire le prenotazioni di tavoli per
 	* Suggerisce di modificare i criteri di ricerca
 	* Il Cliente può tornare al punto 3
 
-#### Caso d'Uso: UC2 - Effettua Prenotazione
+#### Caso d'uso: UC2 - Effettua Prenotazione
 
 **Attore Primario:** Cliente
 
@@ -1008,7 +1008,7 @@ Il sistema di prenotazione ristoranti deve gestire le prenotazioni di tavoli per
 	* Se il pagamento ha successo, continua dal punto 6
 	* Se il pagamento fallisce, la prenotazione viene annullata
 
-#### Caso d'Uso: UC3 - Gestisce Disponibilità
+#### Caso d'uso: UC3 - Gestisce Disponibilità
 
 **Attore Primario:** Ristoratore
 
@@ -1043,7 +1043,7 @@ Il sistema di prenotazione ristoranti deve gestire le prenotazioni di tavoli per
 	* Le modifiche non vengono salvate
 	* Il Ristoratore può riprovare
 
-#### Caso d'Uso: UC4 - Autentica Utente
+#### Caso d'uso: UC4 - Autentica Utente
 
 **Attore Primario:** Cliente/Ristoratore
 
@@ -1072,7 +1072,7 @@ Il sistema di prenotazione ristoranti deve gestire le prenotazioni di tavoli per
 	* Il sistema notifica l'errore
 	* L'utente può riprovare o richiedere il reset della password
 
-#### Caso d'Uso: UC5 - Verifica Disponibilità
+#### Caso d'uso: UC5 - Verifica Disponibilità
 
 **Attore Primario:** Sistema
 
@@ -1102,7 +1102,7 @@ Il sistema di prenotazione ristoranti deve gestire le prenotazioni di tavoli per
 	* Il sistema cerca disponibilità in orari/date alternative
 	* Il sistema propone le alternative trovate
 
-#### Caso d'Uso: UC6 - Invia Conferma
+#### Caso d'uso: UC6 - Invia Conferma
 
 **Attore Primario:** Sistema
 
@@ -1132,7 +1132,7 @@ Il sistema di prenotazione ristoranti deve gestire le prenotazioni di tavoli per
 	* Se il nuovo tentativo fallisce, registra l'errore
 	* La prenotazione rimane valida
 
-#### Caso d'Uso: UC7 - Gestisce Pagamento
+#### Caso d'uso: UC7 - Gestisce Pagamento
 
 **Attore Primario:** Cliente
 

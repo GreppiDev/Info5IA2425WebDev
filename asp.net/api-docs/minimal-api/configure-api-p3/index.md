@@ -1,58 +1,23 @@
-# Guida Completa al Parameter Binding in ASP.NET Minimal APIs
+# Guida introduttiva al Parameter Binding in ASP.NET Minimal APIs
 
-**Indice:**
-
-1. **Introduzione al Parameter Binding in ASP.NET Minimal APIs**
-
-	  * Concetti fondamentali del Binding
-	  * Come ASP.NET Core collega i parametri degli endpoint alle richieste HTTP
-
-2. **Binding dai Form in ASP.NET Minimal APIs**
-
-	  * Cos'è un Form HTML e come funziona in un'applicazione web
-	  * Binding di dati semplici da Form
-		  * Utilizzo implicito del Binding da Form per tipi semplici
-		  * Utilizzo esplicito con l'attributo `[FromForm]`
-		  * Esempi di codice (C\#, HTML, CSS, JavaScript)
-	  * Binding di dati strutturati da Form
-		  * Dropdown List
-			  * Esempio di codice (C\#, HTML, CSS, JavaScript)
-		  * Checkbox
-			  * Esempio di codice (C\#, HTML, CSS, JavaScript)
-		  * Input di tipo File
-			  * Considerazioni sul binding di file
-			  * Esempio di codice (C\#, HTML, CSS, JavaScript)
-	  * `[FromForm]` vs `[AsParameters]`: Differenze e quando usarli
-		  * Spiegazione dettagliata
-		  * Esempi di codice comparativi (C\#)
-	  * Best Practice per la gestione dei Form in Minimal APIs
-	  * Link alla documentazione ufficiale Microsoft per il Binding da Form
-
-3. **Approfondimento sull'Anti-Forgery in ASP.NET Minimal APIs**
-
-	  * Introduzione al problema del Cross-Site Request Forgery (CSRF)
-	  * Diagramma di sequenza del flusso di dati senza Anti-Forgery
-		  * [Image of Diagramma di sequenza del flusso di dati senza Anti-Forgery]
-	  * Diagramma di sequenza del flusso di dati con Anti-Forgery
-		  * [Image of Diagramma di sequenza del flusso di dati con Anti-Forgery]
-	  * Implementazione dell'Anti-Forgery Token in ASP.NET Minimal APIs
-		  * Lato Server: Generazione e validazione del token
-		  * Lato Client: Inclusione del token nel Form
-		  * Esempio di codice completo (C\#, HTML, JavaScript)
-	  * Best Practice per l'Anti-Forgery in Minimal APIs
-	  * Link alla documentazione ufficiale Microsoft per l'Anti-Forgery
-
-4. **Meccanismi Avanzati di Binding (Panoramica)**
-
-	  * Custom Binding con `TryParse` e `BindAsync`
-		  * Breve descrizione e link alla documentazione ufficiale
-	  * Request Body as a `Stream` or `PipeReader`
-		  * Breve descrizione e link alla documentazione ufficiale
-
-5. **Conclusioni e Best Practice Generali sul Parameter Binding**
-
-	  * Riepilogo delle best practice per un binding efficace e sicuro
-	  * Link alla documentazione ufficiale Microsoft principale sul Parameter Binding in ASP.NET Core
+- [Guida introduttiva al Parameter Binding in ASP.NET Minimal APIs](#guida-introduttiva-al-parameter-binding-in-aspnet-minimal-apis)
+	- [Introduzione al Parameter Binding in ASP.NET Minimal APIs](#introduzione-al-parameter-binding-in-aspnet-minimal-apis)
+	- [Binding di Form in ASP.NET Minimal APIs](#binding-di-form-in-aspnet-minimal-apis)
+		- [**Primo Esempio di codice (C#, HTML, CSS, JavaScript) - Dati semplici da Form**](#primo-esempio-di-codice-c-html-css-javascript---dati-semplici-da-form)
+			- [Spiegazione del codice del primo esempio](#spiegazione-del-codice-del-primo-esempio)
+		- [Secondo esempio - differenza tra codifica `application/x-www-form-urlencoded` e `multipart/form-data`](#secondo-esempio---differenza-tra-codifica-applicationx-www-form-urlencoded-e-multipartform-data)
+		- [Terzo esempio - differenza tra codifica `application/x-www-form-urlencoded`, `multipart/form-data` e `application/json`](#terzo-esempio---differenza-tra-codifica-applicationx-www-form-urlencoded-multipartform-data-e-applicationjson)
+			- [Confronto tra le tre soluzioni di invio dati al server](#confronto-tra-le-tre-soluzioni-di-invio-dati-al-server)
+			- [**Perché nella terza pagina non si usa né `URLSearchParams` né `FormData`?**](#perché-nella-terza-pagina-non-si-usa-né-urlsearchparams-né-formdata)
+			- [**Motivazioni principali per l'uso di JSON**](#motivazioni-principali-per-luso-di-json)
+			- [**Quando usare ciascun metodo?**](#quando-usare-ciascun-metodo)
+		- [Binding di dati strutturati da Form](#binding-di-dati-strutturati-da-form)
+		- [**`[FromForm]` vs `[AsParameters]`: Differenze e quando usarli**](#fromform-vs-asparameters-differenze-e-quando-usarli)
+			- [**Esempio comparativo (C#) - `[FromForm]` vs `[AsParameters]`**](#esempio-comparativo-c---fromform-vs-asparameters)
+			- [Best Practice per la gestione dei Form in Minimal APIs](#best-practice-per-la-gestione-dei-form-in-minimal-apis)
+	- [Meccanismi Avanzati di Binding (Panoramica)](#meccanismi-avanzati-di-binding-panoramica)
+	- [Ordine nell'applicazione delle regole di Binding](#ordine-nellapplicazione-delle-regole-di-binding)
+	- [Conclusioni e Best Practice Generali sul Parameter Binding](#conclusioni-e-best-practice-generali-sul-parameter-binding)
 
 ## Introduzione al Parameter Binding in ASP.NET Minimal APIs
 
@@ -93,83 +58,422 @@ In ASP.NET Minimal APIs, il binding è in gran parte **automatico** e basato sul
 
 	L'attributo `[FromForm]` indica esplicitamente ad ASP.NET Core di cercare il valore del parametro nei dati del form inclusi nel body della richiesta HTTP.  Questo è particolarmente importante quando si gestiscono form complessi o quando si vuole essere sicuri della provenienza dei dati.
 
-5. **Esempio di codice (C\#, HTML, CSS, JavaScript) - Dati semplici da Form**
+### **Primo Esempio di codice (C\#, HTML, CSS, JavaScript) - Dati semplici da Form**
 
-	**Program.cs (C\# - ASP.NET Minimal API):**
+**Program.cs (C\# - ASP.NET Minimal API):**
 
-	```csharp
-	using Microsoft.AspNetCore.Mvc;
+```csharp
+using Microsoft.AspNetCore.Mvc;
 
-	var builder = WebApplication.CreateBuilder(args);
-	var app = builder.Build();
+var builder = WebApplication.CreateBuilder(args);
+var app = builder.Build();
 
-	app.MapGet("/", () => Results.Content(
-	"""
-	<!DOCTYPE html>
-	<html>
-	<head>
-		<title>Form Semplice</title>
-	</head>
-	<body>
-		<h1>Form Semplice</h1>
-		<form id="simpleForm" method="post" action="/submitForm">
-			<label for="nome">Nome:</label><br>
-			<input type="text" id="nome" name="nome"><br><br>
-			<label for="cognome">Cognome:</label><br>
-			<input type="text" id="cognome" name="cognome"><br><br>
-			<input type="submit" value="Invia">
-		</form>
+app.MapGet("/", () => Results.Content(
+"""
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Form Semplice</title>
+</head>
+<body>
+	<h1>Form Semplice</h1>
+	<form id="simpleForm" method="post" action="/submitForm">
+		<label for="nome">Nome:</label><br>
+		<input type="text" id="nome" name="nome"><br><br>
+		<label for="cognome">Cognome:</label><br>
+		<input type="text" id="cognome" name="cognome"><br><br>
+		<input type="submit" value="Invia">
+	</form>
 
-		<script>
-			document.getElementById('simpleForm').addEventListener('submit', function(event) {
-				event.preventDefault(); // Impedisce la submit standard
+	<script>
+		document.getElementById('simpleForm').addEventListener('submit', function(event) {
+			event.preventDefault(); // Impedisce la submit standard
 
-				const formData = new FormData(this);
+			const formData = new FormData(this);
 
-				fetch('/submitForm', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/x-www-form-urlencoded' // Importante specificare il content type per i form standard
-					},
-					body: new URLSearchParams(formData).toString() // Converte FormData in URL encoded string
-				})
-				.then(response => response.text())
-				.then(data => {
-					alert(data); // Mostra la risposta del server
-				});
+			fetch('/submitForm', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded' // Importante specificare il content type per i form standard
+				},
+				body: new URLSearchParams(formData).toString() // Converte FormData in URL encoded string
+			})
+			.then(response => response.text())
+			.then(data => {
+				alert(data); // Mostra la risposta del server
 			});
+		});
+	</script>
+</body>
+</html>
+""", "text/html"));
+
+
+app.MapPost("/submitForm", ([FromForm] string nome, [FromForm] string cognome) =>
+{
+	return $"Dati ricevuti dal form: Nome = {nome}, Cognome = {cognome}";
+});
+
+
+app.Run();
+```
+
+#### Spiegazione del codice del primo esempio
+
+* **`app.MapGet("/")`**: Definisce un endpoint GET alla radice (`/`) che restituisce una semplice pagina HTML contenente un form.
+* Il form ha due campi di testo (`nome` e `cognome`) e utilizza il metodo POST verso l'endpoint `/submitForm`.
+* Il codice JavaScript intercetta la submit del form, previene il comportamento predefinito e invia la richiesta POST tramite `fetch`.  **È fondamentale specificare `'Content-Type': 'application/x-www-form-urlencoded'`** nell'header della richiesta `fetch` per simulare una submit form standard.
+* **`app.MapPost("/submitForm", ([FromForm] string nome, [FromForm] string cognome) => ...)`**: Definisce un endpoint POST `/submitForm` che accetta due parametri di tipo `string`, `nome` e `cognome`, decorati con `[FromForm]`.
+* `[FromForm]` indica che ASP.NET Core deve cercare i valori di `nome` e `cognome` nei dati del form della richiesta POST.
+* L'endpoint restituisce una stringa che conferma la ricezione dei dati.
+
+* Nell'esempio precedente, l'oggetto `FormData` viene creato con l'istruzione:
+
+```js
+const formData = new FormData(this);
+```
+
+Dove `this` si riferisce al form (`<form id="simpleForm">`), quindi `FormData` conterrà tutti i dati inseriti nei campi del form.
+
+* **Cosa contiene `formData`?**
+
+L'oggetto `FormData` rappresenta una collezione di coppie **chiave-valore**, dove:
+
+- **La chiave** è il valore dell'attributo `name` di ciascun campo del form.
+- **Il valore** è il valore inserito dall'utente in quel campo.
+
+Se l'utente compila il form in questo modo:
+
+```text
+Nome: Mario
+Cognome: Rossi
+```
+
+All'interno di `formData` avremo:
+
+```text
+nome -> "Mario"
+cognome -> "Rossi"
+```
+
+Possiamo verificarlo con questo codice:
+
+```js
+for (let pair of formData.entries()) {
+console.log(pair[0] + ": " + pair[1]);
+}
+```
+
+L'output nella console sarà:
+
+```text
+nome: Mario
+cognome: Rossi
+```
+
+* **Caso speciale: più campi con lo stesso nome**
+
+Se ci fossero più input con lo stesso `name`, `FormData` manterrebbe più valori sotto la stessa chiave:
+
+```html
+<input type="checkbox" name="interessi" value="sport">
+<input type="checkbox" name="interessi" value="musica">
+```
+
+Se l'utente seleziona entrambi, `FormData` conterrà:
+
+```text
+interessi -> "sport"
+interessi -> "musica"
+```
+
+e potremmo recuperarli con:
+
+```js
+console.log(formData.getAll("interessi")); // ["sport", "musica"]
+
+```
+		
+### Secondo esempio - differenza tra codifica `application/x-www-form-urlencoded` e `multipart/form-data`
+
+Si consideri il seguente esempio, tratto dal [progetto - FormBinding](../../../api-samples/minimal-api/BindingDemos/FormHandling/FormBinding/):
+
+```html
+<!doctype html>
+<html lang="en">
+
+<head>
+	<title>Index</title>
+
+	<!-- Required meta tags -->
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+	<!-- Bootstrap CSS -->
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+		integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+		integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+		crossorigin="anonymous"></script>
+	<link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+	<!-- Navigation Bar -->
+	<nav class="navbar navbar-expand-lg navbar-light bg-light">
+		<div class="container-fluid">
+			<a class="navbar-brand" href="index.html">Todo App</a>
+			<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+				aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+				<span class="navbar-toggler-icon"></span>
+			</button>
+			<div class="collapse navbar-collapse" id="navbarNav">
+				<ul class="navbar-nav">
+					<li class="nav-item">
+						<a class="nav-link" href="index.html">Home</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" href="todos.html">Get All</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" href="get-todo.html">Todo Detail</a>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</nav>
+
+	<div class="container mb-10">
+		<div class="row justify-content-center">
+			<div class="col-md-6">
+				<div class="card mt-5">
+					<div class="card-body">
+						<!-- Existing content -->       
+						<form action="ap/todos" method="post" enctype="multipart/form-data" onsubmit="submitForm(this);return false;">
+							<div class="form-group">
+								<label for="name">Name</label>
+								<input type="text" required class="form-control" name="name" aria-describedby="emailHelp" placeholder="Enter the name">
+							</div>
+							<div class="form-group">
+								<label for="visibility">Visibility</label>
+								<select class="form-control" required name="visibility" title="Visibility">
+									<option value="Public">Public</option>
+									<option value="Private">Private</option>
+								</select>
+							</div>
+							<div class="form-group mt-2">
+								<label for="attachment">Attachment</label>
+								<input type="file" class="form-control-file" name="attachment" title="Attachment">
+							</div>
+							<input type="submit" class="btn btn-primary" value="Submit">
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<script>
+		async function submitForm(oFormElement) {
+			const formData = new FormData(oFormElement);
+			try {
+				const response = await fetch(oFormElement.action, {
+					method: oFormElement.method,
+					body: formData
+				});
+				if (response.ok) {
+					alert('Todo item updated successfully.\n' + 'Result: ' + response.status + ' ' +
+						response.statusText);
+					window.location.href = '/index.html';
+				
+				}else{
+					alert('Todo item updated successfully.\n' + 'Result: ' + response.status + ' ' +
+						response.statusText);
+				}
+			} catch (error) {
+				console.error('Error:', error);
+			}
+		}
+	</script>
+</body>
+</html>
+```
+
+**In questo secondo esempio il form viene sottomesso in maniera differente perché la codifica utilizzata nel form è differente.**
+
+* **Perché nella prima pagina serve `URLSearchParams`, mentre nella seconda no?**
+
+	1. **Prima pagina** (dove viene usato `URLSearchParams`):
+
+		- Il form viene inviato con **`application/x-www-form-urlencoded`**.
+		- `FormData` viene convertito in una stringa codificata nel formato `key=value&key2=value2`, che è il formato standard per i form HTML senza file allegati.
+		- Si utilizza:
+
+			```js
+			`body: new URLSearchParams(formData).toString()`
+			```
+
+		perché `fetch` non può inviare direttamente un `FormData` come `application/x-www-form-urlencoded`.
+	2. **Seconda pagina** (dove si usa solo `FormData` senza `URLSearchParams`):
+
+		- Il form è definito con `enctype="multipart/form-data"`, il che significa che può gestire **file e dati binari**.
+		- `FormData` viene passato direttamente nel `body` di `fetch`:
+
+			```js
+			`body: formData
+			`
+			```
+
+		- In questo caso, **non bisogna usare `URLSearchParams`**, perché questo converte i dati in una stringa e perderebbe il supporto per gli allegati (`<input type="file">`).
+		- `fetch` con un oggetto `FormData` automaticamente imposta l'**intestazione (`Content-Type: multipart/form-data; boundary=...`)**, che è necessaria per inviare file.
+
+	3. **Riepilogo delle differenze chiave**
+
+	| Caratteristica | Prima Pagina (`URLSearchParams`) | Seconda Pagina (`FormData` diretto) |
+	| --- |  --- |  --- |
+	| **Formato della richiesta** | `application/x-www-form-urlencoded` | `multipart/form-data` |
+	| --- |  --- |  --- |
+	| **Metodo di conversione** | `new URLSearchParams(formData).toString()` | `body: formData` diretto |
+	| **Supporto per file** | ❌ (non supporta file) | ✅ (supporta file e dati binari) |
+	| **Quando usarlo?** | Quando si inviano solo **testo/campi input** | Quando si devono inviare anche **file** |
+
+	Quindi, nella seconda pagina **non è necessario usare `URLSearchParams`**, perché `FormData` supporta direttamente la codifica multipart e mantiene il formato corretto per gli allegati.
+
+### Terzo esempio - differenza tra codifica `application/x-www-form-urlencoded`, `multipart/form-data` e `application/json`
+
+Si consideri il seguente esempio, tratto dal [progetto - FilmAPI v3 - gestione registi](../../../api-samples/minimal-api/FilmAPIWeb3/FilmAPI/):
+
+```html
+<!doctype html>
+<html lang="it">
+
+<head>
+	<meta charset="utf-8">
+	<link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+	<link rel="icon" type="image/webp" href="/assets/favicon.webp">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+		integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+	<link rel="stylesheet" href="/css/styles.css">
+	<title>Aggiungi regista</title>
+</head>
+
+<body>
+	<div id="header-container"></div>
+	<main>
+		<div class="container mb-10">
+			<form id="registaForm">
+				<div class="mb-3">
+					<label for="nome" class="form-label">Nome</label>
+					<input type="text" class="form-control" id="nome" name="nome" minlength="2" required>
+				</div>
+				<div class="mb-3">
+					<label for="cognome" class="form-label">Cognome</label>
+					<input type="text" class="form-control" id="cognome" name="cognome" minlength="2" required>
+				</div>
+				<div class="mb-3">
+					<label for="nazionalità" class="form-label">Nazionalità</label>
+					<input type="text" class="form-control" id="nazionalità" name="nazionalità" minlength="2" required>
+				</div>
+				<div class="mb-3">
+					<label for="tmdbId" class="form-label">Tmdb ID (opzionale)</label>
+					<input type="number" class="form-control" id="tmdbId" name="tmdbId">
+				</div>
+
+				<button type="submit" class="btn btn-primary">Aggiungi Regista</button>
+			</form>
+		</div>
+	</main>
+	<div id="footer-container"></div>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+		integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous">
 		</script>
-	</body>
-	</html>
-	""", "text/html"));
+	<script src="/js/template-loader.js"></script>
+	<script>
+		document.addEventListener('DOMContentLoaded', async function () {
+			// Carica i template
+			await TemplateLoader.initializeTemplates();
+		});
+		document.getElementById('registaForm').addEventListener('submit', function (event) {
+			event.preventDefault();
 
+			const nome = document.getElementById('nome').value;
+			const cognome = document.getElementById('cognome').value;
+			const nazionalità = document.getElementById('nazionalità').value;
+			const tmdbId = document.getElementById('tmdbId').value;
+			fetch('/api/registi', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ nome: nome, cognome: cognome, nazionalità: nazionalità, tmdbId: tmdbId })
+			})
+				.then(response => response.json())
+				.then(data => {
+					alert('Regista aggiunto con successo!');
+					document.getElementById('registaForm').reset();
+				})
+				.catch(error => {
+					console.error('Errore:', error);
+					alert('Si è verificato un errore durante l\'aggiunta del regista.');
+				});
+		});
+	</script>
+</body>
 
-	app.MapPost("/submitForm", ([FromForm] string nome, [FromForm] string cognome) =>
-	{
-		return $"Dati ricevuti dal form: Nome = {nome}, Cognome = {cognome}";
-	});
+</html>
+```
 
+#### Confronto tra le tre soluzioni di invio dati al server
 
-	app.Run();
-	```
+In questa sezione si sono esaminati tre modi per inviare dati ad un server. Le differenze chiave sono riportate nella tabella seguente:
 
-6. **Spiegazione del codice:**
+| **Caratteristica**        | **Prima Pagina** (`URLSearchParams`) | **Seconda Pagina** (`FormData` diretto) | **Terza Pagina** (`JSON.stringify()`) |
+|---------------------------|--------------------------------------|------------------------------------------|--------------------------------------|
+| **Formato della richiesta** | `application/x-www-form-urlencoded` | `multipart/form-data` | `application/json` |
+| **Metodo di conversione** | `new URLSearchParams(formData).toString()` | `body: formData` diretto | `JSON.stringify({...})` |
+| **Supporto per file** | ❌ No | ✅ Sì | ❌ No |
+| **Quando usarlo?** | Quando si inviano solo **testo/campi input** senza file | Quando si devono inviare **file + dati di testo** | Quando si lavora con **API JSON-based** (es. REST API) |
+| **Struttura dei dati** | Stringa `key=value&key2=value2` | Dati con **boundary** (supporta file) | Oggetto JSON `{ "chiave": "valore" }` |
+| **Intestazione (`Content-Type`)** | `application/x-www-form-urlencoded` | `multipart/form-data` (gestito da `FormData`) | `application/json` |
 
-	 * **`app.MapGet("/")`**: Definisce un endpoint GET alla radice (`/`) che restituisce una semplice pagina HTML contenente un form.
-		 * Il form ha due campi di testo (`nome` e `cognome`) e utilizza il metodo POST verso l'endpoint `/submitForm`.
-		 * Il codice JavaScript intercetta la submit del form, previene il comportamento predefinito e invia la richiesta POST tramite `fetch`.  **È fondamentale specificare `'Content-Type': 'application/x-www-form-urlencoded'`** nell'header della richiesta `fetch` per simulare una submit form standard.
-	 * **`app.MapPost("/submitForm", ([FromForm] string nome, [FromForm] string cognome) => ...)`**: Definisce un endpoint POST `/submitForm` che accetta due parametri di tipo `string`, `nome` e `cognome`, decorati con `[FromForm]`.
-		 * `[FromForm]` indica che ASP.NET Core deve cercare i valori di `nome` e `cognome` nei dati del form della richiesta POST.
-		 * L'endpoint restituisce una stringa che conferma la ricezione dei dati.
+#### **Perché nella terza pagina non si usa né `URLSearchParams` né `FormData`?**
 
-7. **Per testare questo esempio:**
+Nella **terza pagina**, i dati vengono inviati a un'API REST (`/api/registi`), che si aspetta un **JSON nel corpo della richiesta**.  
+Qui, `fetch` invia i dati con:
 
-   1. Crea un nuovo progetto ASP.NET Core Empty Web App.
-   2. Sostituisci il contenuto di `Program.cs` con il codice C\# fornito.
-   3. Esegui l'applicazione.
-   4. Apri il browser e vai all'indirizzo `https://localhost:<port>`.
-   5. Inserisci nome e cognome nel form e clicca "Invia".
-   6. Dovresti vedere un alert JavaScript con il messaggio di conferma dal server.
+```js
+body: JSON.stringify({ nome: nome, cognome: cognome, nazionalità: nazionalità, tmdbId: tmdbId })
+```
+
+e imposta l'intestazione corretta:
+
+```js
+headers: { 'Content-Type': 'application/json' }
+```
+
+#### **Motivazioni principali per l'uso di JSON**
+
+1. **Le API REST moderne accettano e restituiscono JSON**, quindi inviare i dati in questo formato è più naturale.
+2. **Maggiore flessibilità**: JSON supporta **oggetti annidati e array**, mentre `application/x-www-form-urlencoded` è limitato a stringhe chiave-valore.
+3. **Più leggibile e strutturato**: Un JSON come:
+
+   ```json
+   {
+	   "nome": "Christopher",
+	   "cognome": "Nolan",
+	   "nazionalità": "UK",
+	   "tmdbId": 525
+   }
+   ```
+
+   è più chiaro rispetto a `nome=Christopher&cognome=Nolan&nazionalità=UK&tmdbId=525`.
+
+#### **Quando usare ciascun metodo?**
+
+- **`URLSearchParams`** → Quando il backend si aspetta dati come stringa URL (`application/x-www-form-urlencoded`). Tipico dei form HTML tradizionali.
+- **`FormData`** → Quando dobbiamo inviare file o dati binari. Utile per upload di immagini o allegati.
+- **`JSON.stringify()`** → Quando l'API accetta JSON. Ideale per comunicare con API REST moderne.
 
 ### Binding di dati strutturati da Form
 
@@ -490,222 +794,7 @@ Sia `[FromForm]` che `[AsParameters]` sono utilizzati per il binding di dati pro
   * [Documentazione ufficiale Microsoft:  Binding dei parametri del form in ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/mvc/models/model-binding) (Sebbene focalizzata su MVC, i concetti di binding dei form sono simili anche in Minimal APIs)
   * [Documentazione ufficiale Microsoft:  Attributo FromForm](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.fromformattribute)
 
-
-## Approfondimento sull'Anti-Forgery in ASP.NET Minimal APIs
-
-### Introduzione al problema del Cross-Site Request Forgery (CSRF)
-
-Il **Cross-Site Request Forgery (CSRF)** è una vulnerabilità di sicurezza web che permette a un attaccante di indurre un utente autenticato a eseguire azioni indesiderate su un'applicazione web **a sua insaputa**.
-
-1. **Scenario tipico di attacco CSRF:**
-
-   1. **Utente autenticato**: Un utente (vittima) è autenticato su un'applicazione web (es. una banca online).
-   2. **Sito web malevolo**: L'utente visita un sito web malevolo controllato dall'attaccante.
-   3. **Form malevolo nel sito**: Il sito malevolo contiene un form nascosto che punta all'applicazione web vulnerabile.  Questo form è progettato per eseguire un'azione dannosa (es. trasferimento di denaro, cambio password).
-   4. **Submit automatico**: Il sito malevolo esegue automaticamente la submit del form nascosto, mentre l'utente è autenticato nell'applicazione web.
-   5. **Azione non autorizzata**: Il browser dell'utente, **inclusi i cookie di autenticazione**, invia la richiesta all'applicazione web vulnerabile. Poiché l'utente è autenticato, l'applicazione web **crede che la richiesta provenga dall'utente legittimo** e esegue l'azione dannosa.
-
-2. **Diagramma di sequenza del flusso di dati senza Anti-Forgery**
-
-	```mermaid
-	sequenceDiagram
-		participant U as Utente
-		participant B as Browser
-		participant M as Sito Malevolo
-		participant A as App Web Vulnerabile
-
-		Note over U,A: Utente già autenticato nell'App Web
-		
-		U->>B: Visita sito malevolo
-		B->>M: Richiesta pagina
-		M-->>B: Risposta con form nascosto
-		
-		Note over M,B: Form progettato per azione dannosa
-		
-		M->>B: Esegue submit automatico del form
-		
-		Note over B: Browser include automaticamente<br/>i cookie di autenticazione
-		
-		B->>A: Invia richiesta con cookie auth
-		
-		Note over A: App verifica autenticazione<br/>tramite cookie (validi)
-		
-		A-->>B: Esegue azione dannosa
-		B-->>U: L'utente non è consapevole<br/>dell'azione eseguita
-	```
-
-	*Descrizione Diagramma: L'utente autenticato interagisce con un sito malevolo. Il sito malevolo contiene un form che punta all'applicazione vulnerabile. Il browser dell'utente, con i cookie di autenticazione, invia la richiesta all'applicazione vulnerabile. L'applicazione vulnerabile esegue l'azione dannosa credendo che la richiesta sia legittima.*
-
-3. **Diagramma di sequenza del flusso di dati con Anti-Forgery**
-
-	```mermaid
-	sequenceDiagram
-		participant U as Utente
-		participant B as Browser
-		participant A as App Web Protetta
-		
-		U->>B: Richiede form
-		B->>A: Richiesta pagina form
-		
-		Note over A: Genera Anti-Forgery Token
-		
-		A-->>B: Risposta con HTML form +<br/>Anti-Forgery Token
-		B-->>U: Mostra form
-		
-		U->>B: Submit form
-		
-		Note over B: Browser include:<br/>1. Cookie di autenticazione<br/>2. Anti-Forgery Token
-		
-		B->>A: Invia richiesta form
-		
-		Note over A: Verifica:<br/>1. Cookie di autenticazione<br/>2. Anti-Forgery Token
-		
-		alt Token e Cookie validi
-			A-->>B: Esegue azione richiesta
-			B-->>U: Mostra conferma
-		else Token o Cookie non validi
-			A-->>B: Rifiuta richiesta
-			B-->>U: Mostra errore
-		end
-	```
-
-	*Descrizione Diagramma: L'applicazione genera un Anti-Forgery Token e lo invia al client (browser) insieme alla pagina HTML del form. Il client (browser) include l'Anti-Forgery Token nel form. Quando il form viene inviato, il browser include sia i cookie di autenticazione che l'Anti-Forgery Token nella richiesta. L'applicazione verifica sia i cookie di autenticazione che l'Anti-Forgery Token. Se entrambi sono validi, l'applicazione esegue l'azione; altrimenti, la richiesta viene rifiutata.*
-
-### Implementazione dell'Anti-Forgery Token in ASP.NET Minimal APIs
-
-ASP.NET Core fornisce un meccanismo integrato per proteggere le applicazioni web dagli attacchi CSRF tramite **Anti-Forgery Tokens**.
-
-**Lato Server: Generazione e validazione del token**
-
-1.  **Generazione del Token**:  ASP.NET Core genera automaticamente un Anti-Forgery Token per ogni sessione utente autenticata. Questo token è univoco e legato alla sessione dell'utente.
-2.  **Inclusione del Token nel Form (Server-side rendering)**: Quando generi la pagina HTML contenente il form lato server (es. con Razor Pages, MVC Views, o anche Minimal APIs che restituiscono HTML), devi includere l'Anti-Forgery Token nel form.  Questo viene fatto solitamente con un helper tag in Razor o manualmente in HTML.  **Nel contesto delle Minimal APIs che restituiscono HTML stringhe, dovrai includere il token manualmente.**
-3.  **Validazione del Token (Endpoint)**:  Nell'endpoint che processa il form (tipicamente un endpoint POST), devi **validare** l'Anti-Forgery Token ricevuto dalla richiesta. Questo assicura che la richiesta provenga effettivamente dal tuo sito e non da un sito malevolo.
-
-**Lato Client: Inclusione del token nel Form**
-
-Il client (browser) deve includere l'Anti-Forgery Token nel form quando lo invia al server.  ASP.NET Core si aspetta che l'Anti-Forgery Token sia inviato come:
-
-  * **Campo nascosto nel form**:  Il modo più comune e compatibile.
-  * **Header HTTP**:  Alternativamente, il token può essere inviato in un header HTTP personalizzato (es. per applicazioni JavaScript single-page).
-
-**Esempio di codice completo (C\#, HTML, JavaScript) - Anti-Forgery con Form**
-
-**Program.cs (C\# - ASP.NET Minimal API):**
-
-```csharp
-using Microsoft.AspNetCore.Antiforgery;
-using Microsoft.AspNetCore.Mvc;
-
-var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddAntiforgery(); // Aggiungi il servizio Anti-Forgery
-
-var app = builder.Build();
-
-app.UseAntiforgery(); // Abilita middleware Anti-Forgery
-
-
-app.MapGet("/", async (IAntiforgery antiforgery) =>
-{
-	var tokens = antiforgery.GetAndStoreTokens(HttpContext.Current); // Ottieni e memorizza i token anti-forgery
-
-	return Results.Content(
-	$$"""
-	<!DOCTYPE html>
-	<html>
-	<head>
-		<title>Form protetto con Anti-Forgery</title>
-	</head>
-	<body>
-		<h1>Form protetto con Anti-Forgery</h1>
-		<form id="antiforgeryForm" method="post" action="/submitAntiforgery">
-			<input type="hidden" name="{{tokens.FormFieldName}}" value="{{tokens.RequestToken}}">  <label for="messaggio">Messaggio:</label><br>
-			<input type="text" id="messaggio" name="messaggio"><br><br>
-			<input type="submit" value="Invia">
-		</form>
-
-		<script>
-			document.getElementById('antiforgeryForm').addEventListener('submit', function(event) {
-				event.preventDefault();
-
-				const formData = new FormData(this);
-
-				fetch('/submitAntiforgery', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/x-www-form-urlencoded',
-						 'RequestVerificationToken': '{{tokens.RequestToken}}' // Alternativa: Invia token come header (invece che campo form) - RIMUOVI se usi campo form nascosto
-					},
-					body: new URLSearchParams(formData).toString()
-				})
-				.then(response => response.text())
-				.then(data => {
-					alert(data);
-				});
-			});
-		</script>
-	</body>
-	</html>
-	""", "text/html");
-});
-
-
-app.MapPost("/submitAntiforgery", async ([FromForm] string messaggio, IAntiforgery antiforgery) =>
-{
-	await antiforgery.ValidateRequestAsync(HttpContext.Current); // Valida l'Anti-Forgery Token
-	return $"Messaggio ricevuto: {messaggio} (Anti-Forgery validato)";
-});
-
-
-app.Run();
-```
-
-**Spiegazione:**
-
-1.  **`builder.Services.AddAntiforgery();`**: Registra il servizio Anti-Forgery nel container DI (Dependency Injection).
-2.  **`app.UseAntiforgery();`**: Abilita il middleware Anti-Forgery per l'applicazione.  Questo middleware gestisce la generazione e la validazione dei token.
-3.  **Endpoint `/` (GET):**
-	  * Inietta il servizio `IAntiforgery` nell'endpoint.
-	  * `antiforgery.GetAndStoreTokens(HttpContext.Current)`: **Genera un nuovo set di Anti-Forgery Tokens** (RequestToken e FormFieldName) e li memorizza nella sessione (o cookie).  Restituisce un oggetto `AntiforgeryTokenSet` contenente i token.
-	  * **HTML**:
-		  * **`  <input type="hidden" name="{{tokens.FormFieldName}}" value="{{tokens.RequestToken}}"> `**:  **INSERISCE IL TOKEN COME CAMPO NASCOSTO NEL FORM.**  `tokens.FormFieldName` e `tokens.RequestToken` vengono interpolati nella stringa HTML, inserendo dinamicamente il nome del campo e il valore del token.
-		  * **JavaScript (Opzionale - da commentare/rimuovere se usi campo nascosto):**  `'RequestVerificationToken': '{{tokens.RequestToken}}'`  **Alternativa (NON usare contemporaneamente al campo nascosto):**  Invia il token come header HTTP.  In questo esempio, l'uso del campo nascosto è preferibile per la compatibilità con form standard.
-4.  **Endpoint `/submitAntiforgery` (POST):**
-	  * Inietta `IAntiforgery` nell'endpoint.
-	  * `await antiforgery.ValidateRequestAsync(HttpContext.Current);`:  **VALIDA L'ANTI-FORGERY TOKEN** ricevuto con la richiesta. Se la validazione fallisce (token mancante, non valido, non corrispondente), verrà lanciata un'eccezione (`AntiforgeryValidationException`) e la richiesta verrà rifiutata.
-	  * Se la validazione ha successo, l'endpoint continua l'elaborazione (in questo esempio, restituisce un messaggio di successo).
-
-**Per testare l'Anti-Forgery:**
-
-1.  Crea un nuovo progetto ASP.NET Core Empty Web App.
-2.  Sostituisci il contenuto di `Program.cs` con il codice C\# fornito.
-3.  Esegui l'applicazione.
-4.  Apri il browser e vai all'indirizzo `https://localhost:<port>`.
-5.  Inserisci un messaggio nel form e clicca "Invia". Dovresti vedere un alert di successo.
-6.  **Prova ad attaccare (CSRF test)**:
-	  * Apri gli strumenti di sviluppo del browser (F12) e copia l'HTML del form dalla pagina caricata (elemento `<form id="antiforgeryForm">`).
-	  * Crea un **secondo progetto** ASP.NET Core vuoto (questo simula un sito malevolo).
-	  * In `Program.cs` del **secondo progetto**, crea un endpoint GET (`/attack`) che restituisce una pagina HTML. Incolla l'HTML del form copiato nel body della risposta di questo endpoint. **RIMUOVI la riga `<input type="hidden" ...>` dal form in questo secondo progetto (simula un form malevolo senza Anti-Forgery Token)**.
-	  * Esegui **entrambe** le applicazioni (quella originale e quella "malevola").
-	  * Apri il browser e vai all'indirizzo dell'applicazione "malevola" (es. `https://localhost:<altro_porta>/attack`).
-	  * Inserisci un messaggio nel form del sito "malevolo" e clicca "Invia".
-	  * **Dovresti vedere un errore nella console del browser** (e potenzialmente un errore lato server nella prima applicazione) **perché la validazione dell'Anti-Forgery Token fallirà** (il token è mancante nel form malevolo).  Se la validazione non fallisse, saresti vulnerabile a CSRF.
-
-**Best Practice per l'Anti-Forgery in Minimal APIs**
-
-  * **Abilita sempre Anti-Forgery per form POST, PUT, DELETE**: Proteggi tutti gli endpoint che modificano dati (non solo quelli dei form, ma anche API che ricevono JSON, XML, ecc.) con Anti-Forgery.
-  * **Valida sempre il token negli endpoint**: Non dimenticare di chiamare `antiforgery.ValidateRequestAsync()` in tutti gli endpoint che processano form protetti.
-  * **Utilizza HTTPS**: Anti-Forgery si basa su cookie per la sessione. HTTPS è fondamentale per proteggere i cookie di sessione e prevenire attacchi man-in-the-middle.
-  * **Non disabilitare Anti-Forgery globalmente senza motivo**:  La protezione Anti-Forgery è un importante meccanismo di sicurezza. Disabilitala solo se hai ragioni specifiche e sei consapevole dei rischi.
-  * **Considera CORS (Cross-Origin Resource Sharing)**: Se la tua applicazione espone API utilizzate da siti web di terze parti, configura correttamente CORS per controllare quali siti possono accedere alle tue API. CORS è complementare all'Anti-Forgery e gestisce scenari diversi.
-
-**Link Utili:**
-
-  * [Documentazione ufficiale Microsoft: Prevenire attacchi Cross-Site Request Forgery (CSRF) in ASP.NET Core](https://www.google.com/url?sa=E&source=gmail&q=https://learn.microsoft.com/en-us/aspnet/core/security/anti-request-forgery?view=aspnetcore-9.0)
-  * [OWASP: Cross-Site Request Forgery (CSRF)](https://www.google.com/search?q=https://owasp.org/www-project-top-ten/OWASP_Top_Ten/vulnerability/cross-site_request_forgery_csrf)
-
------
-
-**4. Meccanismi Avanzati di Binding (Panoramica)**
+## Meccanismi Avanzati di Binding (Panoramica)
 
 Oltre al binding automatico e al binding da form, ASP.NET Core offre meccanismi più avanzati per scenari specifici.
 
@@ -718,7 +807,8 @@ Per tipi di parametri personalizzati, puoi estendere il meccanismo di binding im
 
 **Link Utili:**
 
-  * [Documentazione ufficiale Microsoft: Custom parameter binding in Minimal APIs](https://www.google.com/search?q=https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/parameter-binding%3Fview%3Daspnetcore-9.0%23custom-binding)
+  * [Documentazione ufficiale Microsoft: Custom parameter binding in Minimal APIs - TryParse](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/parameter-binding?#tryparse)
+  * [Documentazione ufficiale Microsoft: Custom parameter binding in Minimal APIs - BindAsync](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/parameter-binding?#bindasync)
 
 **Request Body as a `Stream` or `PipeReader`**
 
@@ -726,369 +816,51 @@ In scenari avanzati (es. gestione di upload di file molto grandi o streaming di 
 
 **Link Utili:**
 
-  * [Documentazione ufficiale Microsoft: Access request body as a Stream or PipeReader](https://www.google.com/search?q=https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/parameter-binding%3Fview%3Daspnetcore-9.0%23request-body-as-a-stream-or-pipereader)
+  * [Documentazione ufficiale Microsoft: Access request body as a Stream or PipeReader](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/parameter-binding?#bind-the-request-body-as-a-stream-or-pipereader)
+
+## Ordine nell'applicazione delle regole di Binding
+
+Regole per determinare un'origine di associazione (Binding) da un parametro:
+
+1. Attributo esplicito definito nel parametro (attributi From\*) nell'ordine seguente:
+	1. Valori del percorso: [`[FromRoute]`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.fromrouteattribute)
+	2. Stringa di query: [`[FromQuery]`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.fromqueryattribute)
+	3. Intestazione: [`[FromHeader]`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.fromheaderattribute)
+	4. Corpo: [`[FromBody]`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.frombodyattribute)
+	5. Modulo: [`[FromForm]`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.fromformattribute)
+	6. Servizio: [`[FromServices]`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.fromservicesattribute)
+	7. Valori dei parametri: [`[AsParameters]`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.asparametersattribute)
+2. Tipi speciali
+	1. [`HttpContext`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.httpcontext)
+	2. [`HttpRequest`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.httprequest) ([`HttpContext.Request`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.httpcontext.request#microsoft-aspnetcore-http-httpcontext-request))
+	3. [`HttpResponse`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.httpresponse) ([`HttpContext.Response`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.httpcontext.response#microsoft-aspnetcore-http-httpcontext-response))
+	4. [`ClaimsPrincipal`](https://learn.microsoft.com/en-us/dotnet/api/system.security.claims.claimsprincipal) ([`HttpContext.User`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.httpcontext.user#microsoft-aspnetcore-http-httpcontext-user))
+	5. [`CancellationToken`](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken) ([`HttpContext.RequestAborted`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.httpcontext.requestaborted#microsoft-aspnetcore-http-httpcontext-requestaborted))
+	6. [`IFormCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.iformcollection) ([`HttpContext.Request.Form`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.iformcollection))
+	7. [`IFormFileCollection`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.iformfilecollection) ([`HttpContext.Request.Form.Files`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.iformcollection.files#microsoft-aspnetcore-http-iformcollection-files))
+	8. [`IFormFile`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.iformfile) ([`HttpContext.Request.Form.Files[paramName]`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.iformfilecollection.item#microsoft-aspnetcore-http-iformfilecollection-item(system-string)))
+	9. [`Flusso`](https://learn.microsoft.com/en-us/dotnet/api/system.io.stream) ([`HttpContext.Request.Body`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.httprequest.body#microsoft-aspnetcore-http-httprequest-body))
+	10. [`PipeReader`](https://learn.microsoft.com/en-us/dotnet/api/system.io.pipelines.pipereader) ([`HttpContext.Request.BodyReader`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.httprequest.bodyreader#microsoft-aspnetcore-http-httprequest-bodyreader))
+3. Il tipo di parametro ha un metodo [`BindAsync`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.ibindablefromhttpcontext-1.bindasync) statico valido.
+4. Il tipo di parametro è una stringa o dispone di un metodo [`TryParse`](https://learn.microsoft.com/en-us/dotnet/api/system.iparsable-1.tryparse) statico valido.
+	1. Se il nome del parametro è presente nel modello di route, ad esempio , è associato dalla route.`app.Map("/todo/{id}", (int id) => {});`
+	2. Associato dalla stringa di query.
+5. Se il tipo di parametro è un servizio fornito dall'inserimento delle dipendenze, utilizza tale servizio come origine.
+6. Il parametro proviene dal corpo.
 
 -----
 
-**5. Conclusioni e Best Practice Generali sul Parameter Binding**
+## Conclusioni e Best Practice Generali sul Parameter Binding
 
 **Riepilogo delle best practice per un binding efficace e sicuro:**
 
-  * **Sii esplicito**: Utilizza attributi come `[FromForm]`, `[FromQuery]`, `[FromBody]`, `[FromRoute]` per dichiarare chiaramente la provenienza dei dati dei parametri.
-  * **Valida sempre i dati**: Effettua la validazione dei dati in ingresso lato server, indipendentemente dalla validazione lato client.
-  * **Proteggi i form**: Implementa sempre la protezione Anti-Forgery per i form che modificano dati.
-  * **Utilizza HTTPS**:  Assicura la sicurezza della trasmissione dei dati con HTTPS.
-  * **Semplifica gli endpoint**: Utilizza `[AsParameters]` con attenzione per raggruppare parametri logicamente correlati solo quando rende la firma dell'endpoint più chiara e gestibile.
-  * **Documenta le API**:  Documenta chiaramente quali parametri si aspettano i tuoi endpoint e da dove provengono (route, query, body, form).
+  * **Essere espliciti**: Utilizzare attributi come `[FromForm]`, `[FromQuery]`, `[FromBody]`, `[FromRoute]` per dichiarare chiaramente la provenienza dei dati dei parametri.
+  * **Validare sempre i dati**: Effettuare la validazione dei dati in ingresso lato server, indipendentemente dalla validazione lato client.
+  * **Proteggere i form**: Implementare sempre la protezione Anti-Forgery per i form che modificano dati.
+  * **Utilizzare HTTPS**:  Assicurare la sicurezza della trasmissione dei dati con HTTPS.
+  * **Semplificare gli endpoint**: Utilizzare `[AsParameters]` con attenzione per raggruppare parametri logicamente correlati solo quando rende la firma dell'endpoint più chiara e gestibile.
+  * **Documentare le API**:  Documentare chiaramente quali parametri si aspettano gli endpoint e da dove provengono (route, query, body, form).
 
 **Link Utili Principali:**
 
-  * [Documentazione ufficiale Microsoft: Parameter binding in Minimal APIs](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/parameter-binding?view=aspnetcore-9.0) (Pagina principale sul Parameter Binding)
-  * [Documentazione ufficiale Microsoft: Prevenire attacchi Cross-Site Request Forgery (CSRF) in ASP.NET Core](https://www.google.com/url?sa=E&source=gmail&q=https://learn.microsoft.com/en-us/aspnet/core/security/anti-request-forgery?view=aspnetcore-9.0) (Protezione Anti-Forgery)
-
- Gestire l'Anti-Forgery Token in un'architettura con frontend separato (statico HTML/CSS/JS) e backend Minimal API .NET richiede un approccio leggermente diverso rispetto a quando il frontend e il backend sono più strettamente integrati (ad esempio, con server-side rendering).
-
-**La Sfida del Frontend Separato**
-
-Nel caso di frontend separato, non abbiamo più la facilità di inserire direttamente l'Anti-Forgery Token all'interno di un form HTML generato lato server, come abbiamo visto nell'esempio precedente con le Minimal API che restituivano HTML.  Il frontend statico deve **richiedere** il token al backend e poi **inviarlo** nuovamente ad ogni richiesta che necessita di protezione CSRF.
-
-**Flusso di Lavoro in un Frontend Separato con Anti-Forgery**
-
-Il flusso di lavoro tipico per la gestione dell'Anti-Forgery in questo scenario è il seguente:
-
-1.  **Richiesta del Token (Frontend):**  Quando l'applicazione frontend si carica (o quando necessario), invia una richiesta **GET** speciale al backend per ottenere un Anti-Forgery Token. Questo endpoint backend è progettato unicamente per fornire il token.
-2.  **Risposta con Token (Backend):** Il backend Minimal API genera un Anti-Forgery Token e lo restituisce nella risposta della richiesta GET.  Solitamente, il token viene inviato come parte della risposta, ad esempio in un header HTTP personalizzato o nel corpo JSON della risposta.
-3.  **Memorizzazione del Token (Frontend):**  Il frontend JavaScript riceve il token e lo memorizza. Dove memorizzarlo dipende dalla durata del token e dal contesto dell'applicazione. Opzioni comuni sono:
-	*   **Memoria JavaScript:** La variabile JavaScript mantiene il token in memoria fino a quando la pagina non viene chiusa o ricaricata. Semplice ma il token si perde se la pagina viene ricaricata.
-	*   **Session Storage:** `sessionStorage` del browser. Il token persiste per la durata della sessione del browser (fino alla chiusura della finestra/tab).
-	*   **Local Storage:** `localStorage` del browser. Il token persiste anche dopo la chiusura del browser.  Generalmente **non è raccomandato** memorizzare token sensibili in `localStorage` per ragioni di sicurezza (rischio XSS), ma per Anti-Forgery token che hanno una validità limitata e sono meno sensibili dei token di autenticazione, potrebbe essere accettabile in alcuni contesti, se gestito con attenzione. Per semplicità, nell'esempio useremo la memoria JavaScript.
-4.  **Inclusione del Token nelle Richieste (Frontend):**  Ogni volta che il frontend deve inviare una richiesta al backend che necessita di protezione CSRF (tipicamente richieste `POST`, `PUT`, `DELETE` che modificano dati), deve **includere l'Anti-Forgery Token** nella richiesta.  Il modo più comune per fare ciò in un contesto API è tramite un **header HTTP personalizzato**. L'header standard che ASP.NET Core si aspetta per l'Anti-Forgery Token è `RequestVerificationToken`.
-5.  **Validazione del Token (Backend):** L'endpoint backend Minimal API che riceve la richiesta protetta deve **validare l'Anti-Forgery Token** presente nell'header `RequestVerificationToken`.  La validazione avviene nello stesso modo dell'esempio precedente, utilizzando `antiforgery.ValidateRequestAsync(HttpContext.Current)`.
-
-**Esempio di codice completo (Frontend Statico + Backend Minimal API Anti-Forgery)**
-
-**Struttura del progetto (ipotetica):**
-
-```
-frontend-static/  (Cartella per il frontend statico)
-|-- index.html
-|-- script.js
-|-- style.css
-
-backend-minimal-api/ (Cartella per il backend Minimal API .NET)
-|-- Program.cs
-|-- backend-minimal-api.csproj
-```
-
-**1. Backend Minimal API (.NET - `backend-minimal-api/Program.cs`)**
-
-```csharp
-using Microsoft.AspNetCore.Antiforgery;
-using Microsoft.AspNetCore.Mvc;
-
-var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddAntiforgery();
-
-var app = builder.Build();
-
-app.UseAntiforgery();
-
-// Endpoint per ottenere l'Anti-Forgery Token (GET)
-app.MapGet("/antiforgery/token", (IAntiforgery antiforgery) =>
-{
-	var tokens = antiforgery.GetAndStoreTokens(HttpContext.Current);
-	return Results.Text(tokens.RequestToken ?? ""); // Restituisce solo il RequestToken come testo
-});
-
-// Endpoint protetto da Anti-Forgery (POST)
-app.MapPost("/api/submitData", async ([FromForm] string messaggio, IAntiforgery antiforgery) =>
-{
-	await antiforgery.ValidateRequestAsync(HttpContext.Current);
-	return Results.Ok(new { message = $"Messaggio ricevuto: {messaggio} (Anti-Forgery validato)" });
-})
-.Accepts<Dictionary<string, string>>("application/x-www-form-urlencoded"); // Specifica che accetta form URL-encoded
-
-
-app.Run();
-```
-
-**Spiegazione Backend:**
-
-*   **`/antiforgery/token` (GET Endpoint):**
-	*   Questo endpoint è dedicato a fornire l'Anti-Forgery Token.
-	*   Utilizza `IAntiforgery` per generare i token.
-	*   **Restituisce solo il `RequestToken` come testo semplice** (`Results.Text(tokens.RequestToken ?? "")`).  Potresti anche restituirlo in JSON se preferisci, ma per semplicità qui lo restituiamo come testo. **È importante restituire solo il `RequestToken` e non l'intero `AntiforgeryTokenSet` in questo scenario di frontend separato.**
-	*   **Questo endpoint *non* necessita di protezione Anti-Forgery**, poiché il suo scopo è proprio fornire il token.
-*   **`/api/submitData` (POST Endpoint):**
-	*   Questo è l'endpoint che processa i dati del form e deve essere protetto da CSRF.
-	*   Utilizza `[FromForm]` per ricevere i dati dal form (anche se in questo esempio semplice inviamo un solo campo `messaggio`).
-	*   **`await antiforgery.ValidateRequestAsync(HttpContext.Current);`**:  Valida l'Anti-Forgery Token.
-	*   Restituisce un JSON con un messaggio di successo.
-	*   **.Accepts\<Dictionary\<string, string>>("application/x-www-form-urlencoded")**: Specifica che l'endpoint si aspetta ricevere dati in formato `application/x-www-form-urlencoded` (il formato standard dei form HTML).
-
-**2. Frontend Statico (`frontend-static/index.html`, `frontend-static/script.js`)**
-
-**`frontend-static/index.html`:**
-
-```html
-<!DOCTYPE html>
-<html>
-<head>
-	<title>Frontend Statico con Anti-Forgery</title>
-</head>
-<body>
-	<h1>Frontend Statico con Anti-Forgery</h1>
-	<form id="dataForm">
-		<label for="messaggio">Messaggio:</label><br>
-		<input type="text" id="messaggio" name="messaggio"><br><br>
-		<button type="submit">Invia Dati Protetti</button>
-	</form>
-
-	<script src="script.js"></script>
-</body>
-</html>
-```
-
-**`frontend-static/script.js`:**
-
-```javascript
-document.addEventListener('DOMContentLoaded', function() {
-	let antiforgeryToken = null; // Variabile per memorizzare l'Anti-Forgery Token
-
-	// 1. Ottieni l'Anti-Forgery Token dal backend all'avvio
-	fetch('/antiforgery/token')
-		.then(response => response.text())
-		.then(token => {
-			antiforgeryToken = token; // Memorizza il token
-			console.log("Anti-Forgery Token ottenuto:", antiforgeryToken);
-		})
-		.catch(error => {
-			console.error("Errore nel recupero del token Anti-Forgery:", error);
-			alert("Errore nel recupero del token Anti-Forgery. L'applicazione potrebbe non funzionare correttamente.");
-		});
-
-	const dataForm = document.getElementById('dataForm');
-	dataForm.addEventListener('submit', function(event) {
-		event.preventDefault();
-
-		const messaggioInput = document.getElementById('messaggio');
-		const messaggio = messaggioInput.value;
-
-		const formData = new FormData();
-		formData.append('messaggio', messaggio); // Prepara i dati del form
-
-		// 2. Invia la richiesta POST protetta, includendo l'Anti-Forgery Token nell'header
-		fetch('/api/submitData', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/x-www-form-urlencoded', // Importante per form URL-encoded
-				'RequestVerificationToken': antiforgeryToken // Includi il token nell'header
-			},
-			body: new URLSearchParams(formData).toString() // Converte FormData in URL encoded string
-		})
-		.then(response => response.json())
-		.then(data => {
-			alert(data.message); // Mostra la risposta del backend
-		})
-		.catch(error => {
-			console.error("Errore nell'invio dei dati:", error);
-			alert("Errore nell'invio dei dati. Riprova più tardi.");
-		});
-	});
-});
-```
-
-**Spiegazione Frontend:**
-
-*   **`document.addEventListener('DOMContentLoaded', ...)`:** Assicura che lo script venga eseguito dopo che la pagina HTML è stata completamente caricata.
-*   **`let antiforgeryToken = null;`:**  Dichiara una variabile per memorizzare l'Anti-Forgery Token.
-*   **`fetch('/antiforgery/token')...` (Richiesta GET per il token):**
-	*   All'avvio della pagina, invia una richiesta GET a `/antiforgery/token` sul backend per ottenere il token.
-	*   Quando la risposta arriva (successo), estrae il token come testo (`response.text()`) e lo memorizza in `antiforgeryToken`.
-	*   Gestisce gli errori nel recupero del token.
-*   **`dataForm.addEventListener('submit', ...)` (Gestione Submit Form):**
-	*   Intercetta l'evento di submit del form.
-	*   Previene il comportamento predefinito del form (`event.preventDefault()`).
-	*   Ottiene il valore del campo `messaggio`.
-	*   Crea un `FormData` object e aggiunge il campo `messaggio`.
-	*   **`fetch('/api/submitData', ...)` (Richiesta POST protetta):**
-		*   Invia una richiesta POST a `/api/submitData`.
-		*   **`headers: { 'RequestVerificationToken': antiforgeryToken }`**:  **INCLUDI L'ANTI-FORGERY TOKEN NELL'HEADER `RequestVerificationToken`**.
-		*   `'Content-Type': 'application/x-www-form-urlencoded'`: Specifica il content type corretto per i form standard.
-		*   `body: new URLSearchParams(formData).toString()`: Converte `FormData` in formato `application/x-www-form-urlencoded` per l'invio con `fetch`.
-		*   Gestisce la risposta JSON dal backend e mostra un alert con il messaggio.
-		*   Gestisce gli errori nell'invio dei dati.
-
-**3. Testare l'esempio (Frontend Statico + Backend Minimal API Anti-Forgery)**
-
-1.  **Avvia il backend Minimal API:**  Esegui il progetto `backend-minimal-api`. Dovrebbe avviarsi su un indirizzo come `https://localhost:<porta_backend>`.
-2.  **Apri `frontend-static/index.html` nel browser:**  Apri il file `index.html` **direttamente** nel browser (non tramite un server web, per semplicità in questo test). Poiché è un frontend statico, può essere aperto direttamente dal file system.
-3.  **Interazione:**
-	*   Quando la pagina `index.html` si carica, dovresti vedere un messaggio nella console del browser "Anti-Forgery Token ottenuto: ..." (se il backend è in esecuzione).
-	*   Inserisci un messaggio nel campo di testo e clicca "Invia Dati Protetti".
-	*   Dovresti vedere un alert JavaScript con la risposta JSON dal backend, confermando che il messaggio è stato ricevuto e l'Anti-Forgery validato.
-4.  **Test di attacco CSRF (simulato):**
-	*   Analogamente all'esempio precedente, crea un **secondo progetto frontend statico** (o modifica temporaneamente `frontend-static/index.html`).
-	*   **Rimuovi completamente la parte di codice JavaScript che recupera e include l'Anti-Forgery Token** (sia la richiesta GET a `/antiforgery/token` che l'inclusione del token nell'header della richiesta POST).  In pratica, simula un sito malevolo che non conosce o non utilizza l'Anti-Forgery Token.
-	*   Apri questo **secondo frontend "malevolo"** nel browser.
-	*   Prova ad inviare il form. **Dovresti ricevere un errore (o una risposta di errore dal backend nella console del browser)** perché la validazione dell'Anti-Forgery Token fallirà sul backend.  Questo dimostra che la protezione CSRF sta funzionando.
-
-**Considerazioni Importanti e Best Practice per Frontend Separato e Anti-Forgery**
-
-*   **HTTPS è Fondamentale:** Anche in questo scenario, HTTPS è **essenziale** per proteggere la comunicazione tra frontend e backend, inclusa la trasmissione dell'Anti-Forgery Token e dei cookie di sessione (se utilizzati).
-*   **Gestione degli Errori:**  Implementa una gestione robusta degli errori sia nel frontend che nel backend. Se il token non può essere recuperato, o la validazione fallisce, l'applicazione dovrebbe gestire correttamente la situazione e informare l'utente.
-*   **Durata del Token:** Considera la durata di validità dell'Anti-Forgery Token.  ASP.NET Core genera token che sono validi per la sessione per impostazione predefinita. Se necessario, puoi configurare la durata del token.  Se i token hanno una durata breve, potresti aver bisogno di meccanismi di refresh del token (anche se per Anti-Forgery token, di solito non è necessario un refresh continuo come per i token di autenticazione JWT).
-*   **Sicurezza del Token nel Frontend:**  Sebbene `localStorage` possa essere un'opzione per persistere il token, valuta attentamente i rischi di XSS (Cross-Site Scripting). In molti casi, memorizzare il token in memoria JavaScript (come nell'esempio) o in `sessionStorage` è sufficiente e più sicuro, poiché il token è legato alla sessione dell'utente e ha una validità limitata.
-*   **Documentazione API:**  Documenta chiaramente che le API protette si aspettano l'Anti-Forgery Token nell'header `RequestVerificationToken` e che il frontend deve prima richiedere il token all'endpoint `/antiforgery/token`.
-
-È fondamentale capire perché, nello scenario di frontend separato, restituire **solo il `RequestToken`** dall'endpoint `/antiforgery/token` sia la scelta corretta, e perché inviare l'intero `AntiforgeryTokenSet` sarebbe inappropriato o addirittura problematico.
-
-Per chiarire al meglio, ripercorriamo i concetti chiave e le differenze tra i due scenari principali di gestione dell'Anti-Forgery Token:
-
-**1. Scenario con Frontend e Backend Integrati (Server-Side Rendering, Es. Minimal API che restituisce HTML)**
-
-*   In questo scenario, il backend è responsabile sia della generazione della pagina HTML che della gestione degli endpoint API.
-*   Quando il backend genera la pagina HTML contenente il form, utilizza il servizio `IAntiforgery` per ottenere l'`AntiforgeryTokenSet`.
-*   L'`AntiforgeryTokenSet` contiene **due informazioni principali**:
-	*   **`RequestToken`**:  Il valore effettivo del token di protezione CSRF.
-	*   **`FormFieldName`**:  Il **nome** del campo nascosto (`<input type="hidden" name="...">`) che verrà inserito nel form HTML per contenere il `RequestToken`.
-
-*   Quando il backend restituisce la pagina HTML al browser, **inserisce entrambi** questi elementi nel form:
-	*   Il `RequestToken` come `value` dell'input nascosto.
-	*   Il `FormFieldName` come `name` dell'input nascosto.  Questo è cruciale perché ASP.NET Core, quando convalida l'Anti-Forgery Token in un endpoint che riceve un form, **si aspetta di trovare il token in un campo del form con un *nome* specifico**. Questo nome specifico è proprio il `FormFieldName`.
-
-*   **Esempio di codice HTML generato dal backend nel caso integrato:**
-
-	```html
-	<form method="post" action="/submitForm">
-		<input type="hidden" name="__RequestVerificationToken" value="[VALORE_DEL_REQUEST_TOKEN]"> <label for="messaggio">Messaggio:</label><br>
-		<input type="text" id="messaggio" name="messaggio"><br><br>
-		<input type="submit" value="Invia">
-	</form>
-	```
-
-	In questo esempio, `__RequestVerificationToken` è un valore tipico di `FormFieldName` (ma può essere configurato), e `[VALORE_DEL_REQUEST_TOKEN]` è il `RequestToken`.
-
-**2. Scenario con Frontend Separato (Statico HTML/JS + Backend Minimal API)**
-
-*   In questo scenario, il frontend (HTML, CSS, JavaScript) è completamente separato dal backend Minimal API.
-*   Il frontend è responsabile della gestione dell'interfaccia utente, delle interazioni con l'utente e dell'invio di richieste al backend.
-*   Il backend Minimal API è responsabile della logica applicativa, della gestione dei dati e della sicurezza, inclusa la protezione CSRF.
-*   **Non utilizziamo form HTML generati lato server e campi nascosti per l'Anti-Forgery Token.** Invece, adottiamo l'approccio di inviare il `RequestToken` come **header HTTP** (`RequestVerificationToken`).
-
-*   **Perché restituire solo il `RequestToken` dall'endpoint `/antiforgery/token`?**
-
-	*   **`FormFieldName` non è rilevante:**  Il `FormFieldName` è significativo **solo** quando si utilizza il meccanismo tradizionale di inserire l'Anti-Forgery Token come campo nascosto all'interno di un form HTML. Nel nostro scenario di frontend separato, **non stiamo usando campi nascosti nei form per l'Anti-Forgery Token**. Invece, inviamo il token come header HTTP.  Pertanto, il `FormFieldName` diventa superfluo e non necessario per il frontend.
-	*   **Semplicità e chiarezza:** Restituire solo il `RequestToken` rende l'API `/antiforgery/token` più semplice e focalizzata sul suo scopo: fornire il valore del token.  Il frontend si aspetta di ricevere un semplice token stringa da utilizzare nell'header. Inviare l'intero `AntiforgeryTokenSet` sarebbe eccessivo e potrebbe creare confusione nel frontend su come interpretare e utilizzare `FormFieldName` in un contesto dove non è pertinente.
-	*   **Prevenire usi impropri (anche se meno probabili):** Anche se meno probabile, se il frontend ricevesse l'intero `AntiforgeryTokenSet`, potrebbe erroneamente tentare di utilizzare `FormFieldName` in modi non previsti in un'architettura basata su header, magari cercando di manipolare i form HTML lato client in modo errato. Restituire solo il `RequestToken` riduce la superficie di possibili fraintendimenti o usi non corretti.
-	*   **Minimizzare le informazioni esposte:** In generale, è una buona pratica per le API esporre solo le informazioni strettamente necessarie per il client. In questo caso, il frontend ha bisogno solo del valore del `RequestToken` per inserirlo nell'header.  Inviare informazioni aggiuntive come `FormFieldName`, che non vengono utilizzate, non apporta alcun beneficio e potrebbe essere considerato un'esposizione non necessaria di dettagli interni.
-
-*   **Cosa fa il frontend con il `RequestToken` ricevuto?**
-
-	*   Il frontend JavaScript, dopo aver ricevuto il `RequestToken` dall'endpoint `/antiforgery/token`, lo memorizza (ad esempio, in una variabile JavaScript).
-	*   Successivamente, quando il frontend deve effettuare una richiesta protetta (POST, PUT, DELETE) al backend, **aggiunge il `RequestToken` come valore dell'header HTTP `RequestVerificationToken` nella richiesta**.
-
-*   **Lato Backend (Endpoint protetto - `/api/submitData` nel nostro esempio):**
-
-	*   Indipendentemente da come il token è stato inviato (sia come campo form nascosto nel caso integrato, sia come header nel caso separato), ASP.NET Core, quando si chiama `antiforgery.ValidateRequestAsync(HttpContext.Current)`, si occupa di **verificare la validità del token in base a come è stato configurato il sistema Anti-Forgery**.  In genere, ASP.NET Core è configurato per cercare il token sia nel header `RequestVerificationToken` (per scenari API/frontend separati) che nel campo form con il `FormFieldName` (per scenari di server-side rendering).  Quindi, la validazione funziona correttamente in entrambi i casi, **purché il frontend invii il `RequestToken` correttamente nell'header.**
-
-**In Sintesi:**
-
-Nello scenario di frontend separato, il `FormFieldName` incluso nell'`AntiforgeryTokenSet` è **irrilevante** perché non stiamo utilizzando form HTML generati lato server e campi nascosti per l'Anti-Forgery Token.  Stiamo invece trasmettendo il `RequestToken` come header HTTP. Pertanto, l'endpoint `/antiforgery/token` restituisce **solo il `RequestToken`** per semplicità, chiarezza e per evitare possibili confusioni o usi impropri del `FormFieldName` in un contesto dove non è applicabile.  Il frontend ha bisogno solo del `RequestToken` per popolare l'header `RequestVerificationToken` delle richieste protette.
-
-**Anti-Forgery Token con sessioni sono abilitate sul backend**
-
-**Si può implementare il meccanismo dell'Anti-Forgery Token anche quando le sessioni non sono abilitate sul backend**.  Infatti, il sistema Anti-Forgery di ASP.NET Core è progettato per funzionare **principalmente in modo stateless**, senza dipendere dalle sessioni server-side per la memorizzazione dei token.
-È importante chiarire che, sebbene le sessioni *possano* essere utilizzate per memorizzare l'Anti-Forgery Token (come abbiamo visto in precedenza con `antiforgery.GetAndStoreTokens`), **non sono un requisito indispensabile** per il funzionamento del meccanismo.
-
-**Come funziona l'Anti-Forgery senza sessioni?**
-
-Quando le sessioni non sono utilizzate, il sistema Anti-Forgery di ASP.NET Core si affida a un approccio **stateless e basato sui cookie**.  Ecco come funziona il flusso:
-
-1.  **Generazione del Token (Stateless):** Quando l'endpoint backend (ad esempio, `/antiforgery/token`) viene chiamato per richiedere un token, il servizio `IAntiforgery` genera un token Anti-Forgery.  Questo token **non viene memorizzato in una sessione server-side**.  Invece, il token generato contiene al suo interno tutte le informazioni necessarie per la sua validazione futura, tipicamente attraverso meccanismi di **crittografia e firma digitale**.
-
-2.  **Invio del Token al Client tramite Cookie:**  Oltre a restituire il `RequestToken` (come stringa di testo o JSON) al frontend (per l'header `RequestVerificationToken`), il backend, **in modo automatico e stateless**, imposta anche un **cookie HTTP** nella risposta. Questo cookie contiene una parte del token Anti-Forgery (spesso chiamato *cookie token* o *cookie di base*). Il nome di questo cookie è configurabile (di default, inizia con `.AspNetCore.Antiforgery`).
-
-3.  **Invio del Token con le Richieste (Frontend):** Il frontend, quando effettua una richiesta protetta (POST, PUT, DELETE) al backend, deve fare **due cose**:
-	*   Inviare il `RequestToken` (che ha ottenuto dall'endpoint `/antiforgery/token`) nell'**header HTTP `RequestVerificationToken`**, come abbiamo visto nell'esempio precedente.
-	*   Il browser **invierà automaticamente il cookie Anti-Forgery** (impostato dal backend in precedenza) insieme alla richiesta, **sempre che la richiesta sia fatta allo stesso dominio e percorso** per cui il cookie è valido.  Questo comportamento è intrinseco ai cookie HTTP.
-
-4.  **Validazione del Token (Stateless):** Quando l'endpoint backend protetto riceve la richiesta, e si chiama `antiforgery.ValidateRequestAsync(HttpContext.Current)`, il sistema Anti-Forgery esegue la validazione **in modo stateless**.  La validazione consiste nel:
-	*   **Estrarre il `RequestToken` dall'header `RequestVerificationToken`**.
-	*   **Estrarre il cookie Anti-Forgery dalla richiesta** (se presente e valido per il dominio/percorso).
-	*   **Verificare che il `RequestToken` e il cookie Anti-Forgery siano *correlati* e *validi***.  La logica di correlazione e validazione si basa sulla crittografia e la firma digitale utilizzate nella generazione del token.  Poiché il token contiene tutte le informazioni necessarie, **non è necessario consultare alcuna sessione server-side**.
-
-**Vantaggi dell'approccio Stateless con Cookie:**
-
-*   **Scalabilità:**  Essere stateless rende il backend **più scalabile**, poiché non è necessario gestire la sessione per ogni utente sul server.  Questo è particolarmente importante in architetture distribuite o con un elevato numero di utenti.
-*   **Semplicità:**  Si evita la complessità della gestione e della persistenza delle sessioni server-side.
-*   **Compatibilità con architetture distribuite:**  In microservizi o architetture distribuite, la gestione delle sessioni condivise può essere complessa. L'approccio stateless con cookie elimina questa problematica.
-
-**Esempio di codice Minimal API (senza sessioni esplicite):**
-
-Modifichiamo leggermente l'esempio precedente per evidenziare che **non stiamo usando sessioni esplicite** e che l'Anti-Forgery continua a funzionare in modo stateless tramite cookie. In realtà, il codice precedente **già funzionava in modo stateless** di default, ma ora lo rendiamo ancora più esplicito:
-
-**Program.cs (Backend Minimal API - Stateless Anti-Forgery):**
-
-```csharp
-using Microsoft.AspNetCore.Antiforgery;
-using Microsoft.AspNetCore.Mvc;
-
-var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddAntiforgery();
-
-var app = builder.Build();
-
-app.UseAntiforgery();
-
-
-// Endpoint per ottenere l'Anti-Forgery Token (GET) - Stateless
-app.MapGet("/antiforgery/token", (IAntiforgery antiforgery) =>
-{
-	var tokens = antiforgery.GetTokens(HttpContext.Current); // Utilizziamo GetTokens invece di GetAndStoreTokens
-	return Results.Text(tokens.RequestToken ?? ""); // Restituisce solo il RequestToken come testo
-});
-
-// Endpoint protetto da Anti-Forgery (POST)
-app.MapPost("/api/submitData", async ([FromForm] string messaggio, IAntiforgery antiforgery) =>
-{
-	await antiforgery.ValidateRequestAsync(HttpContext.Current);
-	return Results.Ok(new { message = $"Messaggio ricevuto: {messaggio} (Anti-Forgery validato)" });
-})
-.Accepts<Dictionary<string, string>>("application/x-www-form-urlencoded");
-
-
-app.Run();
-```
-
-**Modifiche rispetto all'esempio precedente:**
-
-*   Nell'endpoint `/antiforgery/token`, abbiamo sostituito `antiforgery.GetAndStoreTokens(HttpContext.Current)` con `antiforgery.GetTokens(HttpContext.Current)`.
-	*   `GetTokens()` **genera solo i token**, ma **non li memorizza nella sessione server-side**.  L'unico modo in cui i token vengono "memorizzati" è tramite l'impostazione del cookie HTTP nella risposta.
-	*   `GetAndStoreTokens()` (usato nell'esempio precedente) fa **sia** generare i token **che** memorizzarli nella sessione server-side (oltre a impostare il cookie).  Anche se `GetAndStoreTokens` funzionerebbe anche senza sessioni abilitate, `GetTokens` è più preciso e semanticamente corretto in un contesto stateless.
-
-**Frontend Statico (`frontend-static/index.html`, `frontend-static/script.js`) - Nessuna modifica necessaria**
-
-Il codice frontend JavaScript e HTML rimane **identico** all'esempio precedente.  Il frontend non deve preoccuparsi se il backend usa sessioni o meno per l'Anti-Forgery.  Il frontend si limita a:
-
-1.  Richiedere il `RequestToken` all'endpoint `/antiforgery/token`.
-2.  Inviare il `RequestToken` nell'header `RequestVerificationToken` delle richieste protette.
-
-**Test (Stateless Anti-Forgery)**
-
-1.  Esegui il backend Minimal API modificato (`Program.cs` con `GetTokens`).
-2.  Apri `frontend-static/index.html` nel browser.
-3.  Interagisci con il form (inserisci messaggio e invia).  Dovresti vedere che l'Anti-Forgery continua a funzionare correttamente, nonostante il backend non utilizzi sessioni esplicite.
-4.  Prova nuovamente l'attacco CSRF simulato (creando un frontend "malevolo" senza token). Dovresti verificare che la validazione fallisce e la protezione CSRF è attiva.
-
-**Considerazioni importanti per l'Anti-Forgery Stateless con Cookie:**
-
-*   **HTTPS è *ancora più* fondamentale:**  Poiché il meccanismo stateless si basa sui cookie per la correlazione dei token, è **cruciale** utilizzare **HTTPS** per proteggere la trasmissione dei cookie e prevenire attacchi man-in-the-middle che potrebbero intercettare o manipolare i cookie Anti-Forgery. Senza sessioni server-side a rafforzare la sicurezza, la protezione offerta da HTTPS diventa ancora più importante.
-*   **Sicurezza dei cookie:** Assicurati che i cookie Anti-Forgery siano configurati con attributi di sicurezza appropriati:
-	*   **`HttpOnly`**:  Impedisce l'accesso ai cookie tramite JavaScript client-side, riducendo il rischio di attacchi XSS che potrebbero rubare i cookie.  (ASP.NET Core imposta `HttpOnly` di default per i cookie Anti-Forgery).
-	*   **`Secure`**:  Garantisce che il cookie venga trasmesso solo su connessioni HTTPS. (Dovresti configurare ASP.NET Core per impostare `Secure` su `true` in ambienti di produzione HTTPS).
-	*   **`SameSite`**:  Aiuta a prevenire alcuni tipi di attacchi CSRF basati su cross-origin request.  Considera di impostare `SameSite` su `Lax` o `Strict` (a seconda delle esigenze della tua applicazione) per una protezione aggiuntiva.
-
-**In conclusione:**
-
-Implementare l'Anti-Forgery Token **senza sessioni server-side è non solo possibile, ma anche spesso preferibile** in termini di scalabilità e semplicità, specialmente per le Minimal API e le architetture moderne basate su frontend separati.  ASP.NET Core fornisce un sistema Anti-Forgery robusto e flessibile che supporta nativamente l'approccio stateless tramite cookie, offrendo una protezione efficace contro gli attacchi CSRF anche in assenza di sessioni server-side.  L'importante è configurare correttamente HTTPS e gli attributi di sicurezza dei cookie per massimizzare la protezione.
+  * [Documentazione ufficiale Microsoft: Parameter binding in Minimal APIs](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/parameter-binding) (Pagina principale sul Parameter Binding)
