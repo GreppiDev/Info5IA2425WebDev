@@ -1,0 +1,6 @@
+@SimpleForms_HostAddress = http://localhost:5124
+
+GET {{SimpleForms_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

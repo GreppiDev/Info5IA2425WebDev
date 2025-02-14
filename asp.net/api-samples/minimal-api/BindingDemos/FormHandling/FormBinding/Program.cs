@@ -24,7 +24,6 @@ if (builder.Environment.IsDevelopment())
 
 builder.Services.AddDbContext<TodoDb>(opt =>
 	opt.UseInMemoryDatabase("TodoList"));
-builder.Services.AddAntiforgery();
 
 var app = builder.Build();
 
