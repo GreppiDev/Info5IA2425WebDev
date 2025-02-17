@@ -1,17 +1,17 @@
 # Anti-Forgery in ASP.NET Minimal APIs
 
 - [Anti-Forgery in ASP.NET Minimal APIs](#anti-forgery-in-aspnet-minimal-apis)
-  - [Introduzione al problema del Cross-Site Request Forgery (CSRF)](#introduzione-al-problema-del-cross-site-request-forgery-csrf)
-  - [Implementazione dell'Anti-Forgery Token in ASP.NET Minimal APIs](#implementazione-dellanti-forgery-token-in-aspnet-minimal-apis)
-    - [Best Practice per l'Anti-Forgery in Minimal APIs](#best-practice-per-lanti-forgery-in-minimal-apis)
-  - [La sfida del Frontend separato](#la-sfida-del-frontend-separato)
-    - [Flusso di lavoro in un Frontend separato con Anti-Forgery](#flusso-di-lavoro-in-un-frontend-separato-con-anti-forgery)
-      - [Esempio di codice completo (Frontend Statico + Backend Minimal API Anti-Forgery)](#esempio-di-codice-completo-frontend-statico--backend-minimal-api-anti-forgery)
-      - [Considerazioni Importanti e Best Practice per Frontend Separato e Anti-Forgery](#considerazioni-importanti-e-best-practice-per-frontend-separato-e-anti-forgery)
-      - [Perché l'invio del solo `RequestToken` è la scelta ottimale nel caso di Frontend separato dal Backend?](#perché-linvio-del-solo-requesttoken-è-la-scelta-ottimale-nel-caso-di-frontend-separato-dal-backend)
-        - [Differenze tra lo scenario con Frontend e Backend integrati e quello con Frontend e Backend separati](#differenze-tra-lo-scenario-con-frontend-e-backend-integrati-e-quello-con-frontend-e-backend-separati)
-    - [Anti-Forgery Token con sessioni non abilitate sul backend](#anti-forgery-token-con-sessioni-non-abilitate-sul-backend)
-      - [Test (Stateless Anti-Forgery)](#test-stateless-anti-forgery)
+	- [Introduzione al problema del Cross-Site Request Forgery (CSRF)](#introduzione-al-problema-del-cross-site-request-forgery-csrf)
+	- [Implementazione dell'Anti-Forgery Token in ASP.NET Minimal APIs](#implementazione-dellanti-forgery-token-in-aspnet-minimal-apis)
+		- [Best Practice per l'Anti-Forgery in Minimal APIs](#best-practice-per-lanti-forgery-in-minimal-apis)
+	- [La sfida del Frontend separato](#la-sfida-del-frontend-separato)
+		- [Flusso di lavoro in un Frontend separato con Anti-Forgery](#flusso-di-lavoro-in-un-frontend-separato-con-anti-forgery)
+			- [Esempio di codice completo (Frontend Statico + Backend Minimal API Anti-Forgery)](#esempio-di-codice-completo-frontend-statico--backend-minimal-api-anti-forgery)
+			- [Considerazioni importanti e best practice per Frontend separato e Anti-Forgery](#considerazioni-importanti-e-best-practice-per-frontend-separato-e-anti-forgery)
+			- [Perché l'invio del solo `RequestToken` è la scelta ottimale nel caso di Frontend separato dal Backend?](#perché-linvio-del-solo-requesttoken-è-la-scelta-ottimale-nel-caso-di-frontend-separato-dal-backend)
+				- [Differenze tra lo scenario con Frontend e Backend integrati e quello con Frontend e Backend separati](#differenze-tra-lo-scenario-con-frontend-e-backend-integrati-e-quello-con-frontend-e-backend-separati)
+		- [Anti-Forgery Token con sessioni non abilitate sul backend](#anti-forgery-token-con-sessioni-non-abilitate-sul-backend)
+			- [Test (Stateless Anti-Forgery)](#test-stateless-anti-forgery)
 
 ## Introduzione al problema del Cross-Site Request Forgery (CSRF)
 
@@ -111,35 +111,46 @@ ASP.NET Core fornisce un meccanismo integrato per proteggere le applicazioni web
 **Esempio di codice completo (C\#, HTML, JavaScript) - Anti-Forgery con Form**
 
 1. **Program.cs (C\# - ASP.NET Minimal API):**
+   Il codice di questo esempio è disponibile nel progetto [MonolithicWebDemo](../../../api-samples/minimal-api/BindingDemos/AntiForgeryDemos/MonolithicWebDemo/)
 
 	```csharp
 	using Microsoft.AspNetCore.Antiforgery;
 	using Microsoft.AspNetCore.Mvc;
-
 	var builder = WebApplication.CreateBuilder(args);
-	builder.Services.AddAntiforgery(); // Aggiungi il servizio Anti-Forgery
 
+	// Add services to the container.
+	// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+	builder.Services.AddOpenApi();
+	builder.Services.AddAntiforgery(); // Aggiunge il servizio Anti-Forgery
 	var app = builder.Build();
 
-	app.UseAntiforgery(); // Abilita middleware Anti-Forgery
-
-
-	app.MapGet("/", async (IAntiforgery antiforgery) =>
+	// Configure the HTTP request pipeline.
+	if (app.Environment.IsDevelopment())
 	{
-		var tokens = antiforgery.GetAndStoreTokens(HttpContext.Current); // Ottieni e memorizza i token anti-forgery
+		app.MapOpenApi();
+	}
+
+	app.UseHttpsRedirection();
+	app.UseAntiforgery(); // Aggiunge middleware Anti-Forgery
+
+	app.MapGet("/", (IAntiforgery antiforgery, HttpContext context) => // Inietta HttpContext come parametro
+	{
+		var tokens = antiforgery.GetAndStoreTokens(context);
 
 		return Results.Content(
 		$$"""
 		<!DOCTYPE html>
-		<html>
+		<html lang="it">
+
 		<head>
+		<meta charset="utf-8">
 			<title>Form protetto con Anti-Forgery</title>
 		</head>
 		<body>
 			<h1>Form protetto con Anti-Forgery</h1>
-			<form id="antiforgeryForm" method="post" action="/submitAntiforgery">
+			<form id="antiforgeryForm" method="post" action="/submit-anti-forgery">
 				<input type="hidden" name="{{tokens.FormFieldName}}" value="{{tokens.RequestToken}}">  <label for="messaggio">Messaggio:</label><br>
-				<input type="text" id="messaggio" name="messaggio"><br><br>
+				<input type="text" name="messaggio"><br><br>
 				<input type="submit" value="Invia">
 			</form>
 
@@ -149,11 +160,11 @@ ASP.NET Core fornisce un meccanismo integrato per proteggere le applicazioni web
 
 					const formData = new FormData(this);
 
-					fetch('/submitAntiforgery', {
+					fetch('/submit-anti-forgery', {
 						method: 'POST',
 						headers: {
 							'Content-Type': 'application/x-www-form-urlencoded',
-							'RequestVerificationToken': '{{tokens.RequestToken}}' // Alternativa: Invia token come header (invece che campo form) - RIMUOVI se usi campo form nascosto
+							'RequestVerificationToken': '{{tokens.RequestToken}}' // Alternativa: Invia token come header (invece che campo form) - RIMUOVERE se si usa il campo nascosto nel form
 						},
 						body: new URLSearchParams(formData).toString()
 					})
@@ -169,14 +180,122 @@ ASP.NET Core fornisce un meccanismo integrato per proteggere le applicazioni web
 	});
 
 
-	app.MapPost("/submitAntiforgery", async ([FromForm] string messaggio, IAntiforgery antiforgery) =>
+	app.MapPost("/submit-anti-forgery", async ([FromForm] string messaggio, IAntiforgery antiforgery, HttpContext context) =>
 	{
-		await antiforgery.ValidateRequestAsync(HttpContext.Current); // Valida l'Anti-Forgery Token
-		return $"Messaggio ricevuto: {messaggio} (Anti-Forgery validato)";
+		try
+		{
+			await antiforgery.ValidateRequestAsync(context);
+			return Results.Ok($"Messaggio ricevuto: {messaggio} (Anti-Forgery validato)");
+		}
+		catch (AntiforgeryValidationException)
+		{
+			return Results.BadRequest("Invalid anti-forgery token");
+			// Alternativa: return Results.StatusCode(403); // Forbidden
+		}
+	});
+
+	app.MapGet("/anti-forgery2", (IAntiforgery antiforgery, HttpContext context) =>
+	{
+		var tokens = antiforgery.GetAndStoreTokens(context);
+
+		return Results.Content(
+		$$"""
+		<!DOCTYPE html>
+		<html lang="it">
+
+		<head>
+		<meta charset="utf-8">
+			<title>Form protetto con Anti-Forgery</title>
+		</head>
+		<body>
+			<h1>Form protetto con Anti-Forgery</h1>
+			<form id="antiforgeryForm2" method="post" action="/submit-anti-forgery2">
+				<input type="hidden" name="{{tokens.FormFieldName}}" value="{{tokens.RequestToken}}">
+				<label for="messaggio">Messaggio:</label><br>
+				<input type="text" name="messaggio"><br><br>
+				<label for="name">Nome:</label><br>
+				<input type="text" name="name" required/><br>
+				<label for="dueDate">Data:</label><br>
+				<input type="date" name="dueDate" value=""/><br>
+				<label for="isCompleted">Completato:</label>
+				<input type="checkbox" name="isCompleted"/><br><br>
+				<input type="submit" value="Invia">
+			</form>
+
+			<script>
+				document.getElementById('antiforgeryForm2').addEventListener('submit', function(event) {
+				event.preventDefault();
+
+				const formData = new FormData(this);
+				const dueDateInput = document.querySelector('input[name="dueDate"]');
+				
+				// Rimuoviamo il campo data se è vuoto per evitare errori di binding
+				//infatti se la data non viene selezionata il campo viene inviato come stringa vuota
+				//e la stringa vuota non può essere convertita in un oggetto DateTime
+				if (!dueDateInput.value) {
+					formData.delete('dueDate');
+				}
+				// Aggiungiamo il campo isCompleted come booleano
+				formData.set('isCompleted', document.querySelector('input[name="isCompleted"]').checked);
+
+				fetch('/submit-anti-forgery2', {
+					method: 'POST',
+					headers: {
+						'RequestVerificationToken': '{{tokens.RequestToken}}' // Alternativa: Invia token come header (invece che campo form) - RIMUOVERE se si usa il campo nascosto nel form
+					},
+					body: formData
+				})
+				.then(response => {
+					if (!response.ok) {
+						throw new Error('Network response was not ok');
+					}
+					return response.json();
+				})
+				.then(data => {
+					alert(JSON.stringify(data, null, 2));
+				})
+				.catch(error => {
+					console.error('Error:', error);
+					alert('Si è verificato un errore durante l\'invio del form');
+				});
+			});
+			</script>
+		</body>
+		</html>
+		""", "text/html");
+	});
+
+	//in questo esempio il campo (Name = "messaggio") non è obbligatorio. 
+	//Può essere utilizzato quando si vuole collegare un parametro con un nome specifico ad una variabile
+	//dell'endpoint handler
+	app.MapPost("/submit-anti-forgery2", async ([FromForm(Name = "messaggio")] string messaggio, [FromForm] Todo todo, IAntiforgery antiforgery, HttpContext context) =>
+	{
+		try
+		{
+			await antiforgery.ValidateRequestAsync(context);
+
+			var response = new { todo, message = messaggio };
+			return Results.Ok(response);
+		}
+		catch (AntiforgeryValidationException)
+		{
+			return Results.BadRequest("Invalid anti-forgery token");
+		}
+		catch (Exception ex)
+		{
+			return Results.BadRequest($"Error during form processing: {ex.Message}");
+		}
 	});
 
 
 	app.Run();
+
+	class Todo
+	{
+		public required string Name { get; set; }
+		public bool IsCompleted { get; set; }
+		public DateTime? DueDate { get; set; }
+	}
 	```
 
 2. **Spiegazione:**
@@ -185,13 +304,13 @@ ASP.NET Core fornisce un meccanismo integrato per proteggere le applicazioni web
    2. **`app.UseAntiforgery();`**: Abilita il middleware Anti-Forgery per l'applicazione.  Questo middleware gestisce la generazione e la validazione dei token.
    3. **Endpoint `/` (GET):**
    	  * Inietta il servizio `IAntiforgery` nell'endpoint.
-   	  * `antiforgery.GetAndStoreTokens(HttpContext.Current)`: **Genera un nuovo set di Anti-Forgery Tokens** (RequestToken e FormFieldName) e li memorizza nella sessione (o cookie).  Restituisce un oggetto `AntiforgeryTokenSet` contenente i token.
+   	  * `antiforgery.GetAndStoreTokens(context)`: **Genera un nuovo set di Anti-Forgery Tokens** (RequestToken e FormFieldName) e li memorizza nella sessione (o cookie).  Restituisce un oggetto `AntiforgeryTokenSet` contenente i token.
    	  * **HTML**:
    		  * **` <input type="hidden" name="{{tokens.FormFieldName}}" value="{{tokens.RequestToken}}"> `**:  **INSERISCE IL TOKEN COME CAMPO NASCOSTO NEL FORM.**  `tokens.FormFieldName` e `tokens.RequestToken` vengono interpolati nella stringa HTML, inserendo dinamicamente il nome del campo e il valore del token.
-   		  * **JavaScript (Opzionale - da commentare/rimuovere se usi campo nascosto):**  `'RequestVerificationToken': '{{tokens.RequestToken}}'`  **Alternativa (NON usare contemporaneamente al campo nascosto):**  Invia il token come header HTTP.  In questo esempio, l'uso del campo nascosto è preferibile per la compatibilità con form standard.
-   4. **Endpoint `/submitAntiforgery` (POST):**
+   		  * **JavaScript (Opzionale - da commentare/rimuovere se si usa il campo nascosto):**  `'RequestVerificationToken': '{{tokens.RequestToken}}'`  **Alternativa (NON usare contemporaneamente al campo nascosto):**  Invia il token come header HTTP.  In questo esempio, l'uso del campo nascosto è preferibile per la compatibilità con form standard.
+   4. **Endpoint `/submit-anti-forgery` (POST):**
    	  * Inietta `IAntiforgery` nell'endpoint.
-   	  * `await antiforgery.ValidateRequestAsync(HttpContext.Current);`:  **VALIDA L'ANTI-FORGERY TOKEN** ricevuto con la richiesta. Se la validazione fallisce (token mancante, non valido, non corrispondente), verrà lanciata un'eccezione (`AntiforgeryValidationException`) e la richiesta verrà rifiutata.
+   	  * `await antiforgery.ValidateRequestAsync(context);`:  **VALIDA L'ANTI-FORGERY TOKEN** ricevuto con la richiesta. Se la validazione fallisce (token mancante, non valido, non corrispondente), verrà lanciata un'eccezione (`AntiforgeryValidationException`) e la richiesta verrà rifiutata.
    	  * Se la validazione ha successo, l'endpoint continua l'elaborazione (in questo esempio, restituisce un messaggio di successo).
 
 3. **Per testare l'Anti-Forgery:**
@@ -200,7 +319,7 @@ ASP.NET Core fornisce un meccanismo integrato per proteggere le applicazioni web
    2. Sostituire il contenuto di `Program.cs` con il codice C\# fornito.
    3. Eseguire l'applicazione.
    4. Aprire il browser e vai all'indirizzo `https://localhost:<port>`.
-   5. Inserire un messaggio nel form e clicca "Invia". Dovresti vedere un alert di successo.
+   5. Inserire un messaggio nel form e clicca "Invia". Si dovrebbe vedere un alert di successo.
    6. **Provare ad attaccare (CSRF test)**:
    	  * Aprire gli strumenti di sviluppo del browser (F12) e copia l'HTML del form dalla pagina caricata (elemento `<form id="antiforgeryForm">`).
    	  * Creare un **secondo progetto** ASP.NET Core vuoto (questo simula un sito malevolo).
@@ -241,14 +360,14 @@ Il flusso di lavoro tipico per la gestione dell'Anti-Forgery in questo scenario 
 	* **Session Storage:** `sessionStorage` del browser. Il token persiste per la durata della sessione del browser (fino alla chiusura della finestra/tab).
 	* **Local Storage:** `localStorage` del browser. Il token persiste anche dopo la chiusura del browser.  Generalmente **non è raccomandato** memorizzare token sensibili in `localStorage` per ragioni di sicurezza (rischio XSS), ma per Anti-Forgery token che hanno una validità limitata e sono meno sensibili dei token di autenticazione, potrebbe essere accettabile in alcuni contesti, se gestito con attenzione. Per semplicità, nell'esempio useremo la memoria JavaScript.
 4. **Inclusione del Token nelle Richieste (Frontend):**  Ogni volta che il frontend deve inviare una richiesta al backend che necessita di protezione CSRF (tipicamente richieste `POST`, `PUT`, `DELETE` che modificano dati), deve **includere l'Anti-Forgery Token** nella richiesta.  Il modo più comune per fare ciò in un contesto API è tramite un **header HTTP personalizzato**. L'header standard che ASP.NET Core si aspetta per l'Anti-Forgery Token è `RequestVerificationToken`.
-5. **Validazione del Token (Backend):** L'endpoint backend Minimal API che riceve la richiesta protetta deve **validare l'Anti-Forgery Token** presente nell'header `RequestVerificationToken`.  La validazione avviene nello stesso modo dell'esempio precedente, utilizzando `antiforgery.ValidateRequestAsync(HttpContext.Current)`.
+5. **Validazione del Token (Backend):** L'endpoint backend Minimal API che riceve la richiesta protetta deve **validare l'Anti-Forgery Token** presente nell'header `RequestVerificationToken`.  La validazione avviene nello stesso modo dell'esempio precedente, utilizzando `antiforgery.ValidateRequestAsync(context)`.
 
 #### Esempio di codice completo (Frontend Statico + Backend Minimal API Anti-Forgery)
 
 **Struttura del progetto (ipotetica):**
 
 ```text
-frontend-static/  (Cartella per il frontend statico)
+wwwroot/  (Cartella per il frontend statico)
 |-- index.html
 |-- script.js
 |-- style.css
@@ -259,33 +378,58 @@ backend-minimal-api/ (Cartella per il backend Minimal API .NET)
 ```
 
 1. **Backend Minimal API (.NET - `backend-minimal-api/Program.cs`)**
+   Il codice di questo esempio è nel progetto [SeparatedFrontedBackend](../../../api-samples/minimal-api/BindingDemos/AntiForgeryDemos/SeparatedFrontendBackend/)
 
 	```csharp
 	using Microsoft.AspNetCore.Antiforgery;
 	using Microsoft.AspNetCore.Mvc;
-
 	var builder = WebApplication.CreateBuilder(args);
-	builder.Services.AddAntiforgery();
 
+	// Add services to the container.
+	// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+	builder.Services.AddOpenApi();
+	builder.Services.AddAntiforgery(); // Aggiunge il servizio Anti-Forgery
 	var app = builder.Build();
 
-	app.UseAntiforgery();
+	// Configure the HTTP request pipeline.
+	if (app.Environment.IsDevelopment())
+	{
+		app.MapOpenApi();
+	}
+
+	app.UseHttpsRedirection();
+	app.UseDefaultFiles();
+	app.UseStaticFiles();
+	app.UseAntiforgery(); // Aggiunge middleware Anti-Forgery
 
 	// Endpoint per ottenere l'Anti-Forgery Token (GET)
-	app.MapGet("/antiforgery/token", (IAntiforgery antiforgery) =>
+	app.MapGet("/antiforgery/token", (IAntiforgery antiforgery, HttpContext context) =>
 	{
-		var tokens = antiforgery.GetAndStoreTokens(HttpContext.Current);
+		var tokens = antiforgery.GetAndStoreTokens(context);
 		return Results.Text(tokens.RequestToken ?? ""); // Restituisce solo il RequestToken come testo
 	});
 
 	// Endpoint protetto da Anti-Forgery (POST)
-	app.MapPost("/api/submitData", async ([FromForm] string messaggio, IAntiforgery antiforgery) =>
+	app.MapPost("/api/submitData", async ([FromForm] string messaggio, IAntiforgery antiforgery, HttpContext context) =>
 	{
-		await antiforgery.ValidateRequestAsync(HttpContext.Current);
-		return Results.Ok(new { message = $"Messaggio ricevuto: {messaggio} (Anti-Forgery validato)" });
+		try
+		{
+
+			await antiforgery.ValidateRequestAsync(context);
+			return Results.Ok(new { message = $"Messaggio ricevuto: {messaggio} (Anti-Forgery validato)" });
+		}
+
+		catch (AntiforgeryValidationException)
+		{
+			return Results.BadRequest("Invalid anti-forgery token");
+		}
+		catch (Exception ex)
+		{
+			return Results.BadRequest($"Error during form processing: {ex.Message}");
+		}
+
 	})
 	.Accepts<Dictionary<string, string>>("application/x-www-form-urlencoded"); // Specifica che accetta form URL-encoded
-
 
 	app.Run();
 	```
@@ -304,16 +448,20 @@ backend-minimal-api/ (Cartella per il backend Minimal API .NET)
 	  	* Restituisce un JSON con un messaggio di successo.
 	  	* **.Accepts\<Dictionary\<string, string>>("application/x-www-form-urlencoded")**: Specifica che l'endpoint si aspetta ricevere dati in formato `application/x-www-form-urlencoded` (il formato standard dei form HTML).
 
-2. **Frontend Statico (`frontend-static/index.html`, `frontend-static/script.js`)**
+2. **Frontend Statico (`wwwroot/index.html`, `wwwroot/script.js`)**
 
-	**`frontend-static/index.html`:**
+	**`wwwroot/index.html`:**
 
 	```html
 	<!DOCTYPE html>
-	<html>
+	<html lang="it">
+
 	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>Frontend Statico con Anti-Forgery</title>
 	</head>
+
 	<body>
 		<h1>Frontend Statico con Anti-Forgery</h1>
 		<form id="dataForm">
@@ -324,51 +472,72 @@ backend-minimal-api/ (Cartella per il backend Minimal API .NET)
 
 		<script src="script.js"></script>
 	</body>
+
 	</html>
 	```
 
-	**`frontend-static/script.js`:**
+	**`wwwroot/script.js`:**
 
 	```javascript
-	document.addEventListener('DOMContentLoaded', function() {
-		let antiforgeryToken = null; // Variabile per memorizzare l'Anti-Forgery Token
+	document.addEventListener("DOMContentLoaded", function () {
+	let antiforgeryToken = null; // Variabile per memorizzare l'Anti-Forgery Token
 
-		// 1. Ottieni l'Anti-Forgery Token dal backend all'avvio
-		fetch('/antiforgery/token')
-			.then(response => response.text())
-			.then(token => {
-				antiforgeryToken = token; // Memorizza il token
-				console.log("Anti-Forgery Token ottenuto:", antiforgeryToken);
+	// ottiene l'Anti-Forgery Token dal backend al caricamento della pagina o del form
+	fetch("/antiforgery/token")
+		.then((response) => response.text())
+		.then((token) => {
+		antiforgeryToken = token; // Memorizza il token
+		console.log("Anti-Forgery Token ottenuto:", antiforgeryToken);
+		})
+		.catch((error) => {
+		console.error("Errore nel recupero del token Anti-Forgery:", error);
+		alert(
+			"Errore nel recupero del token Anti-Forgery. L'applicazione potrebbe non funzionare correttamente."
+		);
+		});
+
+	const dataForm = document.getElementById("dataForm");
+	dataForm.addEventListener("submit", async function (event) {
+		event.preventDefault();
+
+		const messaggioInput = document.getElementById("messaggio");
+		const messaggio = messaggioInput.value;
+
+		const formData = new FormData();
+		formData.append("messaggio", messaggio); // Prepara i dati del form
+	
+		//Si potrebbe richiedere il token anche prima di sottomettere il form
+		
+		//Decidere quale opzione applicare (se richiederlo al caricamento del form oppure prima 
+		//della sottomissione del form) dipende da come si gestiscono i token e le pagine del frontend
+		
+		//Il codice commentato sotto richiede il token prima di sottomettere il form
+		//va usato in alternativa alla richiesta del token al caricamento della pagina/form
+		
+		// try {
+		// 	// Prima richiedi il token usando await
+		// 	const tokenResponse = await fetch("/antiforgery/token2");
+		// 	antiforgeryToken = await tokenResponse.text();
+		// } catch (error) {
+		// 	console.error("Errore nel recupero del token:", error);
+		// 	alert("Errore nel recupero del token. Riprova più tardi.");
+		// 	return;
+		// }
+
+		// Sottomissione del form con il pattern .then() originale
+		fetch("/api/submitData", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/x-www-form-urlencoded",
+				RequestVerificationToken: antiforgeryToken,
+			},
+			body: new URLSearchParams(formData).toString(),
+		})
+			.then((response) => response.json())
+			.then((data) => {
+				alert(data.message);
 			})
-			.catch(error => {
-				console.error("Errore nel recupero del token Anti-Forgery:", error);
-				alert("Errore nel recupero del token Anti-Forgery. L'applicazione potrebbe non funzionare correttamente.");
-			});
-
-		const dataForm = document.getElementById('dataForm');
-		dataForm.addEventListener('submit', function(event) {
-			event.preventDefault();
-
-			const messaggioInput = document.getElementById('messaggio');
-			const messaggio = messaggioInput.value;
-
-			const formData = new FormData();
-			formData.append('messaggio', messaggio); // Prepara i dati del form
-
-			// 2. Invia la richiesta POST protetta, includendo l'Anti-Forgery Token nell'header
-			fetch('/api/submitData', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded', // Importante per form URL-encoded
-					'RequestVerificationToken': antiforgeryToken // Includi il token nell'header
-				},
-				body: new URLSearchParams(formData).toString() // Converte FormData in URL encoded string
-			})
-			.then(response => response.json())
-			.then(data => {
-				alert(data.message); // Mostra la risposta del backend
-			})
-			.catch(error => {
+			.catch((error) => {
 				console.error("Errore nell'invio dei dati:", error);
 				alert("Errore nell'invio dei dati. Riprova più tardi.");
 			});
@@ -411,7 +580,7 @@ backend-minimal-api/ (Cartella per il backend Minimal API .NET)
    	* Aprire questo **secondo frontend "malevolo"** nel browser.
    	* Provare ad inviare il form. **Si dovrebbe ricevere un errore (o una risposta di errore dal backend nella console del browser)** perché la validazione dell'Anti-Forgery Token fallirà sul backend.  Questo dimostra che la protezione CSRF sta funzionando.
 
-#### Considerazioni Importanti e Best Practice per Frontend Separato e Anti-Forgery
+#### Considerazioni importanti e best practice per Frontend separato e Anti-Forgery
 
 * **HTTPS è Fondamentale:** Anche in questo scenario, HTTPS è **essenziale** per proteggere la comunicazione tra frontend e backend, inclusa la trasmissione dell'Anti-Forgery Token e dei cookie di sessione (se utilizzati).
 * **Gestione degli Errori:**  Implementare una gestione robusta degli errori sia nel frontend che nel backend. Se il token non può essere recuperato, o la validazione fallisce, l'applicazione dovrebbe gestire correttamente la situazione e informare l'utente.
@@ -472,7 +641,7 @@ Per chiarire al meglio, ripercorriamo i concetti chiave e le differenze tra i du
 
 	  * **Lato Backend (Endpoint protetto - `/api/submitData` nel nostro esempio):**
 
-	  	* Indipendentemente da come il token è stato inviato (sia come campo form nascosto nel caso integrato, sia come header nel caso separato), ASP.NET Core, quando si chiama `antiforgery.ValidateRequestAsync(HttpContext.Current)`, si occupa di **verificare la validità del token in base a come è stato configurato il sistema Anti-Forgery**.  In genere, ASP.NET Core è configurato per cercare il token sia nel header `RequestVerificationToken` (per scenari API/frontend separati) che nel campo form con il `FormFieldName` (per scenari di server-side rendering).  Quindi, la validazione funziona correttamente in entrambi i casi, **purché il frontend invii il `RequestToken` correttamente nell'header.**
+	  	* Indipendentemente da come il token è stato inviato (sia come campo form nascosto nel caso integrato, sia come header nel caso separato), ASP.NET Core, quando si chiama `antiforgery.ValidateRequestAsync(context)`, si occupa di **verificare la validità del token in base a come è stato configurato il sistema Anti-Forgery**.  In genere, ASP.NET Core è configurato per cercare il token sia nel header `RequestVerificationToken` (per scenari API/frontend separati) che nel campo form con il `FormFieldName` (per scenari di server-side rendering).  Quindi, la validazione funziona correttamente in entrambi i casi, **purché il frontend invii il `RequestToken` correttamente nell'header.**
 
 **In Sintesi:**
 
@@ -495,7 +664,7 @@ Quando le sessioni non sono utilizzate, il sistema Anti-Forgery di ASP.NET Core 
 	* Inviare il `RequestToken` (che ha ottenuto dall'endpoint `/antiforgery/token`) nell'**header HTTP `RequestVerificationToken`**, come abbiamo visto nell'esempio precedente.
 	* Il browser **invierà automaticamente il cookie Anti-Forgery** (impostato dal backend in precedenza) insieme alla richiesta, **sempre che la richiesta sia fatta allo stesso dominio e percorso** per cui il cookie è valido.  Questo comportamento è intrinseco ai cookie HTTP.
 
-4. **Validazione del Token (Stateless):** Quando l'endpoint backend protetto riceve la richiesta, e si chiama `antiforgery.ValidateRequestAsync(HttpContext.Current)`, il sistema Anti-Forgery esegue la validazione **in modo stateless**.  La validazione consiste nel:
+4. **Validazione del Token (Stateless):** Quando l'endpoint backend protetto riceve la richiesta, e si chiama `antiforgery.ValidateRequestAsync(context)`, il sistema Anti-Forgery esegue la validazione **in modo stateless**.  La validazione consiste nel:
 	* **Estrarre il `RequestToken` dall'header `RequestVerificationToken`**.
 	* **Estrarre il cookie Anti-Forgery dalla richiesta** (se presente e valido per il dominio/percorso).
 	* **Verificare che il `RequestToken` e il cookie Anti-Forgery siano *correlati* e *validi***.  La logica di correlazione e validazione si basa sulla crittografia e la firma digitale utilizzate nella generazione del token.  Poiché il token contiene tutte le informazioni necessarie, **non è necessario consultare alcuna sessione server-side**
@@ -510,45 +679,167 @@ Quando le sessioni non sono utilizzate, il sistema Anti-Forgery di ASP.NET Core 
 Modifichiamo leggermente l'esempio precedente per evidenziare che **non stiamo usando sessioni esplicite** e che l'Anti-Forgery continua a funzionare in modo stateless tramite cookie. In realtà, il codice precedente **già funzionava in modo stateless** di default, ma ora lo rendiamo ancora più esplicito:
 
 **Program.cs (Backend Minimal API - Stateless Anti-Forgery):**
+Il codice di questo esempio è nel progetto [SeparatedFrontedBackend](../../../api-samples/minimal-api/BindingDemos/AntiForgeryDemos/SeparatedFrontendBackend/)
 
 ```csharp
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Mvc;
-
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddAntiforgery();
 
+// Add services to the container.
+// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddOpenApi();
+builder.Services.AddAntiforgery(); // Aggiunge il servizio Anti-Forgery
 var app = builder.Build();
 
-app.UseAntiforgery();
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+	app.MapOpenApi();
+}
 
+app.UseHttpsRedirection();
+app.UseDefaultFiles();
+app.UseStaticFiles();
+app.UseAntiforgery(); // Aggiunge middleware Anti-Forgery
 
 // Endpoint per ottenere l'Anti-Forgery Token (GET) - Stateless
-app.MapGet("/antiforgery/token", (IAntiforgery antiforgery) =>
+app.MapGet("/antiforgery/token2", (IAntiforgery antiforgery, HttpContext context) =>
 {
-	var tokens = antiforgery.GetTokens(HttpContext.Current); // Utilizziamo GetTokens invece di GetAndStoreTokens
+	var tokens = antiforgery.GetTokens(context); // Utilizziamo GetTokens invece di GetAndStoreTokens
 	return Results.Text(tokens.RequestToken ?? ""); // Restituisce solo il RequestToken come testo
 });
 
 // Endpoint protetto da Anti-Forgery (POST)
-app.MapPost("/api/submitData", async ([FromForm] string messaggio, IAntiforgery antiforgery) =>
+app.MapPost("/api/submitData", async ([FromForm] string messaggio, IAntiforgery antiforgery, HttpContext context) =>
 {
-	await antiforgery.ValidateRequestAsync(HttpContext.Current);
-	return Results.Ok(new { message = $"Messaggio ricevuto: {messaggio} (Anti-Forgery validato)" });
-})
-.Accepts<Dictionary<string, string>>("application/x-www-form-urlencoded");
+	try
+	{
 
+		await antiforgery.ValidateRequestAsync(context);
+		return Results.Ok(new { message = $"Messaggio ricevuto: {messaggio} (Anti-Forgery validato)" });
+	}
+
+	catch (AntiforgeryValidationException)
+	{
+		return Results.BadRequest("Invalid anti-forgery token");
+	}
+	catch (Exception ex)
+	{
+		return Results.BadRequest($"Error during form processing: {ex.Message}");
+	}
+
+})
+.Accepts<Dictionary<string, string>>("application/x-www-form-urlencoded"); // Specifica che accetta form URL-encoded
 
 app.Run();
+
 ```
 
 **Modifiche rispetto all'esempio precedente:**
 
-* Nell'endpoint `/antiforgery/token`, abbiamo sostituito `antiforgery.GetAndStoreTokens(HttpContext.Current)` con `antiforgery.GetTokens(HttpContext.Current)`.
+* Nell'endpoint `/antiforgery/token`, abbiamo sostituito `antiforgery.GetAndStoreTokens(context)` con `antiforgery.GetTokens(context)`.
 	* `GetTokens()` **genera solo i token**, ma **non li memorizza nella sessione server-side**.  L'unico modo in cui i token vengono "memorizzati" è tramite l'impostazione del cookie HTTP nella risposta.
 	* `GetAndStoreTokens()` (usato nell'esempio precedente) fa **sia** generare i token **che** memorizzarli nella sessione server-side (oltre a impostare il cookie).  Anche se `GetAndStoreTokens` funzionerebbe anche senza sessioni abilitate, `GetTokens` è più preciso e semanticamente corretto in un contesto stateless.
 
-**Frontend Statico (`frontend-static/index.html`, `frontend-static/script.js`) - Nessuna modifica necessaria**
+**Frontend Statico (`wwwroot/index2.html`, `wwwroot/script2.js`)**
+Il codice di questo esempio è nel progetto [SeparatedFrontedBackend](../../../api-samples/minimal-api/BindingDemos/AntiForgeryDemos/SeparatedFrontendBackend/)
+
+* **wwwroot/index2.html**
+
+	```html
+	<!DOCTYPE html>
+	<html lang="it">
+
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Frontend Statico con Anti-Forgery</title>
+	</head>
+
+	<body>
+		<h1>Frontend Statico con Anti-Forgery</h1>
+		<form id="dataForm">
+			<label for="messaggio">Messaggio:</label><br>
+			<input type="text" id="messaggio" name="messaggio"><br><br>
+			<button type="submit">Invia Dati Protetti</button>
+		</form>
+
+		<script src="script2.js"></script>
+	</body>
+
+	</html>
+	```
+
+* **wwwroot/script2.js**
+  
+  ```js
+	document.addEventListener("DOMContentLoaded", function () {
+	let antiforgeryToken = null; // Variabile per memorizzare l'Anti-Forgery Token
+
+	// ottiene l'Anti-Forgery Token dal backend al caricamento della pagina o del form
+	//accede all'endpoint stateless (non cambia nulla per il frontend)
+	fetch("/antiforgery/token2")
+		.then((response) => response.text())
+		.then((token) => {
+		antiforgeryToken = token; // Memorizza il token
+		console.log("Anti-Forgery Token ottenuto:", antiforgeryToken);
+		})
+		.catch((error) => {
+		console.error("Errore nel recupero del token Anti-Forgery:", error);
+		alert(
+			"Errore nel recupero del token Anti-Forgery. L'applicazione potrebbe non funzionare correttamente."
+		);
+		});
+
+	const dataForm = document.getElementById("dataForm");
+	dataForm.addEventListener("submit", async function (event) {
+		event.preventDefault();
+
+		const messaggioInput = document.getElementById("messaggio");
+		const messaggio = messaggioInput.value;
+
+		const formData = new FormData();
+		formData.append("messaggio", messaggio); // Prepara i dati del form
+
+		//Si potrebbe richiedere il token anche prima di sottomettere il form
+
+		//Decidere quale opzione applicare (se richiederlo al caricamento del form oppure prima
+		//della sottomissione del form) dipende da come si gestiscono i token e le pagine del frontend
+
+		//Il codice commentato sotto richiede il token prima di sottomettere il form
+		//va usato in alternativa alla richiesta del token al caricamento della pagina/form
+
+		// try {
+		// 	// Prima richiedi il token usando await
+		// 	const tokenResponse = await fetch("/antiforgery/token2");
+		// 	antiforgeryToken = await tokenResponse.text();
+		// } catch (error) {
+		// 	console.error("Errore nel recupero del token:", error);
+		// 	alert("Errore nel recupero del token. Riprova più tardi.");
+		// 	return;
+		// }
+
+		// Sottomissione del form con il pattern .then() originale
+		fetch("/api/submitData", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/x-www-form-urlencoded",
+			RequestVerificationToken: antiforgeryToken,
+		},
+		body: new URLSearchParams(formData).toString(),
+		})
+		.then((response) => response.json())
+		.then((data) => {
+			alert(data.message);
+		})
+		.catch((error) => {
+			console.error("Errore nell'invio dei dati:", error);
+			alert("Errore nell'invio dei dati. Riprova più tardi.");
+		});
+		});
+	});
+  ```
 
 Il codice frontend JavaScript e HTML rimane **identico** all'esempio precedente.  Il frontend non deve preoccuparsi se il backend usa sessioni o meno per l'Anti-Forgery.  Il frontend si limita a:
 
@@ -558,7 +849,7 @@ Il codice frontend JavaScript e HTML rimane **identico** all'esempio precedente.
 #### Test (Stateless Anti-Forgery)
 
 1. Eseguire il backend Minimal API modificato (`Program.cs` con `GetTokens`).
-2. Aprire `frontend-static/index.html` nel browser.
+2. Aprire `wwwroot/index2.html` nel browser.
 3. Interagire con il form (inserire il messaggio e inviare). Si dovrebbe vedere che l'Anti-Forgery continua a funzionare correttamente, nonostante il backend non utilizzi sessioni esplicite.
 4. Provare nuovamente l'attacco CSRF simulato (creando un frontend "malevolo" senza token). Si dovrebbe verificare che la validazione fallisce e la protezione CSRF è attiva.
 

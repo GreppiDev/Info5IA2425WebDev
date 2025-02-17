@@ -3,27 +3,27 @@
 - [Guida introduttiva al Parameter Binding in ASP.NET Minimal APIs](#guida-introduttiva-al-parameter-binding-in-aspnet-minimal-apis)
 	- [Introduzione al Parameter Binding in ASP.NET Minimal APIs](#introduzione-al-parameter-binding-in-aspnet-minimal-apis)
 	- [Binding di Form in ASP.NET Minimal APIs](#binding-di-form-in-aspnet-minimal-apis)
-		- [Esempio (C#, HTML, CSS, JavaScript) - Dati semplici da form con codifica `application/x-www-url-encoded`](#esempio-c-html-css-javascript---dati-semplici-da-form-con-codifica-applicationx-www-url-encoded)
+		- [Primo esempio (C#, HTML, CSS, JavaScript) - Dati da form con codifica `application/x-www-url-encoded`](#primo-esempio-c-html-css-javascript---dati-da-form-con-codifica-applicationx-www-url-encoded)
 			- [Spiegazione del codice del primo endpoint - form con dati semplici](#spiegazione-del-codice-del-primo-endpoint---form-con-dati-semplici)
-		- [Secondo esempio - differenza tra codifica `application/x-www-form-urlencoded` e `multipart/form-data`](#secondo-esempio---differenza-tra-codifica-applicationx-www-form-urlencoded-e-multipartform-data)
-		- [Terzo esempio - differenza tra codifica `application/x-www-form-urlencoded`, `multipart/form-data` e `application/json`](#terzo-esempio---differenza-tra-codifica-applicationx-www-form-urlencoded-multipartform-data-e-applicationjson)
+		- [Secondo esempio - invio di dati da form con codifica `multipart/form-data` e differenze rispetto alla codifica `application/x-www-form-urlencoded`](#secondo-esempio---invio-di-dati-da-form-con-codifica-multipartform-data-e-differenze-rispetto-alla-codifica-applicationx-www-form-urlencoded)
+		- [Terzo esempio - invio di dati da form con codifica differenza tra codifica `application/json` e differenze rispetto alle codifiche `application/x-www-form-urlencoded` e `multipart/form-data`](#terzo-esempio---invio-di-dati-da-form-con-codifica-differenza-tra-codifica-applicationjson-e-differenze-rispetto-alle-codifiche-applicationx-www-form-urlencoded-e-multipartform-data)
 		- [Confronto tra le tre soluzioni di invio dati al server](#confronto-tra-le-tre-soluzioni-di-invio-dati-al-server)
-			- [**Perché nel terzo caso non si usa né `URLSearchParams` né `FormData`?**](#perché-nel-terzo-caso-non-si-usa-né-urlsearchparams-né-formdata)
-		- [**Motivazioni principali per l'uso di JSON**](#motivazioni-principali-per-luso-di-json)
-		- [**Quando usare ciascun metodo?**](#quando-usare-ciascun-metodo)
-		- [**`[FromForm]` vs `[AsParameters]`: Differenze e quando usarli**](#fromform-vs-asparameters-differenze-e-quando-usarli)
-			- [**Esempio comparativo (C#) - `[FromForm]` vs `[AsParameters]`**](#esempio-comparativo-c---fromform-vs-asparameters)
-			- [Best Practice per la gestione dei Form in Minimal APIs](#best-practice-per-la-gestione-dei-form-in-minimal-apis)
-	- [Binding Esplicito in ASP.NET Minimal API](#binding-esplicito-in-aspnet-minimal-api)
-		- [**Binding da Header con `[FromHeader]`**](#binding-da-header-con-fromheader)
-		- [**Binding dalla Query String con `[FromQuery]`**](#binding-dalla-query-string-con-fromquery)
-		- [**Binding dalla Route con `[FromRoute]`**](#binding-dalla-route-con-fromroute)
-		- [**Binding dai Servizi Iniettati con `[FromServices]`**](#binding-dai-servizi-iniettati-con-fromservices)
-		- [**Accesso Diretto a `HttpRequest`**](#accesso-diretto-a-httprequest)
-		- [**Accesso Diretto ai Servizi Iniettati**](#accesso-diretto-ai-servizi-iniettati)
-	- [Meccanismi Avanzati di Binding (Panoramica)](#meccanismi-avanzati-di-binding-panoramica)
+			- [Perché nel terzo caso non si usa né `URLSearchParams` né `FormData`?](#perché-nel-terzo-caso-non-si-usa-né-urlsearchparams-né-formdata)
+		- [Motivazioni principali per l'uso di JSON](#motivazioni-principali-per-luso-di-json)
+		- [Quando usare ciascun metodo?](#quando-usare-ciascun-metodo)
+		- [`[FromForm]` vs `[AsParameters]`: Differenze e quando usarli](#fromform-vs-asparameters-differenze-e-quando-usarli)
+			- [Esempio comparativo (C#) - `[FromForm]` vs `[AsParameters]`](#esempio-comparativo-c---fromform-vs-asparameters)
+			- [Best practice per la gestione dei form in Minimal APIs](#best-practice-per-la-gestione-dei-form-in-minimal-apis)
+	- [Binding esplicito in ASP.NET Minimal API](#binding-esplicito-in-aspnet-minimal-api)
+		- [Binding da Header con `[FromHeader]`](#binding-da-header-con-fromheader)
+		- [Binding dalla Query String con `[FromQuery]`](#binding-dalla-query-string-con-fromquery)
+		- [Binding dalla Route con `[FromRoute]`](#binding-dalla-route-con-fromroute)
+		- [Binding dai Servizi Iniettati con `[FromServices]`](#binding-dai-servizi-iniettati-con-fromservices)
+		- [Accesso Diretto a `HttpRequest`](#accesso-diretto-a-httprequest)
+		- [Accesso Diretto ai Servizi Iniettati](#accesso-diretto-ai-servizi-iniettati)
+	- [Meccanismi avanzati di Binding (cenni)](#meccanismi-avanzati-di-binding-cenni)
 	- [Ordine nell'applicazione delle regole di Binding](#ordine-nellapplicazione-delle-regole-di-binding)
-	- [Conclusioni e Best Practice Generali sul Parameter Binding](#conclusioni-e-best-practice-generali-sul-parameter-binding)
+	- [Conclusioni e best practice generali sul Parameter Binding](#conclusioni-e-best-practice-generali-sul-parameter-binding)
 
 ## Introduzione al Parameter Binding in ASP.NET Minimal APIs
 
@@ -64,7 +64,7 @@ In ASP.NET Minimal APIs, il binding è in gran parte **automatico** e basato sul
 
 	L'attributo `[FromForm]` indica esplicitamente ad ASP.NET Core di cercare il valore del parametro nei dati del form inclusi nel body della richiesta HTTP.  Questo è particolarmente importante quando si gestiscono form complessi o quando si vuole essere sicuri della provenienza dei dati.
 
-### Esempio (C\#, HTML, CSS, JavaScript) - Dati semplici da form con codifica `application/x-www-url-encoded`
+### Primo esempio (C\#, HTML, CSS, JavaScript) - Dati da form con codifica `application/x-www-url-encoded`
 
 **Program.cs (C\# - ASP.NET Minimal API):**
 
@@ -529,9 +529,9 @@ console.log(formData.getAll("interessi")); // ["sport", "musica"]
 
 ```
 
-Gli altri endpoint funzionano in maniera simile.
+**Gli altri endpoint funzionano in maniera simile.**
 
-### Secondo esempio - differenza tra codifica `application/x-www-form-urlencoded` e `multipart/form-data`
+### Secondo esempio - invio di dati da form con codifica `multipart/form-data` e differenze rispetto alla codifica `application/x-www-form-urlencoded`
 
 Si considerino i seguenti endpoint, sempre del progetto [SimpleForms](../../../api-samples/minimal-api/BindingDemos/SimpleFormDemos/SimpleForms/):
 
@@ -603,7 +603,7 @@ app.MapPost("/file-upload", async (IFormFile? fileInput) =>
 		await fileInput.CopyToAsync(stream);
 		byte[] fileBytes = stream.ToArray();
 
-		// Qui potresti salvare fileBytes su disco, database, ecc.
+		// Qui si potrebbe salvare fileBytes su disco, database, ecc.
 		return $"File '{fileInput.FileName}' caricato con successo. Dimensione: {fileInput.Length} bytes.";
 	}
 	else
@@ -686,17 +686,16 @@ document.getElementById('formMultipart').addEventListener('submit', function(eve
 
 app.MapPost("/submit-multipart-complete", async ([FromForm] DatiFormMultipartCompleto dati) =>
 {
-	// Model binding will create a new instance if null
 	string fileInfo = "Nessun file caricato.";
 	if (dati.ImmagineProfilo != null && dati.ImmagineProfilo.Length > 0)
 	{
 		fileInfo = $"File '{dati.ImmagineProfilo.FileName}', tipo: '{dati.ImmagineProfilo.ContentType}', dimensione: {dati.ImmagineProfilo.Length} bytes.";
-		// Qui potresti salvare il file, ad esempio su disco o in un servizio di storage cloud.
+		// Qui si potrebbe salvare il file, ad esempio su disco o in un servizio di storage cloud.
 		// Esempio semplificato: salvataggio in memoria per dimostrazione:
 		using var stream = new MemoryStream();
 		await dati.ImmagineProfilo.CopyToAsync(stream);
 		// byte[] fileBytes = stream.ToArray();
-		// ... qui potresti fare qualcosa con fileBytes ...
+		// ... qui si potrebbe fare qualcosa con fileBytes ...
 	}
 
 	string interessiString = dati.Interessi!=null? string.Join(", ", dati.Interessi):"";
@@ -741,7 +740,7 @@ public record DatiFormMultipartCompleto
 
 **In questo secondo esempio i form vengono sottomessi in maniera differente perché la codifica utilizzata nel form è differente.**
 
-* **Perché nel primo esempio serve `URLSearchParams`, mentre nella seconda no?**
+* **Perché nel primo esempio serve `URLSearchParams`, mentre nel secondo no?**
 
 	1. **Primo caso** (dove viene usato `URLSearchParams`):
 
@@ -769,17 +768,16 @@ public record DatiFormMultipartCompleto
 
 	3. **Riepilogo delle differenze chiave**
 
-	| Caratteristica | Prima Pagina (`URLSearchParams`) | Seconda Pagina (`FormData` diretto) |
+	| Caratteristica | Primo esempio (`URLSearchParams`) | Secondo esempio (`FormData` diretto) |
 	| --- |  --- |  --- |
 	| **Formato della richiesta** | `application/x-www-form-urlencoded` | `multipart/form-data` |
-	| --- |  --- |  --- |
 	| **Metodo di conversione** | `new URLSearchParams(formData).toString()` | `body: formData` diretto |
 	| **Supporto per file** | ❌ (non supporta file) | ✅ (supporta file e dati binari) |
 	| **Quando usarlo?** | Quando si inviano solo **testo/campi input** | Quando si devono inviare anche **file** |
 
-	Quindi, nella seconda pagina **non è necessario usare `URLSearchParams`**, perché `FormData` supporta direttamente la codifica multipart e mantiene il formato corretto per gli allegati.
+	Quindi, negli endpoint del secondo esempio **non è necessario usare `URLSearchParams`**, perché `FormData` supporta direttamente la codifica multipart e mantiene il formato corretto per gli allegati.
 
-### Terzo esempio - differenza tra codifica `application/x-www-form-urlencoded`, `multipart/form-data` e `application/json`
+### Terzo esempio - invio di dati da form con codifica differenza tra codifica `application/json` e differenze rispetto alle codifiche `application/x-www-form-urlencoded` e `multipart/form-data`
 
 Si considerino i seguenti endpoint, sempre del progetto [SimpleForms](../../../api-samples/minimal-api/BindingDemos/SimpleFormDemos/SimpleForms/):
 
@@ -1008,7 +1006,7 @@ public record DatiFormMultipartCompleto
 
 In questa sezione si sono esaminati tre modi per inviare dati ad un server. Le differenze chiave sono riportate nella tabella seguente:
 
-| **Caratteristica**        | **Prima caso** (`URLSearchParams`) | **Seconda caso** (`FormData` diretto) | **Terza caso** (`JSON.stringify()`) |
+| **Caratteristica**        | **Prima caso** (`URLSearchParams`) | **Secondo caso** (`FormData` diretto) | **Terzo caso** (`JSON.stringify()`) |
 |---------------------------|--------------------------------------|------------------------------------------|--------------------------------------|
 | **Formato della richiesta** | `application/x-www-form-urlencoded` | `multipart/form-data` | `application/json` |
 | **Metodo di conversione** | `new URLSearchParams(formData).toString()` | `body: formData` diretto | `JSON.stringify({...})` |
@@ -1017,7 +1015,7 @@ In questa sezione si sono esaminati tre modi per inviare dati ad un server. Le d
 | **Struttura dei dati** | Stringa `key=value&key2=value2` | Dati con **boundary** (supporta file) | Oggetto JSON `{ "chiave": "valore" }` |
 | **Intestazione (`Content-Type`)** | `application/x-www-form-urlencoded` | `multipart/form-data` (gestito da `FormData`) | `application/json` |
 
-#### **Perché nel terzo caso non si usa né `URLSearchParams` né `FormData`?**
+#### Perché nel terzo caso non si usa né `URLSearchParams` né `FormData`?
 
 Nel **terzo caso**, i dati vengono inviati a un endpoint che si aspetta un **JSON nel corpo della richiesta**.  
 Qui, `fetch` invia i dati con:
@@ -1032,7 +1030,7 @@ e imposta l'intestazione corretta:
 headers: { 'Content-Type': 'application/json' }
 ```
 
-### **Motivazioni principali per l'uso di JSON**
+### Motivazioni principali per l'uso di JSON
 
 1. **Le API REST moderne accettano e restituiscono JSON**, quindi inviare i dati in questo formato è più naturale.
 2. **Maggiore flessibilità**: JSON supporta **oggetti annidati e array**, mentre `application/x-www-form-urlencoded` è limitato a stringhe chiave-valore.
@@ -1049,13 +1047,13 @@ headers: { 'Content-Type': 'application/json' }
 
    è più chiaro rispetto a `nome=Christopher&cognome=Nolan&nazionalità=UK&tmdbId=525`.
 
-### **Quando usare ciascun metodo?**
+### Quando usare ciascun metodo?
 
 - **`URLSearchParams`** → Quando il backend si aspetta dati come stringa URL (`application/x-www-form-urlencoded`). Tipico dei form HTML tradizionali.
-- **`FormData`** → Quando dobbiamo inviare file o dati binari. Utile per upload di immagini o allegati.
+- **`FormData`** → Quando bis inviare file o dati binari. Utile per upload di immagini o allegati.
 - **`JSON.stringify()`** → Quando l'API accetta JSON. Ideale per comunicare con API REST moderne.
 
-### **`[FromForm]` vs `[AsParameters]`: Differenze e quando usarli**
+### `[FromForm]` vs `[AsParameters]`: Differenze e quando usarli
 
 Sia `[FromForm]` che `[AsParameters]` sono utilizzati per il binding di dati provenienti dal form, ma hanno utilizzi e comportamenti differenti.
 
@@ -1063,7 +1061,7 @@ Sia `[FromForm]` che `[AsParameters]` sono utilizzati per il binding di dati pro
 
 * **`[AsParameters]`**:  Si applica `[AsParameters]` **ad un tipo complesso** (classe o record) come parametro dell'endpoint. ASP.NET Core tenterà di mettere in binding le proprietà di questo tipo complesso dai dati del form.  `[AsParameters]` è utile per raggruppare logicamente parametri correlati provenienti dal form in un singolo oggetto, rendendo la firma dell'endpoint più pulita, **ma può rendere meno esplicito da dove provengono i dati**.
 
-#### **Esempio comparativo (C\#) - `[FromForm]` vs `[AsParameters]`**
+#### Esempio comparativo (C\#) - `[FromForm]` vs `[AsParameters]`
 
 **Scenario:**  Un form con campi `Nome`, `Cognome`, `Email`.
 
@@ -1111,20 +1109,19 @@ Sia `[FromForm]` che `[AsParameters]` sono utilizzati per il binding di dati pro
 
   * **Si usa `[FromForm]`**:
 	  * Nella maggior parte dei casi, per **chiarezza** e **controllo esplicito**.
-	  * Quando si hanno solo pochi parametri da collegare dal form.
-	  * Quando vuoi essere molto preciso sulla provenienza dei dati.
+	  * Quando si vuole essere molto precisi sulla provenienza dei dati.
   * **Si usa `[AsParameters]`**:
-	  * Quando si hanno **molti parametri correlati** provenienti dal form e si vuole **semplificare la firma dell'endpoint**.
+	  * Quando si hanno **molti parametri** provenienti dal form e/o da parti diverse della richiesta e si vuole **semplificare la firma dell'endpoint**.
 	  * Per raggruppare logicamente parametri in un oggetto.
 	  * Quando la provenienza dei dati è ovvia dal contesto (es. un endpoint chiaramente dedicato all'elaborazione di un form specifico).
 
-#### Best Practice per la gestione dei Form in Minimal APIs
+#### Best practice per la gestione dei form in Minimal APIs
 
-  * **Utilizzare `[FromForm]` esplicitamente**: Per chiarezza e controllo, usa sempre `[FromForm]` quando si vuole collegare dati da un form, specialmente per tipi semplici.
-  * **Validare i dati in ingresso**:  **Sempre** validare i dati ricevuti dal form lato server per sicurezza e integrità dei dati. Puoi usare Data Annotations, FluentValidation o validazione manuale.
+  * **Utilizzare `[FromForm]` esplicitamente**: Per chiarezza e controllo, usare sempre `[FromForm]` quando si vuole collegare dati da un form, specialmente per tipi semplici.
+  * **Validare i dati in ingresso**:  **Sempre** validare i dati ricevuti dal form lato server per sicurezza e integrità dei dati. Si può usare Data Annotations, FluentValidation o validazione manuale.
   * **Gestire gli errori di validazione**:  Restituire feedback appropriati all'utente in caso di errori di validazione (es. `Results.ValidationProblem()`).
-  * **Proteggere i form con Anti-Forgery Token**: Implementare la protezione Anti-Forgery (si veda la sezione successiva) per prevenire attacchi CSRF, soprattutto per form che modificano dati.
-  * **Utilizza HTTPS**: Assicurare che la tua applicazione utilizzi HTTPS per proteggere la trasmissione dei dati del form.
+  * **Proteggere i form con Anti-Forgery Token**: Implementare la protezione Anti-Forgery (si veda la sezione specifica) per prevenire attacchi CSRF, soprattutto per form che modificano dati.
+  * **Utilizzare HTTPS**: Assicurare che la applicazione utilizzi HTTPS per proteggere la trasmissione dei dati del form.
   * **Considerare l'uso di View Model**: Per form complessi, si potrebbe voler creare un View Model (classi dedicate) per rappresentare i dati del form e facilitare la validazione e il binding.
 
 **Link Utili:**
@@ -1132,11 +1129,11 @@ Sia `[FromForm]` che `[AsParameters]` sono utilizzati per il binding di dati pro
   * [Documentazione ufficiale Microsoft:  Binding dei parametri del form in ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/mvc/models/model-binding) (Sebbene focalizzata su MVC, i concetti di binding dei form sono simili anche in Minimal APIs)
   * [Documentazione ufficiale Microsoft:  Attributo FromForm](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.fromformattribute)
 
-## Binding Esplicito in ASP.NET Minimal API
+## Binding esplicito in ASP.NET Minimal API
 
 Oltre al binding automatico e al binding dai form, ASP.NET Core Minimal APIs offrono diversi attributi e meccanismi per specificare esplicitamente la sorgente dei dati per i parametri degli endpoint. Questo binding esplicito fornisce un controllo preciso e rende il codice più chiaro e manutenibile.
 
-### **Binding da Header con `[FromHeader]`**
+### Binding da Header con `[FromHeader]`
 
 L'attributo `[FromHeader]` indica che il valore del parametro deve essere collegato dall'**header della richiesta HTTP**.  Questo è utile quando si vogliono estrarre informazioni specifiche dagli header, come token di autorizzazione personalizzati, versioni API, user agent, etc.
 
@@ -1181,7 +1178,7 @@ curl -H "X-Authorization-Token: my-secret-token-123" https://localhost:<port>/he
 
 -----
 
-### **Binding dalla Query String con `[FromQuery]`**
+### Binding dalla Query String con `[FromQuery]`
 
 L'attributo `[FromQuery]` indica che il valore del parametro deve essere prelevato dalla **query string dell'URL della richiesta HTTP**. La query string è la parte dell'URL che segue il punto interrogativo (`?`), formata da coppie chiave-valore (es. `?param1=value1&param2=value2`).  `[FromQuery]` è comunemente usato per parametri opzionali, filtri di ricerca, paginazione, ordinamento, etc.
 
@@ -1232,7 +1229,7 @@ https://localhost:<port>/products?searchTerm=laptop&pageSize=20&pageNumber=2
 
 -----
 
-### **Binding dalla Route con `[FromRoute]`**
+### Binding dalla Route con `[FromRoute]`
 
 L'attributo `[FromRoute]` indica che il valore del parametro deve essere prelevato dai **segmenti della route URL** definiti nel pattern dell'endpoint.  Le route parameters sono parti dinamiche dell'URL, racchiuse tra parentesi graffe `{}` nel pattern di route (es. `/items/{id}`). `[FromRoute]` è tipicamente usato per identificare risorse specifiche (es. l'ID di un prodotto, l'username di un utente, etc.).
 
@@ -1274,7 +1271,7 @@ https://localhost:<port>/products/123
 
 -----
 
-### **Binding dai Servizi Iniettati con `[FromServices]`**
+### Binding dai Servizi Iniettati con `[FromServices]`
 
 L'attributo `[FromServices]` permette di iniettare un **servizio registrato nel container di Dependency Injection (DI)** direttamente come parametro di un endpoint Minimal API.  Questo è utile per accedere a servizi come logger, servizi di database, configurazioni, etc., all'interno degli endpoint.
 
@@ -1332,7 +1329,7 @@ app.Run();
 
 -----
 
-### **Accesso Diretto a `HttpRequest`**
+### Accesso Diretto a `HttpRequest`
 
 In alcuni scenari avanzati, potresti aver bisogno di accedere direttamente all'oggetto `HttpRequest` completo per ispezionare dettagli della richiesta HTTP che non sono facilmente accessibili tramite i binding standard (es. header non standard, informazioni sulla connessione, etc.).  Puoi ottenere l'oggetto `HttpRequest` accedendo alla proprietà `HttpContext.Request` all'interno del contesto dell'endpoint.
 
@@ -1371,7 +1368,7 @@ app.Run();
   * L'accesso diretto a `HttpRequest` offre **massima flessibilità**, ma **riduce l'astrazione** e può rendere il codice meno dichiarativo e più soggetto a errori se non usato con attenzione.
   * **Utilizzare il binding esplicito (come `[FromHeader]`, `[FromQuery]`, `[FromRoute]`) quando possibile.** L'accesso diretto a `HttpRequest` dovrebbe essere riservato a casi d'uso specifici dove gli attributi di binding non sono sufficienti.
 
-### **Accesso Diretto ai Servizi Iniettati**
+### Accesso Diretto ai Servizi Iniettati
 
 Similmente all'accesso diretto a `HttpRequest`, si può anche accedere direttamente al **container di Dependency Injection (IServiceProvider)** tramite la proprietà `HttpContext.RequestServices` dell'oggetto `HttpContext`.  Questo permette di risolvere e utilizzare **qualsiasi servizio registrato nel container DI**, anche se non lo si vuole iniettare come parametro dell'endpoint tramite `[FromServices]`.
 
@@ -1412,7 +1409,6 @@ app.MapGet("/serviceAccess", (HttpContext context) =>
 });
 
 app.Run();
-
 ```
 
 **Spiegazione:**
@@ -1434,7 +1430,7 @@ app.Run();
 
 Il binding esplicito in ASP.NET Minimal APIs, tramite attributi come `[FromHeader]`, `[FromQuery]`, `[FromRoute]`, `[FromServices]` e l'accesso diretto a `HttpRequest` e `IServiceProvider`, fornisce un controllo granulare sulla provenienza dei dati dei parametri degli endpoint e sull'accesso ai servizi.  Utilizzare il binding esplicito (attributi) quando possibile per chiarezza e manutenibilità, riservando l'accesso diretto a `HttpRequest` e `IServiceProvider` a scenari più avanzati o specifici.
 
-## Meccanismi Avanzati di Binding (Panoramica)
+## Meccanismi avanzati di Binding (cenni)
 
 Oltre al binding automatico e al binding da form, ASP.NET Core offre meccanismi più avanzati per scenari specifici.
 
@@ -1488,9 +1484,7 @@ Regole per determinare un'origine di associazione (Binding) da un parametro:
 5. Se il tipo di parametro è un servizio fornito dall'inserimento delle dipendenze, utilizza tale servizio come origine.
 6. Il parametro proviene dal corpo.
 
------
-
-## Conclusioni e Best Practice Generali sul Parameter Binding
+## Conclusioni e best practice generali sul Parameter Binding
 
 **Riepilogo delle best practice per un binding efficace e sicuro:**
 

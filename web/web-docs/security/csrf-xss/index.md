@@ -3,9 +3,9 @@
 - [Attacchi XSS e CSRF](#attacchi-xss-e-csrf)
 	- [Attacchi Cross-Site Scripting (XSS)](#attacchi-cross-site-scripting-xss)
 		- [Diagramma di Sequenza di un Attacco XSS Riflesso](#diagramma-di-sequenza-di-un-attacco-xss-riflesso)
-		- [Esempio di Attacco XSS Riflesso Facilmente Replicabile (Frontend e Backend separati)](#esempio-di-attacco-xss-riflesso-facilmente-replicabile-frontend-e-backend-separati)
+		- [Esempio di Attacco XSS Riflesso facilmente replicabile (Frontend e Backend separati)](#esempio-di-attacco-xss-riflesso-facilmente-replicabile-frontend-e-backend-separati)
 	- [Attacchi Cross-Site Request Forgery (CSRF)](#attacchi-cross-site-request-forgery-csrf)
-		- [Diagramma di Sequenza di un Attacco CSRF](#diagramma-di-sequenza-di-un-attacco-csrf)
+		- [Diagramma di sequenza di un attacco CSRF](#diagramma-di-sequenza-di-un-attacco-csrf)
 		- [Esempio di Attacco CSRF Facilmente Replicabile (Frontend e Backend Separati)](#esempio-di-attacco-csrf-facilmente-replicabile-frontend-e-backend-separati)
 		- [Analisi delle memorie/storage sensibili `Lato Client` e vulnerabilità a XSS e CSRF](#analisi-delle-memoriestorage-sensibili-lato-client-e-vulnerabilità-a-xss-e-csrf)
 			- [Tabella riassuntiva delle vulnerabilità delle memorie/storage Lato Client](#tabella-riassuntiva-delle-vulnerabilità-delle-memoriestorage-lato-client)
@@ -47,18 +47,18 @@ sequenceDiagram
 
 Descrizione dettagliata di un attacco XSS riflesso:
 
-1. **Attaccante prepara URL Malevolo:** L'attaccante crea un URL contenente uno script XSS malevolo come parametro. Ad esempio: `https://www.esempio.com/ricerca?query=<script>alert('XSS Attack!')</script>`.
-2. **Attaccante Inganna Vittima:** L'attaccante inganna la vittima affinché clicchi sul link malevolo, ad esempio tramite email phishing o link su social media.
-3. **Vittima Invia Richiesta Malevola:** Il browser della vittima invia una richiesta al server `www.esempio.com` con l'URL malevolo.
-4. **Server Riflette Script Malevolo:** Il server, vulnerabile a XSS riflesso, include lo script malevolo nella risposta HTML, ad esempio all'interno del codice HTML della pagina dei risultati di ricerca.
-5. **Browser della Vittima Esegue Script Malevolo:** Il browser della vittima riceve la risposta e interpreta l'HTML. Quando il browser esegue lo script malevolo incluso nella risposta (in questo caso, `alert('XSS Attack!')`), viene mostrato un alert box. In scenari reali, lo script malevolo potrebbe eseguire azioni più dannose, come rubare cookie di sessione o reindirizzare l'utente a un sito web malevolo.
+1. **Attaccante prepara URL malevolo:** L'attaccante crea un URL contenente uno script XSS malevolo come parametro. Ad esempio: `https://www.esempio.com/ricerca?query=<script>alert('XSS Attack!')</script>`.
+2. **Attaccante inganna vittima:** L'attaccante inganna la vittima affinché clicchi sul link malevolo, ad esempio tramite email phishing o link su social media.
+3. **Vittima invia richiesta malevola:** Il browser della vittima invia una richiesta al server `www.esempio.com` con l'URL malevolo.
+4. **Server riflette script malevolo:** Il server, vulnerabile a XSS riflesso, include lo script malevolo nella risposta HTML, ad esempio all'interno del codice HTML della pagina dei risultati di ricerca.
+5. **Browser della vittima esegue script malevolo:** Il browser della vittima riceve la risposta e interpreta l'HTML. Quando il browser esegue lo script malevolo incluso nella risposta (in questo caso, `alert('XSS Attack!')`), viene mostrato un alert box. In scenari reali, lo script malevolo potrebbe eseguire azioni più dannose, come rubare cookie di sessione o reindirizzare l'utente a un sito web malevolo.
 
 Link di approfondimento:
 
 * [OWASP - Cross Site Scripting (XSS)](https://owasp.org/www-community/attacks/xss/)
 * [Mozilla MDN - Cross-site scripting (XSS)](https://developer.mozilla.org/en-US/docs/Web/Security/Attacks/XSS)
 
-### Esempio di Attacco XSS Riflesso Facilmente Replicabile (Frontend e Backend separati)
+### Esempio di Attacco XSS Riflesso facilmente replicabile (Frontend e Backend separati)
 
 Consideriamo una architettura con frontend (HTML, CSS, JS) e backend (ASP.NET Minimal API) separati.
 
@@ -115,7 +115,7 @@ Questo esempio evidenzia come la mancanza di sanificazione dell'input lato serve
 
 Gli attacchi Cross-Site Request Forgery (CSRF) si basano sullo sfruttamento della fiducia che un sito web ha nel browser di un utente autenticato. In un attacco CSRF, un attaccante induce il browser della vittima ad eseguire una richiesta HTTP indesiderata verso un sito web vulnerabile in cui la vittima è autenticata. Questo permette all'attaccante di forzare l'utente autenticato a eseguire azioni non volute sul sito web vulnerabile, come cambiare la password, effettuare transazioni, o modificare informazioni personali, senza che la vittima ne sia consapevole.
 
-### Diagramma di Sequenza di un Attacco CSRF
+### Diagramma di sequenza di un attacco CSRF
 
 ```mermaid
 sequenceDiagram
@@ -149,11 +149,11 @@ sequenceDiagram
 	Note over V: La vittima non è<br/>consapevole dell'attacco
 ```
 
-1. **Vittima Autenticata al Sito Web Vulnerabile:** La vittima si autentica normalmente al sito web vulnerabile (`www.esempio.com`) e il browser memorizza i cookie di sessione per autenticare le richieste successive.
-2. **Attaccante Prepara Richiesta Malevola:** L'attaccante crea una pagina web malevola (o un email) contenente codice (ad esempio, un form HTML con un submit automatico tramite JavaScript) che invia una richiesta al sito web vulnerabile per eseguire un'azione specifica (es. cambiare email utente). Questa richiesta verrà inviata dal browser della vittima quando la pagina malevola viene caricata.
-3. **Attaccante Inganna Vittima:** L'attaccante induce la vittima a visitare la pagina web malevola, ad esempio tramite link in un'email o su un sito web compromesso.
-4. **Browser della Vittima Invia Richiesta Malevola:** Quando la vittima visita la pagina malevola, il codice malevolo viene eseguito nel browser. Questo codice automaticamente (o con un'interazione minima della vittima, come cliccare un bottone) invia una richiesta al sito web vulnerabile (`www.esempio.com`). Importante: il browser include automaticamente i cookie di sessione del sito vulnerabile nella richiesta perché proviene dallo stesso dominio della vittima autenticata.
-5. **Sito Web Vulnerabile Esegue Azione Indesiderata:** Il sito web vulnerabile riceve la richiesta, la valida (apparentemente proviene da un utente autenticato grazie ai cookie di sessione), e esegue l'azione richiesta (es. cambia l'email dell'utente), senza verificare se l'utente ha realmente autorizzato tale azione.
+1. **Vittima autenticata al sito web vulnerabile:** La vittima si autentica normalmente al sito web vulnerabile (`www.esempio.com`) e il browser memorizza i cookie di sessione per autenticare le richieste successive.
+2. **Attaccante prepara richiesta malevola:** L'attaccante crea una pagina web malevola (o un email) contenente codice (ad esempio, un form HTML con un submit automatico tramite JavaScript) che invia una richiesta al sito web vulnerabile per eseguire un'azione specifica (es. cambiare email utente). Questa richiesta verrà inviata dal browser della vittima quando la pagina malevola viene caricata.
+3. **Attaccante inganna vittima:** L'attaccante induce la vittima a visitare la pagina web malevola, ad esempio tramite link in un'email o su un sito web compromesso.
+4. **Browser della vittima invia richiesta malevola:** Quando la vittima visita la pagina malevola, il codice malevolo viene eseguito nel browser. Questo codice automaticamente (o con un'interazione minima della vittima, come cliccare un bottone) invia una richiesta al sito web vulnerabile (`www.esempio.com`). Importante: il browser include automaticamente i cookie di sessione del sito vulnerabile nella richiesta perché proviene dallo stesso dominio della vittima autenticata.
+5. **Sito web vulnerabile esegue azione indesiderata:** Il sito web vulnerabile riceve la richiesta, la valida (apparentemente proviene da un utente autenticato grazie ai cookie di sessione), e esegue l'azione richiesta (es. cambia l'email dell'utente), senza verificare se l'utente ha realmente autorizzato tale azione.
 
 Link di approfondimento:
 
@@ -173,7 +173,7 @@ var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
 
 // Simula un sistema di autenticazione molto semplificato
-app.MapPost("/cambiaemail", (HttpContext context, [FromForm] string nuovoEmail) =>
+app.MapPost("/cambia-email", (HttpContext context, [FromForm] string nuovoEmail) =>
 {
 	// Vulnerabile a CSRF - Nessuna protezione CSRF implementata
 	// In uno scenario reale, qui si dovrebbe cambiare l'email dell'utente autenticato
@@ -197,7 +197,7 @@ app.Run();
 <body>
 	<h1>Questa è una pagina malevola!</h1>
 	<p>Se sei autenticato sul sito vulnerabile, verrà eseguita un'azione indesiderata...</p>
-	<form action="http://localhost:<PORTA_API>/cambiaemail" method="post" id="csrf_form">
+	<form action="http://localhost:<PORTA_API>/cambia-email" method="post" id="csrf_form">
 		<input type="hidden" name="nuovoEmail" value="email.attaccante@esempio.com">
 	</form>
 	<script>

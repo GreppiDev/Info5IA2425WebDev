@@ -21,8 +21,10 @@ app.UseHttpsRedirection();
 app.MapGet("/", () => Results.Content(
 """
 <!DOCTYPE html>
-<html>
+<html lang="it">
+
 <head>
+<meta charset="utf-8">
 <title>Form Semplice</title>
 </head>
 <body>
@@ -70,8 +72,10 @@ app.MapPost("/submit-form", ([FromForm] string nome, [FromForm] string cognome) 
 app.MapGet("/dropdown", () => Results.Content(
 """
 <!DOCTYPE html>
-<html>
+<html lang="it">
+
 <head>
+<meta charset="utf-8">
 <title>Form con Dropdown</title>
 </head>
 <body>
@@ -122,8 +126,10 @@ app.MapPost("/submit-dropdown", ([FromForm] string paese) =>
 app.MapGet("/checkbox", () => Results.Content(
 """
 <!DOCTYPE html>
-<html>
+<html lang="it">
+
 <head>
+<meta charset="utf-8">
 <title>Form con Checkbox</title>
 </head>
 <body>
@@ -149,6 +155,7 @@ document.getElementById('checkboxForm').addEventListener('submit', function(even
 			'Content-Type': 'application/x-www-form-urlencoded'
 		},
 		body: interessiSelezionati.length > 0 ? new URLSearchParams(formData).toString() : 'interessi=' 
+		//body: new URLSearchParams(formData).toString()
 	})
 	.then(response => response.text())
 	.then(data => {
@@ -164,7 +171,7 @@ document.getElementById('checkboxForm').addEventListener('submit', function(even
 app.MapPost("/submit-checkbox", ([FromForm] CheckboxFormModel model) =>
 {
 	var interessi = model.Interessi ?? [];
-	if (interessi.Count > 0 && interessi.Any(interesse => interesse!=""))
+	if (interessi.Count > 0 && interessi.Any(interesse => interesse != ""))
 	{
 		return $"Interessi selezionati: {string.Join(", ", interessi)}";
 	}
@@ -202,8 +209,10 @@ app.MapPost("/submit-checkbox", ([FromForm] CheckboxFormModel model) =>
 app.MapGet("/checkbox2", () => Results.Content(
 """
 <!DOCTYPE html>
-<html>
+<html lang="it">
+
 <head>
+<meta charset="utf-8">
 <title>Form con Checkbox</title>
 </head>
 <body>
@@ -274,7 +283,7 @@ app.MapGet("/complete-url-encoded-form", () => Results.Content(
 <input type="text" id="nome" name="nome" value="Mario"><br><br>
 
 <label for="eta">Età:</label><br>
-<input type="number" id="eta" name="eta" value="30" required><br><br>
+<input type="number" id="eta" name="eta" value="30" ><br><br>
 
 <label for"notificheAbilitate">Abilita Notifiche:</label><br>
 <input type="checkbox" id="notificheAbilitate" name="notificheAbilitate">
@@ -315,7 +324,7 @@ document.getElementById('formUrlEncoded').addEventListener('submit', function(ev
 		},
 		body: new URLSearchParams({
 			nome: formData.get('nome'),
-			eta: formData.get('eta'),
+			eta: formData.get('eta')||"0",//se non è presente il valore restituisce "0"
 			notificheAbilitate: notificheAbilitate, // Booleano
 			genere: formData.get('genere'),
 			paese: formData.get('paese'),
@@ -353,8 +362,10 @@ app.MapPost("/submit-complete-url-encoded-form", ([FromForm] DatiFormUrlEncoded 
 app.MapGet("/file-upload", () => Results.Content(
 """
 <!DOCTYPE html>
-<html>
+<html lang="it">
+
 <head>
+<meta charset="utf-8">
 <title>Form con File Upload</title>
 </head>
 <body>
@@ -491,7 +502,7 @@ app.MapPost("/submit-multipart-complete", async ([FromForm] DatiFormMultipartCom
 		// ... qui potresti fare qualcosa con fileBytes ...
 	}
 
-	string interessiString = dati.Interessi!=null? string.Join(", ", dati.Interessi):"";
+	string interessiString = dati.Interessi != null ? string.Join(", ", dati.Interessi) : "";
 	return Results.Ok($"Dati Multipart ricevuti:\n" +
 	   $"Nome: {dati.Nome}\n" +
 	   $"Età: {dati.Eta}\n" +
@@ -507,8 +518,10 @@ app.MapPost("/submit-multipart-complete", async ([FromForm] DatiFormMultipartCom
 app.MapGet("/json-data", () => Results.Content(
 """
 <!DOCTYPE html>
-<html>
+<html lang="it">
+
 <head>
+<meta charset="utf-8">
 <title>Form JSON</title>
 </head>
 <body>
@@ -685,7 +698,7 @@ public class CheckboxFormModel
 
 public record DatiFormJson(string Nome, string Cognome);
 
-public record DatiFormUrlEncoded(string Nome, int Eta, bool NotificheAbilitate, string Genere, string Paese, string[] Interessi);
+public record DatiFormUrlEncoded(string Nome, int? Eta, bool NotificheAbilitate, string Genere, string Paese, string[] Interessi);
 
 public record DatiCheckboxForm(string[] Interessi);
 
