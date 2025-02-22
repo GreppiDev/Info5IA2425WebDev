@@ -71,21 +71,12 @@ if (app.Environment.IsDevelopment())
 		config.DocumentPath = "/swagger/{documentName}/swagger.json";
 		config.DocExpansion = "list";
 	});
-}
-//altri middleware
-if (app.Environment.IsDevelopment())
-{
+
 	app.UseDeveloperExceptionPage();
 }
+
 app.UseHttpsRedirection();
-// Configure Swagger UI before static files
-app.UseSwaggerUi(config =>
-{
-	config.DocumentTitle = "Film API v1";
-	config.Path = "/swagger";
-	config.DocumentPath = "/swagger/{documentName}/swagger.json";
-	config.DocExpansion = "list";
-});
+
 
 // Serve static files after Swagger
 

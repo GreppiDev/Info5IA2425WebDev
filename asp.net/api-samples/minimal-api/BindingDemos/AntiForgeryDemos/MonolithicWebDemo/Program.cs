@@ -89,6 +89,7 @@ app.MapGet("/anti-forgery2", (IAntiforgery antiforgery, HttpContext context) =>
 
 	<head>
 	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>Form protetto con Anti-Forgery</title>
 	</head>
 	<body>

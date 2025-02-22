@@ -25,6 +25,7 @@ app.MapGet("/", () => Results.Content(
 
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Form Semplice</title>
 </head>
 <body>
@@ -76,6 +77,7 @@ app.MapGet("/dropdown", () => Results.Content(
 
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Form con Dropdown</title>
 </head>
 <body>
@@ -130,6 +132,7 @@ app.MapGet("/checkbox", () => Results.Content(
 
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Form con Checkbox</title>
 </head>
 <body>
@@ -213,6 +216,7 @@ app.MapGet("/checkbox2", () => Results.Content(
 
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Form con Checkbox</title>
 </head>
 <body>
@@ -273,6 +277,7 @@ app.MapGet("/complete-url-encoded-form", () => Results.Content(
 
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Form URL-encoded Completo</title>
 
 </head>
@@ -366,6 +371,7 @@ app.MapGet("/file-upload", () => Results.Content(
 
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Form con File Upload</title>
 </head>
 <body>
@@ -424,6 +430,7 @@ app.MapGet("/multipart-complete", () => Results.Content(
 
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Form Multipart con File</title>
 
 </head>
@@ -522,6 +529,7 @@ app.MapGet("/json-data", () => Results.Content(
 
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Form JSON</title>
 </head>
 <body>
@@ -587,6 +595,7 @@ app.MapGet("/json-complete", () => Results.Content(
 
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Form JSON Completo</title>
 
 </head>

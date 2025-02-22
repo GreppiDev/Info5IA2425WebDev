@@ -6,7 +6,7 @@
 		- [Primo esempio (C#, HTML, CSS, JavaScript) - Dati da form con codifica `application/x-www-url-encoded`](#primo-esempio-c-html-css-javascript---dati-da-form-con-codifica-applicationx-www-url-encoded)
 			- [Spiegazione del codice del primo endpoint - form con dati semplici](#spiegazione-del-codice-del-primo-endpoint---form-con-dati-semplici)
 		- [Secondo esempio - invio di dati da form con codifica `multipart/form-data` e differenze rispetto alla codifica `application/x-www-form-urlencoded`](#secondo-esempio---invio-di-dati-da-form-con-codifica-multipartform-data-e-differenze-rispetto-alla-codifica-applicationx-www-form-urlencoded)
-		- [Terzo esempio - invio di dati da form con codifica differenza tra codifica `application/json` e differenze rispetto alle codifiche `application/x-www-form-urlencoded` e `multipart/form-data`](#terzo-esempio---invio-di-dati-da-form-con-codifica-differenza-tra-codifica-applicationjson-e-differenze-rispetto-alle-codifiche-applicationx-www-form-urlencoded-e-multipartform-data)
+		- [Terzo esempio - invio di dati da form con codifica `application/json` e differenze rispetto alle codifiche `application/x-www-form-urlencoded` e `multipart/form-data`](#terzo-esempio---invio-di-dati-da-form-con-codifica-applicationjson-e-differenze-rispetto-alle-codifiche-applicationx-www-form-urlencoded-e-multipartform-data)
 		- [Confronto tra le tre soluzioni di invio dati al server](#confronto-tra-le-tre-soluzioni-di-invio-dati-al-server)
 			- [Perché nel terzo caso non si usa né `URLSearchParams` né `FormData`?](#perché-nel-terzo-caso-non-si-usa-né-urlsearchparams-né-formdata)
 		- [Motivazioni principali per l'uso di JSON](#motivazioni-principali-per-luso-di-json)
@@ -94,8 +94,11 @@ app.UseHttpsRedirection();
 app.MapGet("/", () => Results.Content(
 """
 <!DOCTYPE html>
-<html>
+<html lang="it">
+
 <head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Form Semplice</title>
 </head>
 <body>
@@ -143,8 +146,11 @@ app.MapPost("/submit-form", ([FromForm] string nome, [FromForm] string cognome) 
 app.MapGet("/dropdown", () => Results.Content(
 """
 <!DOCTYPE html>
-<html>
+<html lang="it">
+
 <head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Form con Dropdown</title>
 </head>
 <body>
@@ -195,8 +201,11 @@ app.MapPost("/submit-dropdown", ([FromForm] string paese) =>
 app.MapGet("/checkbox", () => Results.Content(
 """
 <!DOCTYPE html>
-<html>
+<html lang="it">
+
 <head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Form con Checkbox</title>
 </head>
 <body>
@@ -275,8 +284,11 @@ app.MapPost("/submit-checkbox", ([FromForm] CheckboxFormModel model) =>
 app.MapGet("/checkbox2", () => Results.Content(
 """
 <!DOCTYPE html>
-<html>
+<html lang="it">
+
 <head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Form con Checkbox</title>
 </head>
 <body>
@@ -337,6 +349,7 @@ app.MapGet("/complete-url-encoded-form", () => Results.Content(
 
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Form URL-encoded Completo</title>
 
 </head>
@@ -561,8 +574,11 @@ app.UseHttpsRedirection();
 app.MapGet("/file-upload", () => Results.Content(
 """
 <!DOCTYPE html>
-<html>
+<html lang="it">
+
 <head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Form con File Upload</title>
 </head>
 <body>
@@ -621,6 +637,7 @@ app.MapGet("/multipart-complete", () => Results.Content(
 
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Form Multipart con File</title>
 
 </head>
@@ -777,7 +794,7 @@ public record DatiFormMultipartCompleto
 
 	Quindi, negli endpoint del secondo esempio **non è necessario usare `URLSearchParams`**, perché `FormData` supporta direttamente la codifica multipart e mantiene il formato corretto per gli allegati.
 
-### Terzo esempio - invio di dati da form con codifica differenza tra codifica `application/json` e differenze rispetto alle codifiche `application/x-www-form-urlencoded` e `multipart/form-data`
+### Terzo esempio - invio di dati da form con codifica `application/json` e differenze rispetto alle codifiche `application/x-www-form-urlencoded` e `multipart/form-data`
 
 Si considerino i seguenti endpoint, sempre del progetto [SimpleForms](../../../api-samples/minimal-api/BindingDemos/SimpleFormDemos/SimpleForms/):
 
@@ -806,8 +823,11 @@ app.UseHttpsRedirection();
 app.MapGet("/json-data", () => Results.Content(
 """
 <!DOCTYPE html>
-<html>
+<html lang="it">
+
 <head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Form JSON</title>
 </head>
 <body>
@@ -873,6 +893,7 @@ app.MapGet("/json-complete", () => Results.Content(
 
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Form JSON Completo</title>
 
 </head>
