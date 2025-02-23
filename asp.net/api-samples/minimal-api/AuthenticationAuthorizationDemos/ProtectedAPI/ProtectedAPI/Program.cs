@@ -2,11 +2,37 @@ using Microsoft.EntityFrameworkCore;
 using ProtectedAPI.Data;
 using ProtectedAPI.Endpoints;
 using ProtectedAPI.Model;
+using ProtectedAPI.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.OpenApi.Models;
 using NSwag.Generation.Processors.Security;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure different configuration sources based on environment
+if (!builder.Environment.IsDevelopment())
+{
+	// In production, we can use different configuration providers
+	// Example for Azure Key Vault (uncomment and configure when needed):
+	/*
+    builder.Configuration.AddAzureKeyVault(
+        new Uri($"https://{builder.Configuration["KeyVaultName"]}.vault.azure.net/"),
+        new DefaultAzureCredential());
+    */
+
+	// Example for AWS Secrets Manager (uncomment and configure when needed):
+	/*
+    builder.Configuration.AddSecretsManager(region: "eu-west-1",
+        configurator: options =>
+        {
+            options.SecretFilter = entry => entry.Name.StartsWith("ProtectedAPI/");
+            options.KeyGenerator = (entry, key) => key
+                .Replace("ProtectedAPI/", string.Empty)
+                .Replace("__", ":");
+        });
+    */
+}
 
 // Add services to the container.
 builder.Services.AddOpenApi();
@@ -45,8 +71,28 @@ builder.Services.AddDbContext<AppDbContext>(
 	.EnableDetailedErrors()
 );
 
-// Add Identity services with API endpoints
-builder.Services.AddIdentityApiEndpoints<ApplicationUser>()
+// Add Identity services with API endpoints and configure password rules
+builder.Services.AddIdentityApiEndpoints<ApplicationUser>(options =>
+{
+	// Password settings
+	options.Password.RequiredLength = 8;
+	options.Password.RequireDigit = true;
+	options.Password.RequireLowercase = true;
+	options.Password.RequireUppercase = true;
+	options.Password.RequireNonAlphanumeric = true;
+
+	// Lockout settings
+	options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+	options.Lockout.MaxFailedAccessAttempts = 5;
+	options.Lockout.AllowedForNewUsers = true;
+
+	// User settings
+	options.User.RequireUniqueEmail = true;
+	options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
+
+	// Email confirmation required
+	options.SignIn.RequireConfirmedEmail = true;
+})
 	.AddRoles<IdentityRole>()
 	.AddEntityFrameworkStores<AppDbContext>();
 
@@ -56,6 +102,48 @@ builder.Services.AddAuthorizationBuilder()
 		policy.RequireRole("Member"))
 	.AddPolicy("RequireAdminRole", policy =>
 		policy.RequireRole("Admin"));
+
+// Add logging configuration
+builder.Services.AddLogging(logging =>
+{
+	logging.ClearProviders();
+	logging.AddConsole();
+
+	// In production, you might want to add other logging providers
+	if (!builder.Environment.IsDevelopment())
+	{
+		// Example for Application Insights (uncomment when needed):
+		// logging.AddApplicationInsights();
+
+		// Example for Serilog with various sinks (uncomment when needed):
+		/*
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Information()
+            .WriteTo.Console()
+            .WriteTo.File("logs/api-.log", rollingInterval: RollingInterval.Day)
+            // Add more sinks as needed
+            .CreateLogger();
+        logging.AddSerilog();
+        */
+	}
+});
+
+// Configure Email Settings and Service
+builder.Services.Configure<EmailSettings>(
+	builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddTransient<IEmailSender, EmailSenderAdapter>();
+builder.Services.AddTransient<IEmailService, EmailService>();
+
+// Validate required configuration
+builder.Services.AddOptions<AdminCredentialsOptions>()
+	.Bind(builder.Configuration.GetSection("AdminCredentials"))
+	.ValidateDataAnnotations()
+	.ValidateOnStart();
+
+builder.Services.AddOptions<EmailSettings>()
+	.Bind(builder.Configuration.GetSection("EmailSettings"))
+	.ValidateDataAnnotations()
+	.ValidateOnStart();
 
 var app = builder.Build();
 
@@ -78,78 +166,17 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Map Identity endpoints
+// Map both default Identity endpoints and our custom ones
 app.MapIdentityApi<ApplicationUser>();
+app.MapCustomIdentityEndpoints();
 
-// Add custom registration endpoint with role (only for Admin)
-app.MapPost("/register-with-role", async (
-    UserManager<ApplicationUser> userManager,
-    string email,
-    string password,
-    string? role) =>
-{
-    // Validate role
-    if (!string.IsNullOrEmpty(role) && role != "Member" && role != "Admin")
-    {
-        return Results.BadRequest("Invalid role specified. Role must be either 'Member' or 'Admin'");
-    }
-
-    var user = new ApplicationUser
-    {
-        UserName = email,
-        Email = email
-    };
-
-    var result = await userManager.CreateAsync(user, password);
-
-    if (result.Succeeded && !string.IsNullOrEmpty(role))
-    {
-        await userManager.AddToRoleAsync(user, role);
-        return Results.Ok($"User created successfully with role {role}");
-    }
-    else if (result.Succeeded)
-    {
-        return Results.Ok("User created successfully without role");
-    }
-
-    return Results.BadRequest(result.Errors);
-})
-.RequireAuthorization("RequireAdminRole")  // Only admin can create users with roles
-.WithOpenApi()
-.WithTags("Identity");
-
-// Create default roles and admin user if they don't exist
+// Initialize the database
 using (var scope = app.Services.CreateScope())
 {
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-    
-    var roles = new[] { "Admin", "Member" };
-    foreach (var role in roles)
-    {
-        if (!await roleManager.RoleExistsAsync(role))
-            await roleManager.CreateAsync(new IdentityRole(role));
-    }
-
-    // Create default admin if it doesn't exist
-    var adminEmail = "admin@example.com";
-    var adminUser = await userManager.FindByEmailAsync(adminEmail);
-    
-    if (adminUser == null)
-    {
-        adminUser = new ApplicationUser
-        {
-            UserName = adminEmail,
-            Email = adminEmail,
-            EmailConfirmed = true
-        };
-        
-        var result = await userManager.CreateAsync(adminUser, "Admin123!");
-        if (result.Succeeded)
-        {
-            await userManager.AddToRoleAsync(adminUser, "Admin");
-        }
-    }
+	await DbInitializer.Initialize(
+		scope.ServiceProvider,
+		applyMigrations: app.Environment.IsDevelopment()
+	);
 }
 
 app.MapGroup("/api").MapTodoEndpoints().WithOpenApi().WithTags("Todos API");
