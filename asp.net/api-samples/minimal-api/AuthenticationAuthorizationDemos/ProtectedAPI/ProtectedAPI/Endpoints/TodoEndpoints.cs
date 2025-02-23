@@ -1,4 +1,5 @@
 using System;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using ProtectedAPI.Data;
 using ProtectedAPI.Model;
@@ -10,18 +11,22 @@ public static class TodoEndpoints
 {
 	public static RouteGroupBuilder MapTodoEndpoints(this RouteGroupBuilder group)
 	{
+		// GET - public access
 		group.MapGet("/todos", async (AppDbContext db) =>
 		{
 			var todos = await db.Todos.ToListAsync();
 			return todos.Select(t => new TodoDTO(t));
-		});
+		})
+		.AllowAnonymous();
 
 		group.MapGet("/todos/{id}", async (AppDbContext db, int id) =>
 		{
 			var todo = await db.Todos.FindAsync(id);
 			return todo is null ? Results.NotFound() : Results.Ok(new TodoDTO(todo));
-		});
+		})
+		.AllowAnonymous();
 
+		// POST - requires Member role
 		group.MapPost("/todos", async (AppDbContext db, TodoDTO todoDto) =>
 		{
 			var todo = new Todo
@@ -33,8 +38,10 @@ public static class TodoEndpoints
 			db.Todos.Add(todo);
 			await db.SaveChangesAsync();
 			return Results.Created($"/todos/{todo.Id}", new TodoDTO(todo));
-		});
+		})
+		.RequireAuthorization("RequireMemberRole");
 
+		// PUT - requires authentication
 		group.MapPut("/todos/{id}", async (AppDbContext db, int id, TodoDTO todoDto) =>
 		{
 			if (id != todoDto.Id)
@@ -54,8 +61,10 @@ public static class TodoEndpoints
 
 			await db.SaveChangesAsync();
 			return Results.NoContent();
-		});
+		})
+		.RequireAuthorization();
 
+		// DELETE - requires Admin role
 		group.MapDelete("/todos/{id}", async (AppDbContext db, int id) =>
 		{
 			var todo = await db.Todos.FindAsync(id);
@@ -66,7 +75,8 @@ public static class TodoEndpoints
 			db.Todos.Remove(todo);
 			await db.SaveChangesAsync();
 			return Results.NoContent();
-		});
+		})
+		.RequireAuthorization("RequireAdminRole");
 
 		return group;
 	}
