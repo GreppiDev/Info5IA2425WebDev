@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using ProtectedAPI.Model;
 
 namespace ProtectedAPI.Data;
@@ -54,6 +55,7 @@ public static class DbInitializer
     private static async Task InitializeAdminUser(IServiceProvider serviceProvider, IConfiguration configuration)
     {
         var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var identitySettings = serviceProvider.GetRequiredService<IOptions<IdentitySettings>>().Value;
         var adminEmail = configuration["AdminCredentials:Email"];
         var adminPassword = configuration["AdminCredentials:Password"];
 
@@ -70,7 +72,7 @@ public static class DbInitializer
             {
                 UserName = adminEmail,
                 Email = adminEmail,
-                EmailConfirmed = true
+                EmailConfirmed = !identitySettings.RequireEmailConfirmation // Se non richiediamo la conferma, impostiamo direttamente a true
             };
 
             var result = await userManager.CreateAsync(adminUser, adminPassword);

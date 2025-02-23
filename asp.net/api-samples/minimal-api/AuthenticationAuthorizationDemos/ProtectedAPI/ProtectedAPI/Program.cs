@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.OpenApi.Models;
 using NSwag.Generation.Processors.Security;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -71,6 +73,9 @@ builder.Services.AddDbContext<AppDbContext>(
 	.EnableDetailedErrors()
 );
 
+// Configure Identity settings
+var identitySettings = builder.Configuration.GetSection("IdentitySettings").Get<IdentitySettings>();
+
 // Add Identity services with API endpoints and configure password rules
 builder.Services.AddIdentityApiEndpoints<ApplicationUser>(options =>
 {
@@ -90,11 +95,39 @@ builder.Services.AddIdentityApiEndpoints<ApplicationUser>(options =>
 	options.User.RequireUniqueEmail = true;
 	options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
 
-	// Email confirmation required
-	options.SignIn.RequireConfirmedEmail = true;
+	// Email confirmation setting from configuration
+	options.SignIn.RequireConfirmedEmail = identitySettings?.RequireEmailConfirmation ?? true;
 })
 	.AddRoles<IdentityRole>()
-	.AddEntityFrameworkStores<AppDbContext>();
+	.AddEntityFrameworkStores<AppDbContext>()
+	.AddTokenProvider<RefreshTokenProvider<ApplicationUser>>("RefreshTokenProvider");
+
+// Configure refresh token provider options
+builder.Services.Configure<RefreshTokenProviderOptions>(options =>
+{
+	var refreshTokenDuration = int.Parse(builder.Configuration["Jwt:RefreshTokenDurationInDays"] ?? "7");
+	options.TokenLifespan = TimeSpan.FromDays(refreshTokenDuration);
+});
+
+// Configure JWT Authentication
+builder.Services.AddAuthentication()
+	.AddJwtBearer(options =>
+	{
+		var jwtKey = builder.Configuration["Jwt:SecretKey"] ??
+			throw new InvalidOperationException("JWT SecretKey not configured");
+		var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
+
+		options.TokenValidationParameters = new TokenValidationParameters
+		{
+			ValidateIssuer = true,
+			ValidateAudience = true,
+			ValidateLifetime = true,
+			ValidateIssuerSigningKey = true,
+			ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "ProtectedAPI",
+			ValidAudience = builder.Configuration["Jwt:Audience"] ?? "ProtectedAPI",
+			IssuerSigningKey = key
+		};
+	});
 
 // Configure authorization policies
 builder.Services.AddAuthorizationBuilder()
@@ -131,6 +164,8 @@ builder.Services.AddLogging(logging =>
 // Configure Email Settings and Service
 builder.Services.Configure<EmailSettings>(
 	builder.Configuration.GetSection("EmailSettings"));
+builder.Services.Configure<IdentitySettings>(
+	builder.Configuration.GetSection("IdentitySettings"));
 builder.Services.AddTransient<IEmailSender, EmailSenderAdapter>();
 builder.Services.AddTransient<IEmailService, EmailService>();
 
@@ -166,9 +201,21 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Map both default Identity endpoints and our custom ones
-app.MapIdentityApi<ApplicationUser>();
-app.MapCustomIdentityEndpoints();
+// Map either Identity API endpoints or our custom endpoints based on email confirmation requirement
+if (identitySettings?.RequireEmailConfirmation ?? true)
+{
+    // Use standard Identity endpoints when email confirmation is required
+    app.MapIdentityApi<ApplicationUser>();
+}
+else
+{
+    // Use our custom endpoints for auth
+    app.MapCustomIdentityEndpoints();
+
+}
+
+// Map additional endpoints that don't conflict with either implementation
+app.MapAdditionalIdentityEndpoints();
 
 // Initialize the database
 using (var scope = app.Services.CreateScope())
