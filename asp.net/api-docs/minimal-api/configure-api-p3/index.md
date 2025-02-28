@@ -103,7 +103,7 @@ app.MapGet("/", () => Results.Content(
 </head>
 <body>
 <h1>Form Semplice</h1>
-<form id="simpleForm" method="post" action="/submitForm">
+<form id="simpleForm" method="post" action="/submit-form">
 <label for="nome">Nome:</label><br>
 <input type="text" id="nome" name="nome"><br><br>
 <label for="cognome">Cognome:</label><br>

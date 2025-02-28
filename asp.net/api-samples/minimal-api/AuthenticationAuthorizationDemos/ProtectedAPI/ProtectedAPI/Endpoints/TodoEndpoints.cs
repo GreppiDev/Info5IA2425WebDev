@@ -26,7 +26,7 @@ public static class TodoEndpoints
 		})
 		.AllowAnonymous();
 
-		// POST - requires Member role
+		// POST - requires Member or Admin role
 		group.MapPost("/todos", async (AppDbContext db, TodoDTO todoDto) =>
 		{
 			var todo = new Todo
@@ -39,7 +39,9 @@ public static class TodoEndpoints
 			await db.SaveChangesAsync();
 			return Results.Created($"/todos/{todo.Id}", new TodoDTO(todo));
 		})
-		.RequireAuthorization("RequireMemberRole");
+		.RequireAuthorization("RequireMemberOrAdmin");
+		//in alternativa alla Custom Policy è possibile specificare i ruoli in linea
+		//.RequireAuthorization(policy => policy.RequireRole("Member", "Admin"));
 
 		// PUT - requires authentication
 		group.MapPut("/todos/{id}", async (AppDbContext db, int id, TodoDTO todoDto) =>

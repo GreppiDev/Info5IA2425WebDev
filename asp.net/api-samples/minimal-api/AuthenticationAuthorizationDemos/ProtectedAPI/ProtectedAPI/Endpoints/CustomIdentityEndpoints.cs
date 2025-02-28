@@ -299,45 +299,6 @@ public static class CustomIdentityEndpoints
             return operation;
         });
 
-        // Logout endpoint supporting both cookie and token authentication
-        app.MapPost("/logout", async (
-            HttpContext context,
-            SignInManager<ApplicationUser> signInManager,
-            UserManager<ApplicationUser> userManager,
-            [FromBody] LogoutRequest? request) =>
-        {
-            if (context.User.Identity?.IsAuthenticated == true)
-            {
-                if (request?.Token != null)
-                {
-                    // For token-based auth, invalidate the refresh token
-                    var userId = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
-                    if (userId != null)
-                    {
-                        var user = await userManager.FindByIdAsync(userId);
-                        if (user != null)
-                        {
-                            await userManager.RemoveAuthenticationTokenAsync(user, "RefreshTokenProvider", "RefreshToken");
-                        }
-                    }
-                }
-                else
-                {
-                    // For cookie-based auth
-                    await signInManager.SignOutAsync();
-                }
-            }
-            return Results.Ok();
-        })
-        .WithName("Logout")
-        .WithOpenApi(operation =>
-        {
-            operation.Summary = "Log out";
-            operation.Description = "Signs out the current user. For token-based auth, invalidates the refresh token. For cookie-based auth, clears the authentication cookie.";
-            operation.Tags = new List<OpenApiTag> { new() { Name = "Identity" } };
-            return operation;
-        });
-
         // Password reset request endpoint
         app.MapPost("/forgotPassword", async (
             UserManager<ApplicationUser> userManager,
@@ -590,10 +551,6 @@ public record LoginRequest(
 public record RefreshTokenRequest(
     [Description("The refresh token")]
     string RefreshToken);
-
-public record LogoutRequest(
-    [Description("The JWT token to invalidate")]
-    string? Token);
 
 public record RegisterRequest(
     [Description("The user's email address")]

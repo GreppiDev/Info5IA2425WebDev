@@ -8,6 +8,7 @@ using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Any;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Authentication;
 
 namespace ProtectedAPI.Endpoints;
 
@@ -22,10 +23,53 @@ public record RegisterWithRoleRequest(
     [Description("The role to assign to the user ('Member' or 'Admin')")]
     string? Role);
 
+public record LogoutRequest(
+    [Description("The JWT token to invalidate")]
+    string? Token);
+
 public static class AdditionalIdentityEndpoints
 {
     public static void MapAdditionalIdentityEndpoints(this IEndpointRouteBuilder app)
     {
+        // Logout endpoint supporting both cookie and token authentication
+        app.MapPost("/logout", async (
+            HttpContext context,
+            SignInManager<ApplicationUser> signInManager,
+            UserManager<ApplicationUser> userManager,
+            [FromBody] LogoutRequest? request) =>
+        {
+            if (context.User.Identity?.IsAuthenticated == true)
+            {
+                if (request?.Token != null)
+                {
+                    // For token-based auth, invalidate the refresh token
+                    var userId = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                    if (userId != null)
+                    {
+                        var user = await userManager.FindByIdAsync(userId);
+                        if (user != null)
+                        {
+                            await userManager.RemoveAuthenticationTokenAsync(user, "RefreshTokenProvider", "RefreshToken");
+                        }
+                    }
+                }
+                else
+                {
+                    // For cookie-based auth
+                    await signInManager.SignOutAsync();
+                }
+            }
+            return Results.Ok();
+        })
+        .WithName("Logout")
+        .WithOpenApi(operation =>
+        {
+            operation.Summary = "Log out";
+            operation.Description = "Signs out the current user. For token-based auth, invalidates the refresh token. For cookie-based auth, clears the authentication cookie.";
+            operation.Tags = new List<OpenApiTag> { new() { Name = "Additional Identity Endpoints" } };
+            return operation;
+        });
+
         // Custom registration with role (only for Admin)
         app.MapPost("/register-with-role", async (
             UserManager<ApplicationUser> userManager,
@@ -101,7 +145,7 @@ public static class AdditionalIdentityEndpoints
                 The role must be either 'Member' or 'Admin'. If email confirmation is required, a confirmation email will be sent.
                 Returns a validation problem if the registration fails or if the role is invalid.
                 """;
-            operation.Tags = new List<OpenApiTag> { new() { Name = "Identity" } };
+            operation.Tags = new List<OpenApiTag> { new() { Name = "Additional Identity Endpoints" } };
 
             return operation;
         });
@@ -126,7 +170,7 @@ public static class AdditionalIdentityEndpoints
                 The {provider} parameter specifies which authentication provider to use.
                 The optional returnUrl query parameter specifies where to redirect after successful authentication.
                 """;
-            operation.Tags = new List<OpenApiTag> { new() { Name = "Identity" } };
+            operation.Tags = new List<OpenApiTag> { new() { Name = "Additional Identity Endpoints" } };
 
             return operation;
         });
@@ -217,7 +261,7 @@ public static class AdditionalIdentityEndpoints
                 If the user doesn't have an account, one will be created using their email from the external provider.
                 After successful authentication, redirects to the specified returnUrl or the default page.
                 """;
-            operation.Tags = new List<OpenApiTag> { new() { Name = "Identity" } };
+            operation.Tags = new List<OpenApiTag> { new() { Name = "Additional Identity Endpoints" } };
 
             return operation;
         });
@@ -264,7 +308,7 @@ public static class AdditionalIdentityEndpoints
         {
             operation.Summary = "Setup two-factor authentication";
             operation.Description = "Gets the information needed to setup two-factor authentication with an authenticator app.";
-            operation.Tags = new List<OpenApiTag> { new() { Name = "Identity" } };
+            operation.Tags = new List<OpenApiTag> { new() { Name = "Additional Identity Endpoints" } };
             return operation;
         });
     }

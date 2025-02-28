@@ -77,7 +77,8 @@ builder.Services.AddDbContext<AppDbContext>(
 var identitySettings = builder.Configuration.GetSection("IdentitySettings").Get<IdentitySettings>();
 
 // Add Identity services with API endpoints and configure password rules
-builder.Services.AddIdentityApiEndpoints<ApplicationUser>(options =>
+//Note: this configuration is required for both default and custom Identity Endpoints
+var identityBuilder = builder.Services.AddIdentityApiEndpoints<ApplicationUser>(options =>
 {
 	// Password settings
 	options.Password.RequiredLength = 8;
@@ -97,21 +98,27 @@ builder.Services.AddIdentityApiEndpoints<ApplicationUser>(options =>
 
 	// Email confirmation setting from configuration
 	options.SignIn.RequireConfirmedEmail = identitySettings?.RequireEmailConfirmation ?? true;
-})
-	.AddRoles<IdentityRole>()
-	.AddEntityFrameworkStores<AppDbContext>()
-	.AddTokenProvider<RefreshTokenProvider<ApplicationUser>>("RefreshTokenProvider");
+}).AddRoles<IdentityRole>().AddEntityFrameworkStores<AppDbContext>();
 
-// Configure refresh token provider options
-builder.Services.Configure<RefreshTokenProviderOptions>(options =>
+//add RefreshTokenProvider only if CustomIdentityEndpoints is used 
+if (identitySettings?.UseCustomIdentityEndpoints ?? false)
 {
-	var refreshTokenDuration = int.Parse(builder.Configuration["Jwt:RefreshTokenDurationInDays"] ?? "7");
-	options.TokenLifespan = TimeSpan.FromDays(refreshTokenDuration);
-});
+	identityBuilder.AddTokenProvider<RefreshTokenProvider<ApplicationUser>>("RefreshTokenProvider");
+	// Configure refresh token provider options
+	builder.Services.Configure<RefreshTokenProviderOptions>(options =>
+	{
+		var refreshTokenDuration = int.Parse(builder.Configuration["Jwt:RefreshTokenDurationInDays"] ?? "7");
+		options.TokenLifespan = TimeSpan.FromDays(refreshTokenDuration);
+	});
 
-// Configure JWT Authentication
-builder.Services.AddAuthentication()
-	.AddJwtBearer(options =>
+}
+
+var authenticationBuilder = builder.Services.AddAuthentication();
+
+// Configure JWT Authentication only if CustomIdentityEndpoints is used 
+if (identitySettings?.UseCustomIdentityEndpoints ?? false)
+{
+	authenticationBuilder.AddJwtBearer(options =>
 	{
 		var jwtKey = builder.Configuration["Jwt:SecretKey"] ??
 			throw new InvalidOperationException("JWT SecretKey not configured");
@@ -128,13 +135,16 @@ builder.Services.AddAuthentication()
 			IssuerSigningKey = key
 		};
 	});
+}
 
 // Configure authorization policies
 builder.Services.AddAuthorizationBuilder()
 	.AddPolicy("RequireMemberRole", policy =>
 		policy.RequireRole("Member"))
 	.AddPolicy("RequireAdminRole", policy =>
-		policy.RequireRole("Admin"));
+		policy.RequireRole("Admin"))
+	.AddPolicy("RequireMemberOrAdmin", policy =>
+		policy.RequireRole("Member", "Admin"));
 
 // Add logging configuration
 builder.Services.AddLogging(logging =>
@@ -201,17 +211,16 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Map either Identity API endpoints or our custom endpoints based on email confirmation requirement
-if (identitySettings?.RequireEmailConfirmation ?? true)
+// Map either default Identity API endpoints or our custom Identity endpoints based UseCustomIdentityEndpoints parameter settings
+if (identitySettings?.UseCustomIdentityEndpoints ?? false)
 {
-    // Use standard Identity endpoints when email confirmation is required
-    app.MapIdentityApi<ApplicationUser>();
+	// Use our custom endpoints for auth
+	app.MapCustomIdentityEndpoints();
 }
 else
 {
-    // Use our custom endpoints for auth
-    app.MapCustomIdentityEndpoints();
-
+	// Use standard Identity endpoints 
+	app.MapIdentityApi<ApplicationUser>().WithOpenApi().WithTags("Identity");
 }
 
 // Map additional endpoints that don't conflict with either implementation
