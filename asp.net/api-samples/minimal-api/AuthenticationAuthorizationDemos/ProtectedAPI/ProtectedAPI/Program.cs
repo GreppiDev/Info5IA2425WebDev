@@ -9,6 +9,8 @@ using Microsoft.OpenApi.Models;
 using NSwag.Generation.Processors.Security;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization; // Add this for AllowAnonymousAttribute
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,18 +46,20 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApiDocument(config =>
 {
 	config.Title = "ProtectedAPI v1";
-	config.DocumentName = "ProtectedAPI API";
+	config.DocumentName = "v1";
 	config.Version = "v1";
 
-	// Add JWT authentication support to Swagger
-	config.AddSecurity("JWT", new NSwag.OpenApiSecurityScheme
+	// Utilizzo dello schema Http per la sicurezza JWT
+	config.AddSecurity("Bearer", new NSwag.OpenApiSecurityScheme
 	{
-		Type = NSwag.OpenApiSecuritySchemeType.ApiKey,
-		Name = "Authorization",
-		In = NSwag.OpenApiSecurityApiKeyLocation.Header,
-		Description = "Type into the textbox: Bearer {your JWT token}."
+		Type = NSwag.OpenApiSecuritySchemeType.Http,
+		Scheme = "Bearer",
+		BearerFormat = "JWT",
+		Description = "Inserisci il token JWT (senza il prefisso 'Bearer')"
 	});
-	config.OperationProcessors.Add(new AspNetCoreOperationSecurityScopeProcessor("JWT"));
+
+	// Utilizza l'OperationProcessor standard per aggiungere i requisiti di sicurezza
+	config.OperationProcessors.Add(new AspNetCoreOperationSecurityScopeProcessor("Bearer"));
 });
 
 if (builder.Environment.IsDevelopment())
@@ -77,7 +81,6 @@ builder.Services.AddDbContext<AppDbContext>(
 var identitySettings = builder.Configuration.GetSection("IdentitySettings").Get<IdentitySettings>();
 
 // Add Identity services with API endpoints and configure password rules
-//Note: this configuration is required for both default and custom Identity Endpoints
 var identityBuilder = builder.Services.AddIdentityApiEndpoints<ApplicationUser>(options =>
 {
 	// Password settings
@@ -100,7 +103,6 @@ var identityBuilder = builder.Services.AddIdentityApiEndpoints<ApplicationUser>(
 	options.SignIn.RequireConfirmedEmail = identitySettings?.RequireEmailConfirmation ?? true;
 }).AddRoles<IdentityRole>().AddEntityFrameworkStores<AppDbContext>();
 
-//add RefreshTokenProvider only if CustomIdentityEndpoints is used 
 if (identitySettings?.UseCustomIdentityEndpoints ?? false)
 {
 	identityBuilder.AddTokenProvider<RefreshTokenProvider<ApplicationUser>>("RefreshTokenProvider");
@@ -111,19 +113,21 @@ if (identitySettings?.UseCustomIdentityEndpoints ?? false)
 		options.TokenLifespan = TimeSpan.FromDays(refreshTokenDuration);
 	});
 
-}
-
-var authenticationBuilder = builder.Services.AddAuthentication();
-
-// Configure JWT Authentication only if CustomIdentityEndpoints is used 
-if (identitySettings?.UseCustomIdentityEndpoints ?? false)
-{
-	authenticationBuilder.AddJwtBearer(options =>
+	// Configura JWT Bearer authentication
+	builder.Services.AddAuthentication(options => 
+	{
+		// Imposta lo schema di autenticazione predefinito a JWT Bearer
+		options.DefaultAuthenticateScheme = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme;
+		options.DefaultChallengeScheme = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme;
+		options.DefaultScheme = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme;
+	})
+	.AddJwtBearer(options =>
 	{
 		var jwtKey = builder.Configuration["Jwt:SecretKey"] ??
 			throw new InvalidOperationException("JWT SecretKey not configured");
 		var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
 
+		// Configurazione JWT Bearer
 		options.TokenValidationParameters = new TokenValidationParameters
 		{
 			ValidateIssuer = true,
@@ -132,7 +136,159 @@ if (identitySettings?.UseCustomIdentityEndpoints ?? false)
 			ValidateIssuerSigningKey = true,
 			ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "ProtectedAPI",
 			ValidAudience = builder.Configuration["Jwt:Audience"] ?? "ProtectedAPI",
-			IssuerSigningKey = key
+			IssuerSigningKey = key,
+			NameClaimType = ClaimTypes.Name,
+			RoleClaimType = ClaimTypes.Role,
+			ClockSkew = TimeSpan.Zero
+		};
+
+		// Eventi di gestione per il debugging
+		options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+		{
+			OnMessageReceived = context =>
+			{
+				var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+
+				// Controlla se c'è un token nell'header Authorization
+				var authHeader = context.HttpContext.Request.Headers["Authorization"].FirstOrDefault();
+				if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+				{
+					var token = authHeader.Substring("Bearer ".Length).Trim();
+					logger.LogInformation("Token JWT ricevuto nell'header Authorization");
+
+					// Non loggare token completi in produzione!
+					if (builder.Environment.IsDevelopment())
+					{
+						logger.LogDebug("Token: {Token}", token);
+					}
+				}
+				else
+				{
+					logger.LogWarning("Nessun token Bearer trovato nell'header Authorization");
+				}
+
+				return Task.CompletedTask;
+			},
+			OnAuthenticationFailed = context =>
+			{
+				var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+
+				// Log dettagliato dell'errore
+				logger.LogError(context.Exception, "Errore durante l'autenticazione JWT: {ErrorMessage}", context.Exception.Message);
+
+				if (context.Exception is SecurityTokenExpiredException)
+				{
+					logger.LogInformation("Il token è scaduto");
+					context.Response.Headers.Append("Token-Expired", "true");
+					context.Response.Headers.Append("Access-Control-Expose-Headers", "Token-Expired");
+				}
+
+				return Task.CompletedTask;
+			},
+			OnTokenValidated = context =>
+			{
+				var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+
+				// Log quando un token è stato validato con successo
+				var userId = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
+				var username = context.Principal?.FindFirstValue(ClaimTypes.Name);
+				logger.LogInformation("Token validato per utente: {UserId}, {Username}", userId, username);
+
+				// Verifica la presenza del security stamp
+				var securityStampClaim = context.Principal?.FindFirstValue("AspNet.Identity.SecurityStamp");
+				if (securityStampClaim != null)
+				{
+					logger.LogInformation("Security stamp trovato nel token: {SecurityStamp}", securityStampClaim);
+				}
+				else
+				{
+					logger.LogWarning("Security stamp non presente nel token!");
+				}
+
+				return Task.CompletedTask;
+			},
+			OnChallenge = context =>
+			{
+				var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+
+				// Informazioni dettagliate sul challenge
+				logger.LogWarning("Autenticazione fallita, emessa challenge. Error: {Error}, ErrorDescription: {ErrorDescription}",
+					context.Error, context.ErrorDescription);
+
+				return Task.CompletedTask;
+			}
+		};
+	});
+
+	// Configura le opzioni dei cookie di Identity
+	builder.Services.ConfigureApplicationCookie(options =>
+	{
+		options.Cookie.Name = "ProtectedAPI.Identity";
+		options.Cookie.HttpOnly = true;
+		options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+		options.ExpireTimeSpan = TimeSpan.FromHours(24);
+		options.SlidingExpiration = true;
+
+		// Approccio intelligente alla validazione del cookie che evita blocchi
+		options.Events.OnValidatePrincipal = async context =>
+		{
+			// 1. Salta la validazione se non ci sono claim di identità (utente non autenticato)
+			if (!context.Principal?.Identity?.IsAuthenticated ?? true)
+			{
+				return;
+			}
+
+			// 2. Verifica se l'endpoint richiede autorizzazione
+			var endpoint = context.HttpContext.GetEndpoint();
+			if (endpoint != null)
+			{
+				// Ottieni tutti i requisiti di autorizzazione associati all'endpoint
+				var authRequirements = endpoint.Metadata.GetOrderedMetadata<IAuthorizeData>();
+				
+				// Se non ci sono requisiti di autorizzazione, o c'è AllowAnonymous, salta la validazione
+				if (!authRequirements.Any() || endpoint.Metadata.GetMetadata<IAllowAnonymous>() != null)
+				{
+					return;
+				}
+			}
+
+			// 3. Limita la frequenza del refresh (ogni 10 minuti)
+			var userId = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
+			if (string.IsNullOrEmpty(userId))
+			{
+				return;
+			}
+
+			// Cache per memorizzare quando è stato fatto l'ultimo refresh
+			var cacheKey = $"LastRefresh_{userId}";
+			var now = DateTimeOffset.UtcNow;
+			
+			if (context.HttpContext.Items.TryGetValue(cacheKey, out var lastRefreshObj) && 
+				lastRefreshObj is DateTimeOffset lastRefresh && 
+				(now - lastRefresh).TotalMinutes < 10)
+			{
+				// Ultimo refresh meno di 10 minuti fa, salta
+				return;
+			}
+
+			// 4. Solo validazione del security stamp, senza rinnovare il cookie
+			var signInManager = context.HttpContext.RequestServices
+				.GetRequiredService<SignInManager<ApplicationUser>>();
+				
+			var validatedPrincipal = await signInManager.ValidateSecurityStampAsync(context.Principal);
+			if (validatedPrincipal == null)
+			{
+				// Security stamp non valido, logout
+				context.RejectPrincipal();
+				await signInManager.SignOutAsync();
+				return;
+			}
+			
+			// Memorizza l'ultimo refresh nella cache
+			context.HttpContext.Items[cacheKey] = now;
+			
+			// Non esegue il refresh del cookie qui, evitando il blocco
+			// Il rinnovo del cookie viene gestito automaticamente dal middleware grazie a SlidingExpiration = true
 		};
 	});
 }

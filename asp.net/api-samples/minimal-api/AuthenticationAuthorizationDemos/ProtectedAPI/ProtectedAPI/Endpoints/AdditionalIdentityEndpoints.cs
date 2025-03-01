@@ -9,9 +9,13 @@ using Microsoft.OpenApi.Any;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.EntityFrameworkCore;
+using ProtectedAPI.Data;
+using System.Text.Json;
 
 namespace ProtectedAPI.Endpoints;
 
+// Rimosso il record LogoutRequest perché non è più necessario
 public record RegisterWithRoleRequest(
     [Description("The user's email address")]
     [EmailAddress]
@@ -23,49 +27,450 @@ public record RegisterWithRoleRequest(
     [Description("The role to assign to the user ('Member' or 'Admin')")]
     string? Role);
 
-public record LogoutRequest(
-    [Description("The JWT token to invalidate")]
-    string? Token);
+public record UserRoleRequest(
+    [Description("The user's email address")]
+    [EmailAddress]
+    [Required]
+    string Email,
+
+    [Description("The role to assign or remove ('Member' or 'Admin')")]
+    [Required]
+    string Role);
+
+public record UserDeleteRequest(
+    [Description("The user's email address")]
+    [EmailAddress]
+    [Required]
+    string Email);
+
+public class PersonalDataExport
+{
+    public string? UserId { get; set; }
+    public string? UserName { get; set; }
+    public string? Email { get; set; }
+    public bool EmailConfirmed { get; set; }
+    public string? PhoneNumber { get; set; }
+    public bool PhoneNumberConfirmed { get; set; }
+    public bool TwoFactorEnabled { get; set; }
+    public DateTimeOffset? LockoutEnd { get; set; }
+    public bool LockoutEnabled { get; set; }
+    public int AccessFailedCount { get; set; }
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+    public IList<string> Roles { get; set; } = new List<string>();
+    public Dictionary<string, object> AdditionalData { get; set; } = new Dictionary<string, object>();
+}
 
 public static class AdditionalIdentityEndpoints
 {
     public static void MapAdditionalIdentityEndpoints(this IEndpointRouteBuilder app)
     {
-        // Logout endpoint supporting both cookie and token authentication
+        // Logout endpoint supporting both cookie and token authentication (solo attraverso header)
         app.MapPost("/logout", async (
             HttpContext context,
             SignInManager<ApplicationUser> signInManager,
             UserManager<ApplicationUser> userManager,
-            [FromBody] LogoutRequest? request) =>
+            ILogger<Program> logger) =>
         {
-            if (context.User.Identity?.IsAuthenticated == true)
+            logger.LogInformation("Ricevuta richiesta di logout");
+
+            // Gestione JWT Token tramite header Authorization
+            var authHeader = context.Request.Headers.Authorization.FirstOrDefault();
+            if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
             {
-                if (request?.Token != null)
+                logger.LogInformation("Rilevato token JWT nell'header Authorization");
+                
+                // Ottieni l'ID utente dal ClaimsPrincipal
+                var userId = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!string.IsNullOrEmpty(userId))
                 {
-                    // For token-based auth, invalidate the refresh token
-                    var userId = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
-                    if (userId != null)
+                    logger.LogInformation("ID utente trovato nel token: {UserId}", userId);
+                    
+                    var user = await userManager.FindByIdAsync(userId);
+                    if (user != null)
                     {
-                        var user = await userManager.FindByIdAsync(userId);
-                        if (user != null)
+                        logger.LogInformation("Utente trovato nel database, aggiorno il security stamp");
+                        
+                        // Invalida tutti i token cambiando il security stamp
+                        await userManager.UpdateSecurityStampAsync(user);
+                        
+                        // Trova e revoca eventuali refresh token
+                        var oldStamp = context.User.FindFirstValue("AspNet.Identity.SecurityStamp");
+                        if (!string.IsNullOrEmpty(oldStamp))
                         {
-                            await userManager.RemoveAuthenticationTokenAsync(user, "RefreshTokenProvider", "RefreshToken");
+                            var tokenPurpose = $"RefreshToken:{user.Id}:{oldStamp}";
+                            await userManager.RemoveAuthenticationTokenAsync(user, "RefreshTokenProvider", tokenPurpose);
+                            logger.LogInformation("Refresh token revocato per il vecchio security stamp");
                         }
+                        
+                        return Results.Ok(new { message = "Token JWT invalidato correttamente." });
+                    }
+                    else
+                    {
+                        logger.LogWarning("Utente {UserId} non trovato nel database", userId);
                     }
                 }
                 else
                 {
-                    // For cookie-based auth
-                    await signInManager.SignOutAsync();
+                    logger.LogWarning("Nessun ID utente trovato nel token JWT");
                 }
             }
-            return Results.Ok();
+            // Gestione cookie auth
+            else if (context.User.Identity?.IsAuthenticated == true)
+            {
+                logger.LogInformation("Autenticazione basata su cookie rilevata");
+                
+                await signInManager.SignOutAsync();
+                logger.LogInformation("Logout cookie completato con successo");
+                
+                return Results.Ok(new { message = "Logout effettuato con successo." });
+            }
+            
+            logger.LogWarning("Nessuna sessione attiva trovata");
+            return Results.Ok(new { message = "Nessuna sessione attiva." });
         })
+        .RequireAuthorization() // Richiede autenticazione per accedere a questo endpoint
         .WithName("Logout")
         .WithOpenApi(operation =>
         {
             operation.Summary = "Log out";
-            operation.Description = "Signs out the current user. For token-based auth, invalidates the refresh token. For cookie-based auth, clears the authentication cookie.";
+            operation.Description = "Signs out the current user. For token-based auth, invalidates the tokens by updating the security stamp (requires token in Authorization header). For cookie-based auth, clears the authentication cookie.";
+            operation.Tags = new List<OpenApiTag> { new() { Name = "Additional Identity Endpoints" } };
+            return operation;
+        });
+
+        // GDPR Data Export endpoint (for authenticated users to export their own data)
+        app.MapGet("/gdpr/export-personal-data", async (
+            HttpContext context,
+            UserManager<ApplicationUser> userManager,
+            RoleManager<IdentityRole> roleManager,
+            AppDbContext dbContext) =>
+        {
+            var user = await userManager.GetUserAsync(context.User);
+            if (user == null)
+            {
+                return Results.Unauthorized();
+            }
+
+            // Create a container for all personal data
+            var personalData = new PersonalDataExport
+            {
+                UserId = user.Id,
+                UserName = user.UserName,
+                Email = user.Email,
+                EmailConfirmed = user.EmailConfirmed,
+                PhoneNumber = user.PhoneNumber,
+                PhoneNumberConfirmed = user.PhoneNumberConfirmed,
+                TwoFactorEnabled = user.TwoFactorEnabled,
+                LockoutEnd = user.LockoutEnd,
+                LockoutEnabled = user.LockoutEnabled,
+                AccessFailedCount = user.AccessFailedCount,
+                Roles = await userManager.GetRolesAsync(user)
+            };
+
+            // Collect any user-specific data from other tables
+            // Example: Get user's todos (if you're tracking user ownership)
+            try
+            {
+                var todos = await dbContext.Todos
+                    .Where(t => t.OwnerId == user.Id)  // Assuming you have an OwnerId property
+                    .Select(t => new { t.Id, t.Title, t.Description, t.IsComplete, t.CreatedAt })
+                    .ToListAsync();
+
+                if (todos.Any())
+                {
+                    personalData.AdditionalData["Todos"] = todos;
+                }
+            }
+            catch
+            {
+                // If the Todos table doesn't have an OwnerId field or other issue
+                // Just continue without adding todos data
+            }
+
+            // Add login history if you track it
+            try
+            {
+                var logins = await userManager.GetLoginsAsync(user);
+                if (logins.Any())
+                {
+                    personalData.AdditionalData["ExternalLogins"] = logins.Select(l =>
+                        new { l.LoginProvider, l.ProviderKey }).ToList();
+                }
+            }
+            catch
+            {
+                // Continue if unable to get logins
+            }
+
+            // Export all collected data as JSON
+            var options = new JsonSerializerOptions
+            {
+                WriteIndented = true
+            };
+
+            // Generate a filename for the download
+            var fileName = $"personal-data-export-{DateTime.UtcNow:yyyy-MM-dd}.json";
+
+            return Results.File(
+                JsonSerializer.SerializeToUtf8Bytes(personalData, options),
+                "application/json",
+                fileName
+            );
+        })
+        .RequireAuthorization()
+        .ValidateSecurityStamp()
+        .WithName("ExportPersonalData")
+        .WithOpenApi(operation =>
+        {
+            operation.Summary = "Export personal data (GDPR)";
+            operation.Description = "Exports all personal data associated with the current user in compliance with GDPR right to data portability.";
+            operation.Tags = new List<OpenApiTag> { new() { Name = "GDPR Compliance" } };
+            return operation;
+        });
+
+        // GDPR Delete Account endpoint (for authenticated users to delete their own account)
+        app.MapDelete("/gdpr/delete-account", async (
+            HttpContext context,
+            UserManager<ApplicationUser> userManager,
+            SignInManager<ApplicationUser> signInManager,
+            AppDbContext dbContext) =>
+        {
+            var user = await userManager.GetUserAsync(context.User);
+            if (user == null)
+            {
+                return Results.Unauthorized();
+            }
+
+            // Begin a transaction to ensure all data is deleted consistently
+            using var transaction = await dbContext.Database.BeginTransactionAsync();
+
+            try
+            {
+                // Delete user-related data from other tables first
+                // Example: Delete user's todos
+                try
+                {
+                    var userTodos = await dbContext.Todos
+                        .Where(t => t.OwnerId == user.Id)  // Assuming you have an OwnerId property
+                        .ToListAsync();
+
+                    if (userTodos.Any())
+                    {
+                        dbContext.Todos.RemoveRange(userTodos);
+                        await dbContext.SaveChangesAsync();
+                    }
+                }
+                catch
+                {
+                    // If the Todos table doesn't have an OwnerId field or other issue
+                    // Just continue with account deletion
+                }
+
+                // Remove external logins
+                var logins = await userManager.GetLoginsAsync(user);
+                foreach (var login in logins)
+                {
+                    await userManager.RemoveLoginAsync(user, login.LoginProvider, login.ProviderKey);
+                }
+
+                // Remove user's roles
+                var roles = await userManager.GetRolesAsync(user);
+                if (roles.Any())
+                {
+                    await userManager.RemoveFromRolesAsync(user, roles);
+                }
+
+                // Remove user tokens and claims
+                var claims = await userManager.GetClaimsAsync(user);
+                foreach (var claim in claims)
+                {
+                    await userManager.RemoveClaimAsync(user, claim);
+                }
+
+                // Delete the user account
+                var result = await userManager.DeleteAsync(user);
+                if (!result.Succeeded)
+                {
+                    // If deletion fails, roll back transaction
+                    await transaction.RollbackAsync();
+
+                    return Results.ValidationProblem(result.Errors.ToDictionary(
+                        e => e.Code,
+                        e => new[] { e.Description }
+                    ));
+                }
+
+                // Sign out the user
+                await signInManager.SignOutAsync();
+
+                // Commit the transaction
+                await transaction.CommitAsync();
+
+                return Results.Ok(new
+                {
+                    Message = "Your account and all personal data have been successfully deleted."
+                });
+            }
+            catch
+            {
+                // If any exception occurs, roll back transaction
+                await transaction.RollbackAsync();
+                return Results.Problem(
+                    title: "Account deletion failed",
+                    detail: "An error occurred while deleting your account. Please try again later.",
+                    statusCode: StatusCodes.Status500InternalServerError
+                );
+            }
+        })
+        .RequireAuthorization()
+        .ValidateSecurityStamp()
+        .WithName("DeletePersonalAccount")
+        .WithOpenApi(operation =>
+        {
+            operation.Summary = "Delete account and personal data (GDPR)";
+            operation.Description = "Permanently deletes the user's account and all associated personal data in compliance with GDPR right to erasure ('right to be forgotten').";
+            operation.Tags = new List<OpenApiTag> { new() { Name = "GDPR Compliance" } };
+            return operation;
+        });
+
+        // Delete user endpoint (Admin only)
+        app.MapDelete("/users/delete", async (
+            UserManager<ApplicationUser> userManager,
+            [FromBody] UserDeleteRequest request) =>
+        {
+            // Find the user
+            var user = await userManager.FindByEmailAsync(request.Email);
+            if (user == null)
+            {
+                return Results.NotFound($"User with email {request.Email} not found.");
+            }
+
+            // Delete the user
+            // ASP.NET Core Identity automatically removes related records in AspNetUserRoles table
+            var result = await userManager.DeleteAsync(user);
+            if (!result.Succeeded)
+            {
+                return Results.ValidationProblem(result.Errors.ToDictionary(
+                    e => e.Code,
+                    e => new[] { e.Description }
+                ));
+            }
+
+            return Results.Ok($"User {request.Email} has been successfully deleted.");
+        })
+        .RequireAuthorization("RequireAdminRole")
+        .ValidateSecurityStamp()
+        .WithName("DeleteUser")
+        .WithOpenApi(operation =>
+        {
+            operation.Summary = "Delete user";
+            operation.Description = "Deletes a user and all associated roles. Only accessible by administrators.";
+            operation.Tags = new List<OpenApiTag> { new() { Name = "Additional Identity Endpoints" } };
+            return operation;
+        });
+
+        // Add role to user endpoint (Admin only)
+        app.MapPost("/users/add-role", async (
+            UserManager<ApplicationUser> userManager,
+            [FromBody] UserRoleRequest request) =>
+        {
+            // Validate role
+            if (request.Role != "Member" && request.Role != "Admin")
+            {
+                return Results.ValidationProblem(new Dictionary<string, string[]>
+                {
+                    { "Role", new[] { "Invalid role specified. Role must be either 'Member' or 'Admin'" } }
+                });
+            }
+
+            // Find the user
+            var user = await userManager.FindByEmailAsync(request.Email);
+            if (user == null)
+            {
+                return Results.NotFound($"User with email {request.Email} not found.");
+            }
+
+            // Check if user already has this role
+            if (await userManager.IsInRoleAsync(user, request.Role))
+            {
+                return Results.BadRequest($"User already has the role '{request.Role}'.");
+            }
+
+            // Add the role to the user
+            var result = await userManager.AddToRoleAsync(user, request.Role);
+            if (!result.Succeeded)
+            {
+                return Results.ValidationProblem(result.Errors.ToDictionary(
+                    e => e.Code,
+                    e => new[] { e.Description }
+                ));
+            }
+
+            // Update security stamp to invalidate existing tokens
+            await userManager.UpdateSecurityStampAsync(user);
+
+            return Results.Ok($"Role '{request.Role}' added to user {request.Email} successfully.");
+        })
+        .RequireAuthorization("RequireAdminRole")
+        .ValidateSecurityStamp()
+        .WithName("AddRoleToUser")
+        .WithOpenApi(operation =>
+        {
+            operation.Summary = "Add role to user";
+            operation.Description = "Adds a role to an existing user. Only accessible by administrators.";
+            operation.Tags = new List<OpenApiTag> { new() { Name = "Additional Identity Endpoints" } };
+            return operation;
+        });
+
+        // Remove role from user endpoint (Admin only)
+        app.MapPost("/users/remove-role", async (
+            UserManager<ApplicationUser> userManager,
+            [FromBody] UserRoleRequest request) =>
+        {
+            // Validate role
+            if (request.Role != "Member" && request.Role != "Admin")
+            {
+                return Results.ValidationProblem(new Dictionary<string, string[]>
+                {
+                    { "Role", new[] { "Invalid role specified. Role must be either 'Member' or 'Admin'" } }
+                });
+            }
+
+            // Find the user
+            var user = await userManager.FindByEmailAsync(request.Email);
+            if (user == null)
+            {
+                return Results.NotFound($"User with email {request.Email} not found.");
+            }
+
+            // Check if user has this role
+            if (!await userManager.IsInRoleAsync(user, request.Role))
+            {
+                return Results.BadRequest($"User does not have the role '{request.Role}'.");
+            }
+
+            // Remove the role from the user
+            var result = await userManager.RemoveFromRoleAsync(user, request.Role);
+            if (!result.Succeeded)
+            {
+                return Results.ValidationProblem(result.Errors.ToDictionary(
+                    e => e.Code,
+                    e => new[] { e.Description }
+                ));
+            }
+
+            // Update security stamp to invalidate existing tokens
+            await userManager.UpdateSecurityStampAsync(user);
+
+            return Results.Ok($"Role '{request.Role}' removed from user {request.Email} successfully.");
+        })
+        .RequireAuthorization("RequireAdminRole")
+        .ValidateSecurityStamp()
+        .WithName("RemoveRoleFromUser")
+        .WithOpenApi(operation =>
+        {
+            operation.Summary = "Remove role from user";
+            operation.Description = "Removes a role from an existing user. Only accessible by administrators.";
             operation.Tags = new List<OpenApiTag> { new() { Name = "Additional Identity Endpoints" } };
             return operation;
         });
@@ -142,7 +547,7 @@ public static class AdditionalIdentityEndpoints
             operation.Summary = "Register a new user with role";
             operation.Description = """
                 Creates a new user account and assigns the specified role. Only accessible by administrators.
-                The role must be either 'Member' or 'Admin'. If email confirmation is required, a confirmation email will be sent.
+                The role must be either 'Member' or 'Admin'. If role is not provided no role is assigned to the user. If email confirmation is required, a confirmation email will be sent.
                 Returns a validation problem if the registration fails or if the role is invalid.
                 """;
             operation.Tags = new List<OpenApiTag> { new() { Name = "Additional Identity Endpoints" } };

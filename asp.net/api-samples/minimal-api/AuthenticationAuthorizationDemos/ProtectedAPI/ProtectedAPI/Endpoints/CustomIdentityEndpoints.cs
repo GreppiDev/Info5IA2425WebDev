@@ -85,12 +85,15 @@ public static class CustomIdentityEndpoints
             // Generate access token and refresh token
             var (accessToken, refreshToken) = await CreateTokensAsync(claims, user, configuration, userManager);
 
+            // Use configured token duration instead of hardcoded value
+            var accessTokenDuration = int.Parse(configuration["Jwt:AccessTokenDurationInMinutes"] ?? "15");
+
             return TypedResults.Ok(new AccessTokenResponse
             {
                 TokenType = "Bearer",
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
-                ExpiresIn = 3600 // 1 hour
+                ExpiresIn = accessTokenDuration * 60  // Convert minutes to seconds
             });
         })
         .WithName("Login")
@@ -160,13 +163,14 @@ public static class CustomIdentityEndpoints
             // Genera nuovi token
             var (accessToken, refreshToken) = await CreateTokensAsync(claims, user, configuration, userManager);
 
-            var accessTokenDuration = int.Parse(configuration["Jwt:AccessTokenDurationInMinutes"] ?? "60");
+            // Usa la durata configurata anziché valore fisso
+            var accessTokenDuration = int.Parse(configuration["Jwt:AccessTokenDurationInMinutes"] ?? "15");
             return Results.Ok(new AccessTokenResponse
             {
                 TokenType = "Bearer",
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
-                ExpiresIn = accessTokenDuration * 60
+                ExpiresIn = accessTokenDuration * 60 // Conversione da minuti a secondi
             });
         })
         .WithName("Refresh")
@@ -380,6 +384,7 @@ public static class CustomIdentityEndpoints
             });
         })
         .RequireAuthorization()
+        .ValidateSecurityStamp()
         .WithName("GetManageInfo")
         .WithOpenApi(operation =>
         {
@@ -434,6 +439,7 @@ public static class CustomIdentityEndpoints
             return Results.Ok("No changes requested.");
         })
         .RequireAuthorization()
+        .ValidateSecurityStamp()
         .WithName("UpdateManageInfo")
         .WithOpenApi(operation =>
         {
@@ -493,6 +499,7 @@ public static class CustomIdentityEndpoints
             return Results.Ok();
         })
         .RequireAuthorization()
+        .ValidateSecurityStamp()
         .WithName("Manage2FA")
         .WithOpenApi(operation =>
         {
@@ -512,25 +519,32 @@ public static class CustomIdentityEndpoints
         var secretKey = configuration["Jwt:SecretKey"] ?? throw new InvalidOperationException("JWT secret key is not configured");
         var issuer = configuration["Jwt:Issuer"] ?? "ProtectedAPI";
         var audience = configuration["Jwt:Audience"] ?? "ProtectedAPI";
-        var accessTokenDuration = int.Parse(configuration["Jwt:AccessTokenDurationInMinutes"] ?? "60");
+        var accessTokenDuration = int.Parse(configuration["Jwt:AccessTokenDurationInMinutes"] ?? "15");
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        // Aggiungi il security stamp come claim usando il nome corretto che ASP.NET Identity si aspetta
+        var securityStamp = await userManager.GetSecurityStampAsync(user);
+        var claimsList = claims.ToList();
+
+        // Usa la stessa chiave che utilizza ASP.NET Identity per il security stamp
+        claimsList.Add(new Claim("AspNet.Identity.SecurityStamp", securityStamp));
 
         var token = new JwtSecurityToken(
             issuer: issuer,
             audience: audience,
-            claims: claims,
+            claims: claimsList,
             expires: DateTime.UtcNow.AddMinutes(accessTokenDuration),
             signingCredentials: creds);
 
         var accessToken = new JwtSecurityTokenHandler().WriteToken(token);
 
         // Include the user ID and security stamp in the token purpose
-        var tokenPurpose = $"RefreshToken:{user.Id}:{await userManager.GetSecurityStampAsync(user)}";
+        var tokenPurpose = $"RefreshToken:{user.Id}:{securityStamp}";
         var refreshToken = await userManager.GenerateUserTokenAsync(user, "RefreshTokenProvider", tokenPurpose);
         await userManager.SetAuthenticationTokenAsync(user, "RefreshTokenProvider", tokenPurpose, refreshToken);
 
-        return (accessToken, $"{user.Id}:{await userManager.GetSecurityStampAsync(user)}:{refreshToken}");
+        return (accessToken, $"{user.Id}:{securityStamp}:{refreshToken}");
     }
 }
 
