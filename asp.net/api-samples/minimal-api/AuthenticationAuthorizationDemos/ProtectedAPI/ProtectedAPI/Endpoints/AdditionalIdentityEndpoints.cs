@@ -64,7 +64,7 @@ public static class AdditionalIdentityEndpoints
 {
     public static void MapAdditionalIdentityEndpoints(this IEndpointRouteBuilder app)
     {
-        // Logout endpoint supporting both cookie and token authentication (solo attraverso header)
+        // Logout endpoint supporting both cookie and token authentication
         app.MapPost("/logout", async (
             HttpContext context,
             SignInManager<ApplicationUser> signInManager,
@@ -73,49 +73,63 @@ public static class AdditionalIdentityEndpoints
         {
             logger.LogInformation("Ricevuta richiesta di logout");
 
-            // Gestione JWT Token tramite header Authorization
-            var authHeader = context.Request.Headers.Authorization.FirstOrDefault();
-            if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            // Verifica se c'è un token JWT nell'header
+            bool isJwtAuth = false;
+            bool tokenProcessed = false;
+
+            if (context.Request.Headers.TryGetValue("Authorization", out var authValues))
             {
-                logger.LogInformation("Rilevato token JWT nell'header Authorization");
-                
-                // Ottieni l'ID utente dal ClaimsPrincipal
-                var userId = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
-                if (!string.IsNullOrEmpty(userId))
+                foreach (var authHeader in authValues)
                 {
-                    logger.LogInformation("ID utente trovato nel token: {UserId}", userId);
-                    
-                    var user = await userManager.FindByIdAsync(userId);
-                    if (user != null)
+                    if (string.IsNullOrEmpty(authHeader))
+                        continue;
+
+                    if (authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
                     {
-                        logger.LogInformation("Utente trovato nel database, aggiorno il security stamp");
+                        isJwtAuth = true;
+                        logger.LogInformation("Rilevato token JWT nell'header Authorization");
                         
-                        // Invalida tutti i token cambiando il security stamp
-                        await userManager.UpdateSecurityStampAsync(user);
-                        
-                        // Trova e revoca eventuali refresh token
-                        var oldStamp = context.User.FindFirstValue("AspNet.Identity.SecurityStamp");
-                        if (!string.IsNullOrEmpty(oldStamp))
+                        // Ottieni l'ID utente dal ClaimsPrincipal
+                        var userId = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                        if (!string.IsNullOrEmpty(userId))
                         {
-                            var tokenPurpose = $"RefreshToken:{user.Id}:{oldStamp}";
-                            await userManager.RemoveAuthenticationTokenAsync(user, "RefreshTokenProvider", tokenPurpose);
-                            logger.LogInformation("Refresh token revocato per il vecchio security stamp");
+                            logger.LogInformation("ID utente trovato nel token: {UserId}", userId);
+                            
+                            var user = await userManager.FindByIdAsync(userId);
+                            if (user != null)
+                            {
+                                logger.LogInformation("Utente trovato nel database, aggiorno il security stamp");
+                                
+                                // Invalida tutti i token cambiando il security stamp
+                                await userManager.UpdateSecurityStampAsync(user);
+                                
+                                // Trova e revoca eventuali refresh token
+                                var oldStamp = context.User.FindFirstValue("AspNet.Identity.SecurityStamp");
+                                if (!string.IsNullOrEmpty(oldStamp))
+                                {
+                                    var tokenPurpose = $"RefreshToken:{user.Id}:{oldStamp}";
+                                    await userManager.RemoveAuthenticationTokenAsync(user, "RefreshTokenProvider", tokenPurpose);
+                                    logger.LogInformation("Refresh token revocato per il vecchio security stamp");
+                                }
+                                
+                                tokenProcessed = true;
+                                break;
+                            }
+                            else
+                            {
+                                logger.LogWarning("Utente {UserId} non trovato nel database", userId);
+                            }
                         }
-                        
-                        return Results.Ok(new { message = "Token JWT invalidato correttamente." });
+                        else
+                        {
+                            logger.LogWarning("Nessun ID utente trovato nel token JWT");
+                        }
                     }
-                    else
-                    {
-                        logger.LogWarning("Utente {UserId} non trovato nel database", userId);
-                    }
-                }
-                else
-                {
-                    logger.LogWarning("Nessun ID utente trovato nel token JWT");
                 }
             }
-            // Gestione cookie auth
-            else if (context.User.Identity?.IsAuthenticated == true)
+
+            // Se l'utente è autenticato e NON sta usando JWT, allora è autenticazione basata su cookie
+            if (context.User.Identity?.IsAuthenticated == true && !isJwtAuth)
             {
                 logger.LogInformation("Autenticazione basata su cookie rilevata");
                 
@@ -123,6 +137,12 @@ public static class AdditionalIdentityEndpoints
                 logger.LogInformation("Logout cookie completato con successo");
                 
                 return Results.Ok(new { message = "Logout effettuato con successo." });
+            }
+            
+            // Se è stata processata l'invalidazione del token JWT
+            if (tokenProcessed)
+            {
+                return Results.Ok(new { message = "Token JWT invalidato correttamente." });
             }
             
             logger.LogWarning("Nessuna sessione attiva trovata");
@@ -476,7 +496,7 @@ public static class AdditionalIdentityEndpoints
         });
 
         // Custom registration with role (only for Admin)
-        app.MapPost("/register-with-role", async (
+        app.MapPost("/users/register-with-role", async (
             UserManager<ApplicationUser> userManager,
             IEmailService emailService,
             IOptions<IdentitySettings> identitySettings,

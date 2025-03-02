@@ -13,6 +13,8 @@ using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Any;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Cryptography;
+using System.IO;
 
 namespace ProtectedAPI.Endpoints;
 
@@ -67,23 +69,45 @@ public static class CustomIdentityEndpoints
             // Handle cookie-based authentication if requested
             if (useCookies == true)
             {
-                await signInManager.SignInAsync(user, !useSessionCookies ?? false);
+                // Crea le claims necessarie per l'autenticazione
+                var claims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.NameIdentifier, user.Id),
+                    new Claim(ClaimTypes.Name, user.UserName!),
+                    new Claim(ClaimTypes.Email, user.Email!)
+                };
+
+                var roles = await userManager.GetRolesAsync(user);
+                claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+
+                // Usa il metodo SignInAsync con parametri più dettagliati per garantire la corretta creazione del cookie
+                var authProperties = new AuthenticationProperties
+                {
+                    IsPersistent = !useSessionCookies ?? false,
+                    ExpiresUtc = !useSessionCookies ?? false ?
+                        DateTimeOffset.UtcNow.AddHours(24) : // Cookie persistente
+                        null, // Cookie di sessione
+                    AllowRefresh = true
+                };
+
+                await signInManager.SignInWithClaimsAsync(user, authProperties, claims);
+
                 return TypedResults.Empty;
             }
 
             // Handle token-based authentication
-            var claims = new List<Claim>
+            var tokenClaims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
                 new Claim(ClaimTypes.Name, user.UserName!),
                 new Claim(ClaimTypes.Email, user.Email!)
             };
 
-            var roles = await userManager.GetRolesAsync(user);
-            claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+            var tokenRoles = await userManager.GetRolesAsync(user);
+            tokenClaims.AddRange(tokenRoles.Select(role => new Claim(ClaimTypes.Role, role)));
 
             // Generate access token and refresh token
-            var (accessToken, refreshToken) = await CreateTokensAsync(claims, user, configuration, userManager);
+            var (accessToken, refreshToken) = await CreateTokensAsync(tokenClaims, user, configuration, userManager);
 
             // Use configured token duration instead of hardcoded value
             var accessTokenDuration = int.Parse(configuration["Jwt:AccessTokenDurationInMinutes"] ?? "15");
@@ -118,14 +142,26 @@ public static class CustomIdentityEndpoints
             }
 
             var parts = request.RefreshToken.Split(':');
-            if (parts.Length != 3)
+            if (parts.Length != 2)
             {
                 return Results.UnprocessableEntity("Invalid refresh token format");
             }
 
-            var userId = parts[0];
-            var securityStamp = parts[1];
-            var actualToken = parts[2];
+            var refreshTokenId = parts[0];
+            var encryptedData = parts[1];
+
+            // Decrypt the sensitive data
+            var secretKey = configuration["Jwt:SecretKey"] ?? throw new InvalidOperationException("JWT secret key is not configured");
+            var sensitiveData = DecryptString(encryptedData, secretKey);
+            var sensitiveParts = sensitiveData.Split(':');
+            if (sensitiveParts.Length != 3)
+            {
+                return Results.UnprocessableEntity("Invalid refresh token format");
+            }
+
+            var userId = sensitiveParts[0];
+            var securityStamp = sensitiveParts[1];
+            var actualToken = sensitiveParts[2];
 
             // Recupera l'utente direttamente usando l'ID (una sola query al database)
             var user = await userManager.FindByIdAsync(userId);
@@ -152,9 +188,9 @@ public static class CustomIdentityEndpoints
 
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Id),
-                new Claim(ClaimTypes.Name, user.UserName!),
-                new Claim(ClaimTypes.Email, user.Email!)
+                new(ClaimTypes.NameIdentifier, user.Id),
+                new(ClaimTypes.Name, user.UserName!),
+                new(ClaimTypes.Email, user.Email!)
             };
 
             var roles = await userManager.GetRolesAsync(user);
@@ -508,6 +544,9 @@ public static class CustomIdentityEndpoints
             operation.Tags = new List<OpenApiTag> { new() { Name = "Identity" } };
             return operation;
         });
+
+        // NOTA: L'endpoint di logout è stato rimosso perché esiste già un'implementazione completa
+        // in AdditionalIdentityEndpoints.cs che gestisce correttamente sia l'autenticazione con cookie che con token JWT
     }
 
     private static async Task<(string AccessToken, string RefreshToken)> CreateTokensAsync(
@@ -539,12 +578,94 @@ public static class CustomIdentityEndpoints
 
         var accessToken = new JwtSecurityTokenHandler().WriteToken(token);
 
-        // Include the user ID and security stamp in the token purpose
+        // Approccio più sicuro per il refresh token
+        // 1. Crea un identificatore univoco per questo refresh token
+        var refreshTokenId = Guid.NewGuid().ToString("N");
+        
+        // 2. Genera il refresh token reale usando UserManager (come prima)
         var tokenPurpose = $"RefreshToken:{user.Id}:{securityStamp}";
-        var refreshToken = await userManager.GenerateUserTokenAsync(user, "RefreshTokenProvider", tokenPurpose);
-        await userManager.SetAuthenticationTokenAsync(user, "RefreshTokenProvider", tokenPurpose, refreshToken);
-
-        return (accessToken, $"{user.Id}:{securityStamp}:{refreshToken}");
+        var actualRefreshToken = await userManager.GenerateUserTokenAsync(user, "RefreshTokenProvider", tokenPurpose);
+        
+        // 3. Memorizza il token nel database
+        await userManager.SetAuthenticationTokenAsync(user, "RefreshTokenProvider", tokenPurpose, actualRefreshToken);
+        
+        // 4. Crittografa le informazioni sensibili usando la stessa chiave del JWT
+        var sensitiveData = $"{user.Id}:{securityStamp}:{actualRefreshToken}";
+        var encryptedData = EncryptString(sensitiveData, secretKey);
+        
+        // 5. Restituisci un token combinato che include un ID pubblico e i dati crittografati
+        // Formato: {refreshTokenId}:{encryptedData}
+        return (accessToken, $"{refreshTokenId}:{encryptedData}");
+    }
+    
+    // Metodo helper per crittografare una stringa
+    private static string EncryptString(string text, string keyString)
+    {
+        try
+        {
+            // Usa una derivazione della chiave segreta JWT come chiave di crittografia
+            using var md5 = System.Security.Cryptography.MD5.Create();
+            var key = md5.ComputeHash(Encoding.UTF8.GetBytes(keyString));
+            
+            using var aes = System.Security.Cryptography.Aes.Create();
+            aes.Key = key;
+            aes.GenerateIV(); // Genera un IV casuale
+            
+            using var encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
+            using var msEncrypt = new MemoryStream();
+            
+            // Scrivi prima l'IV in modo da poterlo recuperare durante la decrittografia
+            msEncrypt.Write(aes.IV, 0, aes.IV.Length);
+            
+            using (var csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
+            using (var swEncrypt = new StreamWriter(csEncrypt))
+            {
+                swEncrypt.Write(text);
+            }
+            
+            return Convert.ToBase64String(msEncrypt.ToArray());
+        }
+        catch (Exception ex)
+        {
+            // In caso di errori di crittografia, registra l'eccezione ma non esporre dettagli
+            Console.WriteLine($"Error encrypting data: {ex.Message}");
+            throw new InvalidOperationException("Could not create secure token");
+        }
+    }
+    
+    // Metodo helper per decrittografare una stringa
+    private static string DecryptString(string cipherText, string keyString)
+    {
+        try
+        {
+            // Converti il testo cifrato da Base64
+            var cipherBytes = Convert.FromBase64String(cipherText);
+            
+            // Usa la stessa derivazione della chiave usata per crittografare
+            using var md5 = System.Security.Cryptography.MD5.Create();
+            var key = md5.ComputeHash(Encoding.UTF8.GetBytes(keyString));
+            
+            using var aes = System.Security.Cryptography.Aes.Create();
+            aes.Key = key;
+            
+            // L'IV è memorizzato nei primi 16 byte del testo cifrato
+            var iv = new byte[aes.IV.Length];
+            Array.Copy(cipherBytes, 0, iv, 0, iv.Length);
+            aes.IV = iv;
+            
+            using var decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
+            using var msDecrypt = new MemoryStream(cipherBytes, iv.Length, cipherBytes.Length - iv.Length);
+            using var csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read);
+            using var srDecrypt = new StreamReader(csDecrypt);
+            
+            return srDecrypt.ReadToEnd();
+        }
+        catch (Exception ex)
+        {
+            // In caso di errori di decrittografia, registra l'eccezione ma non esporre dettagli
+            Console.WriteLine($"Error decrypting data: {ex.Message}");
+            throw new InvalidOperationException("Invalid token format");
+        }
     }
 }
 

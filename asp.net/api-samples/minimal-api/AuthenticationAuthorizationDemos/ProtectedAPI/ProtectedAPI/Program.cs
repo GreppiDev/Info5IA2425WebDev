@@ -10,33 +10,12 @@ using NSwag.Generation.Processors.Security;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization; // Add this for AllowAnonymousAttribute
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.Cookies; // Aggiunto per CookieAuthenticationEvents
+using Microsoft.AspNetCore.DataProtection; // Aggiunto per DataProtection
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Configure different configuration sources based on environment
-if (!builder.Environment.IsDevelopment())
-{
-	// In production, we can use different configuration providers
-	// Example for Azure Key Vault (uncomment and configure when needed):
-	/*
-    builder.Configuration.AddAzureKeyVault(
-        new Uri($"https://{builder.Configuration["KeyVaultName"]}.vault.azure.net/"),
-        new DefaultAzureCredential());
-    */
-
-	// Example for AWS Secrets Manager (uncomment and configure when needed):
-	/*
-    builder.Configuration.AddSecretsManager(region: "eu-west-1",
-        configurator: options =>
-        {
-            options.SecretFilter = entry => entry.Name.StartsWith("ProtectedAPI/");
-            options.KeyGenerator = (entry, key) => key
-                .Replace("ProtectedAPI/", string.Empty)
-                .Replace("__", ":");
-        });
-    */
-}
 
 // Add services to the container.
 builder.Services.AddOpenApi();
@@ -103,6 +82,70 @@ var identityBuilder = builder.Services.AddIdentityApiEndpoints<ApplicationUser>(
 	options.SignIn.RequireConfirmedEmail = identitySettings?.RequireEmailConfirmation ?? true;
 }).AddRoles<IdentityRole>().AddEntityFrameworkStores<AppDbContext>();
 
+// Configura le opzioni dei cookie di Identity indipendentemente dal tipo di endpoint utilizzato
+builder.Services.ConfigureApplicationCookie(options =>
+{
+	options.Cookie.Name = "ProtectedAPI.Identity";
+	options.Cookie.HttpOnly = true;
+	options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+	options.ExpireTimeSpan = TimeSpan.FromHours(24);
+	options.SlidingExpiration = true;
+
+	// Configurazioni ottimali per ambienti multi-istanza con load balancer
+	options.Cookie.Path = "/";                      // Garantisce disponibilità su tutti i percorsi
+	options.Cookie.SameSite = SameSiteMode.Lax;     // Bilanciamento tra sicurezza e usabilità
+
+	// IMPORTANTE: Imposta un dominio se utilizzi sottodomini diversi per le istanze
+	// options.Cookie.Domain = ".tuodominio.com";   // Decommentare e sostituire con il tuo dominio
+
+	// Imposta i percorsi per login/logout/accessdenied (usati nei reindirizzamenti per client browser)
+	options.LoginPath = "/login";
+	options.LogoutPath = "/logout";
+	options.AccessDeniedPath = "/access-denied";
+
+	// Approccio intelligente: rispondi in modo diverso in base al Content-Type
+	options.Events = new CookieAuthenticationEvents
+	{
+		OnRedirectToLogin = context =>
+		{
+			// Controlla se la richiesta accetta HTML o cerca JSON/API
+			if (IsApiRequest(context.Request))
+			{
+				// Per richieste API, restituisci 401 Unauthorized invece di reindirizzare
+				context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+			}
+			return Task.CompletedTask;
+		},
+		OnRedirectToAccessDenied = context =>
+		{
+			if (IsApiRequest(context.Request))
+			{
+				// Per richieste API, restituisci 403 Forbidden invece di reindirizzare
+				context.Response.StatusCode = StatusCodes.Status403Forbidden;
+			}
+			return Task.CompletedTask;
+		},
+		// Gestione ottimizzata per sessioni distribuite
+		OnValidatePrincipal = context =>
+		{
+			// La validazione originale rimane al suo posto,
+			// ma verrà eseguita dopo questa parte
+
+			// Rileva istanze di load balancer NON sticky e imposta attributi del cookie di conseguenza
+			// Questo codice può essere esteso per rilevare specifici proxy/load balancer
+			var forwardedHost = context.Request.Headers["X-Forwarded-Host"].FirstOrDefault();
+			if (!string.IsNullOrEmpty(forwardedHost))
+			{
+				// Modifica il context per garantire consistenza tra istanze
+				context.Properties.IsPersistent = true; // Garantisce persistenza in scenari load-balanced
+			}
+
+			// Poiché non eseguiamo operazioni asincrone, restituiamo direttamente un Task completato
+			return Task.CompletedTask;
+		}
+	};
+});
+
 if (identitySettings?.UseCustomIdentityEndpoints ?? false)
 {
 	identityBuilder.AddTokenProvider<RefreshTokenProvider<ApplicationUser>>("RefreshTokenProvider");
@@ -113,122 +156,110 @@ if (identitySettings?.UseCustomIdentityEndpoints ?? false)
 		options.TokenLifespan = TimeSpan.FromDays(refreshTokenDuration);
 	});
 
-	// Configura JWT Bearer authentication
-	builder.Services.AddAuthentication(options => 
-	{
-		// Imposta lo schema di autenticazione predefinito a JWT Bearer
-		options.DefaultAuthenticateScheme = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme;
-		options.DefaultChallengeScheme = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme;
-		options.DefaultScheme = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme;
-	})
-	.AddJwtBearer(options =>
-	{
-		var jwtKey = builder.Configuration["Jwt:SecretKey"] ??
-			throw new InvalidOperationException("JWT SecretKey not configured");
-		var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
-
-		// Configurazione JWT Bearer
-		options.TokenValidationParameters = new TokenValidationParameters
+	// Configura l'autenticazione con supporto sia per JWT che per cookie
+	builder.Services.AddAuthentication()
+		.AddJwtBearer(options =>
 		{
-			ValidateIssuer = true,
-			ValidateAudience = true,
-			ValidateLifetime = true,
-			ValidateIssuerSigningKey = true,
-			ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "ProtectedAPI",
-			ValidAudience = builder.Configuration["Jwt:Audience"] ?? "ProtectedAPI",
-			IssuerSigningKey = key,
-			NameClaimType = ClaimTypes.Name,
-			RoleClaimType = ClaimTypes.Role,
-			ClockSkew = TimeSpan.Zero
-		};
+			var jwtKey = builder.Configuration["Jwt:SecretKey"] ??
+				throw new InvalidOperationException("JWT SecretKey not configured");
+			var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
 
-		// Eventi di gestione per il debugging
-		options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
-		{
-			OnMessageReceived = context =>
+			// Configurazione JWT Bearer
+			options.TokenValidationParameters = new TokenValidationParameters
 			{
-				var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+				ValidateIssuer = true,
+				ValidateAudience = true,
+				ValidateLifetime = true,
+				ValidateIssuerSigningKey = true,
+				ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "ProtectedAPI",
+				ValidAudience = builder.Configuration["Jwt:Audience"] ?? "ProtectedAPI",
+				IssuerSigningKey = key,
+				NameClaimType = ClaimTypes.Name,
+				RoleClaimType = ClaimTypes.Role,
+				ClockSkew = TimeSpan.Zero
+			};
 
-				// Controlla se c'è un token nell'header Authorization
-				var authHeader = context.HttpContext.Request.Headers["Authorization"].FirstOrDefault();
-				if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+			// Eventi di gestione per il debugging
+			options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+			{
+				OnMessageReceived = context =>
 				{
-					var token = authHeader.Substring("Bearer ".Length).Trim();
-					logger.LogInformation("Token JWT ricevuto nell'header Authorization");
+					var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
 
-					// Non loggare token completi in produzione!
-					if (builder.Environment.IsDevelopment())
+					// Controlla se c'è un token nell'header Authorization
+					var authHeader = context.HttpContext.Request.Headers["Authorization"].FirstOrDefault();
+					if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
 					{
-						logger.LogDebug("Token: {Token}", token);
+						var token = authHeader.Substring("Bearer ".Length).Trim();
+						logger.LogInformation("Token JWT ricevuto nell'header Authorization");
+
+						// Non loggare token completi in produzione!
+						if (builder.Environment.IsDevelopment())
+						{
+							logger.LogDebug("Token: {Token}", token);
+						}
 					}
-				}
-				else
+					else
+					{
+						logger.LogWarning("Nessun token Bearer trovato nell'header Authorization");
+					}
+
+					return Task.CompletedTask;
+				},
+				OnAuthenticationFailed = context =>
 				{
-					logger.LogWarning("Nessun token Bearer trovato nell'header Authorization");
-				}
+					var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
 
-				return Task.CompletedTask;
-			},
-			OnAuthenticationFailed = context =>
-			{
-				var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+					// Log dettagliato dell'errore
+					logger.LogError(context.Exception, "Errore durante l'autenticazione JWT: {ErrorMessage}", context.Exception.Message);
 
-				// Log dettagliato dell'errore
-				logger.LogError(context.Exception, "Errore durante l'autenticazione JWT: {ErrorMessage}", context.Exception.Message);
+					if (context.Exception is SecurityTokenExpiredException)
+					{
+						logger.LogInformation("Il token è scaduto");
+						context.Response.Headers.Append("Token-Expired", "true");
+						context.Response.Headers.Append("Access-Control-Expose-Headers", "Token-Expired");
+					}
 
-				if (context.Exception is SecurityTokenExpiredException)
+					return Task.CompletedTask;
+				},
+				OnTokenValidated = context =>
 				{
-					logger.LogInformation("Il token è scaduto");
-					context.Response.Headers.Append("Token-Expired", "true");
-					context.Response.Headers.Append("Access-Control-Expose-Headers", "Token-Expired");
-				}
+					var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
 
-				return Task.CompletedTask;
-			},
-			OnTokenValidated = context =>
-			{
-				var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+					// Log quando un token è stato validato con successo
+					var userId = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
+					var username = context.Principal?.FindFirstValue(ClaimTypes.Name);
+					logger.LogInformation("Token validato per utente: {UserId}, {Username}", userId, username);
 
-				// Log quando un token è stato validato con successo
-				var userId = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
-				var username = context.Principal?.FindFirstValue(ClaimTypes.Name);
-				logger.LogInformation("Token validato per utente: {UserId}, {Username}", userId, username);
+					// Verifica la presenza del security stamp
+					var securityStampClaim = context.Principal?.FindFirstValue("AspNet.Identity.SecurityStamp");
+					if (securityStampClaim != null)
+					{
+						logger.LogInformation("Security stamp trovato nel token: {SecurityStamp}", securityStampClaim);
+					}
+					else
+					{
+						logger.LogWarning("Security stamp non presente nel token!");
+					}
 
-				// Verifica la presenza del security stamp
-				var securityStampClaim = context.Principal?.FindFirstValue("AspNet.Identity.SecurityStamp");
-				if (securityStampClaim != null)
+					return Task.CompletedTask;
+				},
+				OnChallenge = context =>
 				{
-					logger.LogInformation("Security stamp trovato nel token: {SecurityStamp}", securityStampClaim);
+					var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+
+					// Informazioni dettagliate sul challenge
+					logger.LogWarning("Autenticazione fallita, emessa challenge. Error: {Error}, ErrorDescription: {ErrorDescription}",
+						context.Error, context.ErrorDescription);
+
+					return Task.CompletedTask;
 				}
-				else
-				{
-					logger.LogWarning("Security stamp non presente nel token!");
-				}
+			};
+		});
 
-				return Task.CompletedTask;
-			},
-			OnChallenge = context =>
-			{
-				var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
-
-				// Informazioni dettagliate sul challenge
-				logger.LogWarning("Autenticazione fallita, emessa challenge. Error: {Error}, ErrorDescription: {ErrorDescription}",
-					context.Error, context.ErrorDescription);
-
-				return Task.CompletedTask;
-			}
-		};
-	});
-
-	// Configura le opzioni dei cookie di Identity
+	// Configura opzioni aggiuntive dei cookie specifiche per gli endpoint personalizzati
 	builder.Services.ConfigureApplicationCookie(options =>
 	{
-		options.Cookie.Name = "ProtectedAPI.Identity";
-		options.Cookie.HttpOnly = true;
-		options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-		options.ExpireTimeSpan = TimeSpan.FromHours(24);
-		options.SlidingExpiration = true;
-
 		// Approccio intelligente alla validazione del cookie che evita blocchi
 		options.Events.OnValidatePrincipal = async context =>
 		{
@@ -244,7 +275,7 @@ if (identitySettings?.UseCustomIdentityEndpoints ?? false)
 			{
 				// Ottieni tutti i requisiti di autorizzazione associati all'endpoint
 				var authRequirements = endpoint.Metadata.GetOrderedMetadata<IAuthorizeData>();
-				
+
 				// Se non ci sono requisiti di autorizzazione, o c'è AllowAnonymous, salta la validazione
 				if (!authRequirements.Any() || endpoint.Metadata.GetMetadata<IAllowAnonymous>() != null)
 				{
@@ -262,9 +293,9 @@ if (identitySettings?.UseCustomIdentityEndpoints ?? false)
 			// Cache per memorizzare quando è stato fatto l'ultimo refresh
 			var cacheKey = $"LastRefresh_{userId}";
 			var now = DateTimeOffset.UtcNow;
-			
-			if (context.HttpContext.Items.TryGetValue(cacheKey, out var lastRefreshObj) && 
-				lastRefreshObj is DateTimeOffset lastRefresh && 
+
+			if (context.HttpContext.Items.TryGetValue(cacheKey, out var lastRefreshObj) &&
+				lastRefreshObj is DateTimeOffset lastRefresh &&
 				(now - lastRefresh).TotalMinutes < 10)
 			{
 				// Ultimo refresh meno di 10 minuti fa, salta
@@ -274,7 +305,7 @@ if (identitySettings?.UseCustomIdentityEndpoints ?? false)
 			// 4. Solo validazione del security stamp, senza rinnovare il cookie
 			var signInManager = context.HttpContext.RequestServices
 				.GetRequiredService<SignInManager<ApplicationUser>>();
-				
+
 			var validatedPrincipal = await signInManager.ValidateSecurityStampAsync(context.Principal);
 			if (validatedPrincipal == null)
 			{
@@ -283,13 +314,34 @@ if (identitySettings?.UseCustomIdentityEndpoints ?? false)
 				await signInManager.SignOutAsync();
 				return;
 			}
-			
+
 			// Memorizza l'ultimo refresh nella cache
 			context.HttpContext.Items[cacheKey] = now;
-			
-			// Non esegue il refresh del cookie qui, evitando il blocco
-			// Il rinnovo del cookie viene gestito automaticamente dal middleware grazie a SlidingExpiration = true
 		};
+	});
+
+	// Configurazione degli schemi di autenticazione multipli
+	builder.Services.AddAuthorization(options =>
+	{
+		var defaultPolicy = new AuthorizationPolicyBuilder()
+			.RequireAuthenticatedUser()
+			.AddAuthenticationSchemes(IdentityConstants.ApplicationScheme, JwtBearerDefaults.AuthenticationScheme)
+			.Build();
+
+		options.DefaultPolicy = defaultPolicy;
+
+		// Configura le policy esistenti per usare entrambi gli schemi
+		options.AddPolicy("RequireMemberRole", policy =>
+			policy.RequireRole("Member")
+				.AddAuthenticationSchemes(IdentityConstants.ApplicationScheme, JwtBearerDefaults.AuthenticationScheme));
+
+		options.AddPolicy("RequireAdminRole", policy =>
+			policy.RequireRole("Admin")
+				.AddAuthenticationSchemes(IdentityConstants.ApplicationScheme, JwtBearerDefaults.AuthenticationScheme));
+
+		options.AddPolicy("RequireMemberOrAdmin", policy =>
+			policy.RequireRole("Member", "Admin")
+				.AddAuthenticationSchemes(IdentityConstants.ApplicationScheme, JwtBearerDefaults.AuthenticationScheme));
 	});
 }
 
@@ -311,9 +363,6 @@ builder.Services.AddLogging(logging =>
 	// In production, you might want to add other logging providers
 	if (!builder.Environment.IsDevelopment())
 	{
-		// Example for Application Insights (uncomment when needed):
-		// logging.AddApplicationInsights();
-
 		// Example for Serilog with various sinks (uncomment when needed):
 		/*
         Log.Logger = new LoggerConfiguration()
@@ -334,6 +383,37 @@ builder.Services.Configure<IdentitySettings>(
 	builder.Configuration.GetSection("IdentitySettings"));
 builder.Services.AddTransient<IEmailSender, EmailSenderAdapter>();
 builder.Services.AddTransient<IEmailService, EmailService>();
+
+// Configurazione del sistema DataProtection per supportare più istanze
+var dataProtectionBuilder = builder.Services.AddDataProtection()
+	.SetApplicationName("ProtectedAPI") // Importante: stesso nome su tutte le istanze
+										// Persistenza su file system condiviso (per ambienti di produzione multi-istanza)
+										// In produzione, configura un percorso accessibile da tutte le istanze
+	.PersistKeysToFileSystem(new DirectoryInfo(
+		builder.Environment.IsDevelopment() ?
+		Path.Combine(builder.Environment.ContentRootPath, "DataProtection-Keys") :
+		builder.Configuration["DataProtection:KeysFolder"] ?? "/app/shared/keys"))
+	// Configurazione avanzata delle chiavi
+	.SetDefaultKeyLifetime(TimeSpan.FromDays(
+		int.Parse(builder.Configuration["DataProtection:KeyLifetime"] ?? "14"))); // Durata predefinita delle chiavi
+
+// Applica l'impostazione AutoGenerateKeys in base al valore configurato in appsettings.json
+// Se false, disabilita la generazione automatica di nuove chiavi
+if (builder.Configuration.GetValue<bool>("DataProtection:AutoGenerateKeys") == false)
+{
+	dataProtectionBuilder.DisableAutomaticKeyGeneration();
+
+	// Crea un logger temporaneo per il logging durante la configurazione
+	using var loggerFactory = LoggerFactory.Create(logging =>
+	{
+		logging.AddConsole();
+		logging.SetMinimumLevel(LogLevel.Warning);
+	});
+	var logger = loggerFactory.CreateLogger("DataProtection");
+	
+	logger.LogWarning("AutoGenerateKeys è impostato a false. La generazione automatica delle chiavi è disabilitata. " +
+				   "Assicurarsi che le chiavi di protezione dati siano gestite manualmente.");
+}
 
 // Validate required configuration
 builder.Services.AddOptions<AdminCredentialsOptions>()
@@ -394,5 +474,27 @@ using (var scope = app.Services.CreateScope())
 app.MapGroup("/api").MapTodoEndpoints().WithOpenApi().WithTags("Todos API");
 
 app.Run();
+
+static bool IsApiRequest(HttpRequest request)
+{
+	// Verifica se l'header Accept è presente prima di usarlo
+	if (!request.Headers.TryGetValue("Accept", out Microsoft.Extensions.Primitives.StringValues value))
+	{
+		// Se l'header non esiste, verifica altri possibili indicatori di API
+		// come X-Requested-With o Content-Type
+		return request.Headers.ContainsKey("X-Requested-With") ||
+			   (request.Headers.ContainsKey("Content-Type") &&
+				// Controlla in modo sicuro che ContentType non sia null
+				(request.ContentType != null &&
+				 (request.ContentType.Contains("application/json") ||
+				  request.ContentType.Contains("application/xml"))));
+	}
+
+	var accept = value.ToString();
+	return accept.Contains("application/json") ||
+		   accept.Contains("text/json") ||
+		   accept.Contains("application/xml") ||
+		   accept.Contains("text/xml");
+}
 
 
