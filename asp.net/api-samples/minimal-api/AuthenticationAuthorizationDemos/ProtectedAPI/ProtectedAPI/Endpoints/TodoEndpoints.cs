@@ -26,13 +26,17 @@ public static class TodoEndpoints
 					.Select(t => new TodoDTO(t))
 					.ToListAsync();
 
-				logger.LogInformation("Retrieved {Count} todos", todos.Count);
+				logger.LogInformation("Restituiti {Count} todos", todos.Count);
 				return Results.Ok(todos);
 			}
 			catch (Exception ex)
 			{
-				logger.LogError(ex, "Error retrieving todos");
-				return Results.Problem("An error occurred while retrieving todos");
+				logger.LogError(ex, "Errore durante il recupero dei todos");
+				return Results.Problem(
+					title: "Error retrieving todos",
+					detail: "An error occurred while retrieving the todos. Please try again later.",
+					statusCode: StatusCodes.Status500InternalServerError
+);
 			}
 		})
 		.AllowAnonymous()
@@ -72,7 +76,7 @@ public static class TodoEndpoints
 		{
 			if (id != todoDto.Id)
 			{
-				return Results.BadRequest("Id mismatch");
+				return Results.BadRequest("Id mIdmatch");
 			}
 
 			var todo = await db.Todos.FindAsync(id);

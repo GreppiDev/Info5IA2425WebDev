@@ -12,8 +12,10 @@ using System.Text;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authentication.Cookies; // Aggiunto per CookieAuthenticationEvents
-using Microsoft.AspNetCore.DataProtection; // Aggiunto per DataProtection
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.StackExchangeRedis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -55,6 +57,59 @@ builder.Services.AddDbContext<AppDbContext>(
 	.EnableSensitiveDataLogging()
 	.EnableDetailedErrors()
 );
+
+// Create a logger factory and logger for configuration
+using var configLoggerFactory = LoggerFactory.Create(logging =>
+{
+	logging.AddConsole();
+	logging.SetMinimumLevel(LogLevel.Information);
+});
+var configLogger = configLoggerFactory.CreateLogger("Configuration");
+
+// Configure distributed cache based on environment and settings
+var useRedis = builder.Configuration.GetValue<bool?>("Cache:UseRedis");
+var redisConnection = builder.Configuration["Cache:RedisConnection"];
+
+// Determina se usare Redis in base alle impostazioni e all'ambiente
+bool shouldUseRedis = useRedis ?? !builder.Environment.IsDevelopment(); // Se useRedis non è specificato, usa Redis in produzione
+
+if (shouldUseRedis && !string.IsNullOrEmpty(redisConnection))
+{
+	try
+	{
+		// Use Redis for distributed caching
+		builder.Services.AddStackExchangeRedisCache(options =>
+		{
+			options.Configuration = redisConnection;
+			options.InstanceName = "ProtectedAPI_";
+		});
+
+		configLogger.LogInformation("Cache distribuita configurata usando Redis: {RedisConnection}", redisConnection);
+	}
+	catch (Exception ex)
+	{
+		// Se c'è un errore nella configurazione di Redis, fallback su MemoryCache
+		configLogger.LogError(ex, "Errore nella configurazione di Redis. Fallback su MemoryCache");
+		builder.Services.AddDistributedMemoryCache();
+		configLogger.LogInformation("Cache distribuita configurata in memoria (fallback)");
+	}
+}
+else
+{
+	// Use in-memory distributed cache
+	builder.Services.AddDistributedMemoryCache();
+
+	var reason = string.IsNullOrEmpty(redisConnection)
+		? "connessione Redis non configurata"
+		: !shouldUseRedis
+			? "UseRedis impostato a false"
+			: "ambiente di sviluppo";
+
+	configLogger.LogInformation("Cache distribuita configurata in memoria ({Reason})", reason);
+}
+
+// Registra il servizio di cache
+builder.Services.AddScoped<ICacheService, RedisCacheService>();
 
 // Configure Identity settings
 var identitySettings = builder.Configuration.GetSection("IdentitySettings").Get<IdentitySettings>();
@@ -283,30 +338,32 @@ if (identitySettings?.UseCustomIdentityEndpoints ?? false)
 				}
 			}
 
-			// 3. Limita la frequenza del refresh (ogni 10 minuti)
+			// 3. Limita la frequenza del refresh usando il distributed cache
 			var userId = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
 			if (string.IsNullOrEmpty(userId))
 			{
 				return;
 			}
 
-			// Cache per memorizzare quando è stato fatto l'ultimo refresh
+			var distributedCache = context.HttpContext.RequestServices.GetRequiredService<IDistributedCache>();
 			var cacheKey = $"LastRefresh_{userId}";
-			var now = DateTimeOffset.UtcNow;
+			var lastRefreshBytes = await distributedCache.GetAsync(cacheKey);
 
-			if (context.HttpContext.Items.TryGetValue(cacheKey, out var lastRefreshObj) &&
-				lastRefreshObj is DateTimeOffset lastRefresh &&
-				(now - lastRefresh).TotalMinutes < 10)
+			var now = DateTimeOffset.UtcNow;
+			if (lastRefreshBytes != null)
 			{
-				// Ultimo refresh meno di 10 minuti fa, salta
-				return;
+				var lastRefresh = DateTimeOffset.FromUnixTimeMilliseconds(BitConverter.ToInt64(lastRefreshBytes));
+				if ((now - lastRefresh).TotalMinutes < 10)
+				{
+					// Ultimo refresh meno di 10 minuti fa, salta
+					return;
+				}
 			}
 
 			// 4. Solo validazione del security stamp, senza rinnovare il cookie
-			var signInManager = context.HttpContext.RequestServices
-				.GetRequiredService<SignInManager<ApplicationUser>>();
-
+			var signInManager = context.HttpContext.RequestServices.GetRequiredService<SignInManager<ApplicationUser>>();
 			var validatedPrincipal = await signInManager.ValidateSecurityStampAsync(context.Principal);
+
 			if (validatedPrincipal == null)
 			{
 				// Security stamp non valido, logout
@@ -315,8 +372,13 @@ if (identitySettings?.UseCustomIdentityEndpoints ?? false)
 				return;
 			}
 
-			// Memorizza l'ultimo refresh nella cache
-			context.HttpContext.Items[cacheKey] = now;
+			// Memorizza l'ultimo refresh nella cache distribuita
+			var nowBytes = BitConverter.GetBytes(now.ToUnixTimeMilliseconds());
+			var cacheEntryOptions = new DistributedCacheEntryOptions
+			{
+				AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30) // Mantieni in cache per 30 minuti
+			};
+			await distributedCache.SetAsync(cacheKey, nowBytes, cacheEntryOptions);
 		};
 	});
 
@@ -410,7 +472,7 @@ if (builder.Configuration.GetValue<bool>("DataProtection:AutoGenerateKeys") == f
 		logging.SetMinimumLevel(LogLevel.Warning);
 	});
 	var logger = loggerFactory.CreateLogger("DataProtection");
-	
+
 	logger.LogWarning("AutoGenerateKeys è impostato a false. La generazione automatica delle chiavi è disabilitata. " +
 				   "Assicurarsi che le chiavi di protezione dati siano gestite manualmente.");
 }

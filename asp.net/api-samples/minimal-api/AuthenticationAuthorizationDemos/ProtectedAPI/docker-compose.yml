@@ -1,0 +1,37 @@
+services:
+  redis:
+    # Opzioni di connessione:
+    # - Da altri container sulla stessa rete: redis:6379
+    # - Da applicazione sull'host: localhost:6379
+    # - Da container che deve accedere all'host: host.docker.internal:6379
+    image: redis:alpine
+    container_name: protected-api-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass yourpassword
+    volumes:
+      - redis-data:/data
+    networks:
+      - protected-api-network
+
+  redis-insight:
+    image: redislabs/redisinsight:1.14.0
+    container_name: protected-api-redis-insight
+    ports:
+      - "8001:8001"
+    environment:
+      - RICONFIG_development_mode=true
+    volumes:
+      - redis-insight-data:/db
+    networks:
+      - protected-api-network
+    depends_on:
+      - redis
+
+volumes:
+  redis-data:
+  redis-insight-data:
+
+networks:
+  protected-api-network:
+    driver: bridge
