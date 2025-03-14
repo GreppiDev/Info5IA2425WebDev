@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+  <!-- Background -->
+  <rect width="800" height="600" fill="#f5f5f5"/>
+  
+  <!-- Title -->
+  <text x="400" y="40" text-anchor="middle" font-family="Arial" font-size="24" font-weight="bold">Anatomia di un Cookie HTTP</text>
+  
+  <!-- Cookie Box -->
+  <rect x="100" y="70" width="600" height="380" rx="10" ry="10" fill="#ffe6cc" stroke="#ff9933" stroke-width="3"/>
+  
+  <!-- Cookie header -->
+  <rect x="100" y="70" width="600" height="40" rx="10" ry="10" fill="#ff9933" stroke="none"/>
+  <text x="400" y="97" text-anchor="middle" font-family="Arial" font-size="18" font-weight="bold" fill="white">Set-Cookie Header</text>
+  
+  <!-- Cookie Components -->
+  <!-- Name-Value -->
+  <rect x="120" y="130" width="560" height="40" rx="5" ry="5" fill="#fff" stroke="#666" stroke-width="1"/>
+  <text x="140" y="155" font-family="Arial" font-size="16" font-weight="bold">sessionId=abc123</text>
+  <text x="550" y="155" text-anchor="middle" font-family="Arial" font-size="14" fill="#666">Nome e valore del cookie (obbligatori)</text>
+  
+  <!-- Domain -->
+  <rect x="120" y="180" width="560" height="40" rx="5" ry="5" fill="#fff" stroke="#666" stroke-width="1"/>
+  <text x="140" y="205" font-family="Arial" font-size="16">Domain=example.com</text>
+  <text x="470" y="205" font-family="Arial" font-size="14" fill="#666">Dominio a cui si applica il cookie</text>
+  
+  <!-- Path -->
+  <rect x="120" y="230" width="560" height="40" rx="5" ry="5" fill="#fff" stroke="#666" stroke-width="1"/>
+  <text x="140" y="255" font-family="Arial" font-size="16">Path=/admin</text>
+  <text x="470" y="255" font-family="Arial" font-size="14" fill="#666">Percorso specifico nel dominio</text>
+  
+  <!-- Expires -->
+  <rect x="120" y="280" width="560" height="40" rx="5" ry="5" fill="#fff" stroke="#666" stroke-width="1"/>
+  <text x="140" y="305" font-family="Arial" font-size="16">Expires=Wed, 12 Mar 2026 12:00:00 GMT</text>
+  <text x="470" y="305" font-family="Arial" font-size="14" fill="#666">Data di scadenza</text>
+  
+  <!-- Security Flags -->
+  <rect x="120" y="330" width="560" height="40" rx="5" ry="5" fill="#fff" stroke="#666" stroke-width="1"/>
+  <text x="140" y="355" font-family="Arial" font-size="16">HttpOnly; Secure</text>
+  <text x="470" y="355" font-family="Arial" font-size="14" fill="#666">Flag di sicurezza</text>
+  
+  <!-- SameSite -->
+  <rect x="120" y="380" width="560" height="40" rx="5" ry="5" fill="#fff" stroke="#666" stroke-width="1"/>
+  <text x="140" y="405" font-family="Arial" font-size="16">SameSite=Strict</text>
+  <text x="470" y="405" font-family="Arial" font-size="14" fill="#666">Controllo richieste cross-site</text>
+  
+  <!-- Example in HTTP -->
+  <rect x="100" y="460" width="600" height="60" rx="5" ry="5" fill="#e6f2ff" stroke="#3399ff" stroke-width="1"/>
+  <text x="400" y="480" text-anchor="middle" font-family="Arial" font-size="14" font-style="italic">Set-Cookie: sessionId=abc123; Domain=example.com; Path=/admin; </text>
+  <text x="400" y="500" text-anchor="middle" font-family="Arial" font-size="14" font-style="italic">Expires=Wed, 12 Mar 2026 12:00:00 GMT; HttpOnly; Secure; SameSite=Strict</text>
+</svg>

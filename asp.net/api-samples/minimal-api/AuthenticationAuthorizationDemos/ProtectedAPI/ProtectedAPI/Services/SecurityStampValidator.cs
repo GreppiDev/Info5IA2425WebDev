@@ -80,7 +80,7 @@ public class SecurityStampValidator
                         }
                         return;
                     }
-                    
+
                     // Aggiorna il sign-in
                     await signInManager.RefreshSignInAsync(user);
                 }
@@ -167,6 +167,7 @@ public class SecurityStampValidatorFilter : IEndpointFilter
                             _logger.LogWarning("Security stamp non valido per l'utente JWT {UserId}", userId);
                             return TypedResults.Unauthorized();
                         }
+                        _logger.LogInformation("Security stamp validato con successo per l'utente JWT {UserId}", userId);
                     }
                 }
             }
@@ -183,7 +184,7 @@ public class SecurityStampValidatorFilter : IEndpointFilter
                         await _signInManager.SignOutAsync();
                         return TypedResults.Unauthorized();
                     }
-                    
+
                     // Aggiorna il sign-in
                     await _signInManager.RefreshSignInAsync(user);
                 }

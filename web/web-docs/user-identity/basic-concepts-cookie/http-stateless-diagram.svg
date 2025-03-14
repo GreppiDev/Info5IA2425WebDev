@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400">
+  <!-- Background -->
+  <rect width="800" height="400" fill="#f5f5f5"/>
+  
+  <!-- Client Box -->
+  <rect x="50" y="150" width="200" height="120" rx="10" ry="10" fill="#b3e0ff" stroke="#0066cc" stroke-width="2"/>
+  <text x="150" y="200" text-anchor="middle" font-family="Arial" font-size="18" font-weight="bold">Client</text>
+  <text x="150" y="230" text-anchor="middle" font-family="Arial" font-size="14">(Browser)</text>
+  
+  <!-- Server Box -->
+  <rect x="550" y="150" width="200" height="120" rx="10" ry="10" fill="#ffd6cc" stroke="#ff5c33" stroke-width="2"/>
+  <text x="650" y="200" text-anchor="middle" font-family="Arial" font-size="18" font-weight="bold">Server</text>
+  <text x="650" y="230" text-anchor="middle" font-family="Arial" font-size="14">(Web Application)</text>
+  
+  <!-- Request Arrow 1 -->
+  <line x1="250" y1="170" x2="550" y2="170" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <text x="400" y="160" text-anchor="middle" font-family="Arial" font-size="14">Richiesta 1</text>
+  
+  <!-- Response Arrow 1 -->
+  <line x1="550" y1="190" x2="250" y2="190" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)" stroke-dasharray="5,5"/>
+  <text x="400" y="210" text-anchor="middle" font-family="Arial" font-size="14">Risposta 1</text>
+  
+  <!-- Request Arrow 2 -->
+  <line x1="250" y1="230" x2="550" y2="230" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <text x="400" y="250" text-anchor="middle" font-family="Arial" font-size="14">Richiesta 2 (Nuova connessione)</text>
+  
+  <!-- Response Arrow 2 -->
+  <line x1="550" y1="250" x2="250" y2="250" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)" stroke-dasharray="5,5"/>
+  <text x="400" y="270" text-anchor="middle" font-family="Arial" font-size="14">Risposta 2</text>
+  
+  <!-- Text -->
+  <text x="400" y="50" text-anchor="middle" font-family="Arial" font-size="22" font-weight="bold">Natura Stateless di HTTP</text>
+  <text x="400" y="80" text-anchor="middle" font-family="Arial" font-size="16">Ogni richiesta è indipendente e non conserva informazioni sulle richieste precedenti</text>
+  
+  <!-- Note -->
+  <rect x="150" y="320" width="500" height="60" rx="5" ry="5" fill="#ffffcc" stroke="#ffcc00" stroke-width="2"/>
+  <text x="400" y="345" text-anchor="middle" font-family="Arial" font-size="14">Il server non ricorda automaticamente l'utente tra una richiesta e l'altra.</text>
+  <text x="400" y="365" text-anchor="middle" font-family="Arial" font-size="14">È necessario un meccanismo di persistenza dello stato (come i cookie).</text>
+  
+  <!-- Arrow Marker -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#333"/>
+    </marker>
+  </defs>
+</svg>

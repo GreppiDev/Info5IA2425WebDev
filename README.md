@@ -43,5 +43,10 @@
    1. [ASP.NET Secrets](./asp.net/docs/secrets/index.md)
 7. Aspetti di sicurezza nelle Web App
    1. [Sicurezza nelle Web API basata sull'API Key: approcci possibili](./web/web-docs/security/api-key/index.md)
-   2. [Cookie e sessioni in Web App](./web/web-docs/security/cookies-sessions/index.md)
-   3. [Sicurezza nelle pagine web: CSRF e XSS](./web/web-docs/security/csrf-xss/index.md)
+   2. [Sicurezza nelle pagine web: CSRF e XSS](./web/web-docs/security/csrf-xss/index.md)
+8. Riconoscimento dell'Utente in Applicazioni Web e Mobile
+   1. [Introduzione al riconoscimento dell'utente con i Cookie e protocollo HTTP Stateless](./web/web-docs/user-identity/basic-concepts-cookie/index.md)
+   2. [Pericoli dei Cookie e introduzione ai Token (JWT) per App Mobile](./web/web-docs/user-identity/security-issues-cookies-jwt-token-alternative/index.md)
+   3. [Riconoscimento dell'utente in App Mobile con Token (JWT)](./web/web-docs/user-identity/token-based-authentication/index.md)
+   4. [Riconoscimento dell’utente in Architetture Distribuite](./web/web-docs/user-identity/distributed-architecture/index.md)
+   5. [Refresh Token, Ruoli e meccanismi di Logout con Cookie e Token](./web/web-docs/user-identity/refresh-token-roles-logout/index.md)
