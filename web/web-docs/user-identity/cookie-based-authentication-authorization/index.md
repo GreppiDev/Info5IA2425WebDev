@@ -104,7 +104,7 @@ sequenceDiagram
 
 ## Concetto e Uso dei Claims
 
-I **claims** sono affermazioni che riguardano un utente autenticato. Rappresentano informazioni specifiche sull'utente, come il suo nome, indirizzo email, ruoli, permessi o qualsiasi altro dato rilevante per l'applicazione. I claims sono strutturati come coppie chiave-valore (tipo di claim e valore del claim). Per una descrizione dettagliata, si può consultare la documentazione su [Claims-based identity in ASP.NET Core](https://www.google.com/url?sa=E&source=gmail&q=https://learn.microsoft.com/en-us/aspnet/core/security/claims?view=aspnetcore-9.0).
+I **claims** sono affermazioni che riguardano un utente autenticato. Rappresentano informazioni specifiche sull'utente, come il suo nome, indirizzo email, ruoli, permessi o qualsiasi altro dato rilevante per l'applicazione. I claims sono strutturati come coppie chiave-valore (tipo di claim e valore del claim). Per una descrizione dettagliata, si può consultare la documentazione su [Claims-based identity in ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/security/authorization/claims).
 
 Un oggetto `Claim` ha due proprietà principali:
 
