@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies; //aggiunge il supporto per l'autenticazione tramite cookie
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,15 +19,47 @@ builder.Services.AddOpenApiDocument(config =>
 );
 
 
-// Configurazione dell’autenticazione con cookie
-builder.Services.AddAuthentication("CookieAuth")
-    .AddCookie("CookieAuth", options =>
+// Configurazione dell'autenticazione con cookie usando lo schema predefinito
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
     {
-        options.Cookie.Name = "MyCookie";
+        options.Cookie.Name = ".AspNetCore.Authentication"; // Nome standard non predittivo
         options.Cookie.HttpOnly = true; // Protegge il cookie da accessi via JavaScript
         options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Solo su HTTPS
         options.Cookie.SameSite = SameSiteMode.Strict; // Previene CSRF
         options.LoginPath = "/login"; // Percorso per il login
+
+        // Content-type based redirect handling
+        options.Events = new CookieAuthenticationEvents
+        {
+            OnRedirectToLogin = context =>
+            {
+                // Check if this is an API request based on Accept header or Content-Type
+                bool isApiRequest = context.Request.Headers.Accept.Any(h => h != null &&
+                    (h.Contains("application/json") || h.Contains("application/xml")));
+
+                // Also check if the Accept header DOESN'T contain "text/html" - typical for API clients
+                isApiRequest = isApiRequest ||
+                    (context.Request.Headers.Accept.Count != 0 &&
+                     !context.Request.Headers.Accept.Any(h => h != null && h.Contains("text/html")));
+
+                // Also check X-Requested-With header commonly used for AJAX
+                isApiRequest = isApiRequest ||
+                    context.Request.Headers.XRequestedWith == "XMLHttpRequest";
+
+
+                if (isApiRequest)
+                {
+                    // For API requests, return 401 status code
+                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    return Task.CompletedTask;
+                }
+
+                // For browser requests, redirect to login page (default behavior)
+                context.Response.Redirect(context.RedirectUri);
+                return Task.CompletedTask;
+            }
+        };
     });
 
 
@@ -61,23 +94,25 @@ app.UseAuthorization();
 // Endpoint di login
 app.MapPost("/login", async (HttpContext ctx, LoginModel model) =>
 {
-    // Simulazione validazione credenziali
+    // Simulazione della validazione delle credenziali
     //in questo caso andrebbero verificate le credenziali sul database...
     if (model.Username == "user" && model.Password == "pass")
     {
         var claims = new[] { new Claim(ClaimTypes.Name, model.Username) };
-        var identity = new ClaimsIdentity(claims, "CookieAuth");
-        await ctx.SignInAsync("CookieAuth", new ClaimsPrincipal(identity));
+        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        await ctx.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
         return Results.Ok("Login effettuato con successo");
     }
     return Results.Unauthorized();
 });
 
-// Endpoint per impostare un cookie altro cookie sicuro
+// Endpoint per impostare un altro cookie
+//in questo esempio viene impostato un cookie con un identificativo univoco
+//in realtà il cookie potrebbe essere un valore qualsiasi in base alle necessità
 app.MapGet("/set-cookie", (HttpContext context) =>
 {
     // Generazione di un identificativo univoco 
-    var secretId = Guid.NewGuid().ToString();
+    var uniqueIdentifier = Guid.NewGuid().ToString();
     // Configurazione delle opzioni del cookie
     var cookieOptions = new CookieOptions
     {
@@ -86,28 +121,35 @@ app.MapGet("/set-cookie", (HttpContext context) =>
         SameSite = SameSiteMode.Strict,   // Protegge da CSRF
         Expires = DateTimeOffset.Now.AddMinutes(30) // Cookie persistente per 30 minuti
     };
-    context.Response.Cookies.Append("secretId", secretId, cookieOptions);
+    context.Response.Cookies.Append("uniqueIdentifier", uniqueIdentifier, cookieOptions);
     return Results.Ok("Cookie impostato correttamente!");
 });
 
 //endpoint per leggere il cookie sicuro
 app.MapGet("/read-cookie", (HttpContext context) =>
 {
-    var secretId = context.Request.Cookies["secretId"];
-    return secretId != null
-        ? Results.Ok($"Il valore del cookie è: {secretId}")
+    var uniqueIdentifier = context.Request.Cookies["uniqueIdentifier"];
+    return uniqueIdentifier != null
+        ? Results.Ok($"Il valore del cookie è: {uniqueIdentifier}")
         : Results.NotFound("Cookie non trovato");
 });
 
 // Endpoint protetto
 app.MapGet("/profile", (HttpContext ctx) =>
 {
+    // Verifica che l'utente sia autenticato, altrimenti restituisce 401 Unauthorized
+    // Questo controllo è ridondante con RequireAuthorization, ma aiuta a chiarire il flusso
     if (ctx.User.Identity != null && ctx.User.Identity.IsAuthenticated)
         return Results.Ok($"Benvenuto, {ctx.User.Identity.Name}");
     return Results.Unauthorized();
 }).RequireAuthorization();
 
-
+// Endpoint di logout
+app.MapPost("/logout", async (HttpContext ctx) =>
+{
+    await ctx.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+    return Results.Ok("Logout effettuato con successo");
+});
 
 app.Run();
 

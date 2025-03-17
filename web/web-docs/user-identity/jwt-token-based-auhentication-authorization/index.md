@@ -1,16 +1,7 @@
-# Pericoli dei Cookie e Introduzione ai Token (JWT) per App Mobile
+# Introduzione ai Token (JWT)
 
-- [Pericoli dei Cookie e Introduzione ai Token (JWT) per App Mobile](#pericoli-dei-cookie-e-introduzione-ai-token-jwt-per-app-mobile)
+- [Introduzione ai Token (JWT)](#introduzione-ai-token-jwt)
   - [Introduzione](#introduzione)
-  - [Pericoli e Vulnerabilità dei Cookie](#pericoli-e-vulnerabilità-dei-cookie)
-    - [Cross-Site Scripting (XSS)](#cross-site-scripting-xss)
-      - [Mitigazione del rischio XSS e Cookie](#mitigazione-del-rischio-xss-e-cookie)
-    - [Cross-Site Request Forgery (CSRF)](#cross-site-request-forgery-csrf)
-      - [Mitigazione del rischio CSRF](#mitigazione-del-rischio-csrf)
-    - [Intercettazione (Man-in-the-Middle Attack)](#intercettazione-man-in-the-middle-attack)
-      - [Mitigazione del rischio di Intercettazione](#mitigazione-del-rischio-di-intercettazione)
-    - [Furto Fisico di Cookie](#furto-fisico-di-cookie)
-      - [Mitigazione del rischio di Furto Fisico](#mitigazione-del-rischio-di-furto-fisico)
   - [Introduzione al riconoscimento dell'utente in App Mobile con Token (JWT)](#introduzione-al-riconoscimento-dellutente-in-app-mobile-con-token-jwt)
     - [Perché i Cookie non sono Ideali per le App Mobile?](#perché-i-cookie-non-sono-ideali-per-le-app-mobile)
     - [Vantaggi dei Token (JWT) per App Mobile e API](#vantaggi-dei-token-jwt-per-app-mobile-e-api)
@@ -18,138 +9,13 @@
     - [JWT (JSON Web Token): Struttura e Funzionamento](#jwt-json-web-token-struttura-e-funzionamento)
     - [Validazione JWT](#validazione-jwt)
     - [Esempio di generazione e validazione di JWT con librerie .NET (Minimal API)](#esempio-di-generazione-e-validazione-di-jwt-con-librerie-net-minimal-api)
+  - [Un esempio completo di autenticazione basata su token JWT con Minimal API](#un-esempio-completo-di-autenticazione-basata-su-token-jwt-con-minimal-api)
   - [Riepilogo](#riepilogo)
   - [Risorse](#risorse)
 
 ## Introduzione
 
-Questa lezione prosegue l'esplorazione del riconoscimento dell'utente, concentrandosi sui rischi di sicurezza associati all'uso dei cookie e introducendo i token, in particolare JWT (JSON Web Token), come alternativa più appropriata per le applicazioni mobile e le moderne API.
-
-## Pericoli e Vulnerabilità dei Cookie
-
-Nonostante la loro utilità per il riconoscimento dell'utente nel contesto web, i cookie non sono esenti da rischi di sicurezza. Una comprensione approfondita delle vulnerabilità associate ai cookie è fondamentale per sviluppare applicazioni web sicure e robuste.
-
-**Principali Pericoli e Attacchi basati sui Cookie:**
-
-### Cross-Site Scripting (XSS)
-
-XSS è una delle vulnerabilità web più diffuse e sfruttabili. Un attacco XSS si verifica quando un attaccante riesce a iniettare codice malevolo (solitamente JavaScript) in una pagina web visualizzata da altri utenti.  Se un sito web è vulnerabile a XSS e i cookie di sessione *non* sono protetti con l'attributo `HttpOnly`, un attaccante può utilizzare JavaScript malevolo per rubare il cookie di sessione dell'utente.
-
-```mermaid
-sequenceDiagram
-    actor Attaccante
-    actor Utente
-    participant SitoWeb as Sito Web Vulnerabile
-    participant ServerMalevolo as Server dell'Attaccante
-    
-    Note over Attaccante, SitoWeb: Fase 1: Preparazione dell'attacco
-    Attaccante->>SitoWeb: Individua vulnerabilità XSS
-    Attaccante->>SitoWeb: Inietta codice JavaScript malevolo
-    Note over SitoWeb: Il codice JS malevolo viene memorizzato nel database o nella risposta del server
-    
-    Note over Utente, SitoWeb: Fase 2: Esecuzione dell'attacco
-    Utente->>SitoWeb: Visita la pagina web compromessa
-    SitoWeb->>Utente: Ritorna la pagina con il codice JS malevolo
-    Note over Utente: Il browser esegue il codice JS malevolo
-    
-    Note over Utente, ServerMalevolo: Fase 3: Furto del cookie
-    Utente->>Utente: JS malevolo accede a document.cookie
-    Utente->>ServerMalevolo: JS malevolo invia il cookie di sessione
-    
-    Note over Attaccante, ServerMalevolo: Fase 4: Impersonificazione
-    ServerMalevolo->>Attaccante: Riceve il cookie di sessione
-    Attaccante->>SitoWeb: Utilizza il cookie rubato per impersonare l'utente
-    SitoWeb-->>Attaccante: Accesso autorizzato all'account dell'utente
-```
-
-*Diagramma semplificato di un attacco XSS che mira a rubare cookie di sessione.*
-
-**Scenario di Attacco XSS e Furto di Cookie:**
-
-  1. Un attaccante individua una vulnerabilità XSS in un sito web (es. un campo di input non correttamente validato).
-  2. L'attaccante inietta codice JavaScript malevolo nel sito web attraverso la vulnerabilità XSS. Il codice JavaScript potrebbe essere memorizzato nel database del sito o iniettato in una risposta del server.
-  3. Un utente legittimo visita la pagina web compromessa.
-  4. Il browser dell'utente esegue il codice JavaScript malevolo iniettato.
-  5. Il codice JavaScript malevolo utilizza `document.cookie` per accedere al cookie di sessione dell'utente.
-  6. Il codice JavaScript invia il cookie di sessione a un server controllato dall'attaccante.
-  7. L'attaccante, ora in possesso del cookie di sessione dell'utente legittimo, può impersonare l'utente e accedere all'account senza conoscerne le credenziali (username e password).
-
-#### Mitigazione del rischio XSS e Cookie
-
- * **Sanificazione e Validazione Input:**  Implementare rigorose procedure di sanificazione e validazione di tutti gli input utente (sia lato client che lato server) per prevenire l'iniezione di codice malevolo.
- * **Utilizzo di `HttpOnly`:** Impostare sempre l'attributo `HttpOnly` per i cookie che contengono informazioni sensibili, come gli ID di sessione. Questo impedisce a JavaScript lato client di accedere a questi cookie, mitigando il rischio di furto tramite XSS.
- * **Content Security Policy (CSP):** Implementare Content Security Policy per controllare le risorse che il browser può caricare ed eseguire, riducendo la superficie di attacco per XSS.
-
-### Cross-Site Request Forgery (CSRF)
-
-CSRF è un tipo di attacco in cui un attaccante induce un utente autenticato a effettuare azioni indesiderate su un sito web a sua insaputa.  L'attaccante sfrutta il fatto che **il browser invia automaticamente i cookie (inclusi i cookie di sessione) con ogni richiesta verso il sito web target**.
-
-```mermaid
-sequenceDiagram
-    actor Utente
-    actor Attaccante
-    participant SitoVulnerabile as Sito Web Vulnerabile (es. Banca)
-    participant SitoMalevolo as Sito Web Malevolo
-    
-    Note over Utente, SitoVulnerabile: Fase 1: Autenticazione legittima
-    Utente->>SitoVulnerabile: Si autentica
-    SitoVulnerabile->>Utente: Imposta cookie di sessione
-    Note over Utente: Browser memorizza il cookie di sessione
-
-    Note over Attaccante, SitoMalevolo: Fase 2: Preparazione dell'attacco
-    Attaccante->>SitoMalevolo: Crea sito malevolo/email con link
-    
-    Note over Utente, SitoMalevolo: Fase 3: Inganno dell'utente
-    Attaccante->>Utente: Attira l'utente sul sito malevolo
-    Utente->>SitoMalevolo: Visita il sito o clicca sul link malevolo
-    Note over Utente: Utente è ancora autenticato sul sito vulnerabile
-    
-    Note over Utente, SitoVulnerabile: Fase 4: Esecuzione dell'attacco
-    SitoMalevolo->>Utente: Contiene codice che genera richiesta automatica
-    Note over Utente: Il browser genera richiesta al sito vulnerabile
-    Utente->>SitoVulnerabile: Richiesta automatica con cookie di sessione allegati
-    Note over SitoVulnerabile: Il sito non può distinguere tra richieste legittime e forgiate
-    
-    Note over SitoVulnerabile: Fase 5: Completamento dell'attacco
-    SitoVulnerabile->>SitoVulnerabile: Elabora richiesta come legittima
-    SitoVulnerabile->>SitoVulnerabile: Esegue azione indesiderata (es. bonifico)
-    Note over Utente: L'utente non è consapevole dell'azione eseguita
-```
-
-*Diagramma di un attacco CSRF. L'attaccante inganna l'utente autenticato per eseguire azioni indesiderate.*
-
-**Scenario di Attacco CSRF:**
-
-1. Un utente è autenticato su un sito web vulnerabile (es. una piattaforma di home banking). Il browser ha memorizzato il cookie di sessione per quel sito.
-2. Un attaccante crea un sito web malevolo o invia una email con un link malevolo.
-3. L'utente, mentre è ancora autenticato sul sito web vulnerabile, visita il sito web malevolo o clicca sul link malevolo.
-4. Il sito web malevolo contiene codice (es. immagini, form, JavaScript) che induce il browser dell'utente a inviare una richiesta HTTP al sito web vulnerabile (es. una richiesta per effettuare un bonifico bancario).
-5. Poiché il browser invia automaticamente i cookie (incluso il cookie di sessione) con la richiesta, il sito web vulnerabile riceve una richiesta apparentemente legittima dall'utente autenticato.
-6. Se il sito web vulnerabile non ha protezioni CSRF, elabora la richiesta, eseguendo l'azione indesiderata (es. bonifico bancario non autorizzato) *con l'identità dell'utente autenticato*, senza che l'utente ne sia consapevole o l'abbia intenzionalmente richiesta.
-
-#### Mitigazione del rischio CSRF
-
- * **Token Anti-CSRF (Synchronizer Token Pattern):**  Utilizzare token anti-CSRF. Il server genera un token univoco per ogni sessione utente (o per ogni form). Questo token viene incluso in ogni form o richiesta "sensibile" (es. richieste POST, PUT, DELETE). Quando il server riceve una richiesta, verifica la presenza e la validità del token anti-CSRF. Se il token manca o non è valido, la richiesta viene rifiutata. Questo impedisce agli attaccanti di creare richieste valide per conto dell'utente, poiché non sono in grado di conoscere o generare il token anti-CSRF corretto.
- * **SameSite Cookie Attribute (con cautela):** L'attributo `SameSite` con valore `Strict` o `Lax` può offrire una certa protezione contro attacchi CSRF, limitando l'invio dei cookie in contesti cross-site. Tuttavia, `SameSite` non è una protezione CSRF completa e dovrebbe essere utilizzato in combinazione con altre misure (es. token anti-CSRF).
-
-### Intercettazione (Man-in-the-Middle Attack)
-
-Se i cookie vengono trasmessi su connessioni HTTP non sicure (senza HTTPS) e l'attributo `Secure` non è impostato, un attaccante che intercetta il traffico di rete (es. in una rete Wi-Fi pubblica non sicura) può rubare i cookie, inclusi i cookie di sessione.
-
-#### Mitigazione del rischio di Intercettazione
-
-* **Utilizzo di HTTPS:** Utilizzare sempre il protocollo HTTPS per tutte le comunicazioni web, in particolare per i siti web che gestiscono informazioni sensibili o autenticazione utente. HTTPS cifra il traffico di rete, proteggendo i cookie e altre informazioni da intercettazioni.
-* **Attributo `Secure`:** Impostare sempre l'attributo `Secure` per i cookie, specialmente per i cookie di sessione. Questo assicura che i cookie vengano trasmessi solo su connessioni HTTPS.
-
-### Furto Fisico di Cookie
-
-In scenari meno comuni, un attaccante potrebbe riuscire ad accedere fisicamente al computer dell'utente e rubare i file cookie memorizzati dal browser. Questo potrebbe permettere all'attaccante di impersonare l'utente, specialmente se i cookie di sessione hanno una lunga durata.
-
-#### Mitigazione del rischio di Furto Fisico
-
-* **Limitare la durata dei cookie di sessione:** Ridurre al minimo la durata dei cookie di sessione. Sessioni più brevi riducono la finestra temporale in cui un cookie rubato può essere utilizzato.
-* **Logout Inattivo (Session Timeout):** Implementare un meccanismo di logout automatico per inattività. Se l'utente è inattivo per un certo periodo di tempo, la sessione viene invalidata e il cookie di sessione diventa inutilizzabile.
-* **Crittografia del disco (Full Disk Encryption):**  L'utilizzo della crittografia completa del disco del sistema operativo rende più difficile per un attaccante accedere ai file cookie memorizzati, anche in caso di accesso fisico al computer.
+Questa lezione prosegue l'esplorazione del riconoscimento dell'utente introducendo i token, in particolare JWT (JSON Web Token), come alternativa più appropriata per le applicazioni mobile e le moderne API.
 
 ## Introduzione al riconoscimento dell'utente in App Mobile con Token (JWT)
 
@@ -218,6 +84,8 @@ sequenceDiagram
     R->>C: Risposta con le risorse richieste
 ```
 
+*Diagramma di flusso che mostra l'autenticazione basata su `Access Token` e `Refresh Token`*
+
 **Flusso di Autenticazione con Access Token e Refresh Token:**
 
 1. **Login (Autenticazione Iniziale):** L'utente inserisce le credenziali (username/password) nell'app mobile. L'app invia le credenziali al server di autenticazione.
@@ -233,8 +101,8 @@ sequenceDiagram
 
 **JSON Web Token (JWT)** è uno standard aperto (RFC 7519) ampiamente utilizzato per creare token di accesso sicuri e compatti. Un JWT è una stringa codificata in formato JSON, composta da tre parti principali separate da punti:
 
-[Image of JWT Structure Diagram]
-*Diagramma della struttura di un JWT: Header, Payload, Signature.*
+![Image of JWT Structure Diagram](jwt-structure.svg)
+*Struttura di un JWT: Header, Payload, Signature.*
 
 1. **Header (Intestazione):** L'header contiene metadati sul token, solitamente in formato JSON, indicando il **tipo di token** (tipicamente `"JWT"`) e l'**algoritmo di firma** utilizzato per proteggere il token (es. `"HS256"` per HMAC-SHA256, `"RS256"` per RSA-SHA256). L'header viene codificato in Base64Url.
 
@@ -285,7 +153,7 @@ sequenceDiagram
 
 ### Validazione JWT
 
-Quando un server risorse (API) riceve un JWT, deve validarlo per assicurarsi che sia autentico e non sia stato manomesso.  La validazione JWT tipicamente include i seguenti passaggi:
+Quando un server di risorse (API) riceve un JWT, deve validarlo per assicurarsi che sia autentico e non sia stato manomesso.  La validazione JWT tipicamente include i seguenti passaggi:
 
 1. **Verifica della Firma:** Il server utilizza la **chiave pubblica** (per algoritmi asimmetrici come RS256) o la **chiave segreta condivisa** (per algoritmi simmetrici come HS256) per **verificare la firma digitale** del JWT. Se la firma non è valida, il token è considerato non autentico o manomesso.
 2. **Verifica della Scadenza (`exp` Claim):** Il server controlla la claim `exp` (expiration time) per verificare se il token è scaduto. Se il token è scaduto, non è più valido.
@@ -298,64 +166,360 @@ Per generare e validare JWT in .NET, si possono utilizzare librerie come `System
 **Generazione JWT (Esempio Minimal API):**
 
 ```cs
+using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
+using System.Collections.Concurrent;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configurazione JWT
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+// Configurazione dell'autenticazione tramite JWT
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-        };
-    });
-builder.Services.AddAuthorization();
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"] ??
+            throw new InvalidOperationException("Jwt:Issuer non configurata"),
+        ValidAudience = builder.Configuration["Jwt:Audience"] ??
+            throw new InvalidOperationException("Jwt:Audience non configurata"),
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ??
+                throw new InvalidOperationException("Jwt:Key non configurata")))
+    };
+
+});
+
+// Add authorization services
+builder.Services.AddAuthorization(options =>
+{
+    // Definizione di una policy per gli amministratori
+    options.AddPolicy("RequireAdministratorRole", policy =>
+        policy.RequireRole("Administrator"));
+
+});
 
 var app = builder.Build();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapPost("/login", [AllowAnonymous] (HttpContext httpContext) =>
+// Metodi helper per la gestione dei token
+string GenerateAccessToken(IConfiguration config, IEnumerable<Claim> claims)
 {
-    // Logica di autenticazione utente (es. verifica credenziali)
-    // ...
-
-    // Generazione JWT
-    var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]));
+    var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"] ??
+        throw new InvalidOperationException("Jwt:Key non configurata")));
     var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
-    var claims = new[] {
-        new Claim(JwtRegisteredClaimNames.Sub, "utente123"), // Subject (ID Utente)
-        new Claim(JwtRegisteredClaimNames.Email, "utente@example.com"), // Altre claims
-        new Claim(ClaimTypes.Role, "Administrator") // Ruolo
-    };
-
     var token = new JwtSecurityToken(
-        builder.Configuration["Jwt:Issuer"],
-        builder.Configuration["Jwt:Audience"],
-        claims,
-        expires: DateTime.Now.AddMinutes(30), // Scadenza token
+        issuer: config["Jwt:Issuer"] ??
+            throw new InvalidOperationException("Jwt:Issuer non configurata"),
+        audience: config["Jwt:Audience"] ??
+            throw new InvalidOperationException("Jwt:Audience non configurata"),
+        claims: claims,
+        expires: DateTime.UtcNow.AddMinutes(30), // Usare UTC per timestamp
         signingCredentials: credentials);
 
-    return Results.Ok(new JwtSecurityTokenHandler().WriteToken(token)); // Restituisci JWT come stringa
+    return new JwtSecurityTokenHandler().WriteToken(token);
+}
+
+string GenerateRefreshToken()
+{
+    // Genera un token più sicuro rispetto al semplice Guid
+    // var randomNumber = new byte[32]; // 256 bit
+    // using var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
+    // rng.GetBytes(randomNumber);
+
+    // // Converte in una stringa base64 (più sicura di un GUID e con una maggiore entropia)
+    // return Convert.ToBase64String(randomNumber);
+
+    // Generazione di un refresh token (opaco)
+    var refreshToken = Guid.NewGuid().ToString();
+    return refreshToken;
+}
+
+// Endpoint per il login che restituisce un access token e un refresh token
+app.MapPost("/login", (UserLogin login) =>
+{
+    // Validazione input
+    if (login is null || string.IsNullOrEmpty(login.Username) || string.IsNullOrEmpty(login.Password))
+    {
+        return Results.BadRequest("Username e password sono richiesti");
+    }
+
+    // Verifica per l'utente normale con privilegi limitati
+    if (login.Username == "user" && login.Password == "pass")
+    {
+        string userId = "user123";
+        string userEmail = "user@example.com";
+
+        // Utente standard con ruolo di sola visualizzazione
+        var claims = new[] {
+            new Claim(ClaimTypes.NameIdentifier, userId),
+            new Claim(ClaimTypes.Email, userEmail),
+            new Claim(ClaimTypes.Name, login.Username),
+            new Claim(ClaimTypes.Role, "Viewer")
+        };
+
+        var accessToken = GenerateAccessToken(builder.Configuration, claims);
+        var refreshToken = GenerateRefreshToken();
+
+        // Uso di thread-safe ConcurrentDictionary
+        refreshTokenStore[userId] = new RefreshTokenInfo
+        {
+            Token = refreshToken,
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddDays(7)
+        };
+
+        refreshTokenToUserMap[refreshToken] = userId;
+
+        return Results.Ok(new
+        {
+            accessToken,
+            refreshToken,
+        });
+    }
+    // Verifica per l'amministratore con privilegi completi
+    else if (login.Username == "admin" && login.Password == "Admin123!")
+    {
+        string userId = "admin456";
+        string userEmail = "admin@example.com";
+
+        // Amministratore con ruoli multipli
+        var claims = new[] {
+            new Claim(ClaimTypes.NameIdentifier, userId),
+            new Claim(ClaimTypes.Email, userEmail),
+            new Claim(ClaimTypes.Name, login.Username),
+            new Claim(ClaimTypes.Role, "Administrator"),
+            new Claim(ClaimTypes.Role, "SuperAdministrator")  // Utente con più ruoli
+        };
+
+        var accessToken = GenerateAccessToken(builder.Configuration, claims);
+        var refreshToken = GenerateRefreshToken();
+
+        // Uso di thread-safe ConcurrentDictionary
+        refreshTokenStore[userId] = new RefreshTokenInfo
+        {
+            Token = refreshToken,
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddDays(7)
+        };
+
+        refreshTokenToUserMap[refreshToken] = userId;
+
+        return Results.Ok(new
+        {
+            accessToken,
+            refreshToken,
+
+        });
+    }
+
+    return Results.Unauthorized();
+})
+.WithName("Login")
+.WithOpenApi(operation =>
+{
+    operation.Summary = "Effettua il login e ottiene token di accesso";
+    operation.Description = "Autentica l'utente e restituisce access token e refresh token";
+    return operation;
 });
 
-app.MapGet("/risorsa-protetta", [Authorize] () => {
-    return Results.Ok("Risorsa protetta accessibile!");
+// Endpoint protetto, accessibile solo con un token valido
+app.MapGet("/protected", (HttpContext context) =>
+{
+    // Recupera il nome dell'utente dalle claims del token
+    var username = context.User?.Identity?.Name;
+    var userId = context.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+    var userEmail = context.User?.FindFirstValue(ClaimTypes.Email);
+    var userRole = context.User?.FindFirstValue(ClaimTypes.Role);
+
+    return Results.Ok(new
+    {
+        Message = $"Benvenuto {username}! Questo è un contenuto riservato.",
+        UserDetails = new
+        {
+            Id = userId,
+            Username = username,
+            Email = userEmail,
+            Role = userRole
+        }
+    });
+})
+.RequireAuthorization()
+.WithName("Protected")
+.WithOpenApi(operation =>
+{
+    operation.Summary = "Endpoint protetto ad accesso limitato";
+    operation.Description = "Restituisce informazioni sull'utente autenticato";
+    return operation;
+});
+
+// Endpoint per recuperare le informazioni dell'utente autenticato
+app.MapGet("/user-info", (HttpContext context) =>
+{
+    // Recupera i dettagli dell'utente dalle claims
+    var username = context.User?.Identity?.Name;
+    var userId = context.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+    var email = context.User?.FindFirstValue(ClaimTypes.Email);
+
+    // Recupera tutti i ruoli dell'utente
+    var roles = context.User?.FindAll(ClaimTypes.Role).Select(c => c.Value).ToArray() ?? [];
+
+    // Determina il tipo di utente in base ai ruoli
+    bool isAdmin = roles.Contains("Administrator");
+    bool isViewer = roles.Contains("Viewer");
+    bool isSuperAdmin = roles.Contains("SuperAdministrator");
+
+    return Results.Ok(new
+    {
+        userId,
+        username,
+        email,
+        roles,
+        accountType = isAdmin ? "Administrator" : isViewer ? "Standard User" : "Unknown",
+        permissions = new
+        {
+            canCreate = isAdmin || isSuperAdmin,
+            canRead = true, // Tutti gli utenti autenticati possono leggere
+            canUpdate = isAdmin || isSuperAdmin,
+            canDelete = isAdmin || isSuperAdmin,
+            canManageUsers = isSuperAdmin
+        }
+    });
+})
+.RequireAuthorization() // Richiede l'autenticazione
+.WithName("UserInfo")
+.WithOpenApi(operation =>
+{
+    operation.Summary = "Recupera informazioni sull'utente corrente";
+    operation.Description = "Restituisce i dettagli dell'utente autenticato inclusi ruoli e permessi";
+    return operation;
+});
+
+// Endpoint protetto, accessibile solo agli amministratori
+app.MapGet("/admin", (HttpContext context) =>
+{
+    // Recupera il nome dell'utente dalle claims del token
+    var username = context.User?.Identity?.Name;
+
+    // Ottieni tutti i ruoli dell'utente dalle claims
+    // Garantisce che userRoles non sia mai null - sarà un array vuoto nel caso peggiore
+    var userRoles = context.User?.FindAll(ClaimTypes.Role).Select(c => c.Value).ToArray() ?? [];
+
+    // Ottieni altri dettagli utente
+    var userId = context.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+
+    return Results.Ok(new
+    {
+        Message = $"Benvenuto {username}! Hai accesso all'area amministrativa.",
+        AdminInfo = new
+        {
+            UserId = userId,
+            AccessLevel = "Full",
+            Roles = userRoles,
+            IsAdmin = userRoles.Contains("Administrator"),
+            IsSuperAdmin = userRoles.Contains("SuperAdministrator"),
+            AllowedOperations = GetAllowedOperationsForRoles(userRoles)
+        }
+    });
+})
+.RequireAuthorization("RequireAdministratorRole") // Richiede la policy specifica
+.WithName("AdminArea")
+.WithOpenApi(operation =>
+{
+    operation.Summary = "Area amministrativa riservata";
+    operation.Description = "Questo endpoint è accessibile solo agli utenti con ruolo Administrator";
+    return operation;
+});
+
+// Endpoint per il rinnovo del token - NON richiede l'autenticazione
+app.MapPost("/refresh", (RefreshRequest request) =>
+{
+    // Validazione input
+    if (request is null || string.IsNullOrEmpty(request.RefreshToken))
+    {
+        return Results.BadRequest("Refresh token richiesto");
+    }
+
+    // Cerca l'utente associato al refresh token - Thread safe con ConcurrentDictionary
+    if (refreshTokenToUserMap.TryGetValue(request.RefreshToken, out var userId) &&
+        refreshTokenStore.TryGetValue(userId, out var tokenInfo) &&
+        tokenInfo.Token == request.RefreshToken &&
+        tokenInfo.ExpiresAt > DateTime.UtcNow)
+    {
+        // Recupera i dati dell'utente in base all'ID
+        List<Claim> claims;
+
+        if (userId == "user123")
+        {
+            claims = [
+                new Claim(ClaimTypes.NameIdentifier, userId),
+                new Claim(ClaimTypes.Email, "user@example.com"),
+                new Claim(ClaimTypes.Name, "user"),
+                new Claim(ClaimTypes.Role, "Viewer")
+            ];
+        }
+        else if (userId == "admin456")
+        {
+            claims = [
+                new Claim(ClaimTypes.NameIdentifier, userId),
+                new Claim(ClaimTypes.Email, "admin@example.com"),
+                new Claim(ClaimTypes.Name, "admin"),
+                new Claim(ClaimTypes.Role, "Administrator"),
+                new Claim(ClaimTypes.Role, "SuperAdministrator")
+            ];
+        }
+        else
+        {
+            claims = [
+                new Claim(ClaimTypes.NameIdentifier, userId),
+                new Claim(ClaimTypes.Name, "unknown")
+            ];
+        }
+
+        var newAccessToken = GenerateAccessToken(builder.Configuration, claims);
+        var newRefreshToken = GenerateRefreshToken();
+
+        // Thread safe operations con ConcurrentDictionary
+        refreshTokenToUserMap.TryRemove(request.RefreshToken, out _);
+
+        // Aggiorna il refresh token memorizzato con nuova scadenza
+        refreshTokenStore[userId] = new RefreshTokenInfo
+        {
+            Token = newRefreshToken,
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddDays(7)
+        };
+
+        // Aggiungi il nuovo mapping - Thread safe
+        refreshTokenToUserMap[newRefreshToken] = userId;
+
+        return Results.Ok(new
+        {
+            accessToken = newAccessToken,
+            refreshToken = newRefreshToken
+        });
+    }
+
+    return Results.Unauthorized();
+})
+.WithName("RefreshToken")
+.WithOpenApi(operation =>
+{
+    operation.Summary = "Rinnova l'access token utilizzando un refresh token valido";
+    return operation;
 });
 
 app.Run();
@@ -377,7 +541,13 @@ La validazione dei JWT in ASP.NET Core è gestita automaticamente dal middleware
 }
 ```
 
-**Esercitazione:** Eseguire l'esempio di codice Minimal API.  Utilizzare un client HTTP (es. Postman, Insomnia) per inviare una richiesta POST a `/login`.  La risposta conterrà un JWT.  Utilizzare lo stesso client HTTP per inviare una richiesta GET a `/risorsa-protetta`, includendo il JWT nell'header di autorizzazione (Bearer token). Verificare che la richiesta a `/risorsa-protetta` abbia successo solo se si include un JWT valido nell'header di autorizzazione.  Modificare il JWT (es. alterando la firma) o utilizzare un JWT scaduto e verificare che la richiesta a `/risorsa-protetta` venga rifiutata con errore di autenticazione.  Analizzare la struttura del JWT decodificandolo (es. utilizzando siti web come [https://jwt.io](https://jwt.io)).
+## Un esempio completo di autenticazione basata su token JWT con Minimal API
+
+Nell'esempio [Token Based Login](../../../../asp.net/api-samples/minimal-api/AuthenticationAuthorizationDemos/BasicExamples/token-based-login/BasicTokenDemo/) viene mostrato un progetto di Minimal API .NET che implementa uno schema di autenticazione e autorizzazione basato token JWT.
+
+La documentazione di questo esempio è riportata in [questa pagina](../../../../asp.net/api-samples/minimal-api/AuthenticationAuthorizationDemos/BasicExamples/token-based-login/docs/index.md).
+
+**Esercitazione:** Eseguire l'esempio di codice Minimal API.  Utilizzare un client HTTP (es. Postman, Insomnia) per inviare una richiesta POST a `/login`.  La risposta conterrà un JWT.  Utilizzare lo stesso client HTTP per inviare una richiesta GET a `/protected`, includendo il JWT nell'header di autorizzazione (Bearer token). Verificare che la richiesta a `/protected` abbia successo solo se si include un JWT valido nell'header di autorizzazione.  Modificare il JWT (es. alterando la firma) o utilizzare un JWT scaduto e verificare che la richiesta a `/protected` venga rifiutata con errore di autenticazione.  Analizzare la struttura del JWT decodificandolo (es. utilizzando siti web come [https://jwt.io](https://jwt.io)).
 
 ## Riepilogo
 

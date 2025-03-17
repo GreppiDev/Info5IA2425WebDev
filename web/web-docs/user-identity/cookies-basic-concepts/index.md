@@ -97,6 +97,22 @@ sequenceDiagram
 
 *Schema del flusso di funzionamento dei cookie. Il server imposta il cookie, il browser lo memorizza e lo rinvia ad ogni richiesta successiva.*
 
+Quando si accede a un sito web dopo aver fatto il login, il server invia un cookie di sessione:
+
+```text
+HTTP/1.1 200 OK
+Set-Cookie: sessionId=xyz789; Path=/; HttpOnly
+Content-Type: text/html
+```
+
+Il browser salva questo cookie e lo invia automaticamente con ogni richiesta successiva:
+
+```text
+GET /profile HTTP/1.1
+Host: example.com
+Cookie: sessionId=xyz789
+```
+
 **Tipi di Cookie:**
 
 Esistono diverse tipologie di cookie, classificate in base alla loro durata e al loro scopo:
@@ -227,10 +243,10 @@ I browser moderni offrono strumenti di sviluppo ("Developer Tools") che permetto
 6. Esaminare la lista dei cookie memorizzati per quel dominio.  Per ogni cookie, si possono visualizzare le sue proprietà (Name, Value, Domain, Path, Expires/Max-Age, HttpOnly, Secure, SameSite).
 
 ![Image of Chrome Developer Tools - Cookies](google-cookies-no-consent-in-private.png)
-*Schermata dei Developer Tools di Edge che mostra la sezione "Cookies" all'interno del tab "Application". Pagina gi www.google.it in incognito senza accettare i cookie non strettamente necessari (tecnici)*
+*Schermata dei Developer Tools di Edge che mostra la sezione "Cookies" all'interno del tab "Application". Pagina di [www.google.it](https://www.google.it/) in incognito senza accettare i cookie non strettamente necessari (tecnici)*
 
 ![Image of Chrome Developer Tools - Cookies](google-cookies-logged-in.png)
-*Schermata dei Developer Tools di Edge che mostra la sezione "Cookies" all'interno del tab "Application". Pagina gi www.google.it nel caso di utente che ha effettuato l'accesso e ha abilitato i cookie*
+*Schermata dei Developer Tools di Edge che mostra la sezione "Cookies" all'interno del tab "Application". Pagina di [www.google.it](https://www.google.it/) nel caso di un utente che ha effettuato l'accesso e ha abilitato i cookie*
 
 Questa esercitazione permette di comprendere concretamente come i browser gestiscono i cookie e di visualizzare le diverse proprietà che li definiscono.  Analizzare i cookie di siti web reali può fornire una visione più chiara del loro utilizzo pratico e della varietà di impostazioni possibili.
 
@@ -323,7 +339,7 @@ context.Response.Cookies.Append("AuthToken", "abc123", new CookieOptions
 
 Ora il cookie sarà inviato automaticamente su `example.com`, `api.example.com`, `dashboard.example.com`, ecc.
 
-* **In sintesi:**
+**In sintesi:**
 
 ✅ **In JavaScript, non serve specificare il dominio** perché il browser assegna automaticamente il dominio della pagina corrente.
 

@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+  <!-- Background -->
+  <rect width="900" height="500" fill="#f8f9fa" rx="10" ry="10"/>
+  
+  <!-- Title -->
+  <text x="400" y="50" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="#333">Struttura di un JSON Web Token (JWT)</text>
+  
+  <!-- JWT Structure -->
+  <g transform="translate(50, 100)">
+    <!-- Header Section -->
+    <rect x="0" y="0" width="200" height="130" fill="#4285f4" rx="5" ry="5"/>
+    <text x="100" y="30" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="white">HEADER</text>
+    <text x="100" y="60" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="white">{ "alg": "HS256",</text>
+    <text x="100" y="85" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="white">"typ": "JWT" }</text>
+    <text x="100" y="110" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="white">Base64Url encoded</text>
+    
+    <!-- Dot Separator -->
+    <text x="210" y="65" font-family="Arial, sans-serif" font-size="30" font-weight="bold" text-anchor="middle" fill="#333">.</text>
+    
+    <!-- Payload Section -->
+    <rect x="230" y="0" width="200" height="130" fill="#0f9d58" rx="5" ry="5"/>
+    <text x="330" y="30" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="white">PAYLOAD</text>
+    <text x="330" y="60" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="white">{ "sub": "utente123",</text>
+    <text x="330" y="85" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="white">"name": "Mario Rossi" }</text>
+    <text x="330" y="110" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="white">Base64Url encoded</text>
+    
+    <!-- Dot Separator -->
+    <text x="440" y="65" font-family="Arial, sans-serif" font-size="30" font-weight="bold" text-anchor="middle" fill="#333">.</text>
+    
+    <!-- Signature Section -->
+    <rect x="460" y="0" width="260" height="130" fill="#db4437" rx="5" ry="5"/>
+    <text x="590" y="30" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="white">FIRMA</text>
+    <text x="590" y="60" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="white">HMACSHA256(</text>
+    <text x="590" y="85" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="white">base64(header) + "." + base64(payload),</text>
+    <text x="590" y="110" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="white">chiave_segreta)</text>
+  </g>
+  
+  <!-- Explanation Sections -->
+  <g transform="translate(50, 260)">
+    <!-- Header Explanation -->
+    <rect x="0" y="0" width="200" height="140" fill="#e8f0fe" stroke="#4285f4" stroke-width="2" rx="5" ry="5"/>
+    <text x="100" y="25" font-family="Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#333">Header</text>
+    <text x="15" y="50" font-family="Arial, sans-serif" font-size="14" fill="#333">• Metadati del token</text>
+    <text x="15" y="75" font-family="Arial, sans-serif" font-size="14" fill="#333">• Tipo del token (typ)</text>
+    <text x="15" y="100" font-family="Arial, sans-serif" font-size="14" fill="#333">• Algoritmo di firma (alg)</text>
+    <text x="15" y="125" font-family="Arial, sans-serif" font-size="14" fill="#333">• es: HS256, RS256</text>
+    
+    <!-- Payload Explanation -->
+    <rect x="230" y="0" width="200" height="140" fill="#e6f4ea" stroke="#0f9d58" stroke-width="2" rx="5" ry="5"/>
+    <text x="330" y="25" font-family="Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#333">Payload (Claims)</text>
+    <text x="245" y="50" font-family="Arial, sans-serif" font-size="14" fill="#333">• Dati utente (claims)</text>
+    <text x="245" y="75" font-family="Arial, sans-serif" font-size="14" fill="#333">• Claims registrate (iss, sub,</text>
+    <text x="247" y="100" font-family="Arial, sans-serif" font-size="14" fill="#333">  exp, iat, etc.)</text>
+    <text x="245" y="125" font-family="Arial, sans-serif" font-size="14" fill="#333">• Claims pubbliche/private</text>
+    
+    <!-- Signature Explanation -->
+    <rect x="460" y="0" width="260" height="140" fill="#fce8e6" stroke="#db4437" stroke-width="2" rx="5" ry="5"/>
+    <text x="590" y="25" font-family="Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#333">Firma</text>
+    <text x="475" y="50" font-family="Arial, sans-serif" font-size="14" fill="#333">• Verifica integrità</text>
+    <text x="475" y="75" font-family="Arial, sans-serif" font-size="14" fill="#333">• Verifica dell'emittente</text>
+    <text x="475" y="100" font-family="Arial, sans-serif" font-size="14" fill="#333">• Firmato con chiave segreta</text>
+    <text x="475" y="125" font-family="Arial, sans-serif" font-size="14" fill="#333">  (HMAC) o privata (RSA)</text>
+  </g>
+  
+  <!-- Final JWT Example -->
+  <g transform="translate(50, 420)">
+    <rect x="0" y="0" width="720" height="50" fill="#efefef" stroke="#999" stroke-width="1" rx="5" ry="5"/>
+    <text x="350" y="30" font-family="Consolas, monospace" font-size="10" text-anchor="middle" fill="#333">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1dGVudGUxMjMiLCJuYW1lIjoiTWFyaW8gUm9zc2kifQ.CpgUfPT-c5zAmBHF9XCT7S9CRnRUJmZ9op</text>
+  </g>
+  
+  <!-- Color Coding -->
+  <g transform="translate(200, 420)">
+    <rect x="-150" y="35" width="200" height="15" fill="#4285f4" opacity="0.3"/>
+    <rect x="50" y="35" width="310" height="15" fill="#0f9d58" opacity="0.3"/>
+    <rect x="360" y="35" width="190" height="15" fill="#db4437" opacity="0.3"/>
+  </g>
+</svg>
