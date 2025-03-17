@@ -40,6 +40,64 @@ Per superare i limiti dei cookie stateful in architetture cloud, è possibile ad
 
 **Flusso di Funzionamento Cookie Stateless con Datastore Esterno:**
 
+```mermaid
+sequenceDiagram
+    participant User as Utente/Browser
+    participant LB as Load Balancer
+    participant S1 as Server 1
+    participant S2 as Server 2
+    participant DS as Datastore Esterno
+    
+    %% Fase di Login
+    User->>LB: Richiesta di Login (credenziali)
+    LB->>S1: Forwarding richiesta
+    
+    rect rgb(240, 245, 255)
+        Note over S1: 1. Autenticazione Iniziale
+        S1->>S1: Verifica credenziali
+        
+        Note over S1: 2. Generazione ID Sessione Unico
+        S1->>S1: Genera ID sessione univoco
+        
+        Note over S1, DS: 3. Memorizzazione Sessione
+        S1->>DS: Memorizza sessione con dati utente
+        DS-->>S1: Conferma memorizzazione
+        
+        Note over S1, User: 4. Impostazione Cookie
+        S1-->>User: Risposta con Set-Cookie: SessionID
+    end
+    
+    %% Richieste Successive
+    rect rgb(245, 255, 245)
+        Note over User: 5. Richieste Successive
+        User->>LB: Richiesta con Cookie SessionID
+        LB->>S2: Forwarding a qualsiasi server
+        
+        Note over S2, DS: 6. Recupero Sessione
+        S2->>S2: Estrae SessionID dal cookie
+        S2->>DS: Richiede sessione con SessionID
+        DS-->>S2: Restituisce dati sessione
+        
+        Note over S2: 7. Validazione e Autorizzazione
+        S2->>S2: Verifica validità sessione
+        S2->>S2: Autorizza in base a ruoli
+        S2-->>User: Risposta con dati richiesti
+    end
+    
+    %% Logout
+    rect rgb(255, 245, 245)
+        Note over User: 8. Logout
+        User->>LB: Richiesta di Logout
+        LB->>S1: Forwarding richiesta
+        
+        S1->>S1: Estrae SessionID dal cookie
+        S1->>DS: Cancella sessione con SessionID
+        DS-->>S1: Conferma cancellazione
+        
+        S1-->>User: Risposta con Clear-Cookie
+    end
+```
+
 1. **Login (Autenticazione Iniziale):** Quando un utente si autentica (login) con successo, uno dei server backend riceve la richiesta di autenticazione.
 2. **Generazione ID Sessione Unico:** Il server backend **genera un ID di sessione univoco**.  Questo ID è una stringa casuale e unica, utilizzata per identificare la sessione.
 3. **Memorizzazione Sessione nel Datastore Esterno:** Il server backend **crea una nuova sessione** (oggetto sessione) contenente le informazioni relative all'utente autenticato (es. ID utente, ruoli, preferenze).  Il server **memorizza la sessione nel datastore esterno**, **associandola all'ID di sessione univoco** generato nel passo precedente.
@@ -133,7 +191,7 @@ app.MapPost("/logout", async (HttpContext httpContext) =>
 
 **Nota:** Questo è un esempio *concettuale* semplificato.  L'implementazione completa e robusta di un sistema di sessioni stateless basato su cookie e datastore esterno richiederebbe una configurazione più dettagliata, gestione degli errori, sicurezza e ottimizzazioni delle performance.  La Lezione 5 fornirà esempi più completi e funzionanti.
 
-### Vantaggi dei Cookie Stateless in Architetture Cloud (15 minuti)
+### Vantaggi dei Cookie Stateless in Architetture Cloud
 
 L'architettura cookie stateless con datastore esterno offre numerosi vantaggi in contesti cloud multi-server:
 

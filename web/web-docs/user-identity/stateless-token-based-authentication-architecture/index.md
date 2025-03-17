@@ -2,7 +2,7 @@
 
 Questa lezione approfondisce ulteriormente il tema dei token JWT, esaminando i vantaggi delle architetture stateless rese possibili dai JWT, il funzionamento dei refresh token opachi, il confronto del carico di lavoro con i cookie, la gestione dei ruoli utente e le strategie di logout, incluso l'utilizzo del Security Stamp in contesti ASP.NET Core Identity.
 
-## JWT e Architetture Stateless del Backend (30 minuti)
+## JWT e Architetture Stateless del Backend
 
 Uno dei principali vantaggi derivanti dall'adozione dei token JWT risiede nella possibilità di realizzare **backend stateless**, ovvero backend che non necessitano di memorizzare informazioni di sessione lato server per autenticare e autorizzare le richieste degli utenti. Questa caratteristica apporta notevoli benefici in termini di scalabilità, performance e resilienza, specialmente in architetture distribuite.
 
@@ -10,12 +10,12 @@ Uno dei principali vantaggi derivanti dall'adozione dei token JWT risiede nella 
 
 * **Backend Stateful (con sessioni basate su cookie tradizionali):** In un backend stateful, il server **memorizza attivamente** lo stato della sessione per ogni utente autenticato. Questo stato di sessione può essere memorizzato in memoria sul server (sessioni in-memory) o in un datastore esterno (es. database, cache distribuita).  Ad ogni richiesta autenticata, il server deve recuperare le informazioni di sessione per validare la richiesta e determinare l'identità e i permessi dell'utente.  Questa gestione dello stato lato server introduce complessità nella scalabilità e nella gestione di backend distribuiti.
 
-    [Image of Stateful Backend Architecture]
+    ![Image of Stateful Backend Architecture](stateful-backend.svg)
     *Schema di un'architettura backend stateful con gestione delle sessioni lato server. Ogni server deve avere accesso allo stato della sessione.*
 
 * **Backend Stateless (con JWT):** In un backend stateless che utilizza JWT, il server **non memorizza attivamente** informazioni di sessione lato server.  Tutte le informazioni necessarie per autenticare e autorizzare una richiesta sono contenute all'interno del JWT stesso (nelle claims e nella firma digitale). Ad ogni richiesta autenticata, il server riceve il JWT, lo valida (verificando la firma e la scadenza), estrae le claims e autorizza la richiesta **senza necessità di consultare un datastore per lo stato della sessione**.
 
-    [Image of Stateless Backend Architecture with JWT]
+    ![Image of Stateless Backend Architecture with JWT](stateless-backend.svg)
     *Schema di un'architettura backend stateless con autenticazione JWT. Il server non mantiene lo stato della sessione.*
 
 **Vantaggi del Backend Stateless (JWT):**
@@ -29,7 +29,7 @@ Uno dei principali vantaggi derivanti dall'adozione dei token JWT risiede nella 
 
 In architetture cloud moderne, è comune distribuire il backend su più server, spesso dietro un **reverse proxy** e/o un **load balancer**.  I JWT si integrano perfettamente con queste architetture distribuite e stateless.
 
-[Image of Distributed Backend Architecture with JWT and Load Balancer]
+![Image of Distributed Backend Architecture with JWT and Load Balancer](distributed-backend-jwt.svg)
 *Schema di un'architettura backend distribuita con JWT, Reverse Proxy e Load Balancer.*
 
 * **Reverse Proxy:** Il reverse proxy agisce come punto di ingresso unico per tutte le richieste esterne dirette al backend. Può svolgere diverse funzioni, tra cui:
@@ -52,10 +52,51 @@ Un **token opaco** è un token che non contiene informazioni utili o comprensibi
 
 Quando un'app mobile utilizza un refresh token opaco per richiedere un nuovo access token, il server di autenticazione **non può semplicemente decodificare il refresh token per validarlo**.  Invece, il server **deve consultare un datastore** (es. database, cache) per verificare se il refresh token opaco esiste, è valido, non è stato revocato ed è associato all'utente corretto.
 
-[Image of Refresh Token Opacity Workflow]
+![Image of Refresh Token Opacity Workflow](refresh-token-opacity.svg)
 *Diagramma del flusso di refresh token opaco. Il server consulta il datastore per validare il refresh token.*
 
 **Flusso di Refresh Token Grant con Refresh Token Opaco:**
+
+```mermaid
+sequenceDiagram
+    participant App as App Mobile
+    participant Auth as Server di Autenticazione
+    participant DB as Database/Datastore
+    
+    Note over App: Access token scaduto
+    
+    App->>Auth: 1. Richiesta con Refresh Token Opaco
+    
+    rect rgb(240, 240, 240)
+        Note right of Auth: 2. Validazione Refresh Token
+        Auth->>DB: Verifica esistenza token
+        Auth->>DB: Verifica scadenza token
+        Auth->>DB: Verifica stato revoca
+        Auth->>DB: Verifica associazione utente
+        DB-->>Auth: Conferma validità refresh token
+    end
+    
+    rect rgb(235, 255, 235)
+        Note right of Auth: 3. Generazione nuovi token
+        Auth->>Auth: Genera nuovo Access Token JWT
+        Auth->>Auth: Genera nuovo Refresh Token Opaco (opzionale)
+        
+        alt Rotazione Refresh Token
+            Auth->>DB: Memorizza nuovo Refresh Token
+            Auth->>DB: Revoca vecchio Refresh Token
+        end
+    end
+    
+    Auth-->>App: 4. Rilascio nuovi token (Access Token + Refresh Token opzionale)
+    
+    rect rgb(255, 240, 235)
+        Note left of App: 5. Aggiornamento Token
+        App->>App: Sostituisce Access Token scaduto
+        opt Se ricevuto nuovo Refresh Token
+            App->>App: Aggiorna Refresh Token memorizzato
+        end
+    end
+```
 
 1. **Richiesta di Refresh Token:** L'app mobile, con l'access token scaduto, invia una richiesta al server di autenticazione, includendo il **refresh token opaco**.
 2. **Validazione Refresh Token (Lato Server):** Il server di autenticazione riceve il refresh token opaco.  Il server **consulta il datastore** per cercare il refresh token opaco.  Il server verifica:
@@ -80,7 +121,7 @@ Quando un'app mobile utilizza un refresh token opaco per richiedere un nuovo acc
 
 Nonostante questi svantaggi, i benefici in termini di sicurezza e flessibilità offerti dai refresh token opachi li rendono la scelta preferita nella maggior parte delle implementazioni di autenticazione basata su token, specialmente per applicazioni mobile e API.
 
-### Confronto del Carico di Lavoro: Cookie vs JWT (15 minuti)
+### Confronto del Carico di Lavoro: Cookie vs JWT
 
 È utile confrontare il carico di lavoro sul server e sul database associato al riconoscimento dell'utente basato sui cookie (sessioni server-side) e quello basato sui token JWT.
 
@@ -175,7 +216,7 @@ app.MapGet("/risorsa-protetta-editor", [Authorize(Roles = "Editor,Administrator"
 * **Efficienza e Performance:** L'estrazione dei ruoli dal JWT è un'operazione rapida e computazionalmente leggera, migliorando le performance rispetto al recupero dei ruoli da sessioni server-side o database ad ogni richiesta.
 * **Decentralizzazione dell'Autorizzazione:** Le informazioni sull'autorizzazione (ruoli) sono contenute nel JWT, che può essere validato e utilizzato per l'autorizzazione da diversi server risorse (API) in un'architettura distribuita, senza necessità di un punto di autorizzazione centralizzato per ogni richiesta.
 
-### Gestione del Logout: Cookie vs JWT (25 minuti)
+### Gestione del Logout: Cookie vs JWT
 
 La gestione del **logout** (uscita dell'utente dall'applicazione) differisce in modo significativo tra gli approcci basati su cookie e JWT, riflettendo la diversa natura dei due meccanismi.
 

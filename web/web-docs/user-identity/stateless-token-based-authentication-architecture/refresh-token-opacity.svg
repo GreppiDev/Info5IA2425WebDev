@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+  <!-- Background -->
+  <rect width="800" height="500" fill="#f5f5f5" />
+  
+  <!-- Title -->
+  <text x="400" y="40" font-family="Arial" font-size="20" text-anchor="middle" fill="#333" font-weight="bold">Flusso di Refresh Token Opaco</text>
+  
+  <!-- Client -->
+  <rect x="50" y="100" width="120" height="80" rx="10" fill="#FFB6C1" stroke="#333" stroke-width="2" />
+  <text x="110" y="145" font-family="Arial" font-size="14" text-anchor="middle">Client</text>
+  
+  <!-- Auth Server -->
+  <rect x="350" y="100" width="120" height="80" rx="10" fill="#90EE90" stroke="#333" stroke-width="2" />
+  <text x="410" y="145" font-family="Arial" font-size="14" text-anchor="middle">Auth Server</text>
+  
+  <!-- Database -->
+  <rect x="650" y="100" width="120" height="80" rx="10" fill="#FFD700" stroke="#333" stroke-width="2" />
+  <text x="710" y="145" font-family="Arial" font-size="14" text-anchor="middle">Database</text>
+  
+  <!-- Arrows first (below everything) -->
+  <!-- Client to Auth Server -->
+  <line x1="170" y1="140" x2="350" y2="140" stroke="#333" stroke-width="2" />
+  <polygon points="350,140 340,135 340,145" fill="#333" />
+  
+  <!-- Auth Server to Database -->
+  <line x1="470" y1="120" x2="650" y2="120" stroke="#333" stroke-width="2" />
+  <polygon points="650,120 640,115 640,125" fill="#333" />
+  
+  <!-- Database to Auth Server -->
+  <line x1="650" y1="160" x2="470" y2="160" stroke="#333" stroke-width="2" />
+  <polygon points="470,160 480,155 480,165" fill="#333" />
+  
+  <!-- Auth Server to Client -->
+  <line x1="350" y1="160" x2="170" y2="160" stroke="#333" stroke-width="2" />
+  <polygon points="170,160 180,155 180,165" fill="#333" />
+  
+  <!-- Tokens -->
+  <rect x="130" y="220" width="100" height="50" rx="5" fill="#FFCC99" stroke="#FF6347" stroke-width="2" />
+  <text x="180" y="240" font-family="Arial" font-size="12" text-anchor="middle">Refresh Token</text>
+  <text x="180" y="260" font-family="Arial" font-size="12" text-anchor="middle">Opaco</text>
+  
+  <rect x="130" y="290" width="100" height="50" rx="5" fill="#ADD8E6" stroke="#0000FF" stroke-width="2" />
+  <text x="180" y="310" font-family="Arial" font-size="12" text-anchor="middle">Access Token</text>
+  <text x="180" y="330" font-family="Arial" font-size="12" text-anchor="middle">JWT</text>
+  
+  <!-- Labels on the side of arrows -->
+  <text x="260" y="120" font-family="Arial" font-size="12" text-anchor="middle">1. Richiesta con</text>
+  <text x="260" y="135" font-family="Arial" font-size="12" text-anchor="middle">Refresh Token</text>
+  
+  <text x="560" y="100" font-family="Arial" font-size="12" text-anchor="middle">2. Verifica</text>
+  <text x="560" y="115" font-family="Arial" font-size="12" text-anchor="middle">Refresh Token</text>
+  
+  <text x="560" y="185" font-family="Arial" font-size="12" text-anchor="middle">3. Conferma</text>
+  <text x="560" y="200" font-family="Arial" font-size="12" text-anchor="middle">validità</text>
+  
+  <text x="260" y="185" font-family="Arial" font-size="12" text-anchor="middle">4. Nuovo Access</text>
+  <text x="260" y="200" font-family="Arial" font-size="12" text-anchor="middle">Token JWT</text>
+  
+  <!-- Explanations -->
+  <rect x="100" y="370" width="600" height="110" rx="5" fill="#FFFFFF" stroke="#333" stroke-width="1" />
+  <text x="120" y="395" font-family="Arial" font-size="14" fill="#333" font-weight="bold">Caratteristiche del Refresh Token Opaco:</text>
+  <text x="120" y="425" font-family="Arial" font-size="12" fill="#333">• Stringa casuale e univoca, senza una struttura interna significativa</text>
+  <text x="120" y="450" font-family="Arial" font-size="12" fill="#333">• Archiviato nel database del server di autenticazione</text>
+  <text x="120" y="475" font-family="Arial" font-size="12" fill="#333">• Revocabile, a differenza dei JWT che sono validi fino alla scadenza</text>
+  
+  <!-- Token descriptions with taller boxes -->
+  <rect x="400" y="220" width="300" height="70" rx="5" fill="#FFFFFF" stroke="#333" stroke-width="1" />
+  <text x="420" y="245" font-family="Arial" font-size="12" fill="#333">Refresh Token: "a9b8c7d6e5f4g3h2i1j0k"</text>
+  <text x="420" y="270" font-family="Arial" font-size="12" fill="#333">Non contiene informazioni decodificabili</text>
+  
+  <rect x="400" y="300" width="300" height="70" rx="5" fill="#FFFFFF" stroke="#333" stroke-width="1" />
+  <text x="420" y="325" font-family="Arial" font-size="12" fill="#333">Access Token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."</text>
+  <text x="420" y="350" font-family="Arial" font-size="12" fill="#333">Contiene claims e firma verificabile</text>
+</svg>
