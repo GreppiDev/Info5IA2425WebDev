@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang='it'>
+
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Cookie Authentication Demo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f7f9fc;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .login-container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header h1 {
+            color: #3498db;
+            margin: 0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+
+        .form-group .hint {
+            font-size: 12px;
+            margin-top: 8px;
+            color: #666;
+        }
+
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #2980b9;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            background-color: #fde8e6;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success-message {
+            color: #27ae60;
+            background-color: #e6fde8;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .user-options {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+
+        .user-option {
+            padding: 10px;
+            background-color: #f1f1f1;
+            border-radius: 5px;
+            cursor: pointer;
+            flex: 1;
+            margin: 0 5px;
+            text-align: center;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .user-option:hover {
+            background-color: #e0e0e0;
+        }
+
+        .action-buttons {
+            margin-top: 20px;
+        }
+
+        .action-buttons .btn {
+            margin-bottom: 10px;
+        }
+
+        .profile-info {
+            margin-top: 20px;
+            background-color: #f1f1f1;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class='login-container'>
+        <div class='login-header'>
+            <h1>Login</h1>
+            <p>Accedi con Cookie Authentication</p>
+            <p id="redirectMessage" style='color: #666; font-size: 14px; display: none;'>Dopo il login verrai
+                reindirizzato alla pagina richiesta</p>
+        </div>
+
+        <div id='errorMessage' class='error-message'></div>
+        <div id='successMessage' class='success-message'></div>
+
+        <form id='loginForm' onsubmit='return false;'>
+            <div class='form-group'>
+                <label for='username'>Username</label>
+                <input type='text' id='username' name='username' required>
+                <div class='hint'>Prova con 'user', 'poweruser' o 'admin'</div>
+            </div>
+
+            <div class='form-group'>
+                <label for='password'>Password</label>
+                <input type='password' id='password' name='password' required>
+                <div class='hint'>Password: 'pass' per user, 'powerpass' per poweruser, 'adminpass' per admin</div>
+            </div>
+
+            <input type='hidden' id='returnUrl' value=''>
+            <button type='button' class='btn' onclick='login()'>Login</button>
+        </form>
+
+        <div class='user-options'>
+            <div class='user-option' onclick="fillForm('user', 'pass')">
+                Utente Standard
+            </div>
+            <div class='user-option' onclick="fillForm('poweruser', 'powerpass')">
+                Power User
+            </div>
+            <div class='user-option' onclick="fillForm('admin', 'adminpass')">
+                Amministratore
+            </div>
+        </div>
+
+        <div id='actionButtons' class='action-buttons' style='display: none;'>
+            <button class='btn' onclick='testProfile()'>Accedi al Profilo</button>
+            <button class='btn' style='background-color: #2ecc71;' onclick='testPowerArea()'>Area Power</button>
+            <button class='btn' style='background-color: #e74c3c;' onclick='testAdminArea()'>Area Admin</button>
+            <button class='btn' style='background-color: #9b59b6;' onclick='testSuperArea()'>Area Super Admin</button>
+            <button class='btn' style='background-color: #f39c12;' onclick='checkRoles()'>Verifica Ruoli</button>
+            <button class='btn' style='background-color: #34495e;' onclick='logout()'>Logout</button>
+        </div>
+
+        <div id='profileInfo' class='profile-info'></div>
+    </div>
+
+    <script>
+        // Get return URL from query parameters
+        function getReturnUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('returnUrl') || '';
+        }
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function () {
+            const returnUrl = getReturnUrl();
+            document.getElementById('returnUrl').value = returnUrl;
+
+            // Show redirect message if returnUrl exists
+            if (returnUrl) {
+                document.getElementById('redirectMessage').style.display = 'block';
+            }
+
+            // Check if already authenticated
+            fetch('/my-roles', {
+                method: 'GET',
+                credentials: 'include'
+            }).then(response => {
+                if (response.ok) {
+                    // User is already authenticated, show action buttons
+                    document.getElementById('actionButtons').style.display = 'block';
+
+                    // If there's a returnUrl, offer to redirect right away with the actual URL shown
+                    if (returnUrl) {
+                        const decodedUrl = decodeURIComponent(returnUrl);
+                        const message = `Sei già autenticato. Vuoi accedere a: ${decodedUrl}?`;
+
+                        if (confirm(message)) {
+                            window.location.href = decodedUrl;
+                        } else {
+                            // User declined, remove the returnUrl from the browser's address bar
+                            const cleanUrl = window.location.pathname;
+                            window.history.replaceState({}, document.title, cleanUrl);
+                            // Also clear the hidden input field
+                            document.getElementById('returnUrl').value = '';
+                        }
+                    }
+                }
+            }).catch(() => {
+                // Not authenticated, show login form (already visible)
+            });
+        });
+
+        function fillForm(username, password) {
+            document.getElementById('username').value = username;
+            document.getElementById('password').value = password;
+        }
+
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const returnUrl = document.getElementById('returnUrl').value;
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+
+            if (!username || !password) {
+                showError('Inserisci username e password');
+                return;
+            }
+
+            try {
+                const loginUrl = returnUrl ? `/login?returnUrl=${encodeURIComponent(returnUrl)}` : '/login';
+
+                const response = await fetch(loginUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'text/html,application/json'
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    }),
+                    credentials: 'include',
+                    redirect: 'follow'
+                });
+
+                if (response.redirected) {
+                    window.location.href = response.url;
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error('Credenziali non valide');
+                }
+
+                const data = await response.text();
+                showSuccess(data);
+                document.getElementById('actionButtons').style.display = 'block';
+                errorMessage.style.display = 'none';
+
+                if (returnUrl) {
+                    setTimeout(() => {
+                        window.location.href = decodeURIComponent(returnUrl);
+                    }, 1000);
+                }
+            } catch (error) {
+                showError(error.message);
+                document.getElementById('actionButtons').style.display = 'none';
+                successMessage.style.display = 'none';
+            }
+        }
+
+        function showError(message) {
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            document.getElementById('profileInfo').style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            const successMessage = document.getElementById('successMessage');
+            successMessage.textContent = message;
+            successMessage.style.display = 'block';
+        }
+
+        async function testProfile() {
+            try {
+                const response = await fetch('/profile', {
+                    method: 'GET',
+                    credentials: 'include' // Importante per i cookie
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        throw new Error('Non sei autenticato. Effettua il login.');
+                    } else {
+                        throw new Error('Errore nell\'accesso al profilo');
+                    }
+                }
+
+                const data = await response.text();
+                showProfileInfo(data);
+
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        async function testAdminArea() {
+            try {
+                const response = await fetch('/admin-area', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    if (response.status === 403) {
+                        throw new Error('Non hai i permessi per accedere all\'area amministrativa');
+                    } else if (response.status === 401) {
+                        throw new Error('Non sei autenticato. Effettua il login.');
+                    } else {
+                        throw new Error('Errore nell\'accesso all\'area admin');
+                    }
+                }
+
+                const data = await response.text();
+                showProfileInfo(data);
+
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        async function testPowerArea() {
+            try {
+                const response = await fetch('/power-area', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    if (response.status === 403) {
+                        throw new Error('Non hai i permessi per accedere all\'area power');
+                    } else if (response.status === 401) {
+                        throw new Error('Non sei autenticato. Effettua il login.');
+                    } else {
+                        throw new Error('Errore nell\'accesso all\'area power');
+                    }
+                }
+
+                const data = await response.text();
+                showProfileInfo(data);
+
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        async function testSuperArea() {
+            try {
+                const response = await fetch('/super-area', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    if (response.status === 403) {
+                        throw new Error('Non hai i permessi per accedere all\'area super admin');
+                    } else if (response.status === 401) {
+                        throw new Error('Non sei autenticato. Effettua il login.');
+                    } else {
+                        throw new Error('Errore nell\'accesso all\'area super admin');
+                    }
+                }
+
+                const data = await response.text();
+                showProfileInfo(data);
+
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        async function checkRoles() {
+            try {
+                const response = await fetch('/my-roles', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        throw new Error('Non sei autenticato. Effettua il login.');
+                    } else {
+                        throw new Error('Errore nel recupero dei ruoli');
+                    }
+                }
+
+                const data = await response.json();
+                const profileInfo = document.getElementById('profileInfo');
+                profileInfo.innerHTML = `
+                    <h3>Informazioni Utente:</h3>
+                    <p><strong>Username:</strong> ${data.username}</p>
+                    <p><strong>Ruoli:</strong> ${data.roles.join(', ')}</p>
+                    <p><strong>È Admin:</strong> ${data.isAdmin ? 'Sì' : 'No'}</p>
+                    <p><strong>È Power User:</strong> ${data.isPowerUser ? 'Sì' : 'No'}</p>
+                    <p><strong>È User:</strong> ${data.isUser ? 'Sì' : 'No'}</p>
+                    <p><strong>Ha tutti i ruoli:</strong> ${data.hasAllRoles ? 'Sì' : 'No'}</p>
+                `;
+                profileInfo.style.display = 'block';
+
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        async function logout() {
+            try {
+                const response = await fetch('/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Errore durante il logout');
+                }
+
+                showSuccess('Logout effettuato con successo');
+                document.getElementById('actionButtons').style.display = 'none';
+                document.getElementById('profileInfo').style.display = 'none';
+
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        function showProfileInfo(info) {
+            const profileInfo = document.getElementById('profileInfo');
+            profileInfo.textContent = info;
+            profileInfo.style.display = 'block';
+        }
+    </script>
+</body>
+
+</html>

@@ -184,13 +184,9 @@ In sintesi, il middleware di autorizzazione intercetta le richieste dopo l'auten
 
 Nell'esempio [Cookie Based Login](../../../../asp.net/api-samples/minimal-api/AuthenticationAuthorizationDemos/BasicExamples/cookie-based-login/) viene mostrato un progetto di Minimal API .NET che implementa uno schema di autenticazione e autorizzazione basato su cookie.
 
-La documentazione di questo esempio è riportata in [questa pagina](../../../../asp.net/api-samples/minimal-api/AuthenticationAuthorizationDemos/BasicExamples/cookie-based-login/docs/index.md).
-
 ## Un esempio completo di autenticazione basata su cookie e gestione dei ruoli con Minimal API
 
 Nell'esempio [Cookie Based Login With Roles](../../../../asp.net/api-samples/minimal-api/AuthenticationAuthorizationDemos/BasicExamples/cookie-based-login-with-roles/) viene mostrato un progetto di Minimal API .NET che implementa uno schema di autenticazione e autorizzazione basato su cookie con anche la gestione dei ruoli.
-
-La documentazione di questo esempio è riportata in [questa pagina](../../../../asp.net/api-samples/minimal-api/AuthenticationAuthorizationDemos/BasicExamples/cookie-based-login-with-roles/docs/index.md).
 
 ## Conclusioni
 

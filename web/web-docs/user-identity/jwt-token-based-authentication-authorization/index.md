@@ -370,6 +370,7 @@ app.MapGet("/protected", (HttpContext context) =>
 app.MapGet("/user-info", (HttpContext context) =>
 {
     // Recupera i dettagli dell'utente dalle claims
+    var isAuthenticated = context.User?.Identity?.IsAuthenticated;
     var username = context.User?.Identity?.Name;
     var userId = context.User?.FindFirstValue(ClaimTypes.NameIdentifier);
     var email = context.User?.FindFirstValue(ClaimTypes.Email);
@@ -384,6 +385,7 @@ app.MapGet("/user-info", (HttpContext context) =>
 
     return Results.Ok(new
     {
+        isAuthenticated,
         userId,
         username,
         email,
@@ -527,7 +529,7 @@ app.Run();
 
 **Validazione JWT (Middleware di autenticazione JWT Bearer in ASP.NET Core):**
 
-La validazione dei JWT in ASP.NET Core è gestita automaticamente dal middleware di autenticazione JWT Bearer, configurato nel metodo `AddJwtBearer` in `Startup.cs` o `Program.cs` come mostrato nell'esempio precedente.  Il middleware intercetta le richieste HTTP in ingresso, estrae il JWT dall'header di autorizzazione (Bearer token), lo valida utilizzando le `TokenValidationParameters` configurate e, se valido, autentica l'utente.
+La validazione dei JWT in ASP.NET Core è gestita automaticamente dal middleware di autenticazione JWT Bearer, configurato nel metodo `AddJwtBearer` in `Program.cs` come mostrato nell'esempio precedente.  Il middleware intercetta le richieste HTTP in ingresso, estrae il JWT dall'header di autorizzazione (Bearer token), lo valida utilizzando le `TokenValidationParameters` configurate e, se valido, autentica l'utente.
 
 **Configurazione (Estratto da `appsettings.json`):**
 
@@ -543,9 +545,7 @@ La validazione dei JWT in ASP.NET Core è gestita automaticamente dal middleware
 
 ## Un esempio completo di autenticazione basata su token JWT con Minimal API
 
-Nell'esempio [Token Based Login](../../../../asp.net/api-samples/minimal-api/AuthenticationAuthorizationDemos/BasicExamples/token-based-login/BasicTokenDemo/) viene mostrato un progetto di Minimal API .NET che implementa uno schema di autenticazione e autorizzazione basato token JWT.
-
-La documentazione di questo esempio è riportata in [questa pagina](../../../../asp.net/api-samples/minimal-api/AuthenticationAuthorizationDemos/BasicExamples/token-based-login/docs/index.md).
+Nell'esempio [Token Based Login](../../../../asp.net/api-samples/minimal-api/AuthenticationAuthorizationDemos/BasicExamples/token-based-login-with-roles/BasicTokenDemo/) viene mostrato un progetto di Minimal API .NET che implementa uno schema di autenticazione e autorizzazione basato token JWT.
 
 **Esercitazione:** Eseguire l'esempio di codice Minimal API.  Utilizzare un client HTTP (es. Postman, Insomnia) per inviare una richiesta POST a `/login`.  La risposta conterrà un JWT.  Utilizzare lo stesso client HTTP per inviare una richiesta GET a `/protected`, includendo il JWT nell'header di autorizzazione (Bearer token). Verificare che la richiesta a `/protected` abbia successo solo se si include un JWT valido nell'header di autorizzazione.  Modificare il JWT (es. alterando la firma) o utilizzare un JWT scaduto e verificare che la richiesta a `/protected` venga rifiutata con errore di autenticazione.  Analizzare la struttura del JWT decodificandolo (es. utilizzando siti web come [https://jwt.io](https://jwt.io)).
 

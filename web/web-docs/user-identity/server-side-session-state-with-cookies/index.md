@@ -133,8 +133,6 @@ In architetture distribuite con un database condiviso, il modo più efficiente e
 
 Nell'esempio [Cookie and Server Sessions](../../../../asp.net/api-samples/minimal-api/AuthenticationAuthorizationDemos/BasicExamples/cookie-and-server-sessions/BasicCookieDemo/) viene mostrato un progetto di Minimal API .NET che implementa uno schema di autenticazione e autorizzazione basato su cookie con in aggiunta un meccanismo di sessioni lato server per simulare un carrello degli acquisti.
 
-La documentazione di questo esempio è riportata in [questa pagina](../../../../asp.net/api-samples/minimal-api/AuthenticationAuthorizationDemos/BasicExamples/cookie-and-server-sessions/docs/index.md).
-
 ## Riferimenti Utili
 
 * [Session State in ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/app-state)

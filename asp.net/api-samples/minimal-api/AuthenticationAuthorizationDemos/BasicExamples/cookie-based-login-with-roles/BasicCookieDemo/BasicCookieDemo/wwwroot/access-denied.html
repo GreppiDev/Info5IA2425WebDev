@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accesso Negato</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding-top: 50px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .error {
+            color: #d9534f;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 10px;
+            background-color: #337ab7;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #2e6da4;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1 class="error">Accesso Negato</h1>
+        <p id="userMessage">Ci dispiace, ma non hai i permessi necessari per accedere a questa risorsa.</p>
+
+        <!-- Resource message -->
+        <p id="resourceMessage" style="display: none; color: #e74c3c; margin: 20px 0;"></p>
+
+        <!-- Debug info - hidden by default -->
+        <div id="debugInfo"
+            style="margin: 20px 0; font-size: 12px; text-align: left; background-color: #f8f9fa; padding: 10px; border-radius: 4px; display: none;">
+            <p><strong>Debug Info:</strong></p>
+            <div id="queryString"></div>
+            <div id="decodedUrl"></div>
+        </div>
+
+        <div>
+            <a href="/" class="btn">Torna alla Home</a>
+            <a href="/login-page.html" id="loginLink" class="btn">Accedi con altro account</a>
+            <a href="#" id="logoutBtn" class="btn" style="background-color: #d9534f;"
+                onclick="handleLogoutWithReturnUrl()">Logout</a>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Try to get the username
+            getUsernameAsync()
+                .then(username => {
+                    // Update the message with the username or default
+                    const usernameDisplay = username || "Utente";
+                    document.getElementById('userMessage').textContent =
+                        `Ci dispiace, ${usernameDisplay}, ma non hai i permessi necessari per accedere a questa risorsa.`;
+                })
+                .catch(() => {
+                    console.log("Non è stato possibile recuperare il nome utente.");
+                });
+
+            // Get the raw URL search string and log it
+            const searchStr = window.location.search;
+            console.log("Raw search string:", searchStr);
+
+            // Controlla se esiste l'elemento prima di aggiornarlo
+            const queryStringElement = document.getElementById('queryString');
+            if (queryStringElement) {
+                queryStringElement.textContent = `Query String: ${searchStr}`;
+            }
+
+            // Parse the URL parameters
+            const urlParams = new URLSearchParams(searchStr);
+
+            // Get returnUrl and log it
+            const returnUrl = urlParams.get('returnUrl');
+            console.log("returnUrl parameter:", returnUrl);
+
+            // Try both encoded and decoded versions of the URL
+            if (returnUrl) {
+                try {
+                    const decodedUrl = decodeURIComponent(returnUrl);
+                    console.log("Decoded URL:", decodedUrl);
+
+                    // Update debug info if debug element exists
+                    const decodedUrlElement = document.getElementById('decodedUrl');
+                    if (decodedUrlElement) {
+                        decodedUrlElement.textContent = `Decoded URL: ${decodedUrl}`;
+                    }
+
+                    // Update the resource message
+                    const resourceMessage = document.getElementById('resourceMessage');
+                    resourceMessage.textContent = `Hai tentato di accedere a: ${decodedUrl}`;
+                    resourceMessage.style.display = 'block';
+
+                    // Update login link with proper encoding
+                    const loginLink = document.getElementById('loginLink');
+                    if (loginLink) {
+                        loginLink.href = `/login-page.html?returnUrl=${encodeURIComponent(returnUrl)}`;
+                    }
+                } catch (error) {
+                    console.error("Error processing returnUrl:", error);
+                    document.getElementById('resourceMessage').textContent =
+                        `Errore nel processare l'URL: ${error.message}`;
+                    document.getElementById('resourceMessage').style.display = 'block';
+                }
+            } else {
+                console.warn("No returnUrl found in query parameters");
+                document.getElementById('resourceMessage').textContent =
+                    "Nessuna informazione sulla risorsa richiesta disponibile";
+                document.getElementById('resourceMessage').style.display = 'block';
+
+                // Update debug info if debug element exists
+                const decodedUrlElement = document.getElementById('decodedUrl');
+                if (decodedUrlElement) {
+                    decodedUrlElement.textContent = "Decoded URL: none";
+                }
+            }
+        });
+
+        // Function that fetches the current user's information if logged in
+        async function getUsernameAsync() {
+            try {
+                const response = await fetch('/my-roles', {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const userData = await response.json();
+                    return userData.username;
+                }
+                return null;
+            } catch (error) {
+                console.error("Error fetching username:", error);
+                return null;
+            }
+        }
+
+        // Handle logout with returnUrl preservation
+        async function handleLogoutWithReturnUrl() {
+            const returnUrl = new URLSearchParams(window.location.search).get('returnUrl');
+            try {
+                const response = await fetch('/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                // Redirect to login page with returnUrl if available
+                setTimeout(() => {
+                    const redirectUrl = returnUrl
+                        ? `/login-page.html?returnUrl=${encodeURIComponent(returnUrl)}`
+                        : '/login-page.html';
+                    window.location.href = redirectUrl;
+                }, 500);
+            } catch (error) {
+                console.error("Logout failed:", error);
+                alert("Errore durante il logout. Per favore riprova.");
+            }
+        }
+    </script>
+</body>
+
+</html>

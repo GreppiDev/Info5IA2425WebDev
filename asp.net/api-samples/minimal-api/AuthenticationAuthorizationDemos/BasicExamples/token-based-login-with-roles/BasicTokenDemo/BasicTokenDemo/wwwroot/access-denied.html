@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accesso Negato - JWT Authentication Demo</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        /* Stili specifici per la pagina di accesso negato, che estendono quelli base */
+        .login-container {
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .login-header h1 {
+            color: #e74c3c;
+        }
+
+        .error-icon {
+            font-size: 80px;
+            color: #e74c3c;
+            margin-bottom: 20px;
+        }
+
+        .error-message {
+            display: block;
+            color: #555;
+            background-color: transparent;
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .details {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            text-align: left;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .details h3 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        .details ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .details li {
+            margin-bottom: 8px;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .home-link {
+            background-color: #333;
+            color: white;
+        }
+
+        .home-link:hover {
+            background-color: #555;
+        }
+
+        /* Stile per centrare il testo nei bottoni */
+        .btn {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <div class="error-icon">&#x26D4;</div>
+            <h1>Accesso Negato</h1>
+        </div>
+
+        <div class="error-message">
+            <p>Non hai i permessi necessari per accedere a questa risorsa.</p>
+            <p>Verifica di aver effettuato l'accesso con un account che dispone dei diritti appropriati.</p>
+        </div>
+
+        <div class="button-container">
+            <a href="/login-page.html" class="btn">Torna al Login</a>
+            <a href="/index.html" class="btn home-link">Home</a>
+        </div>
+
+        <div class="details">
+            <h3>Informazioni aggiuntive</h3>
+            <ul>
+                <li>Questa pagina viene mostrata quando tenti di accedere a un'area protetta senza i permessi necessari.
+                </li>
+                <li>Se ritieni che questo sia un errore, contatta l'amministratore del sistema.</li>
+                <li>Codice di stato HTTP: 403 Forbidden</li>
+            </ul>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang='it'>
+
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>JWT Authentication Demo</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        .api-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .success-message {
+            color: #27ae60;
+            background-color: #e8f5e9;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .token-updated {
+            background-color: #fffde7;
+            border-left: 4px solid #f39c12;
+            padding: 8px;
+            margin-top: 5px;
+            font-size: 12px;
+            display: none;
+        }
+
+        /* Rimuoviamo lo stile per il posizionamento assoluto del pulsante Home */
+        .home-link {
+            background-color: #333;
+            color: white;
+        }
+
+        .home-link:hover {
+            background-color: #555;
+        }
+
+        /* Aggiungiamo una navbar basica per il tasto home */
+        .navbar {
+            display: flex;
+            justify-content: flex-end;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* Stile per centrare il testo nei bottoni */
+        .btn {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class='login-container'>
+        <!-- Aggiungiamo una barra di navigazione in alto -->
+        <div class="navbar">
+            <a href="/index.html" class='btn home-link'>Home</a>
+        </div>
+
+        <div class='login-header'>
+            <h1>Login</h1>
+            <p>Accedi per ottenere il token JWT</p>
+        </div>
+
+        <div id='errorMessage' class='error-message'></div>
+        <div id='successMessage' class='success-message'></div>
+
+        <form id='loginForm' onsubmit='return false;'>
+            <div class='form-group'>
+                <label for='username'>Username</label>
+                <input type='text' id='username' name='username' required>
+                <div class='hint'>Prova con 'user' o 'admin'</div>
+            </div>
+
+            <div class='form-group'>
+                <label for='password'>Password</label>
+                <input type='password' id='password' name='password' required>
+                <div class='hint'>Password: 'pass' per user, 'Admin123!' per admin</div>
+            </div>
+
+            <button type='button' class='btn' onclick='login()'>Login</button>
+        </form>
+
+        <div class='user-options'>
+            <div class='user-option' onclick="fillForm('user', 'pass' )">
+                Utente Standard
+            </div>
+            <div class='user-option' onclick="fillForm('admin', 'Admin123!' )">
+                Amministratore
+            </div>
+        </div>
+
+        <div id='tokenDisplay' class='token-display'>
+            <h3>Token ottenuto:</h3>
+            <pre id='accessToken'></pre>
+            <div id="accessTokenUpdated" class="token-updated">Access Token aggiornato!</div>
+
+            <h3>Refresh Token:</h3>
+            <pre id='refreshToken'></pre>
+            <div id="refreshTokenUpdated" class="token-updated">Refresh Token aggiornato!</div>
+
+            <div class="api-buttons">
+                <h3>Test API:</h3>
+                <button class='btn' onclick='testProtectedEndpoint()'>Testa API protetta</button>
+                <button class='btn' style='background-color: #27ae60;' onclick='testAdminEndpoint()'>Testa API
+                    amministrativa</button>
+                <button class='btn' style='background-color: #9b59b6;' onclick='getUserInfo()'>Recupera Info
+                    Utente</button>
+                <button class='btn' style='background-color: #f39c12;' onclick='refreshToken()'>Rinnova Token</button>
+                <button class='btn' style='background-color: #e74c3c;' onclick='logout()'>Logout</button>
+            </div>
+
+            <div id='responseDisplay' class='response-display' style='display: none;'>
+                <h3>Risposta API:</h3>
+                <pre id='responseContent'></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentToken = null;
+        let currentRefreshToken = null;
+
+        function fillForm(username, password) {
+            document.getElementById('username').value = username;
+            document.getElementById('password').value = password;
+        }
+
+        function showError(message) {
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            const successMessage = document.getElementById('successMessage');
+            successMessage.textContent = message;
+            successMessage.style.display = 'block';
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        function displayResponse(data) {
+            const responseDisplay = document.getElementById('responseDisplay');
+            const responseContent = document.getElementById('responseContent');
+            responseContent.textContent = JSON.stringify(data, null, 2);
+            responseDisplay.style.display = 'block';
+        }
+
+        function showTokenUpdated(tokenType) {
+            const element = document.getElementById(tokenType + 'Updated');
+            element.style.display = 'block';
+
+            // Nascondi il messaggio dopo 3 secondi
+            setTimeout(() => {
+                element.style.display = 'none';
+            }, 3000);
+        }
+
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (!username || !password) {
+                showError('Inserisci username e password');
+                return;
+            }
+
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Credenziali non valide');
+                }
+
+                const data = await response.json();
+                currentToken = data.accessToken;
+                currentRefreshToken = data.refreshToken;
+
+                document.getElementById('accessToken').textContent = data.accessToken;
+                document.getElementById('refreshToken').textContent = data.refreshToken;
+                document.getElementById('tokenDisplay').style.display = 'block';
+
+                // Mostra messaggio di successo
+                showSuccess('Login effettuato con successo!');
+
+                // Nascondi eventuali risposte precedenti
+                document.getElementById('responseDisplay').style.display = 'none';
+
+                // Nascondi eventuali indicatori di aggiornamento token
+                document.getElementById('accessTokenUpdated').style.display = 'none';
+                document.getElementById('refreshTokenUpdated').style.display = 'none';
+
+            } catch (error) {
+                showError(error.message);
+                document.getElementById('tokenDisplay').style.display = 'none';
+            }
+        }
+
+        async function testProtectedEndpoint() {
+            if (!currentToken) {
+                showError('Login necessario prima di testare gli endpoint protetti');
+                return;
+            }
+
+            try {
+                const response = await fetch('/protected', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`,
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Accesso negato all\'endpoint protetto');
+                }
+
+                const data = await response.json();
+                displayResponse(data);
+
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        async function testAdminEndpoint() {
+            if (!currentToken) {
+                showError('Login necessario prima di testare gli endpoint protetti');
+                return;
+            }
+
+            try {
+                const response = await fetch('/admin', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`,
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 403) {
+                        throw new Error('Non hai i permessi per accedere all\'area amministrativa');
+                    } else {
+                        throw new Error('Errore di accesso all\'endpoint amministrativo');
+                    }
+                }
+
+                const data = await response.json();
+                displayResponse(data);
+
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        async function getUserInfo() {
+            if (!currentToken) {
+                showError('Login necessario prima di recuperare le informazioni dell\'utente');
+                return;
+            }
+
+            try {
+                const response = await fetch('/user-info', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`,
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Impossibile recuperare le informazioni dell\'utente');
+                }
+
+                const data = await response.json();
+                displayResponse(data);
+
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        async function refreshToken() {
+            if (!currentRefreshToken) {
+                showError('Nessun refresh token disponibile');
+                return;
+            }
+
+            try {
+                const response = await fetch('/refresh', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        refreshToken: currentRefreshToken
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Impossibile rinnovare il token');
+                }
+
+                const data = await response.json();
+
+                // Salva i vecchi token per confronto
+                const oldAccessToken = currentToken;
+                const oldRefreshToken = currentRefreshToken;
+
+                // Aggiorna i token correnti
+                currentToken = data.accessToken;
+                currentRefreshToken = data.refreshToken;
+
+                // Aggiorna la visualizzazione
+                document.getElementById('accessToken').textContent = data.accessToken;
+                document.getElementById('refreshToken').textContent = data.refreshToken;
+
+                // Mostra indicatori di aggiornamento se i token sono cambiati
+                if (oldAccessToken !== currentToken) {
+                    showTokenUpdated('access');
+                }
+
+                if (oldRefreshToken !== currentRefreshToken) {
+                    showTokenUpdated('refresh');
+                }
+
+                showSuccess('Token rinnovato con successo');
+
+                displayResponse({
+                    message: 'Token rinnovato con successo',
+                    accessTokenUpdated: oldAccessToken !== currentToken,
+                    refreshTokenUpdated: oldRefreshToken !== currentRefreshToken
+                });
+
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        async function logout() {
+            if (!currentToken || !currentRefreshToken) {
+                showError('Nessuna sessione attiva da chiudere');
+                return;
+            }
+
+            try {
+                const response = await fetch('/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        refreshToken: currentRefreshToken
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Errore durante il logout');
+                }
+
+                const data = await response.json();
+
+                // Resetta i token
+                currentToken = null;
+                currentRefreshToken = null;
+
+                // Nascondi la sezione token
+                document.getElementById('tokenDisplay').style.display = 'none';
+
+                // Mostra messaggio di conferma come successo, non come errore
+                showSuccess('Logout effettuato con successo');
+
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -25,7 +25,6 @@
     7. [Minimal API: Response Types, Service Lifetimes](asp.net/api-docs/minimal-api/configure-api-p4/index.md)
     8. [Minimal API: Validazione dell'input](asp.net/api-docs/minimal-api/configure-api-p5/index.md)
     9. [Minimal API: Meccanismi di protezione contro attacchi CSRF](asp.net/api-docs/minimal-api/configure-api-p6/index.md)
-    10. [Minimal API: Aspetti di sicurezza - Authentication e Authorization](asp.net/api-docs/minimal-api/configure-api-p7/index.md)
 
 4. Web Architecture
    1. [Web mechanics](./web/web-docs/web-mechanics/index.md)
@@ -49,6 +48,6 @@
    2. [Cookie Based Authentication and Authorization](./web/web-docs/user-identity/cookie-based-authentication-authorization/index.md)
    3. [Pericoli e Vulnerabilità dei Cookie](./web/web-docs/user-identity/cookie-security-issues/index.md)
    4. [Server Side Sessions in ASP.NET Core Minimal APIs](./web/web-docs/user-identity/server-side-session-state-with-cookies/index.md)
-   5. [JWT Token Based Authentication and Authorization](./web/web-docs/user-identity/jwt-token-based-auhentication-authorization/index.md)
+   5. [JWT Token Based Authentication and Authorization](./web/web-docs/user-identity/jwt-token-based-authentication-authorization/index.md)
    6. [Analisi dei token JWT in Architetture Stateless](./web/web-docs/user-identity/stateless-token-based-authentication-architecture/index.md)
    7. [Cookie Stateless in Architetture Distribuite](./web/web-docs/user-identity/stateless-cookie-in-distributed-architecture/index.md)

@@ -1,24 +1,22 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Mvc; //aggiunge il supporto per l'autenticazione tramite cookie
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using BasicCookieDemo.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
-//aggiunge il servizio che permette ad OpenAPI di leggere i metadati delle API
 builder.Services.AddEndpointsApiExplorer();
-//configura il servizio OpenAPI
 builder.Services.AddOpenApiDocument(config =>
-    {
-        config.Title = "Basic Cookie v1";
-        config.DocumentName = "Basic Cookie API";
-        config.Version = "v1";
-    }
-);
-
+{
+    config.Title = "Basic Cookie v1";
+    config.DocumentName = "Basic Cookie API";
+    config.Version = "v1";
+});
 
 // Configurazione dell'autenticazione con cookie usando lo schema predefinito
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -26,126 +24,95 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     {
         options.Cookie.Name = ".AspNetCore.Authentication"; // Nome standard non predittivo
         options.Cookie.HttpOnly = true; // Protegge il cookie da accessi via JavaScript
-        options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Solo su HTTPS
-        options.Cookie.SameSite = SameSiteMode.Strict; // Previene CSRF
-        options.LoginPath = "/login"; // Percorso per il login
-        options.AccessDeniedPath = "/access-denied"; // Percorso per l'accesso negato
 
-        // Content-type based redirect handling
+        // In sviluppo, permetti cookie su HTTP per semplificare il testing
+        options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+            ? CookieSecurePolicy.None
+            : CookieSecurePolicy.Always;
+
+        // SameSite meno restrittivo in sviluppo per facilitare il testing
+        options.Cookie.SameSite = builder.Environment.IsDevelopment()
+            ? SameSiteMode.Lax
+            : SameSiteMode.Strict;
+
+        options.LoginPath = "/login-page.html";
+        options.AccessDeniedPath = "/access-denied.html";
+
         options.Events = new CookieAuthenticationEvents
         {
             OnRedirectToLogin = context =>
             {
-                // Check if this is an API request based on Accept header or Content-Type
-                bool isApiRequest = context.Request.Headers.Accept.Any(h => h != null &&
-                    (h.Contains("application/json") || h.Contains("application/xml")));
-
-                // Also check if the Accept header DOESN'T contain "text/html" - typical for API clients
-                isApiRequest = isApiRequest ||
-                    (context.Request.Headers.Accept.Count != 0 &&
-                     !context.Request.Headers.Accept.Any(h => h != null && h.Contains("text/html")));
-
-                // Also check X-Requested-With header commonly used for AJAX
-                isApiRequest = isApiRequest ||
-                    context.Request.Headers.XRequestedWith == "XMLHttpRequest";
-
-                if (isApiRequest)
+                if (IsHtmlRequest(context.Request))
                 {
-                    // For API requests, return 401 status code without redirect
-                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    // Prevent the default redirect which can cause the 405 error
-                    context.Response.Headers["Location"] = string.Empty;
-                    return Task.CompletedTask;
+                    context.Response.Redirect(context.RedirectUri);
                 }
-
-                // For browser requests, redirect to login page (default behavior)
-                context.Response.Redirect(context.RedirectUri);
+                else
+                {
+                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    context.Response.Headers.Remove("Location");
+                }
                 return Task.CompletedTask;
             },
 
-            // Gestione della risposta quando l'accesso è negato a un utente autenticato (Forbidden)
             OnRedirectToAccessDenied = context =>
             {
-                // Check if this is an API request based on Accept header or Content-Type
-                bool isApiRequest = context.Request.Headers.Accept.Any(h => h != null &&
-                    (h.Contains("application/json") || h.Contains("application/xml")));
-
-                // Also check if the Accept header DOESN'T contain "text/html" - typical for API clients
-                isApiRequest = isApiRequest ||
-                    (context.Request.Headers.Accept.Count != 0 &&
-                     !context.Request.Headers.Accept.Any(h => h != null && h.Contains("text/html")));
-
-                // Also check X-Requested-With header commonly used for AJAX
-                isApiRequest = isApiRequest ||
-                    context.Request.Headers.XRequestedWith == "XMLHttpRequest";
-
-
-                if (isApiRequest)
+                if (IsHtmlRequest(context.Request))
                 {
-                    // Return 403 Forbidden for API requests
-                    context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                    return Task.CompletedTask;
+                    // For HTML requests, manually add the returnUrl parameter to the redirection
+                    var returnUrl = context.Request.Path.Value ?? string.Empty;
+
+                    // Build the redirect URL with returnUrl parameter
+                    var redirectUrl = $"/access-denied.html?returnUrl={Uri.EscapeDataString(returnUrl)}";
+
+                    context.Response.Redirect(redirectUrl);
                 }
-
-                // // Default behavior for browser requests
-                // context.Response.Redirect(context.RedirectUri);
-                // return Task.CompletedTask;
-
-                // Per richieste browser, personalizza l'URL aggiungendo parametri
-                var redirectUri = context.RedirectUri;
-                var returnUrl = context.Request.Path;
-
-                // Aggiungi il returnUrl come parametro di query per poter tornare
-                // alla pagina originale dopo l'autenticazione
-                redirectUri = $"{options.AccessDeniedPath}?returnUrl={Uri.EscapeDataString(returnUrl)}";
-
-                // Default behavior for browser requests with custom URL
-                context.Response.Redirect(redirectUri);
+                else
+                {
+                    context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    context.Response.Headers.Remove("Location");
+                }
                 return Task.CompletedTask;
             }
         };
     });
 
-
-// Add authorization services - senza specificare policy
-//builder.Services.AddAuthorization();
 // Add authorization services con policy per ruoli multipli
-builder.Services.AddAuthorization(options =>
-{
-    // Policy che richiede un solo ruolo specifico
-    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
-    options.AddPolicy("PowerUserOnly", policy => policy.RequireRole("PowerUser"));
-
-    // Policy che accetta uno qualsiasi tra più ruoli (OR logico)
-    options.AddPolicy("AdminOrPowerUser", policy =>
-        policy.RequireRole("Admin", "PowerUser"));
-
-    // Policy per tutti gli utenti registrati
-    options.AddPolicy("RegisteredUsers", policy =>
-        policy.RequireRole("Admin", "PowerUser", "User"));
-
-    // Policy che richiede TUTTI i ruoli specificati (AND logico)
-    options.AddPolicy("AdminAndPowerUser", policy =>
+builder.Services.AddAuthorizationBuilder()
+    // Add authorization services con policy per ruoli multipli
+    .AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"))
+    // Add authorization services con policy per ruoli multipli
+    .AddPolicy("PowerUserOnly", policy => policy.RequireRole("PowerUser"))
+    // Add authorization services con policy per ruoli multipli
+    .AddPolicy("AdminOrPowerUser", policy => policy.RequireRole("Admin", "PowerUser"))
+    // Add authorization services con policy per ruoli multipli
+    .AddPolicy("RegisteredUsers", policy => policy.RequireRole("Admin", "PowerUser", "User"))
+    // Add authorization services con policy per ruoli multipli
+    .AddPolicy("AdminAndPowerUser", policy => 
         policy.RequireAssertion(context =>
-            context.User.IsInRole("Admin") && context.User.IsInRole("PowerUser")));
-
-    // Policy con logica personalizzata più complessa
-    options.AddPolicy("ComplexRoleRequirement", policy =>
+            context.User.IsInRole("Admin") && context.User.IsInRole("PowerUser")))
+    // Add authorization services con policy per ruoli multipli
+    .AddPolicy("ComplexRoleRequirement", policy =>
         policy.RequireAssertion(context =>
             context.User.IsInRole("Admin") ||
             (context.User.IsInRole("PowerUser") && context.User.HasClaim(c =>
                 c.Type == "Permission" && c.Value == "CanEditContent"))));
-});
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    app.UseDeveloperExceptionPage();
+
+    // Disabilita la validazione HTTPS per sviluppo locale
+    app.UseCookiePolicy(new CookiePolicyOptions
+    {
+        MinimumSameSitePolicy = SameSiteMode.Lax,
+        Secure = CookieSecurePolicy.None
+    });
+
     app.MapOpenApi();
-    //permette a Swagger (NSwag) di generare un file JSON con le specifiche delle API
     app.UseOpenApi();
-    //permette di configurare l'interfaccia SwaggerUI (l'interfaccia grafica web di Swagger (NSwag) che permette di interagire con le API)
     app.UseSwaggerUi(config =>
     {
         config.DocumentTitle = "Basic Cookie v1";
@@ -153,94 +120,187 @@ if (app.Environment.IsDevelopment())
         config.DocumentPath = "/swagger/{documentName}/swagger.json";
         config.DocExpansion = "list";
     });
-
-    app.UseDeveloperExceptionPage();
 }
+else
+{
+    app.UseHsts();
+    app.UseHttpsRedirection();
+}
+
+
+// Middleware per file statici
+
+// 1. Configura il middleware per servire index.html dalla cartella root
+app.UseDefaultFiles();
+
+// 2. Middleware per file statici in wwwroot (CSS, JS, ecc.)
+app.UseStaticFiles();
 
 // Middleware
 app.UseAuthentication();
 app.UseAuthorization();
-//per l'utilizzo delle sessioni
 
-// Endpoint di login - versione semplice con credenziali fisse e senza ruoli
-// app.MapPost("/login", async (HttpContext ctx, LoginModel model) =>
-// {
-//     // Simulazione della validazione delle credenziali
-//     //in questo caso andrebbero verificate le credenziali sul database...
-//     if (model.Username == "user" && model.Password == "pass")
-//     {
-//         var claims = new[] { new Claim(ClaimTypes.Name, model.Username) };
-//         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-//         await ctx.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
-//         return Results.Ok("Login effettuato con successo");
-//     }
-//     return Results.Unauthorized();
-// });
+// Middleware per gestire le risposte di errore per autenticazione e autorizzazione 
+app.UseStatusCodePages(async context =>
+{
+    var response = context.HttpContext.Response;
+
+    // Verifica che la risposta non sia già iniziata
+    if (response.HasStarted)
+        return;
+
+    if (response.StatusCode == StatusCodes.Status401Unauthorized)
+    {
+        // Per richieste HTML, redirect alla pagina di login
+        if (IsHtmlRequest(context.HttpContext.Request))
+        {
+            var returnUrl = context.HttpContext.Request.Path;
+            response.Redirect($"/login-page.html?returnUrl={Uri.EscapeDataString(returnUrl)}");
+            return;
+        }
+
+        // Per API, restituisci risposta JSON
+        response.ContentType = "application/json";
+        await response.WriteAsJsonAsync(new
+        {
+            status = 401,
+            message = "Non sei autenticato. Effettua il login per accedere a questa risorsa.",
+            timestamp = DateTime.UtcNow,
+            path = context.HttpContext.Request.Path
+        });
+    }
+    else if (response.StatusCode == StatusCodes.Status403Forbidden)
+    {
+        // Per richieste HTML, redirect alla pagina di accesso negato
+        if (IsHtmlRequest(context.HttpContext.Request))
+        {
+            // Ensure we get the full path including query string
+            var returnUrl = context.HttpContext.Request.Path.Value ?? string.Empty;
+
+            // Special handling for paths with query strings
+            if (context.HttpContext.Request.QueryString.HasValue)
+            {
+                returnUrl += context.HttpContext.Request.QueryString.Value;
+            }
+
+            var encodedReturnUrl = Uri.EscapeDataString(returnUrl);
+
+            // Make sure the querystring is formatted correctly
+            response.Redirect($"/access-denied.html?returnUrl={encodedReturnUrl}");
+            return;
+        }
+
+        // Per API, restituisci risposta JSON
+        response.ContentType = "application/json";
+        await response.WriteAsJsonAsync(new
+        {
+            status = 403,
+            message = "Non hai i permessi necessari per accedere a questa risorsa.",
+            timestamp = DateTime.UtcNow,
+            path = context.HttpContext.Request.Path
+        });
+    }
+});
+
+// Funzione helper per determinare se la richiesta è da un browser o API
+static bool IsHtmlRequest(HttpRequest request)
+{
+    // Controlla se l'header Accept include HTML
+    if (request.Headers.TryGetValue("Accept", out var acceptHeader))
+    {
+        return acceptHeader.ToString().Contains("text/html");
+    }
+
+    // Controlla l'header User-Agent per identificare i browser più comuni
+    if (request.Headers.TryGetValue("User-Agent", out var userAgent))
+    {
+        string ua = userAgent.ToString().ToLower();
+        if (ua.Contains("mozilla") || ua.Contains("chrome") || ua.Contains("safari") ||
+            ua.Contains("edge") || ua.Contains("firefox") || ua.Contains("webkit"))
+        {
+            return true;
+        }
+    }
+    return false;
+}
 
 // Endpoint di login
-app.MapPost("/login", async (HttpContext ctx, LoginModel model) =>
+app.MapPost("/login", async (HttpContext ctx, LoginModel model, [FromQuery] string? returnUrl) =>
 {
+    bool success = false;
+    string message = "";
+
     // Simulazione della validazione delle credenziali
     if (model.Username == "admin" && model.Password == "adminpass")
     {
-        // Utente con ruoli multipli: Admin e PowerUser
         var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.Name, model.Username),
-            new Claim(ClaimTypes.Role, "Admin"),
-            new Claim(ClaimTypes.Role, "PowerUser")
+            new(ClaimTypes.Name, model.Username),
+            new(ClaimTypes.Role, "Admin"),
+            new(ClaimTypes.Role, "PowerUser")
         };
+        
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         await ctx.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
-        return Results.Ok("Login effettuato con successo come Admin+PowerUser");
+        message = "Login effettuato con successo come Admin+PowerUser";
+        success = true;
     }
     else if (model.Username == "poweruser" && model.Password == "powerpass")
     {
-        // Utente con un solo ruolo: PowerUser
         var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.Name, model.Username),
-            new Claim(ClaimTypes.Role, "PowerUser")
+            new(ClaimTypes.Name, model.Username),
+            new(ClaimTypes.Role, "PowerUser")
         };
+        
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         await ctx.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
-        return Results.Ok("Login effettuato con successo come PowerUser");
+        message = "Login effettuato con successo come PowerUser";
+        success = true;
     }
     else if (model.Username == "user" && model.Password == "pass")
     {
-        // Utente normale con ruolo base User
         var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.Name, model.Username),
-            new Claim(ClaimTypes.Role, "User")
+            new(ClaimTypes.Name, model.Username),
+            new(ClaimTypes.Role, "User")
         };
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         await ctx.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
-        return Results.Ok("Login effettuato con successo come User");
+        message = "Login effettuato con successo come User";
+        success = true;
     }
-    return Results.Unauthorized();
+
+    // Se il login è riuscito e c'è un returnUrl
+    if (success && !string.IsNullOrEmpty(returnUrl))
+    {
+        // Verifica che l'URL sia sicuro prima di eseguire il redirect
+        if (Uri.IsWellFormedUriString(returnUrl, UriKind.Relative) ||
+            returnUrl.StartsWith(ctx.Request.Scheme + "://" + ctx.Request.Host))
+        {
+            return Results.Redirect(returnUrl);
+        }
+    }
+
+    return success ? Results.Ok(message) : Results.Unauthorized();
 });
 
 // Endpoint per impostare un altro cookie
-//in questo esempio viene impostato un cookie con un identificativo univoco
-//in realtà il cookie potrebbe essere un valore qualsiasi in base alle necessità
 app.MapGet("/set-cookie", (HttpContext context) =>
 {
-    // Generazione di un identificativo univoco 
     var uniqueIdentifier = Guid.NewGuid().ToString();
-    // Configurazione delle opzioni del cookie
     var cookieOptions = new CookieOptions
     {
-        HttpOnly = true,                  // Impedisce l'accesso tramite JS
-        Secure = true,                    // Trasmissione solo via HTTPS
-        SameSite = SameSiteMode.Strict,   // Protegge da CSRF
-        Expires = DateTimeOffset.Now.AddMinutes(30) // Cookie persistente per 30 minuti
+        HttpOnly = true,
+        Secure = context.Request.IsHttps,
+        SameSite = SameSiteMode.Lax,
+        Expires = DateTimeOffset.Now.AddMinutes(30)
     };
     context.Response.Cookies.Append("uniqueIdentifier", uniqueIdentifier, cookieOptions);
     return Results.Ok("Cookie impostato correttamente!");
 });
 
-//endpoint per leggere il cookie sicuro
+// endpoint per leggere il cookie sicuro
 app.MapGet("/read-cookie", (HttpContext context) =>
 {
     var uniqueIdentifier = context.Request.Cookies["uniqueIdentifier"];
@@ -252,8 +312,6 @@ app.MapGet("/read-cookie", (HttpContext context) =>
 // Endpoint protetto
 app.MapGet("/profile", (HttpContext ctx) =>
 {
-    // Verifica che l'utente sia autenticato, altrimenti restituisce 401 Unauthorized
-    // Questo controllo è ridondante con RequireAuthorization, ma aiuta a chiarire il flusso
     if (ctx.User.Identity != null && ctx.User.Identity.IsAuthenticated)
         return Results.Ok($"Benvenuto, {ctx.User.Identity.Name}");
     return Results.Unauthorized();
@@ -302,16 +360,14 @@ app.MapGet("/my-roles", (HttpContext ctx) =>
 // Aggiunta di endpoint per test con permessi specifici
 app.MapPost("/login-with-permissions", async (HttpContext ctx, LoginModel model) =>
 {
-    // Simulazione autenticazione
     if (model.Username == "editor" && model.Password == "editorpass")
     {
-        // Utente con ruolo PowerUser e permessi specifici
         var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.Name, model.Username),
-            new Claim(ClaimTypes.Role, "PowerUser"),
-            new Claim("Permission", "CanEditContent"),
-            new Claim("Permission", "CanPublishContent")
+            new(ClaimTypes.Name, model.Username),
+            new(ClaimTypes.Role, "PowerUser"),
+            new("Permission", "CanEditContent"),
+            new("Permission", "CanPublishContent")
         };
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         await ctx.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
@@ -324,31 +380,18 @@ app.MapPost("/login-with-permissions", async (HttpContext ctx, LoginModel model)
 app.MapGet("/edit-content", (HttpContext ctx) =>
 {
     bool canEdit = ctx.User.HasClaim(c => c.Type == "Permission" && c.Value == "CanEditContent");
-
     if (!canEdit)
         return Results.Forbid();
-
     return Results.Ok("Puoi modificare i contenuti");
-}).RequireAuthorization(); // Richiede autenticazione ma il permesso specifico è verificato nel codice
+}).RequireAuthorization();
 
-// Endpoint di logout
-// app.MapPost("/logout", async (HttpContext ctx) =>
-// {
-//     await ctx.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-//     return Results.Ok("Logout effettuato con successo");
-// });
-
-// Endpoint di logout migliorato con reindirizzamento opzionale
+// Endpoint di logout migliorato
 app.MapPost("/logout", async (HttpContext ctx, [FromQuery] string? returnUrl) =>
 {
     await ctx.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
-    // Se è specificato un URL di ritorno e la richiesta proviene da un browser,
-    // reindirizza l'utente
-    if (!string.IsNullOrEmpty(returnUrl) &&
-        ctx.Request.Headers.Accept.Any(h => h != null && h.Contains("text/html")))
+    if (!string.IsNullOrEmpty(returnUrl) && IsHtmlRequest(ctx.Request))
     {
-        // Assicurati che l'URL sia sicuro (evita open redirect vulnerabilities)
         if (Uri.IsWellFormedUriString(returnUrl, UriKind.Relative) ||
             returnUrl.StartsWith(ctx.Request.Scheme + "://" + ctx.Request.Host))
         {
@@ -359,70 +402,9 @@ app.MapPost("/logout", async (HttpContext ctx, [FromQuery] string? returnUrl) =>
     return Results.Ok("Logout effettuato con successo");
 });
 
-
-// Endpoint per l'accesso negato
-// app.MapGet("/access-denied", () =>
-// {
-//     return Results.Problem(
-//         title: "Accesso negato",
-//         detail: "Non hai i permessi necessari per accedere a questa risorsa.",
-//         statusCode: StatusCodes.Status403Forbidden
-//     );
-// });
-
-app.MapGet("/access-denied", (HttpContext context, [FromQuery] string? returnUrl) =>
-{
-    // Ottieni informazioni sull'utente corrente
-    string username = context.User.Identity?.Name ?? "Utente";
-
-    // Costruisci una risposta HTML personalizzata
-    var html = $@"
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Accesso Negato</title>
-    <style>
-        body {{ font-family: Arial, sans-serif; text-align: center; padding-top: 50px; }}
-        .container {{ max-width: 600px; margin: 0 auto; }}
-        .error {{ color: #d9534f; }}
-        .btn {{ 
-            display: inline-block; 
-            padding: 10px 20px; 
-            margin: 10px; 
-            background-color: #337ab7; 
-            color: white; 
-            text-decoration: none; 
-            border-radius: 4px; 
-        }}
-    </style>
-</head>
-<body>
-    <div class=""container"">
-        <h1 class=""error"">Accesso Negato</h1>
-        <p>Ci dispiace, {username}, ma non hai i permessi necessari per accedere a questa risorsa.</p>
-        
-        {(string.IsNullOrEmpty(returnUrl) ? "" : $"<p>Hai tentato di accedere a: {returnUrl}</p>")}
-        
-        <div>
-            <a href=""/"" class=""btn"">Torna alla Home</a>
-            
-            {(string.IsNullOrEmpty(returnUrl) ? "" :
-              $"<a href=\"/request-access?resource={Uri.EscapeDataString(returnUrl)}\" class=\"btn\">Richiedi Accesso</a>")}
-        </div>
-    </div>
-</body>
-</html>";
-
-    return Results.Content(html, "text/html");
-});
-
 app.Run();
 
-public class LoginModel
-{
-    public string Username { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
-}
+
 
 
 

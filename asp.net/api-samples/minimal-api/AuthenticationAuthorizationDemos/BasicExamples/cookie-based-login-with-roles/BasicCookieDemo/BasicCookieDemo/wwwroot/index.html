@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cookie Authentication Demo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f7f9fc;
+        }
+
+        header {
+            background-color: #3498db;
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            margin: 0;
+            font-weight: 300;
+            font-size: 2.5em;
+        }
+
+        h2 {
+            color: #2980b9;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-top: 40px;
+        }
+
+        .cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .card {
+            flex: 1;
+            min-width: 250px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        .card h3 {
+            color: #3498db;
+            margin-top: 0;
+        }
+
+        code {
+            background-color: #f4f6f8;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .credentials {
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #2980b9;
+        }
+
+        .endpoints {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .endpoints li {
+            margin-bottom: 10px;
+            padding: 10px 15px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+            border-radius: 0 5px 5px 0;
+        }
+
+        .endpoints .method {
+            font-weight: bold;
+            color: #e74c3c;
+            margin-right: 10px;
+        }
+
+        footer {
+            margin-top: 60px;
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 0.9em;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Cookie Authentication Demo</h1>
+        <p>Esempio di autenticazione basata su cookie con ruoli e autorizzazioni in ASP.NET Core</p>
+    </header>
+
+    <main>
+        <section>
+            <h2>Descrizione del Progetto</h2>
+            <p>
+                Questa applicazione dimostra come implementare l'autenticazione basata su cookie in ASP.NET Core,
+                con supporto completo per ruoli utente e autorizzazioni granulari. Il progetto utilizza ASP.NET Core
+                Minimal API
+                e mostra come proteggere le risorse in base ai ruoli e alle autorizzazioni degli utenti.
+            </p>
+
+            <div class="cards">
+                <div class="card">
+                    <h3>Funzionalità di Autenticazione</h3>
+                    <p>
+                        Implementazione completa di autenticazione basata su cookie con:
+                    </p>
+                    <ul>
+                        <li>Login/logout sicuro</li>
+                        <li>Cookie HttpOnly protetti</li>
+                        <li>Gestione delle policy SameSite</li>
+                        <li>Redirect automatici per risorse protette</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>Sistema di Autorizzazione</h3>
+                    <p>
+                        Controllo accessi avanzato con:
+                    </p>
+                    <ul>
+                        <li>Policy basate su ruoli</li>
+                        <li>Controlli di autorizzazione OR e AND</li>
+                        <li>Permessi granulari (Claims)</li>
+                        <li>Messaggi di errore personalizzati</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Come Iniziare</h2>
+            <p>
+                Per testare l'applicazione, puoi accedere usando uno dei seguenti account predefiniti:
+            </p>
+
+            <div class="credentials">
+                <h3>Credenziali di Test</h3>
+                <table>
+                    <tr>
+                        <th>Tipo di Utente</th>
+                        <th>Username</th>
+                        <th>Password</th>
+                        <th>Ruoli</th>
+                    </tr>
+                    <tr>
+                        <td>Amministratore</td>
+                        <td><code>admin</code></td>
+                        <td><code>adminpass</code></td>
+                        <td>Admin, PowerUser</td>
+                    </tr>
+                    <tr>
+                        <td>Power User</td>
+                        <td><code>poweruser</code></td>
+                        <td><code>powerpass</code></td>
+                        <td>PowerUser</td>
+                    </tr>
+                    <tr>
+                        <td>Utente Standard</td>
+                        <td><code>user</code></td>
+                        <td><code>pass</code></td>
+                        <td>User</td>
+                    </tr>
+                    <tr>
+                        <td>Editor</td>
+                        <td><code>editor</code></td>
+                        <td><code>editorpass</code></td>
+                        <td>PowerUser + permessi speciali</td>
+                    </tr>
+                </table>
+            </div>
+
+            <p>
+                Dopo il login, potrai testare l'accesso a diverse aree dell'applicazione in base ai ruoli dell'utente
+                con cui hai effettuato l'accesso.
+            </p>
+
+            <a href="/login-page.html" class="btn">Vai alla pagina di Login</a>
+        </section>
+
+        <section>
+            <h2>Endpoint API Disponibili</h2>
+            <p>
+                L'applicazione espone i seguenti endpoint API:
+            </p>
+
+            <h3>Autenticazione</h3>
+            <ul class="endpoints">
+                <li><span class="method">POST</span> <code>/login</code> - Effettua il login</li>
+                <li><span class="method">POST</span> <code>/logout</code> - Effettua il logout</li>
+                <li><span class="method">POST</span> <code>/login-with-permissions</code> - Login con permessi speciali
+                </li>
+            </ul>
+
+            <h3>Risorse Protette</h3>
+            <ul class="endpoints">
+                <li><span class="method">GET</span> <code>/profile</code> - Accessibile a qualsiasi utente autenticato
+                </li>
+                <li><span class="method">GET</span> <code>/admin-area</code> - Accessibile solo agli amministratori</li>
+                <li><span class="method">GET</span> <code>/power-area</code> - Accessibile a PowerUser o Admin</li>
+                <li><span class="method">GET</span> <code>/super-area</code> - Richiede entrambi i ruoli Admin E
+                    PowerUser</li>
+                <li><span class="method">GET</span> <code>/edit-content</code> - Richiede il permesso "CanEditContent"
+                </li>
+                <li><span class="method">GET</span> <code>/my-roles</code> - Fornisce informazioni sui ruoli dell'utente
+                </li>
+            </ul>
+
+            <h3>Utility</h3>
+            <ul class="endpoints">
+                <li><span class="method">GET</span> <code>/set-cookie</code> - Imposta un cookie di esempio</li>
+                <li><span class="method">GET</span> <code>/read-cookie</code> - Legge il cookie di esempio</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Caratteristiche Tecniche</h2>
+            <p>
+                Questo progetto dimostra varie caratteristiche avanzate di ASP.NET Core:
+            </p>
+
+            <ul>
+                <li>Minimal API per endpoint RESTful</li>
+                <li>Authentication middleware con cookie</li>
+                <li>Policy di autorizzazione complesse</li>
+                <li>Gestione dei ClaimsPrincipal e ClaimsIdentity</li>
+                <li>Middleware StatusCodePages personalizzato</li>
+                <li>Rilevamento browser vs richieste API</li>
+                <li>Gestione HTTPS e SameSite cookies</li>
+                <li>OpenAPI/Swagger per la documentazione API</li>
+            </ul>
+        </section>
+    </main>
+
+    <footer>
+        <p>
+            Progetto di esempio per ASP.NET Core Authentication & Authorization Demo &copy; 2024
+        </p>
+    </footer>
+</body>
+
+</html>

@@ -25,8 +25,14 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     {
         options.Cookie.Name = ".AspNetCore.Authentication"; // Nome standard non predittivo
         options.Cookie.HttpOnly = true; // Protegge il cookie da accessi via JavaScript
-        options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Solo su HTTPS
-        options.Cookie.SameSite = SameSiteMode.Strict; // Previene CSRF
+        // In sviluppo, permetti cookie su HTTP per semplificare il testing
+        options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+            ? CookieSecurePolicy.None
+            : CookieSecurePolicy.Always;
+        // SameSite meno restrittivo in sviluppo per facilitare il testing
+        options.Cookie.SameSite = builder.Environment.IsDevelopment()
+            ? SameSiteMode.Lax
+            : SameSiteMode.Strict;
         options.LoginPath = "/login"; // Percorso per il login
 
         // Content-type based redirect handling

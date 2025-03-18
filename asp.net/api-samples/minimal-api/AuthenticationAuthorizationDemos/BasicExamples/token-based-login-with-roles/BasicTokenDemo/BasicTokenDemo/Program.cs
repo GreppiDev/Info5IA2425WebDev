@@ -4,6 +4,13 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Collections.Concurrent; // Aggiunto per ConcurrentDictionary
+using BasicTokenDemo.Utils;
+using BasicTokenDemo.Models;
+
+// In una applicazione in produzione andrebbero utilizzati meccanismi di memorizzazione più sofisticati
+// In questo esempio didattico non viene gestita l'invalidazione dell'Access Token al logout per semplicità
+// Al logout viene invalidato solo il Refresh Token
+// Una soluzione completa e production ready verrà mostrata in un esempio successivo
 
 // Dictionary thread-safe per la gestione dei token
 ConcurrentDictionary<string, RefreshTokenInfo> refreshTokenStore = new();
@@ -72,7 +79,7 @@ builder.Services.AddAuthentication(options =>
             if (IsHtmlRequest(context.Request))
             {
                 // Reindirizza al login
-                context.Response.Redirect("/login-page");
+                context.Response.Redirect("/login-page.html");
                 return;
             }
 
@@ -106,8 +113,15 @@ builder.Services.AddAuthentication(options =>
                 context.Response.Headers.Append("Token-Expired", "true");
                 // Non gestire la risposta qui, lasceremo che OnChallenge lo faccia
             }
-
             return Task.CompletedTask;
+        },
+
+        // Aggiungiamo la gestione dell'errore di autorizzazione (403 Forbidden)
+        OnForbidden = async context =>
+        {
+            // ForbiddenContext non ha il metodo HandleResponse
+            // Possiamo accedere direttamente alla Response
+            await HandleForbiddenResponse(context.Request, context.Response);
         }
     };
 });
@@ -143,73 +157,32 @@ if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();
 }
 
-// Middleware
+// Middleware for static files should come BEFORE authentication
+// 1. Configura il middleware per servire index.html dalla cartella root
+app.UseDefaultFiles();
+
+// 2. Middleware per file statici in wwwroot (CSS, JS, ecc.)
+app.UseStaticFiles();
+
+// Authentication and authorization middleware
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Gestione personalizzata degli errori di autorizzazione (403 Forbidden)
-app.Use(async (context, next) =>
+// Status code pages middleware should come AFTER authentication but BEFORE endpoint routing
+// Manteniamo il middleware per i casi che non vengono gestiti dal JWT Bearer
+app.UseStatusCodePages(async context =>
 {
-    await next();
+    var response = context.HttpContext.Response;
 
-    // Intercetta solo le risposte 403 Forbidden
-    if (context.Response.StatusCode == StatusCodes.Status403Forbidden)
+    if (response.StatusCode == StatusCodes.Status403Forbidden)
     {
-        // Se la richiesta accetta HTML (browser)
-        if (IsHtmlRequest(context.Request))
+        // Verifica se è possibile ancora modificare la risposta
+        if (!response.HasStarted)
         {
-            // Reindirizza alla pagina di accesso negato
-            context.Response.Redirect("/access-denied");
-            return;
+            await HandleForbiddenResponse(context.HttpContext.Request, response);
         }
-
-        // Altrimenti invia una risposta 403 con dettagli in JSON
-        context.Response.ContentType = "application/json";
-        var response = new
-        {
-            status = 403,
-            message = "Non hai i permessi necessari per accedere a questa risorsa.",
-            timestamp = DateTime.UtcNow,
-            path = context.Request.Path
-        };
-
-        await context.Response.WriteAsJsonAsync(response);
     }
 });
-
-// Metodi helper per la gestione dei token
-string GenerateAccessToken(IConfiguration config, IEnumerable<Claim> claims)
-{
-    var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"] ??
-        throw new InvalidOperationException("Jwt:Key non configurata")));
-    var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
-    var token = new JwtSecurityToken(
-        issuer: config["Jwt:Issuer"] ??
-            throw new InvalidOperationException("Jwt:Issuer non configurata"),
-        audience: config["Jwt:Audience"] ??
-            throw new InvalidOperationException("Jwt:Audience non configurata"),
-        claims: claims,
-        expires: DateTime.UtcNow.AddMinutes(30), // Usare UTC per timestamp
-        signingCredentials: credentials);
-
-    return new JwtSecurityTokenHandler().WriteToken(token);
-}
-
-string GenerateRefreshToken()
-{
-    // Genera un token più sicuro rispetto al semplice Guid
-    // var randomNumber = new byte[32]; // 256 bit
-    // using var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
-    // rng.GetBytes(randomNumber);
-
-    // // Converte in una stringa base64 (più sicura di un GUID e con una maggiore entropia)
-    // return Convert.ToBase64String(randomNumber);
-
-    // Generazione di un refresh token (opaco)
-    var refreshToken = Guid.NewGuid().ToString();
-    return refreshToken;
-}
 
 // Endpoint per il login che restituisce un access token e un refresh token
 app.MapPost("/login", (UserLogin login) =>
@@ -333,6 +306,7 @@ app.MapGet("/protected", (HttpContext context) =>
 app.MapGet("/user-info", (HttpContext context) =>
 {
     // Recupera i dettagli dell'utente dalle claims
+    var isAuthenticated = context.User?.Identity?.IsAuthenticated;
     var username = context.User?.Identity?.Name;
     var userId = context.User?.FindFirstValue(ClaimTypes.NameIdentifier);
     var email = context.User?.FindFirstValue(ClaimTypes.Email);
@@ -347,6 +321,7 @@ app.MapGet("/user-info", (HttpContext context) =>
 
     return Results.Ok(new
     {
+        isAuthenticated,
         userId,
         username,
         email,
@@ -555,297 +530,67 @@ app.MapPost("/logout", (HttpContext context, LogoutRequest? request) =>
     return operation;
 });
 
-// Endpoint semplice di login per redirect da browser (solo per dimostrazione)
-app.MapGet("/login-page", () => Results.Content(
-    @"<!DOCTYPE html>
-<html lang='it'>
-<head>
-    <meta charset='UTF-8'>
-    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-    <title>JWT Authentication Demo</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f7f9fc;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-        .login-container {
-            background-color: white;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 400px;
-        }
-        .login-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .login-header h1 {
-            color: #3498db;
-            margin: 0;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: #333;
-        }
-        .form-group input {
-            width: 100%;
-            padding: 12px;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-            box-sizing: border-box;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-        .form-group input:focus {
-            border-color: #3498db;
-            outline: none;
-        }
-        .form-group .hint {
-            font-size: 12px;
-            margin-top: 8px;
-            color: #666;
-        }
-        .btn {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 12px;
-            width: 100%;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            transition: background-color 0.3s;
-        }
-        .btn:hover {
-            background-color: #2980b9;
-        }
-        .error-message {
-            color: #e74c3c;
-            background-color: #fde8e6;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            display: none;
-        }
-        .user-options {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 30px;
-        }
-        .user-option {
-            padding: 10px;
-            background-color: #f1f1f1;
-            border-radius: 5px;
-            cursor: pointer;
-            flex: 1;
-            margin: 0 5px;
-            text-align: center;
-            font-size: 14px;
-            transition: all 0.3s;
-        }
-        .user-option:hover {
-            background-color: #e0e0e0;
-        }
-        .token-display {
-            margin-top: 20px;
-            display: none;
-            word-break: break-all;
-        }
-        .token-display pre {
-            background-color: #f1f1f1;
-            padding: 15px;
-            border-radius: 5px;
-            font-size: 12px;
-            max-height: 150px;
-            overflow-y: auto;
-        }
-    </style>
-</head>
-<body>
-    <div class='login-container'>
-        <div class='login-header'>
-            <h1>Login</h1>
-            <p>Accedi per ottenere il token JWT</p>
-        </div>
-        
-        <div id='errorMessage' class='error-message'></div>
-        
-        <form id='loginForm' onsubmit='return false;'>
-            <div class='form-group'>
-                <label for='username'>Username</label>
-                <input type='text' id='username' name='username' required>
-                <div class='hint'>Prova con 'user' o 'admin'</div>
-            </div>
-            
-            <div class='form-group'>
-                <label for='password'>Password</label>
-                <input type='password' id='password' name='password' required>
-                <div class='hint'>Password: 'pass' per user, 'Admin123!' per admin</div>
-            </div>
-            
-            <button type='button' class='btn' onclick='login()'>Login</button>
-        </form>
-        
-        <div class='user-options'>
-            <div class='user-option' onclick=""fillForm('user', 'pass')"">
-                Utente Standard
-            </div>
-            <div class='user-option' onclick=""fillForm('admin', 'Admin123!')"">
-                Amministratore
-            </div>
-        </div>
-        
-        <div id='tokenDisplay' class='token-display'>
-            <h3>Token ottenuto:</h3>
-            <pre id='accessToken'></pre>
-            <h3>Refresh Token:</h3>
-            <pre id='refreshToken'></pre>
-            <button class='btn' style='margin-top:10px;' onclick='testProtectedEndpoint()'>Testa API protetta</button>
-            <button class='btn' style='margin-top:10px; background-color: #27ae60;' onclick='testAdminEndpoint()'>Testa API amministrativa</button>
-        </div>
-    </div>
-
-    <script>
-        function fillForm(username, password) {
-            document.getElementById('username').value = username;
-            document.getElementById('password').value = password;
-        }
-
-        let currentToken = null;
-        
-        async function login() {
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const errorMessage = document.getElementById('errorMessage');
-            
-            if (!username || !password) {
-                showError('Inserisci username e password');
-                return;
-            }
-            
-            try {
-                const response = await fetch('/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        username: username,
-                        password: password
-                    })
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Credenziali non valide');
-                }
-                
-                const data = await response.json();
-                currentToken = data.accessToken;
-                
-                document.getElementById('accessToken').textContent = data.accessToken;
-                document.getElementById('refreshToken').textContent = data.refreshToken;
-                document.getElementById('tokenDisplay').style.display = 'block';
-                errorMessage.style.display = 'none';
-                
-            } catch (error) {
-                showError(error.message);
-                document.getElementById('tokenDisplay').style.display = 'none';
-            }
-        }
-        
-        function showError(message) {
-            const errorMessage = document.getElementById('errorMessage');
-            errorMessage.textContent = message;
-            errorMessage.style.display = 'block';
-        }
-        
-        async function testProtectedEndpoint() {
-            if (!currentToken) {
-                showError('Login necessario prima di testare gli endpoint protetti');
-                return;
-            }
-            
-            try {
-                const response = await fetch('/protected', {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${currentToken}`,
-                        'Accept': 'application/json'
-                    }
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Accesso negato all\'endpoint protetto');
-                }
-                
-                const data = await response.json();
-                alert(`Risposta dall'endpoint protetto: ${JSON.stringify(data, null, 2)}`);
-                
-            } catch (error) {
-                showError(error.message);
-            }
-        }
-        
-        async function testAdminEndpoint() {
-            if (!currentToken) {
-                showError('Login necessario prima di testare gli endpoint protetti');
-                return;
-            }
-            
-            try {
-                const response = await fetch('/admin', {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${currentToken}`,
-                        'Accept': 'application/json'
-                    }
-                });
-                
-                if (!response.ok) {
-                    if (response.status === 403) {
-                        throw new Error('Non hai i permessi per accedere all\'area amministrativa');
-                    } else {
-                        throw new Error('Errore di accesso all\'endpoint amministrativo');
-                    }
-                }
-                
-                const data = await response.json();
-                alert(`Risposta dall'endpoint admin: ${JSON.stringify(data, null, 2)}`);
-                
-            } catch (error) {
-                showError(error.message);
-            }
-        }
-    </script>
-</body>
-</html>",
-    "text/html"))
-// Assicuriamoci che questo endpoint sia accessibile senza autenticazione
-.AllowAnonymous();
-
-// Endpoint di accesso negato per redirect da browser
-app.MapGet("/access-denied", () => Results.Content(
-    "<html><body><h1>Accesso Negato</h1><p>Non hai i permessi necessari per accedere alla risorsa richiesta.</p>" +
-    "<p><a href='/login-page'>Torna al login</a></p></body></html>",
-    "text/html"))
-// Assicuriamoci che questo endpoint sia accessibile senza autenticazione
-.AllowAnonymous();
-
 app.Run();
+
+// Metodi helper per la gestione dei token
+string GenerateAccessToken(IConfiguration config, IEnumerable<Claim> claims)
+{
+    var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"] ??
+        throw new InvalidOperationException("Jwt:Key non configurata")));
+    var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+    var token = new JwtSecurityToken(
+        issuer: config["Jwt:Issuer"] ??
+            throw new InvalidOperationException("Jwt:Issuer non configurata"),
+        audience: config["Jwt:Audience"] ??
+            throw new InvalidOperationException("Jwt:Audience non configurata"),
+        claims: claims,
+        expires: DateTime.UtcNow.AddMinutes(30), // Usare UTC per timestamp
+        signingCredentials: credentials);
+
+    return new JwtSecurityTokenHandler().WriteToken(token);
+}
+
+string GenerateRefreshToken()
+{
+    // Genera un token più sicuro rispetto al semplice Guid
+    // var randomNumber = new byte[32]; // 256 bit
+    // using var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
+    // rng.GetBytes(randomNumber);
+
+    // // Converte in una stringa base64 (più sicura di un GUID e con una maggiore entropia)
+    // return Convert.ToBase64String(randomNumber);
+
+    // Generazione di un refresh token (opaco)
+    var refreshToken = Guid.NewGuid().ToString();
+    return refreshToken;
+}
+
+// Helper per gestire le risposte 403 Forbidden in modo uniforme
+async Task HandleForbiddenResponse(HttpRequest request, HttpResponse response)
+{
+    // Se la richiesta accetta HTML (browser)
+    if (IsHtmlRequest(request))
+    {
+        // Reindirizza alla pagina di accesso negato
+        response.Redirect("/access-denied.html");
+        return;
+    }
+
+    // Altrimenti invia una risposta 403 con dettagli in JSON
+    response.StatusCode = StatusCodes.Status403Forbidden;
+    response.ContentType = "application/json";
+
+    var responseData = new
+    {
+        status = 403,
+        message = "Non hai i permessi necessari per accedere a questa risorsa.",
+        timestamp = DateTime.UtcNow,
+        path = request.Path
+    };
+
+    await response.WriteAsJsonAsync(responseData);
+}
 
 // Helper per determinare se una richiesta proviene da un browser web
 bool IsHtmlRequest(HttpRequest request)
@@ -912,23 +657,6 @@ string[] GetAllowedOperationsForRoles(string[] roles)
     return [.. operations];
 }
 
-// Definizione di una classe per memorizzare informazioni aggiuntive sul refresh token
-public class RefreshTokenInfo
-{
-    public required string Token { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime ExpiresAt { get; set; }
-}
 
-// Modelli di record per le richieste
-public record UserLogin(string Username, string Password);
-public record RefreshRequest(string RefreshToken);
-public record LogoutRequest(string RefreshToken);
 
-// Array statici per ruoli comuni
-static class UserRoles
-{
-    public static readonly string[] ViewerRoles = ["Viewer"];
-    public static readonly string[] AdminRoles = ["Administrator", "SuperAdministrator"];
-    public static readonly string[] EmptyRoles = [];
-}
+
