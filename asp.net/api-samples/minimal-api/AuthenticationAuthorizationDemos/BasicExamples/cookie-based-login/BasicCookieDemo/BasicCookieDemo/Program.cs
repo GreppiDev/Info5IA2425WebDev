@@ -33,38 +33,24 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.SameSite = builder.Environment.IsDevelopment()
             ? SameSiteMode.Lax
             : SameSiteMode.Strict;
-        options.LoginPath = "/login"; // Percorso per il login
+        options.LoginPath = "/login.html"; // Percorso per il login
 
         // Content-type based redirect handling
         options.Events = new CookieAuthenticationEvents
         {
             OnRedirectToLogin = context =>
-            {
-                // Check if this is an API request based on Accept header or Content-Type
-                bool isApiRequest = context.Request.Headers.Accept.Any(h => h != null &&
-                    (h.Contains("application/json") || h.Contains("application/xml")));
-
-                // Also check if the Accept header DOESN'T contain "text/html" - typical for API clients
-                isApiRequest = isApiRequest ||
-                    (context.Request.Headers.Accept.Count != 0 &&
-                     !context.Request.Headers.Accept.Any(h => h != null && h.Contains("text/html")));
-
-                // Also check X-Requested-With header commonly used for AJAX
-                isApiRequest = isApiRequest ||
-                    context.Request.Headers.XRequestedWith == "XMLHttpRequest";
-
-
-                if (isApiRequest)
-                {
-                    // For API requests, return 401 status code
-                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    return Task.CompletedTask;
-                }
-
-                // For browser requests, redirect to login page (default behavior)
-                context.Response.Redirect(context.RedirectUri);
-                return Task.CompletedTask;
-            }
+           {
+               if (IsHtmlRequest(context.Request))
+               {
+                   context.Response.Redirect(context.RedirectUri);
+               }
+               else
+               {
+                   context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                   context.Response.Headers.Remove("Location");
+               }
+               return Task.CompletedTask;
+           }
         };
     });
 
@@ -159,6 +145,26 @@ app.MapPost("/logout", async (HttpContext ctx) =>
 
 app.Run();
 
+static bool IsHtmlRequest(HttpRequest request)
+{
+    // Controlla se l'header Accept include HTML
+    if (request.Headers.TryGetValue("Accept", out var acceptHeader))
+    {
+        return acceptHeader.ToString().Contains("text/html");
+    }
+
+    // Controlla l'header User-Agent per identificare i browser più comuni
+    if (request.Headers.TryGetValue("User-Agent", out var userAgent))
+    {
+        string ua = userAgent.ToString().ToLower();
+        if (ua.Contains("mozilla") || ua.Contains("chrome") || ua.Contains("safari") ||
+            ua.Contains("edge") || ua.Contains("firefox") || ua.Contains("webkit"))
+        {
+            return true;
+        }
+    }
+    return false;
+}
 public class LoginModel
 {
     public string Username { get; set; } = string.Empty;

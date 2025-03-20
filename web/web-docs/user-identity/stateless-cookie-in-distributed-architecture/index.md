@@ -98,6 +98,8 @@ sequenceDiagram
     end
 ```
 
+Immagine che illustra il flusso di funzionamento dell'autenticazione basata su cookie stateless in architetture distribuite
+
 1. **Login (Autenticazione Iniziale):** Quando un utente si autentica (login) con successo, uno dei server backend riceve la richiesta di autenticazione.
 2. **Generazione ID Sessione Unico:** Il server backend **genera un ID di sessione univoco**.  Questo ID è una stringa casuale e unica, utilizzata per identificare la sessione.
 3. **Memorizzazione Sessione nel Datastore Esterno:** Il server backend **crea una nuova sessione** (oggetto sessione) contenente le informazioni relative all'utente autenticato (es. ID utente, ruoli, preferenze).  Il server **memorizza la sessione nel datastore esterno**, **associandola all'ID di sessione univoco** generato nel passo precedente.
@@ -209,8 +211,6 @@ Nonostante i vantaggi, l'architettura cookie stateless con datastore esterno int
 * **Costo dell'Infrastruttura:** L'utilizzo di un datastore esterno condiviso e resiliente (es. Redis Cluster, database distribuito) può comportare **costi aggiuntivi** per l'infrastruttura cloud.  È necessario valutare attentamente i costi del datastore esterno rispetto ai benefici in termini di scalabilità, resilienza e gestione semplificata.
 * **Complessità di Configurazione e Gestione:**  L'implementazione di un sistema di gestione delle sessioni stateless basato su cookie e datastore esterno richiede una **configurazione più complessa** rispetto alle sessioni in-memory tradizionali.  È necessario configurare e gestire il datastore esterno, la connessione tra i server backend e il datastore, la serializzazione e deserializzazione delle sessioni, la gestione degli errori e la sicurezza dell'accesso al datastore.
 
-### Riepilogo e Transizione alla Lezione Conclusiva
+### Riepilogo
 
 Questa lezione ha illustrato in dettaglio come rendere i cookie "stateless" in architetture cloud multi-server, sfruttando un datastore esterno condiviso per la gestione delle sessioni.  Sono stati analizzati i componenti chiave dell'architettura, il flusso di funzionamento, i vantaggi in termini di scalabilità, load balancing, resilienza e i compromessi in termini di latenza, costi e complessità di configurazione. È stato fornito un esempio concettuale di integrazione con ASP.NET Core Minimal API e Redis.
-
-La lezione successiva si focalizzerà sull'aspetto pratico, presentando esempi di codice **pienamente funzionanti e utilizzabili** con ASP.NET Minimal API per implementare sia l'autenticazione con cookie stateless (utilizzando un datastore esterno) che l'autenticazione con token JWT, fornendo guide passo passo, snippet di codice dettagliati e configurazioni complete per mettere in pratica i concetti discussi in tutte le lezioni del ciclo.
