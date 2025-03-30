@@ -1,0 +1,30 @@
+services:
+  redis-stack:
+    # Opzioni di connessione:
+    # - Da altri container sulla stessa rete: redis-stack:6379
+    # - Da applicazione sull'host: localhost:6379
+    # - Da container che deve accedere all'host: host.docker.internal:6379
+    image: redis/redis-stack:latest
+    container_name: redis-stack
+    ports:
+      - "6379:6379" # Porta per Redis
+      - "8001:8001" # Porta per RedisInsight (UI web)
+    networks:
+      - redis-network
+    volumes:
+      - redis-data:/data
+    environment:
+      - REDIS_ARGS=--requirepass yourpassword --appendonly yes
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "yourpassword", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+networks:
+  redis-network:
+    driver: bridge
+
+volumes:
+  redis-data:

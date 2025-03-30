@@ -25,6 +25,7 @@
     7. [Minimal API: Response Types, Service Lifetimes](asp.net/api-docs/minimal-api/configure-api-p4/index.md)
     8. [Minimal API: Validazione dell'input](asp.net/api-docs/minimal-api/configure-api-p5/index.md)
     9. [Minimal API: Meccanismi di protezione contro attacchi CSRF](asp.net/api-docs/minimal-api/configure-api-p6/index.md)
+    10. [Minimal API: Caching dei dati - In-memory Caching, Distributed Cache, HybridCache](asp.net/api-docs/minimal-api/configure-api-p7/index.md)
 
 4. Web Architecture
    1. [Web mechanics](./web/web-docs/web-mechanics/index.md)
@@ -51,3 +52,4 @@
    5. [JWT Token Based Authentication and Authorization](./web/web-docs/user-identity/jwt-token-based-authentication-authorization/index.md)
    6. [Analisi dei token JWT in Architetture Stateless](./web/web-docs/user-identity/stateless-token-based-authentication-architecture/index.md)
    7. [Cookie Stateless in Architetture Distribuite](./web/web-docs/user-identity/stateless-cookie-in-distributed-architecture/index.md)
+   8. [JWT Token Based Authentication and Authorization with improved Logout](./web/web-docs/user-identity/jwt-token-based-authentication-authorization-with-improved-logout/index.md)

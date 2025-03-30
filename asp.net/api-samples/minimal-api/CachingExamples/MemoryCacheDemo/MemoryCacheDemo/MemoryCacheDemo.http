@@ -1,0 +1,6 @@
+@MemoryCacheDemo_HostAddress = http://localhost:5069
+
+GET {{MemoryCacheDemo_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

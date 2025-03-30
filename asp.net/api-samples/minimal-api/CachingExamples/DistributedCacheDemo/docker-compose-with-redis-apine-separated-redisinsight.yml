@@ -1,0 +1,44 @@
+services:
+  redis:
+   # Opzioni di connessione:
+    # - Da altri container sulla stessa rete: redis:6379
+    # - Da applicazione sull'host: localhost:6379
+    # - Da container che deve accedere all'host: host.docker.internal:6379
+    image: redis:alpine
+    container_name: redis-cache
+    ports:
+      - "6379:6379"
+    networks:
+      - redis-network
+    volumes:
+      - redis-data:/data
+    command: redis-server --requirepass yourpassword --appendonly yes
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "yourpassword", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: redis-insight
+    ports:
+      - "5540:5540"
+    networks:
+      - redis-network
+    volumes:
+      - redisinsight-data:/db
+    environment:
+      - RICONFIG_development_mode=true
+    depends_on:
+      - redis
+    restart: always
+
+networks:
+  redis-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+  redisinsight-data:

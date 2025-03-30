@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JWT Authentication Demo - Documentazione</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        body {
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #3498db;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            color: #2980b9;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        h3 {
+            color: #3498db;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        code {
+            background-color: #f8f9fa;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: Consolas, Monaco, 'Andale Mono', monospace;
+            font-size: 0.9em;
+        }
+
+        pre {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-family: Consolas, Monaco, 'Andale Mono', monospace;
+            border-left: 4px solid #3498db;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        table th {
+            background-color: #f8f9fa;
+            text-align: left;
+            padding: 10px;
+        }
+
+        table td {
+            border-bottom: 1px solid #eee;
+            padding: 10px;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        .tag-get {
+            background-color: #e7f4ff;
+            color: #3498db;
+        }
+
+        .tag-post {
+            background-color: #e3f9e3;
+            color: #27ae60;
+        }
+
+        .tag-protected {
+            background-color: #fff8e1;
+            color: #f39c12;
+        }
+
+        .tag-admin {
+            background-color: #ffebee;
+            color: #e74c3c;
+        }
+
+        .btn-demo {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 1rem;
+        }
+
+        .btn-demo:hover {
+            background-color: #2980b9;
+        }
+
+        .security-note {
+            background-color: #fdf2e9;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #e67e22;
+            margin: 1rem 0;
+        }
+
+        .flow-diagram {
+            max-width: 100%;
+            margin: 1rem 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>JWT Authentication e Authorization Demo</h1>
+
+        <p>
+            Benvenuto nella demo di autenticazione e autorizzazione utilizzando JWT (JSON Web Tokens) in ASP.NET Core
+            Minimal API.
+            Questo progetto dimostrativo implementa un sistema completo di autenticazione basato su token con refresh
+            token e supporto per i ruoli.
+        </p>
+
+        <a href="/login-page.html" class="btn-demo">Prova la Demo Interattiva</a>
+        <a href="/swagger" class="btn-demo" style="background-color: #27ae60;">Esplora le API (Swagger)</a>
+
+        <h2>Caratteristiche Principali</h2>
+        <ul>
+            <li>Autenticazione basata su JWT (JSON Web Tokens)</li>
+            <li>Gestione di refresh token per mantenere l'utente autenticato</li>
+            <li>Controllo degli accessi basato su ruoli (RBAC)</li>
+            <li>Reindirizzamento automatico per richieste da browser</li>
+            <li>Risposta JSON dettagliata per client API</li>
+            <li>Interfaccia di test interattiva</li>
+            <li>Documentazione OpenAPI (Swagger)</li>
+        </ul>
+
+        <h2>Flusso di Autenticazione</h2>
+
+        <div class="flow-diagram">
+            <pre>
+┌────────┐     (1) Login Request     ┌───────────┐
+│        │ ────────────────────────> │           │
+│        │                           │           │
+│        │  (2) JWT + Refresh Token  │  Minimal  │
+│ Client │ <─────────────────────────│    API    │
+│        │                           │           │
+│        │  (3) Request with JWT     │  Server   │
+│        │ ────────────────────────> │           │
+│        │                           │           │
+│        │  (4) Protected Resource   │           │
+│        │ <─────────────────────────│           │
+└────────┘                           └───────────┘</pre>
+        </div>
+
+        <p>
+            <strong>Flusso dettagliato:</strong>
+        </p>
+        <ol>
+            <li>Il client invia le credenziali (username e password) al server</li>
+            <li>Il server verifica le credenziali e, se valide, genera e restituisce:</li>
+            <ul>
+                <li>Access Token (JWT con scadenza breve)</li>
+                <li>Refresh Token (per ottenere nuovi token senza riautenticarsi)</li>
+            </ul>
+            <li>Il client utilizza l'Access Token per le richieste API successive</li>
+            <li>Quando l'Access Token scade, il client utilizza il Refresh Token per ottenere nuovi token</li>
+            <li>Al logout, il Refresh Token viene invalidato sul server</li>
+        </ol>
+
+        <h2>Account Demo</h2>
+        <p>Sono disponibili due account di test con diversi livelli di autorizzazione:</p>
+
+        <table>
+            <tr>
+                <th>Username</th>
+                <th>Password</th>
+                <th>Ruoli</th>
+                <th>Accesso</th>
+            </tr>
+            <tr>
+                <td><code>user</code></td>
+                <td><code>pass</code></td>
+                <td>Viewer</td>
+                <td>Endpoint <code>/protected</code> e <code>/user-info</code></td>
+            </tr>
+            <tr>
+                <td><code>admin</code></td>
+                <td><code>Admin123!</code></td>
+                <td>Administrator, SuperAdministrator</td>
+                <td>Tutti gli endpoint, incluso <code>/admin</code></td>
+            </tr>
+        </table>
+
+        <h2>Endpoint API</h2>
+
+        <table>
+            <tr>
+                <th>Endpoint</th>
+                <th>Metodo</th>
+                <th>Descrizione</th>
+                <th>Autorizzazione</th>
+            </tr>
+            <tr>
+                <td><code>/login</code></td>
+                <td><span class="tag tag-post">POST</span></td>
+                <td>Effettua l'autenticazione e genera i token</td>
+                <td>Public</td>
+            </tr>
+            <tr>
+                <td><code>/protected</code></td>
+                <td><span class="tag tag-get">GET</span></td>
+                <td>Contenuto accessibile a utenti autenticati</td>
+                <td><span class="tag tag-protected">Autenticato</span></td>
+            </tr>
+            <tr>
+                <td><code>/admin</code></td>
+                <td><span class="tag tag-get">GET</span></td>
+                <td>Funzionalità riservate agli amministratori</td>
+                <td><span class="tag tag-admin">Role: Administrator</span></td>
+            </tr>
+            <tr>
+                <td><code>/user-info</code></td>
+                <td><span class="tag tag-get">GET</span></td>
+                <td>Informazioni sull'utente corrente</td>
+                <td><span class="tag tag-protected">Autenticato</span></td>
+            </tr>
+            <tr>
+                <td><code>/refresh</code></td>
+                <td><span class="tag tag-post">POST</span></td>
+                <td>Rinnova i token utilizzando un refresh token</td>
+                <td>Public</td>
+            </tr>
+            <tr>
+                <td><code>/logout</code></td>
+                <td><span class="tag tag-post">POST</span></td>
+                <td>Invalida il refresh token</td>
+                <td><span class="tag tag-protected">Autenticato</span></td>
+            </tr>
+        </table>
+
+        <h2>Sicurezza e Implementazione</h2>
+
+        <div class="security-note">
+            <p><strong>Nota:</strong> Questo è un progetto dimostrativo. In produzione, sono raccomandati ulteriori
+                accorgimenti di sicurezza.</p>
+        </div>
+
+        <h3>Misure di Sicurezza Implementate</h3>
+        <ul>
+            <li><strong>Validazione completa dei token JWT</strong> (firma, emittente, destinatario, scadenza)</li>
+            <li><strong>Refresh token opachi</strong> (non contengono informazioni e sono memorizzati lato server)</li>
+            <li><strong>Invalidazione al logout</strong> dei refresh token</li>
+            <li><strong>Thread-safe storage</strong> con <code>ConcurrentDictionary</code></li>
+            <li><strong>Gestione delle eccezioni</strong> per token scaduti o non validi</li>
+            <li><strong>Reindirizzamenti specifici</strong> per browser VS risposte JSON per API client</li>
+        </ul>
+
+        <h3>Tecnologie Utilizzate</h3>
+        <ul>
+            <li>ASP.NET Core Minimal API</li>
+            <li>JWT Bearer Authentication</li>
+            <li>Role-Based Authorization</li>
+            <li>OpenAPI (Swagger) per la documentazione</li>
+            <li>HTML, CSS e JavaScript per l'interfaccia di test</li>
+        </ul>
+
+        <h3>Architettura dell'Applicazione</h3>
+        <p>
+            L'applicazione implementa un'architettura RESTful con autenticazione stateless basata su token. Il client
+            mantiene lo stato dell'autenticazione conservando i token, mentre il server valida ogni richiesta senza
+            mantenere sessioni.
+        </p>
+        <p>
+            La pipeline middleware di ASP.NET Core è configurata con attenzione all'ordine dei componenti per garantire
+            il corretto funzionamento del sistema di autenticazione e autorizzazione:
+        </p>
+        <ol>
+            <li>Middleware per file statici (prima dell'autenticazione)</li>
+            <li>Autenticazione</li>
+            <li>Autorizzazione</li>
+            <li>Gestione delle risposte di errore (status code)</li>
+            <li>Routing degli endpoint</li>
+        </ol>
+
+        <h3>Particolarità di Implementazione</h3>
+        <ul>
+            <li>Gestione differenziata delle risposte 401 (non autenticato) e 403 (non autorizzato)</li>
+            <li>Reindirizzamento automatico alla pagina di login per richieste da browser</li>
+            <li>Rilevamento intelligente delle richieste browser vs API</li>
+            <li>Supporto per token con ruoli multipli</li>
+            <li>Gestione personalizzata degli eventi di autenticazione</li>
+        </ul>
+
+        <h2>Testare la Pagina di Accesso Negato</h2>
+        <p>
+            Per testare il reindirizzamento alla pagina <code>access-denied.html</code>, è necessario:
+        </p>
+        <ol>
+            <li>Autenticarsi come utente standard (username: <code>user</code>, password: <code>pass</code>)</li>
+            <li>Tentare di accedere a una risorsa protetta che richiede privilegi di amministratore</li>
+        </ol>
+
+        <div class="security-note">
+            <p><strong>Nota sulla sperimentazione:</strong> Poiché l'autenticazione è basata su token JWT,
+                testare questo comportamento direttamente nel browser è complesso perché richiede:</p>
+            <ul>
+                <li>Una richiesta HTTP con il token JWT nell'header <code>Authorization</code></li>
+                <li>La richiesta deve accettare <code>text/html</code> come tipo di contenuto di risposta</li>
+                <li>Il token deve appartenere a un utente autenticato ma senza i permessi necessari</li>
+            </ul>
+            <p>Nella demo interattiva, puoi testare questo scenario facendo clic sul pulsante "Testa API amministrativa"
+                dopo aver eseguito l'accesso come utente standard.</p>
+        </div>
+
+        <h2>Esplorare il Codice</h2>
+        <p>
+            Il codice sorgente è organizzato per essere didattico e dimostrativo. I componenti principali sono:
+        </p>
+        <ul>
+            <li><strong>Program.cs</strong>: Configurazione dell'applicazione e definizione degli endpoint</li>
+            <li><strong>wwwroot/login-page.html</strong>: Interfaccia di test interattiva</li>
+            <li><strong>wwwroot/access-denied.html</strong>: Pagina di errore per accessi non autorizzati</li>
+            <li><strong>wwwroot/css/styles.css</strong>: Stili condivisi dell'applicazione</li>
+        </ul>
+
+        <p>
+            <a href="https://github.com/GreppiDev/Info5IA2425WebDev/tree/main/asp.net/api-samples/minimal-api/AuthenticationAuthorizationDemos/BasicExamples/token-based-login-with-roles"
+                target="_blank" rel="noopener noreferrer" class="btn-demo" style="background-color: #333;">
+                Visualizza su GitHub
+            </a>
+        </p>
+
+        <footer
+            style="margin-top: 3rem; color: #777; font-size: 0.9rem; text-align: center; border-top: 1px solid #eee; padding-top: 1rem;">
+            JWT Authentication Demo - Sviluppato per scopi didattici - 2024
+        </footer>
+    </div>
+</body>
+
+</html>

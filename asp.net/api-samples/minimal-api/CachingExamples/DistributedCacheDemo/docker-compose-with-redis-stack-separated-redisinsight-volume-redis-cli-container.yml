@@ -1,0 +1,39 @@
+services:
+  redis-stack:
+    image: redis/redis-stack:latest
+    container_name: redis-stack
+    ports:
+      - "6379:6379" # Porta per Redis
+      - "8001:8001" # Porta per RedisInsight (UI web)
+    networks:
+      - redis-network
+    volumes:
+      - redis-data:/data # Dati di Redis
+      - redisinsight-data:/db # Dati di RedisInsight
+    environment:
+      - REDIS_ARGS=--requirepass yourpassword --appendonly yes
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "yourpassword", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  redis-cli:
+    image: redis:latest # Usa l'immagine ufficiale di Redis
+    container_name: redis-cli
+    networks:
+      - redis-network
+    depends_on:
+      - redis-stack
+    entrypoint: ["redis-cli", "-h", "redis-stack", "-a", "yourpassword"]
+    stdin_open: true
+    tty: true
+
+networks:
+  redis-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+  redisinsight-data:
