@@ -27,9 +27,11 @@
       - [Entità Raffinate](#entità-raffinate)
       - [Relazioni Raffinate](#relazioni-raffinate)
       - [Diagramma E/R Raffinato](#diagramma-er-raffinato)
+        - [Regole di lettura delle associazioni](#regole-di-lettura-delle-associazioni)
       - [Conclusioni](#conclusioni)
     - [Progettazione Logica Database Biblioteca Universitaria (MariaDB)](#progettazione-logica-database-biblioteca-universitaria-mariadb)
       - [Schema Relazionale](#schema-relazionale)
+        - [Mapping da E/R raffinato a modello logico](#mapping-da-er-raffinato-a-modello-logico)
         - [Tabelle per la Gestione degli Utenti](#tabelle-per-la-gestione-degli-utenti)
         - [Tabelle per la Gestione del Catalogo](#tabelle-per-la-gestione-del-catalogo)
         - [Tabelle per la Gestione dei Prestiti e Prenotazioni](#tabelle-per-la-gestione-dei-prestiti-e-prenotazioni)
@@ -38,6 +40,7 @@
       - [Note sulla Progettazione](#note-sulla-progettazione)
   - [Esempio completo: "Prenota il tuo tavolo con app"](#esempio-completo-prenota-il-tuo-tavolo-con-app)
   - [Raffinamento delle Entità e del Modello E/R](#raffinamento-delle-entità-e-del-modello-er)
+    - [Mapping dal modello E/R ristrutturato al modello logico](#mapping-dal-modello-er-ristrutturato-al-modello-logico)
     - [Conclusione](#conclusione)
   - [Esempio completo: web app per prenotazioni al ristorante](#esempio-completo-web-app-per-prenotazioni-al-ristorante)
     - [Traccia di Input](#traccia-di-input)
@@ -58,6 +61,8 @@
       - [Entità Raffinate - prenotazioni ristorante](#entità-raffinate---prenotazioni-ristorante)
       - [Relazioni Raffinate - prenotazioni ristorante](#relazioni-raffinate---prenotazioni-ristorante)
       - [Diagramma E/R Raffinato - prenotazioni ristorante](#diagramma-er-raffinato---prenotazioni-ristorante)
+      - [Regole di lettura delle associazioni nel modello E/R](#regole-di-lettura-delle-associazioni-nel-modello-er)
+      - [Mapping da E/R ristrutturato a modello logico](#mapping-da-er-ristrutturato-a-modello-logico)
     - [Schema Logico SQL (MariaDB) - prenotazioni ristorante](#schema-logico-sql-mariadb---prenotazioni-ristorante)
 
 ## Collegamento tra casi d'uso, analisi dei requisiti e progettazione concettuale
@@ -361,15 +366,11 @@ erDiagram
 				string DataScadenza
 				string DataRestituzione
 				string Stato
-				string ISBN FK
-				string MatricolaStudente FK
 		}
 		Prenotazione {
 				int IDPrenotazione PK
 				string DataPrenotazione
 				string Stato
-				string ISBN FK
-				string MatricolaStudente FK
 		}
 
 		Libro ||--o{ Autore : ScrittoDa
@@ -386,13 +387,13 @@ Rivediamo il modello E/R iniziale e i casi d'uso per individuare possibili migli
 
 * **Gestione della Disponibilità dei Libri**: L'attributo `NumeroCopie` in `Libro` è insufficiente per tracciare la disponibilità reale. Dobbiamo distinguere tra il *libro* come entità concettuale e le *copie fisiche* del libro. Introduciamo l'entità **CopiaLibro** che rappresenta una singola copia fisica di un libro.
 
-	* **Nuova Entità: CopiaLibro**: (IDCopiaLibro, StatoCopia (disponibile, prestata, in riparazione, ecc.), ISBN_Libro FK). La chiave primaria `ISBN` in `Libro` ora identifica il libro *concettuale*, mentre `IDCopiaLibro` identifica una specifica copia fisica.
+	* **Nuova Entità: CopiaLibro**: (IDCopiaLibro, StatoCopia (disponibile, prestata, in riparazione, ecc.)). La chiave primaria `ISBN` in `Libro` ora identifica il libro *concettuale*, mentre `IDCopiaLibro` identifica una specifica copia fisica.
 	* **Relazione Libro - CopiaLibro**: Un Libro *ha* una o più CopieLibro. Una CopiaLibro *è una copia di* un Libro. (Relazione Uno-a-Molti, Chiave esterna ISBN in CopiaLibro).
 	* La relazione Prestito ora riguarderà `CopiaLibro` invece di `Libro`. Analogamente per Prenotazione.
 
 * **Dettagli su Autori e Categorie**: Potremmo voler aggiungere più informazioni sugli autori (es: biografia, data di nascita) e sulle categorie (es: descrizione della categoria, categoria genitore per gerarchie). Per ora, manteniamo la semplicità, ma è un punto da considerare per future espansioni.
-* **Attributi di Prestito e Prenotazione**: L'entità `Prestito` potrebbe beneficiare di un attributo per registrare il bibliotecario che ha effettuato il prestito (`MatricolaBibliotecario_Prestito FK`). Per la `Prenotazione`, potrebbe essere utile aggiungere una data di scadenza della prenotazione (oltre la quale la prenotazione decade se il libro è disponibile e non ritirato).
-* **Gestione Chiavi Primarie e Straniere**: Esplicitiamo meglio le chiavi primarie (PK) e straniere (FK). Usiamo nomi più descrittivi per le chiavi straniere per chiarezza (es: `ISBN_Libro` invece di solo `ISBN`).
+* **Attributi di Prestito e Prenotazione**: L'entità `Prestito` potrebbe beneficiare di un attributo per registrare il bibliotecario che ha effettuato il prestito. Per la `Prenotazione`, potrebbe essere utile aggiungere una data di scadenza della prenotazione (oltre la quale la prenotazione decade se il libro è disponibile e non ritirato).
+* **Gestione Chiavi Primarie e Straniere**: Esplicitiamo meglio le chiavi primarie (PK). Usiamo nomi più descrittivi per le chiavi.
 * **Cardinalità delle Relazioni**: Rivediamo le cardinalità. Confermiamo che le relazioni Molti-a-Molti tra Libro-Autore e Libro-Categoria sono corrette (un libro può avere più autori e appartenere a più categorie, e un autore può aver scritto più libri, una categoria può contenere più libri). Le relazioni uno-a-molti Libro-CopiaLibro, Prestito-CopiaLibro, Prestito-Studente, Prenotazione-CopiaLibro, Prenotazione-Studente sembrano corrette.
 
 ### Modello E/R Raffinato
@@ -402,13 +403,13 @@ Applichiamo i raffinamenti al modello E/R.
 #### Entità Raffinate
 
 * **Libro**: (ISBN_Libro PK, Titolo, Edizione, Riassunto)
-* **CopiaLibro**: (IDCopiaLibro PK, StatoCopia, ISBN_Libro FK)
+* **CopiaLibro**: (IDCopiaLibro PK, StatoCopia)
 * **Autore**: (IDAutore PK, Nome, Cognome)
 * **Categoria**: (IDCategoria PK, NomeCategoria)
 * **Studente**: (MatricolaStudente PK, Nome, Cognome, CorsoLaurea, Email, Password)
 * **Bibliotecario**: (MatricolaBibliotecario PK, Nome, Cognome, Ruolo, Email, Password)
-* **Prestito**: (IDPrestito PK, DataInizioPrestito, DataScadenzaPrestito, DataRestituzionePrestito, StatoPrestito, IDCopiaLibro_Prestito FK, MatricolaStudente_Prestito FK, MatricolaBibliotecario_Prestito FK)
-* **Prenotazione**: (IDPrenotazione PK, DataPrenotazione, StatoPrenotazione, DataScadenzaPrenotazione, IDCopiaLibro_Prenotazione FK, MatricolaStudente_Prenotazione FK)
+* **Prestito**: (IDPrestito PK, DataInizioPrestito, DataScadenzaPrestito, DataRestituzionePrestito, StatoPrestito)
+* **Prenotazione**: (IDPrenotazione PK, DataPrenotazione, StatoPrenotazione, DataScadenzaPrenotazione)
 
 #### Relazioni Raffinate
 
@@ -436,7 +437,6 @@ erDiagram
 		CopiaLibro {
 				int IDCopiaLibro PK
 				string StatoCopia
-				string ISBN_Libro FK
 		}
 		Autore {
 				int IDAutore PK
@@ -469,17 +469,12 @@ erDiagram
 				string DataScadenzaPrestito
 				string DataRestituzionePrestito
 				string StatoPrestito
-				int IDCopiaLibro_Prestito FK
-				string MatricolaStudente_Prestito FK
-				string MatricolaBibliotecario_Prestito FK
 		}
 		Prenotazione {
 				int IDPrenotazione PK
 				string DataPrenotazione
 				string StatoPrenotazione
 				string DataScadenzaPrenotazione
-				int IDCopiaLibro_Prenotazione FK
-				string MatricolaStudente_Prenotazione FK
 		}
 
 		Libro ||--o{ Autore : ScrittoDa
@@ -492,6 +487,17 @@ erDiagram
 		Studente ||--|| Prenotazione : EffettuatoDa
 ```
 
+##### Regole di lettura delle associazioni
+
+* **Libro - Autore**: (Molti-a-Molti, invariata)
+* **Libro - Categoria**: (Molti-a-Molti, invariata)
+* **Libro - CopiaLibro**: Libro *ha* CopieLibro, CopiaLibro *è copia di* Libro (Uno-a-Molti)
+* **Prestito - CopiaLibro**: Prestito *riguarda* CopiaLibro, CopiaLibro *può essere oggetto di* Prestiti (Uno-a-Molti)
+* **Prestito - Studente**: Prestito *effettuato da* Studente, Studente *effettua* Prestiti (Uno-a-Molti)
+* **Prestito - Bibliotecario**: Prestito *registrato da* Bibliotecario, Bibliotecario *registra* Prestiti (Uno-a-Molti)
+* **Prenotazione - CopiaLibro**: Prenotazione *riguarda* CopiaLibro, CopiaLibro *può essere oggetto di* Prenotazioni (Uno-a-Molti)
+* **Prenotazione - Studente**: Prenotazione *effettuata da* Studente, Studente *effettua* Prenotazioni (Uno-a-Molti)
+
 #### Conclusioni
 
 Questo esempio dimostra come, partendo da una specifica testuale di requisiti, possiamo procedere attraverso l'analisi dei requisiti funzionali e di dato, la definizione dei casi d'uso e la progettazione concettuale con il modello E/R, fino ad arrivare a un modello E/R raffinato. Il processo è iterativo e beneficia della revisione e del raffinamento continuo, guidato sia dai casi d'uso che da una comprensione più profonda del dominio applicativo e dei vincoli.
@@ -501,6 +507,19 @@ Questo esempio dimostra come, partendo da una specifica testuale di requisiti, p
 #### Schema Relazionale
 
 Di seguito è riportato lo schema relazionale del database per la biblioteca universitaria. Sono utilizzati i tipi di dato e le caratteristiche specifiche di MariaDB.
+
+##### Mapping da E/R raffinato a modello logico
+
+Si riportano di seguito le relazioni dedotte dal modello E/R ristrutturato
+
+* **Libro**: (ISBN_Libro PK, Titolo, Edizione, Riassunto)
+* **CopiaLibro**: (IDCopiaLibro PK, StatoCopia, ISBN_Libro FK)
+* **Autore**: (IDAutore PK, Nome, Cognome)
+* **Categoria**: (IDCategoria PK, NomeCategoria)
+* **Studente**: (MatricolaStudente PK, Nome, Cognome, CorsoLaurea, Email, Password)
+* **Bibliotecario**: (MatricolaBibliotecario PK, Nome, Cognome, Ruolo, Email, Password)
+* **Prestito**: (IDPrestito PK, DataInizioPrestito, DataScadenzaPrestito, DataRestituzionePrestito, StatoPrestito, IDCopiaLibro_Prestito FK, MatricolaStudente_Prestito FK, MatricolaBibliotecario_Prestito FK)
+* **Prenotazione**: (IDPrenotazione PK, DataPrenotazione, StatoPrenotazione, DataScadenzaPrenotazione, IDCopiaLibro_Prenotazione FK, MatricolaStudente_Prenotazione FK)
 
 ##### Tabelle per la Gestione degli Utenti
 
@@ -833,11 +852,11 @@ Riconsiderando il caso d'uso "Prenotare Tavolo" dettagliato, possiamo raffinare 
 **Entità E/R Raffinate (per "Prenotare Tavolo" e contesti correlati):**
 
 * **Ristorante** (già presente):  Manteniamo gli attributi iniziali: Nome, Indirizzo, TipoCucina, OrarioApertura, CapacitàMassimaTavoli. Potremmo aggiungere:  `IDRistorante` come chiave primaria, FasceOrariePrenotabili, PoliticaPrenotazioni (es. preavviso minimo, politica di cancellazione, richiesta acconto/prepagamento).
-* **Prenotazione** (già presente, ma raffinata):  Miglioriamo gli attributi: `IDPrenotazione` (PK), DataPrenotazione, OraPrenotazione, NumeroPersone, StatoPrenotazione (es. "in attesa di conferma", "confermata", "cancellata", "completata", "non presentata"), DataRichiestaPrenotazione, DataConfermaPrenotazione, NoteSpecialiUtente, `IDRistorante_Prenotazione` (FK), `IDUtente_Prenotazione` (FK).  Potremmo aggiungere anche un riferimento al tavolo specifico prenotato (se si vuole gestire l'assegnazione tavoli).
+* **Prenotazione** (già presente, ma raffinata):  Miglioriamo gli attributi: `IDPrenotazione` (PK), DataPrenotazione, OraPrenotazione, NumeroPersone, StatoPrenotazione (es. "in attesa di conferma", "confermata", "cancellata", "completata", "non presentata"), DataRichiestaPrenotazione, DataConfermaPrenotazione, NoteSpecialiUtente.  Potremmo aggiungere anche un riferimento al tavolo specifico prenotato (se si vuole gestire l'assegnazione tavoli).
 * **UtenteApp** (inizialmente "Utente", rinominiamo per chiarezza):  `IDUtenteApp` (PK), Nome, Cognome, Telefono, Email, (altri dati profilo utente), `Password` (se gestita direttamente, altrimenti gestione autenticazione esterna).
-* **TavoloRistorante**:  Nuova entità per gestire la disponibilità. `IDTavoloRistorante` (PK), NumeroTavolo, TipoTavolo (es. "normale", "tavolo alto", "privato"), CapacitàPosti, `IDRistorante_Tavolo` (FK).
-* **FasciaOrariaDisponibilità**: Nuova entità per definire orari di disponibilità per prenotazioni. `IDFasciaOraria` (PK), OraInizio, OraFine, GiornoSettimana, `IDRistorante_FasciaOraria` (FK).  Questo permette di definire fasce orarie prenotabili per ristorante (es. pranzo 12:00-14:30, cena 19:00-22:30).
-* **(Opzionale) PagamentoPrenotazione**:  Entità per tracciare i pagamenti delle prenotazioni (se richiesti acconti/prepagamenti). `IDPagamentoPrenotazione` (PK), DataPagamento, ImportoPagamento, MetodoPagamento, StatoPagamento, `IDPrenotazione_Pagamento` (FK), `IDSistemaPagamentoEsterno_Pagamento` (FK - se si traccia il sistema esterno).
+* **TavoloRistorante**:  Nuova entità per gestire la disponibilità. `IDTavoloRistorante` (PK), NumeroTavolo, TipoTavolo (es. "normale", "tavolo alto", "privato"), CapacitàPosti.
+* **FasciaOrariaDisponibilità**: Nuova entità per definire orari di disponibilità per prenotazioni. `IDFasciaOraria` (PK), OraInizio, OraFine, GiornoSettimana.  Questo permette di definire fasce orarie prenotabili per ristorante (es. pranzo 12:00-14:30, cena 19:00-22:30).
+* **(Opzionale) PagamentoPrenotazione**:  Entità per tracciare i pagamenti delle prenotazioni (se richiesti acconti/prepagamenti). `IDPagamentoPrenotazione` (PK), DataPagamento, ImportoPagamento, MetodoPagamento, StatoPagamento.
 
 **Relazioni E/R Raffinate (per "Prenotare Tavolo" e contesti correlati):**
 
@@ -869,7 +888,6 @@ erDiagram
 				int IDTavoloRistorante PK
 				int NumeroTavolo
 				int CapacitaPosti
-				int IDRistorante_Tavolo FK
 		}
 		
 		FasciaOrariaDisponibilita {
@@ -877,7 +895,6 @@ erDiagram
 				time OraInizio
 				time OraFine
 				string GiornoSettimana
-				int IDRistorante_FasciaOraria FK
 		}
 		
 		Prenotazione {
@@ -886,8 +903,6 @@ erDiagram
 				datetime OraPrenotazione
 				int NumeroPersone
 				string StatoPrenotazione
-				int IDRistorante_Prenotazione FK
-				int IDUtenteApp_Prenotazione FK
 		}
 		
 		UtenteApp {
@@ -904,17 +919,34 @@ erDiagram
 				decimal ImportoPagamento
 				string MetodoPagamento
 				string StatoPagamento
-				int IDPrenotazione_Pagamento FK
 		}
 ```
 
-**Spiegazione del Modello E/R Raffinato:**
+* **Spiegazione del Modello E/R Raffinato:**
 
-* **Nuova Entità TavoloRistorante**: Permette di gestire la disponibilità a livello di singolo tavolo, se necessario (es. per ristoranti che vogliono gestire prenotazioni su tavoli specifici).
-* **Nuova Entità FasciaOrariaDisponibilità**: Permette di definire orari prenotabili per ristorante in modo strutturato.
-* **Attributi Aggiuntivi in Prenotazione**: Più dettagli sulla prenotazione (data/ora richiesta, conferma, stato, note).
-* **Entità PagamentoPrenotazione (Opzionale)**: Per gestire la parte dei pagamenti, se richiesta.
-* **Relazioni Raffinate**:  Definite relazioni più precise, incluse quelle per la disponibilità e i tavoli.
+  * **Nuova Entità TavoloRistorante**: Permette di gestire la disponibilità a livello di singolo tavolo, se necessario (es. per ristoranti che vogliono gestire prenotazioni su tavoli specifici).
+  * **Nuova Entità FasciaOrariaDisponibilità**: Permette di definire orari prenotabili per ristorante in modo strutturato.
+  * **Attributi Aggiuntivi in Prenotazione**: Più dettagli sulla prenotazione (data/ora richiesta, conferma, stato, note).
+  * **Entità PagamentoPrenotazione (Opzionale)**: Per gestire la parte dei pagamenti, se richiesta.
+  * **Relazioni Raffinate**:  Definite relazioni più precise, incluse quelle per la disponibilità e i tavoli.
+
+* **Regole di lettura**
+
+  * **Ristorante - TavoloRistorante**:  Ristorante *ha* TavoliRistorante (Uno-a-Molti).
+  * **Ristorante - FasciaOrariaDisponibilità**: Ristorante *offre* FasceOrarieDisponibilità (Uno-a-Molti).
+  * **TavoloRistorante - FasciaOrariaDisponibilità**:  (Relazione per definire quali tavoli sono disponibili in quali fasce orarie - se necessario un controllo di disponibilità a livello di tavolo, altrimenti la disponibilità può essere gestita a livello di ristorante/fascia oraria aggregata).  Potrebbe essere una relazione Molti-a-Molti se un tavolo può essere disponibile in più fasce orarie e una fascia oraria può avere più tavoli disponibili.  Oppure si può semplificare e gestire la disponibilità in modo più aggregato a livello di ristorante e fascia oraria.
+  * **Prenotazione - Ristorante**: Prenotazione *riguarda* Ristorante (Uno-a-Molti).
+  * **Prenotazione - UtenteApp**: Prenotazione *effettuata da* UtenteApp (Uno-a-Molti).
+  * **(Opzionale) Prenotazione - PagamentoPrenotazione**: Prenotazione *può avere* PagamentoPrenotazione (Uno-a-Uno o Uno-a-Zero/Uno, a seconda se il pagamento è sempre obbligatorio o opzionale).
+
+### Mapping dal modello E/R ristrutturato al modello logico
+
+* **Ristorante** (`IDRistorante` PK, Nome, Indirizzo, TipoCucina, OrarioApertura, CapacitàMassimaTavoli,FasceOrariePrenotabili, PoliticaPrenotazioni)
+* **Prenotazione** (`IDPrenotazione` PK, DataPrenotazione, OraPrenotazione, NumeroPersone, StatoPrenotazione, DataRichiestaPrenotazione, DataConfermaPrenotazione, NoteSpecialiUtente, `IDRistorante_Prenotazione` (FK), `IDUtente_Prenotazione` (FK)).
+* **UtenteApp** (`IDUtenteApp` (PK), Nome, Cognome, Telefono, Email, `Password`).
+* **TavoloRistorante**(`IDTavoloRistorante` (PK), NumeroTavolo, TipoTavolo, CapacitàPosti, `IDRistorante_Tavolo` (FK)).
+* **FasciaOrariaDisponibilità** (`IDFasciaOraria` (PK), OraInizio, OraFine, GiornoSettimana, `IDRistorante_FasciaOraria` (FK))
+* **(Opzionale) PagamentoPrenotazione** (`IDPagamentoPrenotazione` (PK), DataPagamento, ImportoPagamento, MetodoPagamento, StatoPagamento, `IDPrenotazione_Pagamento` (FK), `IDSistemaPagamentoEsterno_Pagamento`)
 
 ### Conclusione
 
@@ -1207,7 +1239,6 @@ erDiagram
         int Numero
         int Capacita
         string Stato
-        int IDRistorante FK
     }
     Cliente {
         int IDCliente PK
@@ -1222,15 +1253,12 @@ erDiagram
         datetime DataOra
         int NumeroPersone
         string Stato
-        int IDCliente FK
-        int IDTavolo FK
     }
     Pagamento {
         int IDPagamento PK
         decimal Importo
         string Stato
         string TipoPagamento
-        int IDPrenotazione FK
     }
     Ristoratore {
         int IDRistoratore PK
@@ -1244,7 +1272,6 @@ erDiagram
         datetime DataInizio
         datetime DataFine
         string Stato
-        int IDRistorante FK
     }
 
     Ristorante ||--|| Ristoratore : "è gestito da"
@@ -1283,15 +1310,15 @@ Analizziamo alcuni aspetti che possono essere migliorati:
 #### Entità Raffinate - prenotazioni ristorante
 
 * **Ristorante**: (IDRistorante PK, Nome, Indirizzo, TipoCucina, FasciaPrezzo, Descrizione, OrarioApertura, OrarioChiusura, GiorniApertura, TempoMedioServizio)
-* **Tavolo**: (IDTavolo PK, Numero, Capacità, Stato, Posizione, Note, IDRistorante FK)
+* **Tavolo**: (IDTavolo PK, Numero, Capacità, Stato, Posizione, Note)
 * **Cliente**: (IDCliente PK, Nome, Cognome, Email, Telefono, Password, DataRegistrazione, UltimoAccesso)
-* **Prenotazione**: (IDPrenotazione PK, DataOra, NumeroPersone, Stato, Note, DataCreazione, DataModifica, IDCliente FK, IDTavolo FK)
-* **Pagamento**: (IDPagamento PK, Importo, Stato, TipoPagamento, DataPagamento, RiferimentoTransazione, IDPrenotazione FK)
+* **Prenotazione**: (IDPrenotazione PK, DataOra, NumeroPersone, Stato, Note, DataCreazione, DataModifica)
+* **Pagamento**: (IDPagamento PK, Importo, Stato, TipoPagamento, DataPagamento, RiferimentoTransazione)
 * **Ristoratore**: (IDRistoratore PK, Nome, Cognome, Email, Password, Telefono, DataRegistrazione)
-* **TurnoServizio**: (IDTurno PK, DataInizio, DataFine, Stato, CapacitàMassima, Note, IDRistorante FK)
-* **Categoria**: (IDCategoria PK, Nome, Descrizione, Ordine, IDRistorante FK)
-* **Piatto**: (IDPiatto PK, Nome, Descrizione, Prezzo, Disponibile, IDCategoria FK)
-* **Recensione**: (IDRecensione PK, Valutazione, Commento, DataRecensione, IDCliente FK, IDRistorante FK)
+* **TurnoServizio**: (IDTurno PK, DataInizio, DataFine, Stato, CapacitàMassima, Note)
+* **Categoria**: (IDCategoria PK, Nome, Descrizione, Ordine)
+* **Piatto**: (IDPiatto PK, Nome, Descrizione, Prezzo, Disponibile)
+* **Recensione**: (IDRecensione PK, Valutazione, Commento, DataRecensione)
 * **Allergia**: (IDAllergia PK, Nome, Descrizione)
 
 #### Relazioni Raffinate - prenotazioni ristorante
@@ -1331,7 +1358,6 @@ erDiagram
         string Stato
         string Posizione
         string Note
-        int IDRistorante FK
     }
     Cliente {
         int IDCliente PK
@@ -1351,8 +1377,6 @@ erDiagram
         string Note
         datetime DataCreazione
         datetime DataModifica
-        int IDCliente FK
-        int IDTavolo FK
     }
     Pagamento {
         int IDPagamento PK
@@ -1361,7 +1385,6 @@ erDiagram
         string TipoPagamento
         datetime DataPagamento
         string RiferimentoTransazione
-        int IDPrenotazione FK
     }
     Ristoratore {
         int IDRistoratore PK
@@ -1379,14 +1402,12 @@ erDiagram
         string Stato
         int CapacitaMassima
         string Note
-        int IDRistorante FK
     }
     Categoria {
         int IDCategoria PK
         string Nome
         string Descrizione
         int Ordine
-        int IDRistorante FK
     }
     Piatto {
         int IDPiatto PK
@@ -1394,15 +1415,12 @@ erDiagram
         string Descrizione
         decimal Prezzo
         boolean Disponibile
-        int IDCategoria FK
     }
     Recensione {
         int IDRecensione PK
         int Valutazione
         string Commento
         datetime DataRecensione
-        int IDCliente FK
-        int IDRistorante FK
     }
     Allergia {
         int IDAllergia PK
@@ -1422,6 +1440,34 @@ erDiagram
     Prenotazione ||--|| Pagamento : "ha"
     Ristorante ||--o{ Recensione : "riceve"
 ```
+
+#### Regole di lettura delle associazioni nel modello E/R
+
+* **Ristorante - Tavolo**: (Uno-a-Molti, invariata)
+* **Ristorante - Ristoratore**: (Uno-a-Uno, invariata)
+* **Prenotazione - Cliente**: (Uno-a-Molti, invariata)
+* **Prenotazione - Tavolo**: (Uno-a-Molti, invariata)
+* **Prenotazione - Pagamento**: (Uno-a-Uno, invariata)
+* **Ristorante - TurnoServizio**: (Uno-a-Molti)
+* **Ristorante - Categoria**: (Uno-a-Molti)
+* **Categoria - Piatto**: (Uno-a-Molti)
+* **Cliente - Allergia**: (Molti-a-Molti)
+* **Cliente - Recensione**: (Uno-a-Molti)
+* **Ristorante - Recensione**: (Uno-a-Molti)
+
+#### Mapping da E/R ristrutturato a modello logico
+
+* **Ristorante** (IDRistorante PK, Nome, Indirizzo, TipoCucina, FasciaPrezzo, Descrizione, OrarioApertura, OrarioChiusura, GiorniApertura, TempoMedioServizio)
+* **Tavolo** (IDTavolo PK, Numero, Capacità, Stato, Posizione, Note, IDRistorante FK)
+* **Cliente**: (IDCliente PK, Nome, Cognome, Email, Telefono, Password, DataRegistrazione, UltimoAccesso)
+* **Prenotazione** (IDPrenotazione PK, DataOra, NumeroPersone, Stato, Note, DataCreazione, DataModifica, IDCliente FK, IDTavolo FK)
+* **Pagamento** (IDPagamento PK, Importo, Stato, TipoPagamento, DataPagamento, RiferimentoTransazione, IDPrenotazione FK)
+* **Ristoratore** (IDRistoratore PK, Nome, Cognome, Email, Password, Telefono, DataRegistrazione)
+* **TurnoServizio** (IDTurno PK, DataInizio, DataFine, Stato, CapacitàMassima, Note, IDRistorante FK)
+* **Categoria** (IDCategoria PK, Nome, Descrizione, Ordine, IDRistorante FK)
+* **Piatto** (IDPiatto PK, Nome, Descrizione, Prezzo, Disponibile, IDCategoria FK)
+* **Recensione** (IDRecensione PK, Valutazione, Commento, DataRecensione, IDCliente FK, IDRistorante FK)
+* **Allergia** (IDAllergia PK, Nome, Descrizione)
 
 ### Schema Logico SQL (MariaDB) - prenotazioni ristorante
 
