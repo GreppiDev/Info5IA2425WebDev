@@ -1,9 +1,11 @@
 # Sistemi di Cache in ASP.NET Core
 
 - [Sistemi di Cache in ASP.NET Core](#sistemi-di-cache-in-aspnet-core)
-  - [Introduzione alla Cache](#introduzione-alla-cache)
+  - [Introduzione al Caching e sua Importanza](#introduzione-al-caching-e-sua-importanza)
+  - [Caching in ASP.NET](#caching-in-aspnet)
     - [Vantaggi dell'utilizzo della cache](#vantaggi-dellutilizzo-della-cache)
     - [Quando utilizzare la cache](#quando-utilizzare-la-cache)
+  - [Strategie di Caching Tradizionali in ASP.NET Core](#strategie-di-caching-tradizionali-in-aspnet-core)
   - [IMemoryCache](#imemorycache)
     - [Configurazione di IMemoryCache](#configurazione-di-imemorycache)
     - [Utilizzo di IMemoryCache](#utilizzo-di-imemorycache)
@@ -31,16 +33,36 @@
       - [Strategia "Stale While Revalidate" (SWR) (servire dati obsoleti mentre si aggiorna in background nella gestione della Cache)](#strategia-stale-while-revalidate-swr-servire-dati-obsoleti-mentre-si-aggiorna-in-background-nella-gestione-della-cache)
       - [Cache Penetration: Spiegazione e Soluzioni](#cache-penetration-spiegazione-e-soluzioni)
       - [Soluzione ottimale con Lock Distribuito + Negative Caching](#soluzione-ottimale-con-lock-distribuito--negative-caching)
-    - [Comparativa delle Strategie di Caching](#comparativa-delle-strategie-di-caching)
-      - [Comparativa delle tre strategie di caching principali implementate](#comparativa-delle-tre-strategie-di-caching-principali-implementate)
+    - [Analisi delle Strategie di Caching](#analisi-delle-strategie-di-caching)
+      - [Confronto tra le tre strategie di caching distribuito implementate](#confronto-tra-le-tre-strategie-di-caching-distribuito-implementate)
       - [Tabella comparativa](#tabella-comparativa)
       - [Casi d'uso ideali](#casi-duso-ideali)
       - [Implementazione Ibrida](#implementazione-ibrida)
-      - [Conclusione](#conclusione)
+      - [Considerazioni conclusive su DistributedCache](#considerazioni-conclusive-su-distributedcache)
+  - [HybridCache](#hybridcache)
+    - [Introduzione a `HybridCache`](#introduzione-a-hybridcache)
+    - [Architettura della Cache Ibrida (`HybridCache`)](#architettura-della-cache-ibrida-hybridcache)
+    - [Vantaggi di `HybridCache`](#vantaggi-di-hybridcache)
+    - [Confronto: In-Memory vs Distributed vs Hybrid Cache](#confronto-in-memory-vs-distributed-vs-hybrid-cache)
+    - [Configurazione ed Esempio Pratico](#configurazione-ed-esempio-pratico)
+    - [Focus su Redis come Cache Distribuita (L2)](#focus-su-redis-come-cache-distribuita-l2)
+    - [Scenario d'Uso: Applicazione Multi-Istanza](#scenario-duso-applicazione-multi-istanza)
+    - [Considerazioni conclusive su HybridCache](#considerazioni-conclusive-su-hybridcache)
 
-## Introduzione alla Cache
+## Introduzione al Caching e sua Importanza
 
-La cache è un meccanismo fondamentale per migliorare le prestazioni delle applicazioni web. Consiste nell'archiviare temporaneamente dati a cui si accede frequentemente in una memoria ad accesso rapido, in modo da evitare operazioni costose come calcoli complessi o accessi al database.
+Nello sviluppo di applicazioni backend moderne, specialmente quelle progettate per gestire un carico significativo di richieste come le soluzioni multi-server ASP.NET Core dietro un load balancer, le prestazioni e la scalabilità sono fondamentali. Una delle tecniche più efficaci per migliorare le prestazioni e ridurre il carico sui sistemi sottostanti (come i database SQL) è il **caching**.
+
+Il caching consiste nel memorizzare temporaneamente dati frequentemente richiesti in una posizione di accesso rapido (la cache), invece di recuperarli ogni volta dalla fonte originale (spesso più lenta, come un database o un servizio esterno). Questo porta a diversi vantaggi:
+
+1. **Riduzione della Latenza:** Le richieste vengono servite più velocemente recuperando i dati dalla cache.
+2. **Riduzione del Carico sul Backend:** Meno richieste raggiungono il database o altri servizi, riducendo il loro carico di lavoro e i costi associati (es. CPU del database, chiamate API a pagamento).
+3. **Miglioramento della Scalabilità:** L'applicazione può gestire più richieste concorrenti poiché molte vengono soddisfatte dalla cache.
+4. **Maggiore Resilienza:** In caso di indisponibilità temporanea del sistema di origine dati, la cache può continuare a servire dati (anche se potenzialmente "stale", cioè non aggiornatissimi), migliorando la disponibilità percepita dall'utente.
+
+In un'architettura comune con più istanze di un'applicazione web ASP.NET Core distribuite da un load balancer, che interagiscono con un database SQL e potenzialmente con altri servizi come Redis (spesso usato esso stesso come cache distribuita o per altri scopi), una strategia di caching efficace diventa cruciale per garantire coerenza e performance su tutte le istanze.
+
+## Caching in ASP.NET
 
 ASP.NET Core offre [diverse soluzioni per implementare sistemi di cache](https://learn.microsoft.com/en-us/aspnet/core/performance/caching/overview):
 
@@ -61,6 +83,32 @@ ASP.NET Core offre [diverse soluzioni per implementare sistemi di cache](https:/
 - Per risultati di operazioni costose in termini di risorse
 - Per risultati di query di database frequenti
 - Per ridurre il carico su servizi esterni
+
+## Strategie di Caching Tradizionali in ASP.NET Core
+
+Le principali strategie di caching tradizionali integrate in ASP.NET Core sono:
+
+1. **In-Memory Cache (`IMemoryCache`):**
+
+    - **Architettura:** Memorizza i dati nella memoria RAM del processo dell'applicazione web stessa. Ogni istanza dell'applicazione ha la sua cache indipendente.
+    - **Vantaggi:** Estremamente veloce (accesso alla memoria locale), semplice da configurare e usare.
+    - **Svantaggi:**
+        - **Non Condivisa:** I dati non sono condivisi tra le diverse istanze dell'applicazione. Se un'istanza popola la sua cache, le altre non ne beneficiano.
+        - **Coerenza:** Mantenere la coerenza tra le cache delle varie istanze è difficile. Se i dati sottostanti cambiano, invalidare la cache su tutte le istanze richiede meccanismi aggiuntivi (es. backplane).
+        - **Volatilità:** La cache viene persa al riavvio dell'applicazione.
+        - **Consumo di Memoria:** Può consumare una quantità significativa di memoria del server web.
+2. **Distributed Cache (`IDistributedCache`):**
+
+    - **Architettura:** Memorizza i dati in un sistema esterno condiviso tra tutte le istanze dell'applicazione. Implementazioni comuni includono Redis, SQL Server, NCache.
+    - **Vantaggi:**
+        - **Condivisa:** Tutte le istanze accedono alla stessa cache, garantendo che un dato cachato sia disponibile per tutte.
+        - **Coerenza:** I dati sono più coerenti tra le istanze (anche se la coerenza perfetta dipende dalla strategia di invalidazione).
+        - **Persistenza (Opzionale):** Alcuni provider (come Redis con persistenza abilitata) possono mantenere i dati anche dopo riavvii.
+        - **Scalabilità:** Il sistema di cache distribuita può scalare indipendentemente dall'applicazione web.
+    - **Svantaggi:**
+        - **Latenza:** L'accesso richiede una chiamata di rete al server di cache distribuita, risultando più lento dell'in-memory cache.
+        - **Complessità:** Richiede la configurazione e la gestione di un servizio esterno.
+        - **Serializzazione:** I dati devono essere serializzati (spesso in JSON o binario) per essere memorizzati, aggiungendo un piccolo overhead.
 
 ## IMemoryCache
 
@@ -2627,9 +2675,9 @@ Questo metodo integra le migliori caratteristiche di entrambi gli approcci:
         }
   ```
 
-### Comparativa delle Strategie di Caching
+### Analisi delle Strategie di Caching
 
-#### Comparativa delle tre strategie di caching principali implementate
+#### Confronto tra le tre strategie di caching distribuito implementate
 
 1. Lock Distribuito
 
@@ -2765,7 +2813,7 @@ public async Task<T?> GetCachedValueAsync<T>(
 }
 ```
 
-#### Conclusione
+#### Considerazioni conclusive su DistributedCache
 
 Non esiste una strategia "migliore" in assoluto: la scelta ottimale dipende dai requisiti specifici dell'applicazione.
 
@@ -2774,3 +2822,577 @@ Non esiste una strategia "migliore" in assoluto: la scelta ottimale dipende dai 
 - **Stale While Revalidate**: Minima latenza, al costo di potenziale incoerenza
 
 **In linea di massima si può suggerire di utilizzare il lock distribuito per dati critici e chiavi molto richieste, e lo *stale while revalidate* per la maggior parte degli altri casi, specialmente quando la latenza percepita dall'utente è prioritaria.**
+
+## HybridCache
+
+### Introduzione a `HybridCache`
+
+La libreria `Microsoft.Extensions.Caching.Hybrid` introduce un approccio di caching "ibrido" che mira a combinare i vantaggi delle cache in-memory e distribuite, mitigandone gli svantaggi. È progettata per fornire un'esperienza di caching a due livelli ottimizzata per le prestazioni e la scalabilità.
+
+### Architettura della Cache Ibrida (`HybridCache`)
+
+`HybridCache` implementa una strategia di caching a due livelli (L1/L2):
+
+1. **Livello 1 (L1 - Cache Locale):** È una cache **in-memory** (`IMemoryCache`) specifica per ogni istanza dell'applicazione. Fornisce accesso ultra-rapido ai dati messi in cache localmente.
+2. **Livello 2 (L2 - Cache Distribuita):** È una cache **distribuita** (`IDistributedCache`), come Redis, condivisa tra tutte le istanze dell'applicazione. Serve come fonte autorevole e condivisa per i dati messi in cache.
+
+**Flusso di Recupero Dati (`GetOrCreateAsync`):**
+
+Quando si richiede un dato tramite `HybridCache`:
+
+1. **Controllo L1:** La libreria verifica prima se il dato è presente nella cache in-memory locale (L1). Se trovato e non scaduto, viene restituito immediatamente (massima performance).
+2. **Controllo L2:** Se il dato non è in L1 (o è scaduto localmente), la libreria controlla la cache distribuita (L2).
+3. **Recupero dalla Fonte:** Se il dato non è presente nemmeno in L2 (o è scaduto), la libreria invoca la *factory* fornita per recuperare il dato dalla fonte originale (es. database).
+4. **Popolamento Cache:** Il dato recuperato viene quindi memorizzato:
+    - Prima nella cache distribuita (L2) con la sua scadenza definita.
+    - Poi nella cache locale (L1) con la sua scadenza specifica (tipicamente più breve di quella L2).
+5. **Restituzione Dato:** Il dato viene restituito all'applicazione.
+
+**Invalidazione e Coerenza:**
+
+Un aspetto cruciale delle cache distribuite e ibride è la gestione dell'invalidazione per mantenere la coerenza. `HybridCache` astrae parte di questa complessità. Quando un elemento viene rimosso o aggiornato esplicitamente (es. tramite `RemoveAsync` o `SetAsync`), la libreria si occupa di:
+
+1. Rimuovere/Aggiornare l'elemento nella cache distribuita (L2).
+2. Rimuovere l'elemento dalla cache locale (L1) dell'istanza corrente.
+3. **(Importante)** Idealmente, dovrebbe esistere un meccanismo (spesso chiamato "backplane", tipicamente implementato con funzionalità Pub/Sub del provider L2 come Redis) per notificare le *altre* istanze dell'applicazione che quell'elemento è stato invalidato in L2, in modo che possano rimuoverlo dalle loro rispettive cache L1. Sebbene la configurazione esplicita di un backplane possa richiedere passaggi aggiuntivi a seconda del provider L2, l'architettura di `HybridCache` è progettata per integrarsi con tali meccanismi. La scadenza più breve di L1 aiuta anche a mitigare la visualizzazione di dati obsoleti.
+
+```mermaid
+sequenceDiagram
+    participant R1 as Richiesta 1
+    participant R2 as Richiesta 2 (concorrente)
+    participant L1 as Cache L1 (Memory)
+    participant L2 as Cache L2 (Redis)
+    participant Lock as Lock Distribuito
+    participant DB as MariaDB
+    
+    Note over R1,R2: Richieste simultanee per lo stesso dato scaduto
+    
+    R1->>L1: GetOrCreateAsync("product:1")
+    L1-->>R1: Cache miss
+    R1->>L2: Verifica in L2
+    L2-->>R1: Cache miss
+    
+    R1->>Lock: Acquisisci lock per "product:1"
+    Lock-->>R1: Lock acquisito
+    
+    R2->>L1: GetOrCreateAsync("product:1")
+    L1-->>R2: Cache miss
+    R2->>L2: Verifica in L2
+    L2-->>R2: Cache miss
+    
+    R2->>Lock: Acquisisci lock per "product:1"
+    Lock-->>R2: Lock non disponibile
+    Note over R2,Lock: Attende completamento di R1
+    
+    R1->>DB: GetProductFromDatabaseAsync(1)
+    DB-->>R1: Dati del prodotto
+    R1->>L2: Memorizza in L2 (TTL: 1 ora)
+    R1->>L1: Memorizza in L1 (TTL: 15 min)
+    R1->>Lock: Rilascia lock
+    R1-->>R1: Restituisce il risultato
+    
+    Lock-->>R2: Segnala completamento
+    R2->>L1: Riprova GetOrCreateAsync("product:1")
+    L1-->>R2: Cache hit! (appena popolata da R1)
+    R2-->>R2: Restituisce il risultato da cache
+
+    Note over R1,R2: Solo una query al DB nonostante richieste simultanee
+```
+
+### Vantaggi di `HybridCache`
+
+L'adozione di `HybridCache` offre numerosi vantaggi significativi:
+
+1. **Prestazioni Ottimizzate:** Sfrutta la velocità della cache in-memory (L1) per le richieste ripetute sullo stesso server, riducendo drasticamente la latenza media rispetto a una cache solo distribuita.
+2. **Riduzione del Carico sulla Cache Distribuita:** Poiché molti accessi vengono soddisfatti da L1, il numero di chiamate alla cache distribuita (L2) diminuisce, riducendo il traffico di rete, il carico sul server L2 e potenzialmente i costi associati.
+3. **Riduzione del Carico sul Database:** Come tutte le cache, riduce significativamente le query al database o le chiamate ai servizi di origine dati. L'approccio a due livelli massimizza questo effetto.
+4. **Migliore Resilienza ("Dogpiling" o "Cache Stampede" Prevention):** `HybridCache` include meccanismi interni per prevenire il problema del "cache stampede" o "dogpiling", dove più richieste concorrenti per un dato non in cache tentano simultaneamente di rigenerarlo. La libreria assicura che la factory per recuperare il dato venga eseguita una sola volta per chiave, mentre le altre richieste attendono il risultato.
+5. **Scalabilità Migliorata:** Riducendo il carico su L2 e sul database, permette all'intera architettura (applicazioni, cache distribuita, database) di scalare in modo più efficiente.
+6. **API Semplificata:** Fornisce un'unica interfaccia (`HybridCache`) per interagire con entrambi i livelli di cache, semplificando il codice dell'applicazione.
+
+### Confronto: In-Memory vs Distributed vs Hybrid Cache
+
+| **Caratteristica** | **In-Memory Cache (IMemoryCache)** | **Distributed Cache (IDistributedCache)** | **Hybrid Cache (HybridCache)** |
+| --- |  --- |  --- |  --- |
+| **Velocità** | Altissima (locale) | Media (rete + serializzazione) | Altissima (hit L1) / Media (hit L2) |
+| **Condivisione** | No (per istanza) | Sì (tra istanze) | Sì (tramite L2) |
+| **Coerenza** | Bassa (difficile tra istanze) | Alta (dipende da invalidazione) | Buona (L2 autorevole + invalidazione L1) |
+| **Scalabilità** | Limitata dal server app | Alta (server cache dedicato) | Alta |
+| **Resilienza** | Bassa (persa al riavvio) | Media/Alta (dipende dal provider L2) | Buona (L1 può servire se L2 è down) |
+| **Complessità** | Bassa | Media (richiede servizio esterno) | Media (configurazione iniziale) |
+| **Infrastruttura** | Nessuna aggiuntiva | Richiede server cache esterno (Redis) | Richiede server cache esterno (Redis) |
+| **Uso Memoria App** | Potenzialmente alto | Basso | Moderato (per L1) |
+
+### Configurazione ed Esempio Pratico
+
+Vediamo come configurare e utilizzare `HybridCache` in un'applicazione Minimal API ASP.NET Core, utilizzando Redis come cache distribuita (L2).
+
+Le parti di codice mostrate in questa sezione sono prese dal progetto [HybridCacheDemo](../../../api-samples/minimal-api/CachingExamples/HybridCacheDemo/).
+
+A titolo puramente didattico, gli esempi mostrati con l'utilizzo della libreria `HybridCache` sono stati sviluppati anche con l'utilizzo diretto della `In-Memory Cache` e della `DistributedCache` nel progetto [CustomHybridCacheDemo](../../../api-samples/minimal-api/CachingExamples/CustomHybridCacheDemo/). Per gli sviluppi in ASP.NET è fortemente consigliato l'utilizzo diretto della libreria `HybridCache`.
+
+* **1. Configurazione dei Servizi (`Program.cs`)**
+
+    ```cs
+    using DistributedCacheDemo.Models; // Assumi esista questo namespace con la classe Product
+    using Microsoft.Extensions.Caching.Hybrid;
+
+    var builder = WebApplication.CreateBuilder(args);
+
+    // Registrazione servizi standard per API e Swagger/OpenAPI
+    builder.Services.AddOpenApi();
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddOpenApiDocument(/*...*/);
+
+    // *** Configurazione Cache Distribuita (L2 - Redis) ***
+    // Legge la stringa di connessione e il nome istanza da appsettings.json
+    builder.Services.AddStackExchangeRedisCache(options =>
+    {
+        options.Configuration = builder.Configuration.GetSection("Redis:ConnectionString").Value;
+        options.InstanceName = builder.Configuration.GetSection("Redis:InstanceName").Value;
+    });
+
+    // *** Configurazione Cache In-Memory (L1) ***
+    // Configura la cache in memoria locale con un limite di dimensione
+    builder.Services.AddMemoryCache(options =>
+    {
+        // Limita la dimensione della cache locale a 100 MB
+        options.SizeLimit = 100 * 1024 * 1024;
+    });
+
+    // *** Configurazione HybridCache ***
+    builder.Services.AddHybridCache(options =>
+        {
+            // Limiti di sicurezza opzionali
+            options.MaximumPayloadBytes = 1024 * 1024; // 1 MB max per singolo item
+            options.MaximumKeyLength = 1024;          // Chiave max 1024 caratteri
+
+            // Opzioni di default per le voci di cache
+            options.DefaultEntryOptions = new HybridCacheEntryOptions
+            {
+                // Scadenza nella cache distribuita (L2)
+                Expiration = TimeSpan.FromHours(1),
+                // Scadenza nella cache locale (L1) - solitamente più breve
+                LocalCacheExpiration = TimeSpan.FromMinutes(15),
+            };
+            // Qui si potrebbero configurare altre opzioni come il Serializer
+        });
+
+    var app = builder.Build();
+
+    // Configurazione Middleware (Swagger, Dev Page, etc.)
+    if (app.Environment.IsDevelopment())
+    {
+        app.MapOpenApi();
+        app.UseOpenApi();
+        app.UseSwaggerUi(/*...*/);
+        app.UseDeveloperExceptionPage();
+    }
+
+    // Definizione Endpoints API (vedi sotto)
+    // ...
+
+    app.Run();
+
+    // Funzioni ausiliarie per simulare accesso al DB
+    static async Task<Product?> GetProductFromDatabaseAsync(int id) { /* ... implementazione ... */ }
+    static async Task<List<Product>> GetProductsByCategoryAsync(string category) { /* ... implementazione ... */ }
+
+    // Definizione classe Product (esempio)
+    namespace DistributedCacheDemo.Models
+    {
+        public class Product
+        {
+            public int Id { get; set; }
+            public string Name { get; set; }
+            public decimal Price { get; set; }
+            public DateTime LastUpdated { get; set; }
+        }
+    }
+
+    ```
+
+    **Spiegazione della Configurazione:**
+
+    - `AddStackExchangeRedisCache`: Registra l'implementazione di `IDistributedCache` che usa Redis. Richiede la stringa di connessione.
+    - `AddMemoryCache`: Registra `IMemoryCache`. Impostare `SizeLimit` è una buona pratica per evitare un consumo eccessivo di memoria.
+    - `AddHybridCache`: Registra i servizi per `HybridCache`. Utilizzerà automaticamente i servizi `IMemoryCache` e `IDistributedCache` registrati. Le `DefaultEntryOptions` definiscono le scadenze predefinite per L2 (`Expiration`) e L1 (`LocalCacheExpiration`).
+
+* **2. Utilizzo negli Endpoint API**
+
+    `HybridCache` viene iniettato negli endpoint tramite dependency injection. Il metodo principale è `GetOrCreateAsync`.
+
+    - **`GetOrCreateAsync` (Stateless Factory):**
+
+        ```cs
+        app.MapGet("/products-stateless/{id}", async (int id, HybridCache cache) =>
+        {
+            string cacheKey = $"product:{id}";
+            Console.WriteLine($"Richiesta per il prodotto {id} ricevuta (usando stateless)");
+            // CancellationToken per timeout/cancellazione
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+
+            var product = await cache.GetOrCreateAsync(
+                cacheKey, // La chiave univoca per la cache
+                async (ct) => // La factory da eseguire se il dato non è in cache
+                {
+                    Console.WriteLine($"Recupero del prodotto {id} dal database");
+                    return await GetProductFromDatabaseAsync(id); // Logica per ottenere il dato
+                },
+                // Opzioni specifiche per questa voce (sovrascrivono i default se necessario)
+                new HybridCacheEntryOptions
+                {
+                    Expiration = TimeSpan.FromHours(1), // Scadenza L2
+                    LocalCacheExpiration = TimeSpan.FromMinutes(15) // Scadenza L1
+                    // Flags = HybridCacheEntryFlags.DisableDistributedCache // Vedi esempio flags
+                },
+                cancellationToken: cts.Token); // Passa il CancellationToken
+
+            return product is null ? Results.NotFound() : Results.Ok(product);
+        });
+
+        ```
+
+        Questa è la forma più comune. La factory è una lambda `async (ct) => ...` che non riceve stato esterno (a parte quello catturato dalla closure, come `id`).
+
+    - **`GetOrCreateAsync` (Stateful Factory):**
+
+        ```cs
+        app.MapGet("/products-factory-with-state/{id}", async (int id, HybridCache cache) =>
+        {
+            string cacheKey = $"product-factory:{id}";
+            Console.WriteLine($"Richiesta per il prodotto {id} ricevuta (usando factory)");
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+
+            // Stato da passare alla factory (può essere un tipo complesso)
+            var factoryState = (ProductId: id, CacheKeyUsed: cacheKey);
+
+            var product = await cache.GetOrCreateAsync(
+                cacheKey,
+                factoryState, // Oggetto di stato passato alla factory
+                async (state, ct) => // La factory riceve lo stato come primo argomento
+                {
+                    Console.WriteLine($"Factory invocata per il prodotto {state.ProductId} con cacheKey {state.CacheKeyUsed}");
+                    return await GetProductFromDatabaseAsync(state.ProductId);
+                },
+                new HybridCacheEntryOptions { /* ... opzioni ... */ },
+                cancellationToken: cts.Token);
+
+            return product is null ? Results.NotFound() : Results.Ok(product);
+        });
+
+        ```
+
+        Questa variante permette di passare esplicitamente uno stato alla factory. È utile per evitare problemi di cattura di closure in scenari più complessi o per rendere la factory più testabile.
+
+    - **`SetAsync` (Caching Esplicito):**
+
+        ```cs
+        app.MapGet("/products-set/{id}", async (int id, HybridCache cache) =>
+        {
+            string cacheKey = $"product-set:{id}";
+            Console.WriteLine($"Recupero del prodotto {id} dal database (usando direttamente SetAsync)");
+            var product = await GetProductFromDatabaseAsync(id); // Ottieni il dato
+
+            if (product is null) return Results.NotFound();
+
+            // Memorizza esplicitamente il dato nella cache (L1 + L2)
+            await cache.SetAsync(
+                cacheKey,
+                product,
+                new HybridCacheEntryOptions { /* ... opzioni ... */ });
+
+            Console.WriteLine($"Prodotto {id} salvato direttamente nella cache ibrida con SetAsync");
+            return Results.Ok(product);
+        });
+
+        ```
+
+        Utile quando si ottiene il dato in un contesto diverso e si vuole popolarne la cache successivamente.
+
+    - **`RemoveAsync` (Rimozione per Chiave):**
+
+        ```cs
+        app.MapDelete("/products/{id}", async (int id, HybridCache cache) =>
+        {
+            Console.WriteLine($"Richiesta di invalidazione cache per prodotto {id}");
+
+            // Rimuove chiavi specifiche da L1, L2 e notifica (se configurato)
+            var keysToInvalidate = new[]
+            {
+                $"product:{id}",
+                $"product-factory:{id}",
+                // ... altre chiavi correlate allo stesso prodotto
+            };
+            await cache.RemoveAsync(keysToInvalidate); // Può rimuovere singole chiavi o array
+
+            return Results.Ok(new { Message = "Cache invalidata" });
+        });
+
+        ```
+
+        Fondamentale per invalidare la cache quando i dati sottostanti cambiano (es. dopo un aggiornamento o eliminazione nel DB).
+
+    - **`HybridCacheEntryFlags`:**
+
+        ```cs
+        app.MapGet("/products-flags/{id}", async (int id, HybridCache cache) =>
+        {
+            string cacheKey = $"product-flags:{id}";
+            var product = await cache.GetOrCreateAsync(
+                cacheKey, id,
+                async (state, ct) => await GetProductFromDatabaseAsync(state),
+                new HybridCacheEntryOptions
+                {
+                    Expiration = TimeSpan.FromHours(1), // Scadenza L2 (ma non verrà usato)
+                    LocalCacheExpiration = TimeSpan.FromMinutes(10), // Scadenza L1
+                    // Questo flag disabilita l'uso della cache distribuita (L2)
+                    // per questa specifica operazione. Utile per dati temporanei
+                    // o specifici dell'istanza che non necessitano condivisione.
+                    Flags = HybridCacheEntryFlags.DisableDistributedCache
+                });
+            // ...
+            return Results.Ok(product);
+        });
+
+        ```
+
+        I flags permettono di modificare il comportamento per specifiche operazioni, ad esempio disabilitando la cache distribuita.
+
+    - **Tagging (`SetAsync` con Tags e `RemoveByTagAsync`):**
+
+        ```cs
+        // Endpoint per caching prodotti per categoria, aggiungendo tag
+        app.MapGet("/products-tagged/{category}", async (string category, HybridCache cache) =>
+        {
+            var productsInCategory = await GetProductsByCategoryAsync(category);
+            if (productsInCategory.Count == 0) return Results.NotFound();
+
+            foreach (var product in productsInCategory)
+            {
+                string cacheKey = $"product-in-category:{product.Id}";
+                // Definisci i tag associati a questa voce di cache
+                var tags = new List<string> { $"category:{category}", "products" };
+                if (product.Price > 25) tags.Add("premium"); // Aggiungi tag condizionale
+
+                await cache.SetAsync(
+                    cacheKey, product,
+                    new HybridCacheEntryOptions { /* ... opzioni ... */ },
+                    tags.ToArray()); // Passa i tag a SetAsync
+            }
+            return Results.Ok(new { /* ... Dettagli ... */ });
+        });
+
+        // Endpoint per rimuovere tutte le voci con un tag specifico
+        app.MapDelete("/products/category/{category}", async (string category, HybridCache cache) =>
+        {
+            Console.WriteLine($"Invalidazione prodotti categoria '{category}'");
+            // Rimuove tutte le voci (in L1 e L2) associate al tag specificato
+            await cache.RemoveByTagAsync($"category:{category}");
+            return Results.Ok(new { Message = $"Cache categoria '{category}' invalidata" });
+        });
+
+        // Altri esempi di rimozione per tag
+        app.MapDelete("/products/premium", async (HybridCache cache) => { /* ... await cache.RemoveByTagAsync("premium"); ... */ });
+        app.MapDelete("/products/all", async (HybridCache cache) => { /* ... await cache.RemoveByTagAsync("products"); ... */ });
+        ```
+
+        Il tagging è una funzionalità potente che permette di associare una o più stringhe (tag) a una voce di cache. Successivamente, si può usare `RemoveByTagAsync` per invalidare *tutte* le voci che condividono un determinato tag. Questo è estremamente utile per invalidare dati correlati senza dover conoscere tutte le chiavi specifiche (es. invalidare tutti i prodotti di una categoria, tutti gli articoli di un utente, ecc.). *Nota: Il supporto per i tag dipende dall'implementazione di `IDistributedCache`. Redis lo supporta bene.*
+
+### Focus su Redis come Cache Distribuita (L2)
+
+Redis è una scelta estremamente popolare e performante come backend per la cache distribuita (L2) in `HybridCache`.
+
+* **Perché Redis?**
+
+  - **Velocità:** È un data store in memoria, ottimizzato per letture e scritture rapide.
+  - **Strutture Dati:** Supporta varie strutture dati (stringhe, hash, liste, set, sorted set) che possono essere utili.
+  - **Funzionalità:** Offre funzionalità avanzate come Pub/Sub (utile per i backplane di invalidazione), scripting Lua, transazioni.
+  - **Persistenza:** Può essere configurato per persistere i dati su disco (Snapshotting RDB, Append-Only File AOF).
+  - **Scalabilità e Alta Disponibilità:** Supporta clustering e Sentinel per alta disponibilità.
+  - **Maturità ed Ecosistema:** È ampiamente adottato, con ottime librerie client (come `StackExchange.Redis` usata da ASP.NET Core) e strumenti di supporto.
+
+* **Redis Community vs Redis Stack**
+
+  - **Redis Community Edition:** È la versione open-source principale di Redis. Fornisce il core delle funzionalità di caching e data structure server.
+  - **Redis Stack:** È un bundle creato da Redis Inc. che include:
+      - Redis Community Edition (il cuore).
+      - **RedisInsight:** Una GUI web per visualizzare dati, monitorare Redis e interagire con esso. Molto utile per lo sviluppo e la gestione.
+      - **Moduli Redis:** Estensioni che aggiungono funzionalità potenti come ricerca full-text (`RediSearch`), tipi di dati JSON (`RedisJSON`), time series (`RedisTimeSeries`), grafi (`RedisGraph`), filtri probabilistici (`RedisBloom`). Per il caching di base non sono strettamente necessari, ma `redis-stack` è comodo perché include già RedisInsight.
+
+* **Installazione con Docker (`redis-stack`)**
+
+    Usare Docker e Docker Compose è un modo eccellente per eseguire Redis (specialmente `redis-stack`) in ambienti di sviluppo e test, e potenzialmente anche in produzione. Il file `docker-compose.yml` fornito è un ottimo esempio:
+
+    ```yaml
+    services:
+    redis-stack:
+        # Usa l'immagine ufficiale che include Redis e RedisInsight
+        image: redis/redis-stack:latest
+        container_name: redis-stack
+        ports:
+        # Mappa la porta Redis del container (6379) alla porta dell'host (6379)
+        - "6379:6379"
+        # Mappa la porta RedisInsight del container (8001) alla porta dell'host (8001)
+        - "8001:8001"
+        networks:
+        # Collega il container a una rete definita per la comunicazione
+        - redis-network
+        volumes:
+        # Mappa un volume Docker per persistere i dati di Redis
+        # anche se il container viene ricreato
+        - redis-data:/data
+        environment:
+        # Passa argomenti al comando redis-server all'avvio
+        # --requirepass: Imposta una password per la connessione
+        # --appendonly yes: Abilita la persistenza AOF (Append-Only File)
+        - REDIS_ARGS=--requirepass yourpassword --appendonly yes
+        restart: always # Riavvia automaticamente il container se si ferma
+        healthcheck:
+        # Controlla periodicamente se Redis risponde correttamente (con la password)
+        test: ["CMD", "redis-cli", "-a", "yourpassword", "ping"]
+        interval: 10s
+        timeout: 5s
+        retries: 3
+
+    networks:
+    redis-network:
+        driver: bridge # Rete Docker standard
+
+    volumes:
+    redis-data: # Volume Docker gestito per i dati persistenti
+
+    ```
+
+* **Spiegazione del `docker-compose.yml`:**
+
+  - `image: redis/redis-stack:latest`: Specifica l'immagine da usare.
+  - `ports`: Espone le porte necessarie sull'host. `6379` per la connessione Redis dall'applicazione (es. `localhost:6379` o `redis-stack:6379` da altri container nella stessa rete), `8001` per accedere all'interfaccia web di RedisInsight (`http://localhost:8001`).
+  - `networks`: Assicura che il container sia su una rete specifica, utile se altre applicazioni (es. l'app ASP.NET Core in un altro container) devono comunicare con Redis tramite il nome del servizio (`redis-stack`).
+  - `volumes`: `redis-data:/data` monta un volume Docker nella directory `/data` del container, dove Redis salva i suoi file (incluso il file AOF se `appendonly yes` è attivo). Questo garantisce che i dati non vengano persi se il container viene rimosso e ricreato.
+  - `environment`: `REDIS_ARGS` permette di passare parametri di configurazione. `--requirepass yourpassword` protegge Redis con una password (fondamentale!). `--appendonly yes` abilita la persistenza AOF, che offre una maggiore durabilità rispetto allo snapshotting RDB predefinito, registrando ogni operazione di scrittura.
+  - `restart: always`: Mantiene il container in esecuzione.
+  - `healthcheck`: Docker verifica periodicamente che il server Redis sia attivo e risponda al comando `PING` (autenticandosi con la password).
+
+* **Gestione con RedisInsight**
+
+    Una volta avviato il container `redis-stack` con `docker-compose up -d`, è possibile accedere a RedisInsight aprendo `http://localhost:8001` nel browser. Da lì, ci si può connettere all'istanza Redis locale (solitamente `localhost` o `redis-stack` come host, porta `6379`, e la password definita in `REDIS_ARGS`). RedisInsight permette di:
+
+    - Navigare tra le chiavi memorizzate.
+    - Visualizzare il tipo e il valore delle chiavi.
+    - Monitorare le prestazioni del server (memoria usata, comandi al secondo, client connessi).
+    - Eseguire comandi Redis tramite una console integrata.
+    - Analizzare l'uso della memoria.
+
+    È uno strumento prezioso durante lo sviluppo per verificare cosa viene effettivamente memorizzato nella cache distribuita, per effettuare il debug di problemi e capire come la cache viene utilizzata.
+
+### Scenario d'Uso: Applicazione Multi-Istanza
+
+Consideriamo l'architettura target: diverse istanze dell'app ASP.NET Core dietro un load balancer, con un DB SQL e Redis per la cache distribuita.
+
+```mermaid
+sequenceDiagram
+    participant Utente1
+    participant Utente2
+    participant Utente3
+    participant LB as Load Balancer
+    participant A as Istanza App A
+    participant A_L1 as Cache L1 (Memoria A)
+    participant B as Istanza App B
+    participant B_L1 as Cache L1 (Memoria B)
+    participant Redis as Redis (Cache L2)
+    participant MariaDB as MariaDB
+
+    %% Scenario 1: Prima richiesta a Istanza A
+    Utente1->>LB: GET /products/1
+    LB->>A: Inoltra richiesta
+    A->>A_L1: GetOrCreateAsync("product:1")
+    A_L1-->>A: Cache miss (non trovato)
+    A->>Redis: GetOrCreateAsync("product:1")
+    Redis-->>A: Cache miss (non trovato)
+    A->>MariaDB: GetProductFromDatabaseAsync(1)
+    MariaDB-->>A: Dati del Prodotto 1
+    A->>Redis: Memorizza in L2 (TTL: 1 ora)
+    A->>A_L1: Memorizza in L1 (TTL: 15 min)
+    A-->>Utente1: Risposta con Prodotto 1
+
+    %% Scenario 2: Seconda richiesta alla stessa istanza A
+    Utente2->>LB: GET /products/1
+    LB->>A: Inoltra richiesta
+    A->>A_L1: GetOrCreateAsync("product:1")
+    A_L1-->>A: Cache hit! (trovato in memoria)
+    Note over A_L1,A: Accesso ultra-rapido senza chiamate esterne
+    A-->>Utente2: Risposta velocissima con Prodotto 1
+
+    %% Scenario 3: Richiesta a diversa istanza B
+    Utente3->>LB: GET /products/1
+    LB->>B: Inoltra richiesta
+    B->>B_L1: GetOrCreateAsync("product:1")
+    B_L1-->>B: Cache miss (non trovato)
+    B->>Redis: GetOrCreateAsync("product:1")
+    Redis-->>B: Cache hit! (trovato in L2)
+    Note over Redis,B: Accesso più lento di L1 ma evita query al DB
+    B->>B_L1: Memorizza in L1 (TTL: 15 min)
+    B-->>Utente3: Risposta con Prodotto 1
+
+    %% Scenario 4: Aggiornamento del prodotto
+    Utente1->>LB: PUT /products/1 (aggiornamento)
+    LB->>A: Inoltra richiesta
+    A->>MariaDB: UpdateProduct(1, nuovi dati)
+    MariaDB-->>A: Conferma aggiornamento
+    A->>Redis: RemoveAsync("product:1")
+    A->>A_L1: RemoveAsync("product:1")
+    A-->>Utente1: Conferma aggiornamento
+    
+    %% Parte opzionale: notifica tramite backplane Redis pub/sub
+    Redis->>B: Notifica invalidazione (via Pub/Sub)
+    Note over Redis,B: Solo se backplane configurato
+    B->>B_L1: RemoveAsync("product:1")
+    
+    %% Richiesta dopo invalidazione
+    Utente3->>LB: GET /products/1 (dopo aggiornamento)
+    LB->>B: Inoltra richiesta
+    B->>B_L1: GetOrCreateAsync("product:1")
+    B_L1-->>B: Cache miss (invalidato o scaduto)
+    B->>Redis: GetOrCreateAsync("product:1")
+    Redis-->>B: Cache miss (invalidato)
+    B->>MariaDB: GetProductFromDatabaseAsync(1)
+    MariaDB-->>B: Nuovi dati del Prodotto 1
+    B->>Redis: Memorizza in L2 (TTL: 1 ora)
+    B->>B_L1: Memorizza in L1 (TTL: 15 min)
+    B-->>Utente3: Risposta con Prodotto 1 aggiornato
+```
+
+1. **Richiesta Utente 1 (a Istanza A):** L'utente richiede `/products/1`.
+
+    - Istanza A usa `HybridCache.GetOrCreateAsync("product:1", ...)`.
+    - L1 (memoria di A) è vuota -> Controlla L2 (Redis).
+    - L2 (Redis) è vuota -> Esegue `GetProductFromDatabaseAsync(1)`.
+    - Memorizza il prodotto in L2 (Redis) con chiave `product:1` e scadenza 1 ora.
+    - Memorizza il prodotto in L1 (memoria di A) con chiave `product:1` e scadenza 15 min.
+    - Restituisce il prodotto all'utente.
+2. **Richiesta Utente 2 (a Istanza A):** Un altro utente richiede `/products/1` (instradato alla stessa istanza A).
+
+    - Istanza A usa `HybridCache.GetOrCreateAsync("product:1", ...)`.
+    - L1 (memoria di A) contiene `product:1` (non scaduto) -> Restituisce immediatamente il prodotto da L1.
+    - *Risultato: Risposta velocissima, nessun accesso a Redis o al DB.*
+3. **Richiesta Utente 3 (a Istanza B):** Un utente richiede `/products/1` (instradato a una diversa istanza B).
+
+    - Istanza B usa `HybridCache.GetOrCreateAsync("product:1", ...)`.
+    - L1 (memoria di B) è vuota -> Controlla L2 (Redis).
+    - L2 (Redis) contiene `product:1` (messo lì da Istanza A) -> Recupera il prodotto da Redis.
+    - Memorizza il prodotto in L1 (memoria di B) con scadenza 15 min.
+    - Restituisce il prodotto all'utente.
+    - *Risultato: Risposta più lenta della Richiesta 2 (accesso a Redis via rete) ma comunque molto più veloce e meno costosa di una query al DB.*
+4. **Aggiornamento Prodotto (es. tramite un endpoint PUT/PATCH su Istanza A):**
+
+    - Il prodotto 1 viene aggiornato nel DB.
+    - Il codice dell'endpoint di aggiornamento chiama `HybridCache.RemoveAsync("product:1")`.
+    - `HybridCache` rimuove `product:1` da L2 (Redis) e da L1 (memoria di A).
+    - Se un backplane è configurato (es. Redis Pub/Sub), Istanza B riceve una notifica e rimuove `product:1` dalla sua L1. Altrimenti, `product:1` rimarrà nella L1 di B finché non scade (dopo max 15 min).
+
+Questo scenario illustra come `HybridCache` ottimizzi le prestazioni sfruttando L1 per accessi ripetuti sulla stessa istanza e L2 per condividere i dati tra istanze, riducendo il carico complessivo.
+
+### Considerazioni conclusive su HybridCache
+
+`HybridCache` rappresenta un'evoluzione significativa nelle strategie di caching per ASP.NET Core, offrendo un equilibrio ottimale tra le prestazioni della cache in-memory e la coerenza/condivisione della cache distribuita. La sua architettura a due livelli, combinata con funzionalità come la prevenzione del "cache stampede" e il tagging, la rende una scelta eccellente per applicazioni backend moderne, specialmente in ambienti multi-istanza che richiedono alta performance e scalabilità. Comprendere la sua architettura, i vantaggi e come configurarla correttamente con un backend robusto come Redis permette di migliorare notevolmente l'efficienza e la reattività delle applicazioni.

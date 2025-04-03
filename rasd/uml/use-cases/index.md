@@ -1,4 +1,3 @@
-
 # Introduzione ai Diagrammi UML dei Casi d'Uso
 
 - [Introduzione ai Diagrammi UML dei Casi d'Uso](#introduzione-ai-diagrammi-uml-dei-casi-duso)

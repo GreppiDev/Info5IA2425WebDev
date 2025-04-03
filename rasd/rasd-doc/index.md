@@ -238,8 +238,8 @@ Vediamo nel dettaglio come si integrano:
 * **Le Tecniche (ER, Analisi Funzionale/Non Funzionale, Casi d'Uso):** Sono *strumenti* e *metodologie* di analisi.  Sono processi intellettuali e pratici che vengono messi in atto per *comprendere* e *definire* i requisiti. Producono *output specifici* (modelli ER, liste di requisiti, diagrammi di caso d'uso).
 * **Il RASD:** È il *documento formale* e *completo* che *raccoglie, organizza e specifica* tutti i requisiti del sistema.  *Utilizza* i risultati delle tecniche di analisi (inclusi modello ER, requisiti funzionali/non funzionali e casi d'uso) e li presenta in una struttura standardizzata e comprensibile a tutti gli stakeholder.  È un *deliverable* del progetto, un artefatto di comunicazione e riferimento.
 
-**Immagina:**
+**Metafora:**
 
-Pensa alle tecniche di analisi come agli strumenti di un architetto (matita, squadra, software CAD) e al RASD come al progetto architettonico completo (disegni, specifiche, capitolato).  L'architetto usa gli strumenti (tecniche) per creare il progetto (RASD).  Il progetto (RASD) *contiene* e *formalizza* il lavoro svolto con gli strumenti (tecniche).
+Si pensi alle tecniche di analisi come agli strumenti di un architetto (matita, squadra, software CAD) e al RASD come al progetto architettonico completo (disegni, specifiche, capitolato).  L'architetto usa gli strumenti (tecniche) per creare il progetto (RASD).  Il progetto (RASD) *contiene* e *formalizza* il lavoro svolto con gli strumenti (tecniche).
 
 **In conclusione:**  L'analisi basata su modello ER, requisiti funzionali/non funzionali e casi d'uso è un *approccio metodologico* per *sviluppare* e *popolare* un RASD.  Il RASD è il documento *finale* che contiene e formalizza i risultati di queste analisi, insieme ad altre informazioni contestuali e organizzative (introduzione, scopo, ambito, vincoli, ecc.).  Non sono in contrapposizione, ma **sinergici e complementari**.  Un RASD ben fatto si *basa* sull'applicazione efficace di queste tecniche di analisi.

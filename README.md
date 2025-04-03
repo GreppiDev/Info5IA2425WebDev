@@ -53,3 +53,12 @@
    6. [Analisi dei token JWT in Architetture Stateless](./web/web-docs/user-identity/stateless-token-based-authentication-architecture/index.md)
    7. [Cookie Stateless in Architetture Distribuite](./web/web-docs/user-identity/stateless-cookie-in-distributed-architecture/index.md)
    8. [JWT Token Based Authentication and Authorization with improved Logout](./web/web-docs/user-identity/jwt-token-based-authentication-authorization-with-improved-logout/index.md)
+
+9. Progettazione concettuale e logica
+   1. [Requirements Analysis and Specification Document (RASD)](./rasd/rasd-doc/index.md)
+   2. [Introduzione ai Diagrammi UML dei Casi d'Uso](./rasd/uml/use-cases/index.md)
+   3. [Casi d'Uso, Progettazione Concettuale e Logica](./rasd/use-cases-er-requirements/index.md)
+
+10. NoSQL Databases
+    1. Key-value store in-memory database
+       1. [Redis](./nosqldb/redis/index.md)
