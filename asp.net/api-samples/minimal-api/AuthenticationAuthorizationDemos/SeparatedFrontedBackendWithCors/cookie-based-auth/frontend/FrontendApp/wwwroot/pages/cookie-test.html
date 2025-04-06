@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cookie Authentication Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        button {
+            padding: 8px 16px;
+            margin: 5px;
+            cursor: pointer;
+        }
+
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+
+        .success {
+            color: green;
+        }
+
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Cookie Authentication Test</h1>
+
+    <div>
+        <h2>Step 1: Login</h2>
+        <input type="text" id="username" placeholder="Username" value="admin">
+        <input type="password" id="password" placeholder="Password" value="admin">
+        <button onclick="login()">Login</button>
+    </div>
+
+    <div>
+        <h2>Step 2: Test Authentication</h2>
+        <button onclick="checkCookies()">Check Cookies</button>
+        <button onclick="getMe()">Get /me</button>
+        <button onclick="getAdmin()">Get /admin</button>
+    </div>
+
+    <div>
+        <h2>Step 3: Logout</h2>
+        <button onclick="logout()">Logout</button>
+    </div>
+
+    <div>
+        <h2>Response:</h2>
+        <pre id="response"></pre>
+    </div>
+
+    <script>
+        const API_URL = 'https://localhost:7143';
+
+        // Utility di log
+        function logResponse(data, isError = false) {
+            const responseElement = document.getElementById('response');
+            if (typeof data === 'object') {
+                responseElement.textContent = JSON.stringify(data, null, 2);
+            } else {
+                responseElement.textContent = data;
+            }
+            responseElement.className = isError ? 'error' : 'success';
+        }
+
+        // Verifica dei cookie nel browser
+        function checkCookies() {
+            fetch(`${API_URL}/debug-cookies`, {
+                method: 'GET',
+                credentials: 'include' // Questo è fondamentale
+            })
+                .then(response => response.json())
+                .then(data => {
+                    logResponse(data);
+
+                    // Log cookie del browser
+                    console.log("Browser cookies:", document.cookie);
+
+                    // Visualizza anche i cookie del browser
+                    const browserCookies = document.cookie.split(';')
+                        .map(cookie => cookie.trim())
+                        .map(cookie => {
+                            const [name, value] = cookie.split('=');
+                            return { name, value };
+                        });
+
+                    logResponse({
+                        serverCookies: data,
+                        browserCookies: browserCookies.length ? browserCookies : "No cookies in browser"
+                    });
+                })
+                .catch(error => {
+                    logResponse(`Error checking cookies: ${error.message}`, true);
+                });
+        }
+
+        // Login
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            fetch(`${API_URL}/login`, {
+                method: 'POST',
+                credentials: 'include', // Fondamentale per i cookie
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Login failed: ${response.status} ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    logResponse({
+                        message: 'Login successful',
+                        user: data,
+                        cookiesAvailable: document.cookie.length > 0
+                    });
+
+                    // Verifica immediatamente i cookie
+                    setTimeout(checkCookies, 500);
+                })
+                .catch(error => {
+                    logResponse(`Login error: ${error.message}`, true);
+                });
+        }
+
+        // Get /me
+        function getMe() {
+            fetch(`${API_URL}/me`, {
+                method: 'GET',
+                credentials: 'include' // Fondamentale per i cookie
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`/me request failed: ${response.status} ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    logResponse({
+                        message: 'Authentication successful',
+                        user: data
+                    });
+                })
+                .catch(error => {
+                    logResponse(`/me error: ${error.message}`, true);
+                });
+        }
+
+        // Get /admin
+        function getAdmin() {
+            fetch(`${API_URL}/admin`, {
+                method: 'GET',
+                credentials: 'include' // Fondamentale per i cookie
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`/admin request failed: ${response.status} ${response.statusText}`);
+                    }
+                    return response.text();
+                })
+                .then(data => {
+                    logResponse({
+                        message: 'Admin access successful',
+                        result: data
+                    });
+                })
+                .catch(error => {
+                    logResponse(`/admin error: ${error.message}`, true);
+                });
+        }
+
+        // Logout
+        function logout() {
+            fetch(`${API_URL}/logout`, {
+                method: 'POST',
+                credentials: 'include' // Fondamentale per i cookie
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Logout failed: ${response.status} ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    logResponse({
+                        message: 'Logout successful',
+                        result: data
+                    });
+
+                    // Verifica immediatamente i cookie dopo il logout
+                    setTimeout(checkCookies, 500);
+                })
+                .catch(error => {
+                    logResponse(`Logout error: ${error.message}`, true);
+                });
+        }
+    </script>
+</body>
+
+</html>

@@ -3290,6 +3290,8 @@ Redis è una scelta estremamente popolare e performante come backend per la cach
 
 Consideriamo l'architettura target: diverse istanze dell'app ASP.NET Core dietro un load balancer, con un DB SQL e Redis per la cache distribuita.
 
+![Distributed Cloud Architecture with Hybrid Cache](cloud-architecture-diagram-distributed-cache-with-db-clusters.svg)
+
 ```mermaid
 sequenceDiagram
     participant Utente1

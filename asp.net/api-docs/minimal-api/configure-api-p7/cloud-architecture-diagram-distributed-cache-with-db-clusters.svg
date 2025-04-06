@@ -1,0 +1,184 @@
+<svg viewBox="0 0 900 600" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background Cloud -->
+    <rect x="0" y="0" width="900" height="600" fill="#f0f8ff" rx="15" ry="15" />
+    <path d="M50,50 Q100,25 150,50 T250,50 T350,50 T450,50 T550,50 T650,50 T750,50 T850,50" stroke="#d6e9ff" stroke-width="2" fill="none" />
+    <path d="M50,550 Q100,525 150,550 T250,550 T350,550 T450,550 T550,550 T650,550 T750,550 T850,550" stroke="#d6e9ff" stroke-width="2" fill="none" />
+    <text x="450" y="30" font-family="Arial" font-size="22" text-anchor="middle" fill="#2c3e50" font-weight="bold">Architettura Cloud Multi-Istanza con HybridCache</text>
+
+    <!-- Clients -->
+    <g transform="translate(120, 80)">
+        <rect x="-60" y="0" width="420" height="70" fill="#f5f7fa" stroke="#bdc3c7" stroke-width="2" rx="5" ry="5"/>
+        <text x="150" y="20" font-family="Arial" font-size="16" text-anchor="middle" fill="#2c3e50" font-weight="bold">Clients</text>
+        <g transform="translate(0, 40)">
+            <rect x="-20" y="-15" width="30" height="20" fill="#3498db" rx="2" ry="2"/>
+            <text x="-5" y="0" font-family="Arial" font-size="10" text-anchor="middle" fill="white">Client</text>
+        </g>
+        <g transform="translate(70, 40)">
+            <rect x="-20" y="-15" width="30" height="20" fill="#3498db" rx="2" ry="2"/>
+            <text x="-5" y="0" font-family="Arial" font-size="10" text-anchor="middle" fill="white">Client</text>
+        </g>
+        <g transform="translate(140, 40)">
+            <rect x="-20" y="-15" width="30" height="20" fill="#3498db" rx="2" ry="2"/>
+            <text x="-5" y="0" font-family="Arial" font-size="10" text-anchor="middle" fill="white">Client</text>
+        </g>
+        <g transform="translate(210, 40)">
+            <rect x="-20" y="-15" width="30" height="20" fill="#3498db" rx="2" ry="2"/>
+            <text x="-5" y="0" font-family="Arial" font-size="10" text-anchor="middle" fill="white">Client</text>
+        </g>
+        <g transform="translate(280, 40)">
+            <rect x="-20" y="-15" width="30" height="20" fill="#3498db" rx="2" ry="2"/>
+            <text x="-5" y="0" font-family="Arial" font-size="10" text-anchor="middle" fill="white">Client</text>
+        </g>
+    </g>
+
+    <!-- HTTP Requests -->
+    <path d="M150,150 L150,180" stroke="#7f8c8d" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrow)"/>
+    <path d="M260,150 L260,180" stroke="#7f8c8d" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrow)"/>
+    <path d="M370,150 L370,180" stroke="#7f8c8d" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrow)"/>
+    <text x="260" y="170" font-family="Arial" font-size="12" text-anchor="middle" fill="#7f8c8d" font-style="italic">HTTP Requests</text>
+
+    <!-- Load Balancer -->
+    <rect x="120" y="180" width="300" height="60" fill="#2ecc71" stroke="#27ae60" stroke-width="2" rx="5" ry="5"/>
+    <text x="270" y="215" font-family="Arial" font-size="16" text-anchor="middle" fill="white" font-weight="bold">Load Balancer / Reverse Proxy</text>
+
+    <!-- Routing Arrows -->
+    <path d="M150,240 L150,280" stroke="#7f8c8d" stroke-width="2" marker-end="url(#arrow)"/>
+    <path d="M260,240 L260,280" stroke="#7f8c8d" stroke-width="2" marker-end="url(#arrow)"/>
+    <path d="M370,240 L370,280" stroke="#7f8c8d" stroke-width="2" marker-end="url(#arrow)"/>
+    <path d="M270,260 L500,260 L500,280" stroke="#7f8c8d" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="420" y="255" font-family="Arial" font-size="12" text-anchor="middle" fill="#7f8c8d" font-style="italic">Load Distribution</text>
+
+    <!-- ASP.NET Core Instances -->
+    <g transform="translate(150, 300)">
+        <rect x="-60" y="0" width="120" height="100" fill="#3498db" stroke="#2980b9" stroke-width="2" rx="5" ry="5"/>
+        <text x="0" y="25" font-family="Arial" font-size="14" text-anchor="middle" fill="white" font-weight="bold">ASP.NET Core</text>
+        <text x="0" y="45" font-family="Arial" font-size="14" text-anchor="middle" fill="white">API Instance 1</text>
+        <rect x="-50" y="60" width="100" height="30" fill="#2980b9" stroke="white" stroke-width="1" rx="3" ry="3"/>
+        <text x="0" y="80" font-family="Arial" font-size="12" text-anchor="middle" fill="white">HybridCache</text>
+    </g>
+
+    <g transform="translate(260, 300)">
+        <rect x="-50" y="0" width="100" height="100" fill="#3498db" stroke="#2980b9" stroke-width="2" rx="5" ry="5"/>
+        <text x="0" y="25" font-family="Arial" font-size="14" text-anchor="middle" fill="white" font-weight="bold">ASP.NET Core</text>
+        <text x="0" y="45" font-family="Arial" font-size="14" text-anchor="middle" fill="white">API Instance 2</text>
+        <rect x="-40" y="60" width="80" height="30" fill="#2980b9" stroke="white" stroke-width="1" rx="3" ry="3"/>
+        <text x="0" y="80" font-family="Arial" font-size="12" text-anchor="middle" fill="white">HybridCache</text>
+    </g>
+
+    <g transform="translate(370, 300)">
+        <rect x="-50" y="0" width="100" height="100" fill="#3498db" stroke="#2980b9" stroke-width="2" rx="5" ry="5"/>
+        <text x="0" y="25" font-family="Arial" font-size="14" text-anchor="middle" fill="white" font-weight="bold">ASP.NET Core</text>
+        <text x="0" y="45" font-family="Arial" font-size="14" text-anchor="middle" fill="white">API Instance 3</text>
+        <rect x="-40" y="60" width="80" height="30" fill="#2980b9" stroke="white" stroke-width="1" rx="3" ry="3"/>
+        <text x="0" y="80" font-family="Arial" font-size="12" text-anchor="middle" fill="white">HybridCache</text>
+    </g>
+
+    <g transform="translate(500, 300)">
+        <rect x="-50" y="0" width="100" height="100" fill="#3498db" stroke="#2980b9" stroke-width="2" rx="5" ry="5"/>
+        <text x="0" y="25" font-family="Arial" font-size="14" text-anchor="middle" fill="white" font-weight="bold">ASP.NET Core</text>
+        <text x="0" y="45" font-family="Arial" font-size="14" text-anchor="middle" fill="white">API Instance N</text>
+        <rect x="-40" y="60" width="80" height="30" fill="#2980b9" stroke="white" stroke-width="1" rx="3" ry="3"/>
+        <text x="0" y="80" font-family="Arial" font-size="12" text-anchor="middle" fill="white">HybridCache</text>
+    </g>
+
+    <!-- L1 Cache Labels -->
+    <g transform="translate(150, 320)">
+        <ellipse cx="0" cy="50" rx="40" ry="15" fill="#ebf5fb" stroke="#3498db" stroke-width="1" />
+        <text x="0" y="55" font-family="Arial" font-size="10" text-anchor="middle" fill="#2980b9">L1 (Memory)</text>
+    </g>
+
+    <g transform="translate(260, 320)">
+        <ellipse cx="0" cy="50" rx="34" ry="15" fill="#ebf5fb" stroke="#3498db" stroke-width="1" />
+        <text x="0" y="55" font-family="Arial" font-size="10" text-anchor="middle" fill="#2980b9">L1 (Memory)</text>
+    </g>
+
+    <g transform="translate(370, 320)">
+        <ellipse cx="0" cy="50" rx="34" ry="15" fill="#ebf5fb" stroke="#3498db" stroke-width="1" />
+        <text x="0" y="55" font-family="Arial" font-size="10" text-anchor="middle" fill="#2980b9">L1 (Memory)</text>
+    </g>
+
+    <g transform="translate(500, 320)">
+        <ellipse cx="0" cy="50" rx="34" ry="15" fill="#ebf5fb" stroke="#3498db" stroke-width="1" />
+        <text x="0" y="55" font-family="Arial" font-size="10" text-anchor="middle" fill="#2980b9">L1 (Memory)</text>
+    </g>
+
+    <!-- Redis Section -->
+    <rect x="140" y="450" width="260" height="100" fill="#e74c3c" stroke="#c0392b" stroke-width="2" rx="5" ry="5"/>
+    <text x="270" y="470" font-family="Arial" font-size="16" text-anchor="middle" fill="white" font-weight="bold">Redis Cluster</text>
+    <text x="270" y="490" font-family="Arial" font-size="14" text-anchor="middle" fill="white">L2 (Distributed Cache)</text>
+    
+    <!-- Redis Nodes -->
+    <rect x="170" y="500" width="60" height="30" fill="#c0392b" stroke="white" stroke-width="1" rx="3" ry="3"/>
+    <text x="200" y="520" font-family="Arial" font-size="12" text-anchor="middle" fill="white">Primary</text>
+    
+    <rect x="240" y="500" width="60" height="30" fill="#c0392b" stroke="white" stroke-width="1" rx="3" ry="3"/>
+    <text x="270" y="520" font-family="Arial" font-size="12" text-anchor="middle" fill="white">Replica</text>
+    
+    <rect x="310" y="500" width="60" height="30" fill="#c0392b" stroke="white" stroke-width="1" rx="3" ry="3"/>
+    <text x="340" y="520" font-family="Arial" font-size="12" text-anchor="middle" fill="white">Replica</text>
+
+    <!-- Database Section -->
+    <rect x="480" y="450" width="250" height="100" fill="#9b59b6" stroke="#8e44ad" stroke-width="2" rx="5" ry="5"/>
+    <text x="605" y="470" font-family="Arial" font-size="16" text-anchor="middle" fill="white" font-weight="bold">SQL Database Cluster</text>
+    <text x="605" y="490" font-family="Arial" font-size="14" text-anchor="middle" fill="white">(MariaDB/SQLServer/PostgreSQL)</text>
+    
+    <!-- Database Nodes -->
+    <rect x="500" y="500" width="70" height="30" fill="#8e44ad" stroke="white" stroke-width="1" rx="3" ry="3"/>
+    <text x="535" y="520" font-family="Arial" font-size="12" text-anchor="middle" fill="white">Primary</text>
+    
+    <rect x="580" y="500" width="70" height="30" fill="#8e44ad" stroke="white" stroke-width="1" rx="3" ry="3"/>
+    <text x="615" y="520" font-family="Arial" font-size="12" text-anchor="middle" fill="white">Standby</text>
+    
+    <rect x="660" y="500" width="50" height="30" fill="#8e44ad" stroke="white" stroke-width="1" rx="3" ry="3"/>
+    <text x="685" y="520" font-family="Arial" font-size="12" text-anchor="middle" fill="white">Read</text>
+
+    <!-- Connection Lines between ASP.NET and Redis -->
+    <path d="M150,400 L190,450" stroke="#e74c3c" stroke-width="2" stroke-dasharray="4,2" marker-end="url(#redisArrow)"/>
+    <path d="M260,400 L250,450" stroke="#e74c3c" stroke-width="2" stroke-dasharray="4,2" marker-end="url(#redisArrow)"/>
+    <path d="M370,400 L310,450" stroke="#e74c3c" stroke-width="2" stroke-dasharray="4,2" marker-end="url(#redisArrow)"/>
+    <path d="M500,400 L370,450" stroke="#e74c3c" stroke-width="2" stroke-dasharray="4,2" marker-end="url(#redisArrow)"/>
+
+    <!-- Connection Lines between ASP.NET and Database -->
+    <path d="M150,400 L500,450" stroke="#9b59b6" stroke-width="2" marker-end="url(#dbArrow)"/>
+    <path d="M260,400 L550,450" stroke="#9b59b6" stroke-width="2" marker-end="url(#dbArrow)"/>
+    <path d="M370,400 L600,450" stroke="#9b59b6" stroke-width="2" marker-end="url(#dbArrow)"/>
+    <path d="M500,400 L650,450" stroke="#9b59b6" stroke-width="2" marker-end="url(#dbArrow)"/>
+
+    <!-- Legend -->
+    <rect x="630" y="100" width="250" height="120" fill="white" stroke="#bdc3c7" stroke-width="1" rx="5" ry="5"/>
+    <text x="750" y="120" font-family="Arial" font-size="14" text-anchor="middle" fill="#2c3e50" font-weight="bold">Legend</text>
+    
+    <rect x="670" y="135" width="15" height="15" fill="#ebf5fb" stroke="#3498db" stroke-width="1"/>
+    <text x="765" y="147" font-family="Arial" font-size="12" fill="#2c3e50">L1 Cache (Memory)</text>
+    
+    <rect x="670" y="160" width="15" height="15" fill="#e74c3c" stroke="#c0392b" stroke-width="1"/>
+    <text x="765" y="172" font-family="Arial" font-size="12" fill="#2c3e50">L2 Cache (Redis)</text>
+    
+    <rect x="670" y="185" width="15" height="15" fill="#9b59b6" stroke="#8e44ad" stroke-width="1"/>
+    <text x="765" y="197" font-family="Arial" font-size="12" fill="#2c3e50">Database Layer</text>
+
+    <!-- Cache Flow -->
+    <rect x="600" y="260" width="250" height="110" fill="white" stroke="#bdc3c7" stroke-width="1" rx="5" ry="5"/>
+    <text x="725" y="280" font-family="Arial" font-size="14" text-anchor="middle" fill="#2c3e50" font-weight="bold">Cache Flow</text>
+    
+    <rect x="620" y="295" width="210" height="65" fill="#f9f9f9" stroke="#bdc3c7" stroke-width="1" rx="3" ry="3"/>
+    <text x="725" y="312" font-family="Arial" font-size="12" text-anchor="middle" fill="#2c3e50">1. Check L1 (Memory Cache)</text>
+    <text x="725" y="332" font-family="Arial" font-size="12" text-anchor="middle" fill="#2c3e50">2. If not found, check L2 (Redis)</text>
+    <text x="725" y="352" font-family="Arial" font-size="12" text-anchor="middle" fill="#2c3e50">3. If not found, query Database</text>
+
+    <!-- Define Markers -->
+    <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5"
+                markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#7f8c8d"/>
+        </marker>
+        <marker id="redisArrow" viewBox="0 0 10 10" refX="5" refY="5"
+                markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#e74c3c"/>
+        </marker>
+        <marker id="dbArrow" viewBox="0 0 10 10" refX="5" refY="5"
+                markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#9b59b6"/>
+        </marker>
+    </defs>
+</svg>

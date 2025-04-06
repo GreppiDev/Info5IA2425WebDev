@@ -33,7 +33,7 @@
     - [Performance e Best Practices](#performance-e-best-practices)
       - [Ottimizzazione delle Selezioni](#ottimizzazione-delle-selezioni)
       - [Gestione Dinamica del DOM](#gestione-dinamica-del-dom)
-    - [Conclusioni](#conclusioni)
+    - [Conclusioni sulla gestione del DOM](#conclusioni-sulla-gestione-del-dom)
   - [CSS Media Query](#css-media-query)
     - [Mozilla - CSS Media Query fundamentals](#mozilla---css-media-query-fundamentals)
     - [W3schools - Using CSS Media Query](#w3schools---using-css-media-query)
@@ -69,7 +69,7 @@
         - [Multi-column Layout](#multi-column-layout)
         - [Flexbox Layout](#flexbox-layout)
         - [Grid Layout](#grid-layout)
-        - [Conclusioni](#conclusioni-1)
+        - [Conclusioni sui principali tipi di layout](#conclusioni-sui-principali-tipi-di-layout)
   - [Confronto tra CSS Flexbox e CSS Grid con esempi strutturati](#confronto-tra-css-flexbox-e-css-grid-con-esempi-strutturati)
     - [Flexbox](#flexbox)
       - [Concetti Base di Flexbox](#concetti-base-di-flexbox)
@@ -921,7 +921,7 @@ observer.observe(targetNode, {
 });
 ```
 
-### Conclusioni
+### Conclusioni sulla gestione del DOM
 
 La corretta selezione degli elementi del DOM è fondamentale per la manipolazione efficace delle pagine web. La scelta del metodo di selezione appropriato dipende da diversi fattori:
 
@@ -2942,7 +2942,7 @@ Di seguito vengono mostrati alcuni esempi strutturati di Grid Layout
        - Si adatta a qualsiasi dimensione dello schermo
        - È facile da mantenere e modificare
 
-##### Conclusioni
+##### Conclusioni sui principali tipi di layout
 
 Imparare a gestire i layout in CSS richiede la comprensione degli algoritmi di layout, piuttosto che la semplice memorizzazione delle proprietà. La chiave è visualizzare ogni elemento come un box, capire le relazioni genitore-figlio, e scegliere il layout più appropriato per ogni situazione. Non esitare a sperimentare con diversi layout per capire appieno come funzionano.
 
