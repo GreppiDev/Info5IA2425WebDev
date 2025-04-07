@@ -78,7 +78,7 @@ Prima di affrontare le forme normali, è essenziale comprendere il concetto di d
 
 ### 🔹 **Dipendenza funzionale banale**
 
-Una dipendenza funzionale X -> Y è detta **banale** se XY⊆X.Cioè: l'insieme degli attributi sul lato destro è **contenuto** (o uguale) a quello sul lato sinistro.
+Una dipendenza funzionale X -> Y è detta **banale** se Y⊆X.Cioè: l'insieme degli attributi sul lato destro è **contenuto** (o uguale) a quello sul lato sinistro.
 
 ✅ Esempi di dipendenze **banali**:
 
@@ -90,7 +90,7 @@ Sono **ovvie** e **sempre vere**, per definizione.
 
 ### 🔹 **Dipendenza funzionale non banale**
 
-Una dipendenza funzionale YX→Y è detta **non banale** se Y⊈XY. In altre parole: il lato destro **contiene almeno un attributo** che **non è incluso** nel lato sinistro.
+Una dipendenza funzionale X→Y è detta **non banale** se Y⊈X. In altre parole: il lato destro **contiene almeno un attributo** che **non è incluso** nel lato sinistro.
 ✅ Esempi di dipendenze **non banali**:
 
 - A→B se B∉{A}
@@ -114,7 +114,7 @@ Prima di procedere con le forme normali, è fondamentale definire i tipi di chia
 * **Definizione:** Una relazione è in 1NF se tutti i suoi attributi sono *atomici*, ovvero contengono un solo valore per tupla e non insiemi di valori o tabelle annidate. Per essere in 1NF una relazione:
   * deve avere una chiave primaria
   * deve avere solo attributi semplici (non deve avere attributi composti o multi-valore)
-  * In presenza di attributi composti, in base all'uso che si farà dell'attributo, si potrà considerare l'attributo come atomico oppure no. Ad esempio, un attributo come l'`indirizzo`, potrebbe essere considerato atomico, se in base all'uso che se ne deve fare, non è necessario scomporlo nelle sue parti semanticamente rilevanti. Questo aspetto relativo agli attributi composti va sempre dichiarato in fase di analisi.
+  * In presenza di attributi composti, in base all'uso che si farà dell'attributo, si potrà considerare l'attributo come atomico oppure no. Ad esempio, un attributo come l'`indirizzo` potrebbe essere considerato atomico se, in base all'uso che se ne deve fare, non è necessario scomporlo nelle sue parti semanticamente rilevanti. Questo aspetto relativo agli attributi composti va sempre dichiarato in fase di analisi.
 * **Scopo:** Eliminare gruppi ripetuti e attributi multi-valore, rendendo la struttura della tabella uniforme.
 * **Esempio (Non in 1NF):**
     Tabella `ORDINI`
@@ -187,7 +187,7 @@ Prima di procedere con le forme normali, è fondamentale definire i tipi di chia
 ### Terza Forma Normale (3NF)
 
 * **Prerequisito:** La relazione deve essere in 2NF.
-* **Definizione:** Una relazione è in 3NF se è in 2NF e *nessun attributo non-chiave è transitivamente dipendente dalla chiave primaria*. Una dipendenza transitiva si verifica quando X → Y e Y → Z, dove X è la chiave primaria, e Y non è una chiave candidata (Y è un attributo non-chiave), e Z è un attributo non-chiave. In sostanza, un attributo non-chiave non deve dipendere da un altro attributo non-chiave.
+* **Definizione:** Una relazione è in 3NF se è in 2NF e *nessun attributo non-chiave è transitivamente dipendente dalla chiave primaria*. Una dipendenza transitiva si verifica quando X → Y e Y → Z, dove X è la chiave primaria, e Y non è una chiave candidata (Y è un attributo non-chiave), e Z è un attributo non-chiave. In sostanza, **un attributo non-chiave non deve dipendere da un altro attributo non-chiave.**
 * **Scopo:** Eliminare le dipendenze transitive tra attributi non-chiave.
 * **Esempio (Non in 3NF):**
     Tabella `IMPIEGATI_DIPARTIMENTO` (supponiamo sia già in 2NF)
@@ -329,7 +329,7 @@ Prima di procedere con le forme normali, è fondamentale definire i tipi di chia
 
 * **1NF:** Attributi atomici.
 * **2NF:** 1NF + Nessuna dipendenza parziale di attributi non-chiave dalla chiave primaria.
-* **3NF:** 2NF + Nessuna dipendenza transitiva di attributi non-chiave dalla chiave primaria.
+* **3NF:** 2NF + Nessuna dipendenza transitiva di attributi non-chiave dalla chiave primaria, ossia nessuno attributo non-chiave che dipenda da un altro attributo non-chiave.
 * **BCNF:** 3NF + Ogni determinante di una dipendenza funzionale è una superchiave.
 
 Generalmente, l'obiettivo nella progettazione di database relazionali è raggiungere almeno la 3NF, e preferibilmente la BCNF, a meno che non ci siano specifiche ragioni di performance (denormalizzazione controllata) per fermarsi prima o fare eccezioni.

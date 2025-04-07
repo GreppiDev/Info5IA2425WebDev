@@ -222,7 +222,8 @@
     window.addEventListener('popstate', (e) => {
       const pageId = e.state?.page || 'home';
       if (pageId) {
-        navigateTo(pageId);
+        // Passa false come secondo parametro per evitare modifiche alla cronologia
+        navigateTo(pageId, false);
       }
     });
 
@@ -232,22 +233,25 @@
 
       console.log("HashChange detected:", newHash);
 
-      navigateTo(newHash);
+       navigateTo(newHash, false); // Aggiunta di false come secondo parametro
 
       e.preventDefault();
     });
 
     // SPA Navigation
-    function showPage(pageId) {
+    function showPage(pageId, updateHistory = true) {
       document.querySelectorAll('.page').forEach(page => {
         page.classList.remove('active');
       });
       document.getElementById(pageId + 'Page').classList.add('active');
-
-      const currentHash = window.location.hash.substring(1);
-      if (currentHash !== pageId) {
-        history.replaceState({ page: pageId }, '', '#' + pageId);
+      if (updateHistory){
+        const currentHash = window.location.hash.substring(1);
+        if (currentHash !== pageId) {
+          //history.replaceState({ page: pageId }, '', '#' + pageId);
+          history.pushState({ page: pageId }, '', '#' + pageId);
+        }
       }
+      
     }
 
     // Initialize page navigation
@@ -259,31 +263,31 @@
       });
     });
 
-    function navigateTo(pageId) {
+    function navigateTo(pageId, updateHistory = true) {
       if (['profile'].includes(pageId) && !currentUser) {
         showAlert('Please login to access this page', 'warning');
-        showPage('login');
+         showPage('login', updateHistory);
         return;
       }
 
       if (pageId === 'admin') {
         if (!currentUser) {
           showAlert('Please login to access this page', 'warning');
-          showPage('login');
+          showPage('login', updateHistory);
           return;
         }
 
         const userRole = (currentUser?.role || '').toLowerCase();
         if (userRole !== 'admin') {
           showAlert('You need admin access for this page', 'danger');
-          showPage('home');
+           showPage('login', updateHistory);
           return;
         }
 
         loadAdminContent();
       }
 
-      showPage(pageId);
+     showPage(pageId, updateHistory);
     }
 
     async function login() {
