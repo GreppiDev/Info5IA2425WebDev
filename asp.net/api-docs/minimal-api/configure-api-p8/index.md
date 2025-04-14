@@ -64,7 +64,7 @@
         - Usa l'**interpolazione di stringhe C#** (`$""`) per creare query leggibili e sicure.
         - **Come funziona la sicurezza:** Anche se sembra una normale interpolazione, EF Core **non** inserisce direttamente i valori nella stringa SQL. Invece, analizza la `FormattableString`, crea oggetti `DbParameter` per ogni variabile interpolata (`{variabile}`) e inserisce i nomi dei parametri generati nella stringa SQL (`@p0`, `@p1`, ...). Questo previene automaticamente SQL Injection per i valori interpolati.
         - È il metodo **preferito** per la maggior parte degli scenari di query su entità grazie alla sua sicurezza e leggibilità.
-        - **Esempio (dal tuo input - `Book`):**
+        - **Esempio (classe `Book`):**
 
             ```cs
             // Modelli (semplificati per l'esempio)
