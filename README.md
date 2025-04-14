@@ -25,11 +25,12 @@
     3. [Minimal API con MariaDB e Microsoft SQL Server: Progetto `AziendaAPI` con EF Core](./asp.net/api-docs/minimal-api/use-databases-p2/index.md)
     4. [Minimal API: OpenAPI Support, Route Handling, Error Handling](./asp.net/api-docs/minimal-api/configure-api-p1/index.md)
     5. [Minimal API: Middlewares, Routing, Filters](./asp.net/api-docs/minimal-api/configure-api-p2/index.md)
-    6. [Minimal API: Data Binding e gestione dei form](asp.net/api-docs/minimal-api/configure-api-p3/index.md)
-    7. [Minimal API: Response Types, Service Lifetimes](asp.net/api-docs/minimal-api/configure-api-p4/index.md)
-    8. [Minimal API: Validazione dell'input](asp.net/api-docs/minimal-api/configure-api-p5/index.md)
-    9. [Minimal API: Meccanismi di protezione contro attacchi CSRF](asp.net/api-docs/minimal-api/configure-api-p6/index.md)
-    10. [Minimal API: Caching dei dati - In-memory Caching, Distributed Cache, HybridCache](asp.net/api-docs/minimal-api/configure-api-p7/index.md)
+    6. [Minimal API: Data Binding e gestione dei form](./asp.net/api-docs/minimal-api/configure-api-p3/index.md)
+    7. [Minimal API: Response Types, Service Lifetimes](./asp.net/api-docs/minimal-api/configure-api-p4/index.md)
+    8. [Minimal API: Validazione dell'input](./asp.net/api-docs/minimal-api/configure-api-p5/index.md)
+    9. [Minimal API: Meccanismi di protezione contro attacchi CSRF](./asp.net/api-docs/minimal-api/configure-api-p6/index.md)
+    10. [Minimal API: Caching dei dati - In-memory Caching, Distributed Cache, HybridCache](./asp.net/api-docs/minimal-api/configure-api-p7/index.md)
+    11. [Minimal API: Esecuzione di query SQL nel codice ASP.NET mediante EF Core](./asp.net/api-docs/minimal-api/configure-api-p8/index.md)
 
 5. Web Architecture
    1. [Web mechanics](./web/web-docs/web-mechanics/index.md)

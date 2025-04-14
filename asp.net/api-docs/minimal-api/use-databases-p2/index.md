@@ -1260,6 +1260,7 @@ In effetti, **dal punto di vista della sicurezza sarebbe meglio affidare la crea
 Il comando per la creazione dell'utente sarebbe in questo caso:
 
 ```sql
+CREATE USER IF NOT EXISTS 'azienda_api_user'@'%' IDENTIFIED BY 'my_password';
 GRANT CREATE, ALTER, INSERT, UPDATE, DELETE, SELECT, DROP, INDEX ON azienda_api.* TO 'azienda_api_user'@'%';
 
 -- se l'utente deve anche creare il database:

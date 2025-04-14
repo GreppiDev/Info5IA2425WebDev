@@ -485,25 +485,32 @@ EducationalGames/
 |-- EducationalGames.csproj
 |-- appsettings.json
 |-- Program.cs           # Cuore dell'applicazione Minimal API
-|-- DbContext/
+|-- Properties
+|   |-- launchSettings.json
+|-- Data/
 |   |-- AppDbContext.cs    # Contesto Entity Framework Core
+|-- Endpoints
+|   |--
 |-- Migrations/          # Generate da EF Core
 |   |-- ...
 |-- Models/
 |   |-- Utente.cs
 |   |-- ClasseVirtuale.cs
+|   |-- ClasseGioco.cs
+|   |-- GiocoArgomento.cs
 |   |-- Videogioco.cs
 |   |-- ProgressoStudente.cs
+|   |-- Iscrizione.cs
 |   |-- Materia.cs         
 |   |-- Argomento.cs       
+|-- ModelsDTO/
 |   |-- LoginModel.cs      # Modello per il form di login
-|   |-- RankingViewModel.cs # Modello per i dati della classifica
 |-- wwwroot/               # Contenuto statico servito al client
 |   |-- index.html         # Landing page
-|   |-- login.html
+|   |-- login-page.html
 |   |-- classifica-generale.html
 |   |-- crea-classe.html   # Esempio pagina protetta per Docente
-|   |-- accesso-negato.html
+|   |-- access-denied.html
 |   |-- css/
 |   |   |-- bootstrap.min.css
 |   |   |-- style.css

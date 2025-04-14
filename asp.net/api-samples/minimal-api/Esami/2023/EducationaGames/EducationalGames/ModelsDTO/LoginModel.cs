@@ -1,6 +1,6 @@
 using System;
 
-namespace EducationalGames.Models;
+namespace EducationalGames.ModelsDTO;
 
 public class LoginModel
 {
