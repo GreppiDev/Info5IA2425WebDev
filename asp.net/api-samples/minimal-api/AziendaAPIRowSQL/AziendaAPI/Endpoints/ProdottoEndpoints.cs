@@ -21,8 +21,7 @@ public static class ProdottoEndpoints
         {
             // Opzionale ma consigliato: Verificare prima se l'azienda esiste per un 404 più preciso
             var aziendaExists = await db.Database
-                                        .SqlQuery<int>($"SELECT 1 FROM Aziende WHERE Id = {id} LIMIT 1")
-                                        .CountAsync() > 0; // Controlla se esiste almeno una riga
+                                        .SqlQuery<int>($"SELECT 1 FROM Aziende WHERE Id = {id} LIMIT 1").AnyAsync(); // Controlla se esiste almeno una riga
 
             if (!aziendaExists)
             {

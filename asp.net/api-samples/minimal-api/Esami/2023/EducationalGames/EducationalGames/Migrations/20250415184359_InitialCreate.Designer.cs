@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EducationalGames.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250413160532_AddUtenteClasseSkipNavigation")]
-    partial class AddUtenteClasseSkipNavigation
+    [Migration("20250415184359_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

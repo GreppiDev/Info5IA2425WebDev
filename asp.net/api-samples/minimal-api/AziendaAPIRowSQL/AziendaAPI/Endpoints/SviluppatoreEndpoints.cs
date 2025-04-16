@@ -31,8 +31,7 @@ public static class SviluppatoreEndpoints
         {
             // 1. Verifica esistenza Azienda
              var aziendaExists = await db.Database
-                                        .SqlQuery<int>($"SELECT 1 FROM Aziende WHERE Id = {id} LIMIT 1")
-                                        .CountAsync() > 0;
+                                        .SqlQuery<int>($"SELECT 1 FROM Aziende WHERE Id = {id} LIMIT 1").AnyAsync();
             if (!aziendaExists)
             {
                 return Results.NotFound($"Azienda con id {id} non trovata.");
@@ -89,8 +88,7 @@ public static class SviluppatoreEndpoints
         {
              // 1. Controlla se il prodotto esiste (per un NotFound più pulito)
              var prodottoExists = await db.Database
-                                        .SqlQuery<int>($"SELECT 1 FROM Prodotti WHERE Id = {id} LIMIT 1")
-                                        .CountAsync() > 0;
+                                        .SqlQuery<int>($"SELECT 1 FROM Prodotti WHERE Id = {id} LIMIT 1").AnyAsync();
              if (!prodottoExists)
              {
                  return Results.NotFound($"Prodotto con id {id} non trovato.");
@@ -207,7 +205,7 @@ public static class SviluppatoreEndpoints
         // CON SQL RAW (DELETE con gestione dipendenza)
         app.MapDelete("/sviluppatori/{id}", async (AziendaDbContext db, int id) =>
         {
-             using var transaction = await db.Database.BeginTransactionAsync();
+            using var transaction = await db.Database.BeginTransactionAsync();
             try
             {
                  // 1. Elimina le righe dipendenti in SviluppaProdotti

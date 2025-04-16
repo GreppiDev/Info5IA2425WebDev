@@ -5,9 +5,9 @@ namespace EducationalGames.Models
 {
     public enum RuoloUtente
     {
+        Admin,
         Docente,
-        Studente,
-        Admin
+        Studente
     }
 
     [Table("UTENTI")]
