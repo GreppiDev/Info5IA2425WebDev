@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pagina Non Trovata - Educational Games</title>
+    <title>Errore di Login - Educational Games</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -12,12 +12,12 @@
         body {
             padding-top: 70px;
             /* Aggiunto padding per navbar fissa + margine */
+            font-family: 'Inter', sans-serif;
             display: flex;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
             background-color: #f8f9fa;
-            /* Grigio chiaro Bootstrap */
             padding-bottom: 2rem;
         }
 
@@ -26,24 +26,18 @@
         }
 
         .card {
-            max-width: 500px;
-            /* Larghezza massima per la card */
+            max-width: 450px;
             width: 100%;
             margin: auto;
-            /* Centra la card */
         }
 
-        .icon-not-found {
-            width: 5rem;
-            /* 80px */
-            height: 5rem;
-            /* 80px */
+        .icon-error {
+            width: 4rem;
+            height: 4rem;
             margin-left: auto;
             margin-right: auto;
-            margin-bottom: 1.5rem;
-            /* mb-4 */
-            color: var(--bs-warning);
-            /* Colore giallo/arancio di Bootstrap */
+            margin-bottom: 1rem;
+            color: var(--bs-danger);
         }
     </style>
 </head>
@@ -96,23 +90,27 @@
     <form id="logoutForm" action="/api/account/logout" method="post" style="display: none;"></form>
 
     <div class="container">
-        <div class="card shadow-sm text-center">
-            <div class="card-body p-5">
-                <svg class="icon-not-found" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+        <div class="card shadow-sm">
+            <div class="card-body p-5 text-center">
+                <svg class="icon-error" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                     stroke-width="1.5" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round"
-                        d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75 8.25 8.25" />
+                        d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.008v.008H12v-.008Z" />
                 </svg>
 
-                <h1 class="h2 card-title fw-bold mb-3">Oops! Pagina Non Trovata</h1>
+                <h1 class="h3 card-title fw-bold mb-2">Errore di Login</h1>
                 <p class="card-text text-muted mb-4">
-                    La risorsa che stai cercando non esiste o è stata spostata.
+                    Si è verificato un problema durante il tentativo di accesso.
                 </p>
+                <div id="error-reason" class="alert alert-danger text-sm mb-4 d-none" role="alert">
+                </div>
                 <p class="card-text text-muted mb-4">
-                    Controlla l'indirizzo URL o torna alla pagina principale.
+                    Per favore, prova di nuovo. Se il problema persiste, contatta l'assistenza.
                 </p>
-                <a href="/" class="btn btn-primary fw-semibold">
+                <a href="/login-page.html" class="btn btn-primary fw-semibold me-2">
+                    Torna al Login
+                </a>
+                <a href="/" class="btn btn-secondary fw-semibold">
                     Torna alla Home
                 </a>
             </div>
@@ -124,6 +122,42 @@
 
     <script src="/js/navbar.js" defer></script>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const params = new URLSearchParams(window.location.search);
+            const reason = params.get('reason');
+            const errorDiv = document.getElementById('error-reason');
+
+            if (reason && errorDiv) {
+                let message = 'Dettaglio errore non riconosciuto: ' + reason; // Fallback
+
+                // Mappa i codici di errore a messaggi user-friendly
+                switch (reason) {
+                    // Errori da HandleTicketReceived
+                    case 'internal_error_principal': message = 'Si è verificato un errore interno recuperando le informazioni utente da Google.'; break;
+                    case 'google_missing_claims': message = 'Non è stato possibile recuperare le informazioni necessarie (ID o email) dal tuo account Google. Verifica le autorizzazioni concesse.'; break;
+                    case 'db_search_error': message = 'Errore tecnico durante la verifica dell\'utente nel nostro database. Riprova più tardi.'; break;
+                    case 'user_creation_error': message = 'Non è stato possibile creare il tuo account utente locale dopo l\'autenticazione Google. Riprova più tardi o contatta l\'assistenza.'; break;
+                    case 'internal_error_user': message = 'Si è verificato un errore tecnico interno dopo la creazione/ricerca dell\'utente.'; break;
+                    case 'signin_error': message = 'Si è verificato un errore tecnico durante il tentativo di accesso finale all\'applicazione.'; break;
+                    // Errore da HandleAccessDenied
+                    case 'access_denied': message = 'Hai negato all\'applicazione l\'accesso alle informazioni richieste dal tuo account Google.'; break;
+                    // Gestione errori da HandleRemoteFailure
+                    default:
+                        try {
+                            const decodedReason = decodeURIComponent(reason);
+                            message = `Si è verificato un errore durante la comunicazione con Google. Dettaglio: ${decodedReason.substring(0, 100)}${decodedReason.length > 100 ? '...' : ''}`;
+                            if (decodedReason.includes('Correlation failed')) { message = 'Si è verificato un problema di sicurezza durante l\'autenticazione. Riprova.'; }
+                        } catch (e) { message = `Si è verificato un errore esterno non specificato (Codice: ${reason})`; }
+                        if (reason === 'unknown_external_error' || message.length > 150) { message = 'Si è verificato un errore durante la comunicazione con il provider esterno. Riprova più tardi.'; }
+                        break;
+                }
+
+                errorDiv.textContent = message;
+                errorDiv.classList.remove('d-none');
+            }
+        });
+    </script>
 </body>
 
 </html>

@@ -1,4 +1,3 @@
-using System;
 using System.Security.Claims;
 using EducationalGames.Utils;
 using EducationalGames.Data;
@@ -6,9 +5,12 @@ using EducationalGames.ModelsDTO;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Identity;
 using EducationalGames.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Mvc.Abstractions;
 
 namespace EducationalGames.Endpoints;
 
@@ -99,7 +101,7 @@ public static class AccountEndpoints
 
 
             // --- Redirect ---
-            // Reindirizza l'utente alla returnUrl se fornita, altrimenti alla home page
+            // Reindirizza l'utente alla returnUrl se fornita altrimenti a una pagina di successo predefinita.
             // Assicurarsi che returnUrl sia un URL locale per prevenire attacchi di open redirect
             if (!string.IsNullOrEmpty(returnUrl) && Uri.IsWellFormedUriString(returnUrl, UriKind.Relative))
             {
@@ -107,7 +109,7 @@ public static class AccountEndpoints
             }
             else
             {
-                return Results.Redirect("/"); //redirect alla home oppure a un'altra pagina di default
+                return Results.Redirect("/loggedIn.html"); // Reindirizza a una pagina di successo predefinita
             }
 
         }).AllowAnonymous(); // Permette accesso anonimo al login
@@ -125,7 +127,7 @@ public static class AccountEndpoints
             }
 
             // 3. Verifica se l'email esiste già
-            var existingUser = await db.Utenti.AnyAsync(u => u.Email == model.Email);
+            var existingUser = await db.Utenti.AnyAsync(u => u.Email.ToLower() == model.Email.ToLower());
             if (existingUser)
             {
                 // Usiamo Problem per dare più dettagli standardizzati sull'errore
@@ -164,7 +166,7 @@ public static class AccountEndpoints
             // 1. Validazione del Modello (automatica)
 
             // 2. Verifica se l'email esiste già
-            var existingUser = await db.Utenti.AnyAsync(u => u.Email == model.Email);
+            var existingUser = await db.Utenti.AnyAsync(u => u.Email.ToLower() == model.Email.ToLower());
             if (existingUser)
             {
                 return Results.Problem(
@@ -221,7 +223,10 @@ public static class AccountEndpoints
 
             return Results.Ok(new
             {
-                Username = ctx.User.FindFirstValue(ClaimTypes.Name),
+                Username = ctx.User.FindFirstValue(ClaimTypes.Name), // Email
+                GivenName = ctx.User.FindFirstValue(ClaimTypes.GivenName), // Nome
+                Surname = ctx.User.FindFirstValue(ClaimTypes.Surname), // Cognome
+                NameIdentifier = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier), // ID
                 Roles = roles,
                 IsAdmin = ctx.User.IsInRole("Admin"),
                 IsDocente = ctx.User.IsInRole("Docente"),
@@ -258,6 +263,8 @@ public static class AccountEndpoints
             return Results.Redirect("/");
 
         }).RequireAuthorization(); // È necessario essere loggati per poter fare logout
+
+        
 
         return group;
     }

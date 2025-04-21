@@ -1,5 +1,12 @@
 # Indicazioni per lo sviluppo del progetto
 
+- [Indicazioni per lo sviluppo del progetto](#indicazioni-per-lo-sviluppo-del-progetto)
+  - [Setup del progetto](#setup-del-progetto)
+  - [Configurazione del database (Modello, DbContext, Migrazione)](#configurazione-del-database-modello-dbcontext-migrazione)
+  - [Autenticazione e autorizzazione degli utenti e seed del database all'avvio (funzionalità non richieste dalla traccia, ma fondamentali per il prototipo)](#autenticazione-e-autorizzazione-degli-utenti-e-seed-del-database-allavvio-funzionalità-non-richieste-dalla-traccia-ma-fondamentali-per-il-prototipo)
+    - [Implementazione del seeding del database in produzione](#implementazione-del-seeding-del-database-in-produzione)
+    - [Autenticazione basata su Google](#autenticazione-basata-su-google)
+
 Dobbiamo realizzare un prototipo funzionante per la [traccia di esame di maturità di informatica del 2023](https://www.istruzione.it/esame_di_stato/202223/Istituti%20tecnici/Ordinaria/A038_ORD23.pdf) (con particolare riferimento al punto 6 della prima parte della traccia)
 
 L'architettura di riferimento è una **Applicazione Unificata (Minimal API serve sia API che Pagine)**. Questa applicazione sarà strutturata secondo una Multi Page Application (MPA), come indicato nel documento [progetto-educational-games](progetto-educational-games.md).
@@ -380,3 +387,466 @@ Procediamo con i seguenti step:
   ```ps
     dotnet ef database update --project EducationalGames
   ```
+
+## Autenticazione e autorizzazione degli utenti e seed del database all'avvio (funzionalità non richieste dalla traccia, ma fondamentali per il prototipo)
+
+Per la gestione degli accessi nel prototipo verrà utilizzato il seguente approccio:
+
+- Definizione dei ruoli degli utenti: `Admin`, `Docente`, `Studente`. Per rendere più semplice la gestione dei permessi verranno attribuiti `ruoli in cascata`, ossia l'utente che ha i permessi associati al ruolo gerarchicamente più alto, riceve anche tutti i permessi dei ruoli gerarchicamente inferiori.
+- Accesso autenticato alla piattaforma mediante un meccanismo di accesso basato sulla verifica di `username` (corrispondente alla e-mail dell'utente) e `password`. Le password verranno memorizzate in formato criptato nella tabella degli utenti, ricorrendo agli algoritmi di hashing implementati dalla libreria Identity di Microsoft (nello specifico `PBKDF2 with HMAC-SHA1, 128-bit salt, 256-bit subkey, 1000 iterations`). Durante la procedura di login, dopo aver verificato la corrispondenza tra username (e-mail) e password, verrà creato un cookie con il `ClaimsPrincipal` che rappresenta l'utente autenticato.
+- Successivamente verrà implementato anche un meccanismo di accesso autenticato, basato sullo standard `OAuth 2.0`, per l'autenticazione degli utenti mediante Google.
+- Gli utenti con ruolo `Docente`, oppure `Studente` possono registrarsi liberamente alla piattaforma, mentre gli utenti `Admin` devono necessariamente essere creati da un altro utente con il ruolo di `Admin`.
+- La creazione e il popolamento del database in fase di sviluppo viene effettuato direttamente da codice, pertanto alla partenza dell'applicazione, se il database non esiste viene creato e vengono applicate le migrazioni; inoltre viene creato anche un account amministrativo predefinito le cui credenziali vengono prese dagli `User Secrets`.
+- Definizione di policies di sicurezza per l'accesso agli endpoint delle API
+- Gestione dei codici di errore del client 401 (tentativo di accesso a risorse che richiedono autenticazione) /403 (tentativo di accesso di utente autenticato, ma senza i permessi richiesti) /404 (tentativo di accesso a risorsa non trovata) per richieste API e per richieste non API.
+  - Richiesta API(`/api/...`) con Errore (401/403/404):
+    - Il `StatusCodeMiddleware` intercetta l'errore e restituisce una risposta JSON standardizzata.
+  - Richiesta NON API (`/pagina-protetta`) che richiede Login (401):
+    - `CookieAuthenticationEvents` reindirizza a `/login-required`, che poi reindirizza a `/login-page.html?ReturnUrl=....`
+  - Richiesta NON API (`/area-admin` oppure `/area-docente` per utente non autorizzato) senza Permessi (403):
+    - `CookieAuthenticationEvents` reindirizza a `/access-denied`, che poi reindirizza a `/access-denied.html?ReturnUrl=....`
+  - Richiesta NON API (`/pagina-inesistente.html`) non trovata (404):
+    - `UseStatusCodePagesWithRedirects` reindirizza a `/not-found.html`.
+
+Il codice di `Program.cs` nel prototipo diventa:
+
+```cs
+using Microsoft.AspNetCore.Authentication.Cookies;
+using EducationalGames.Models;
+using Microsoft.EntityFrameworkCore;
+using EducationalGames.Data;
+using EducationalGames.Middlewares;
+using EducationalGames.Endpoints;
+using Microsoft.AspNetCore.Identity; // Per PasswordHasher
+using Microsoft.Extensions.Primitives; // Per StringValues
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+builder.Services.AddOpenApi();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddOpenApiDocument(config =>
+{
+    config.Title = "Educational Games v1";
+    config.DocumentName = "Educational Games API";
+    config.Version = "v1";
+});
+
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+}
+
+
+// Configura le opzioni di System.Text.Json per gestire gli enum come stringhe
+builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
+{
+    // Aggiunge il convertitore che permette di leggere/scrivere enum come stringhe
+    options.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+
+    // Opzionale: Rende i nomi delle proprietà JSON case-insensitive durante la deserializzazione
+    options.SerializerOptions.PropertyNameCaseInsensitive = true;
+});
+
+// Se si stesse usando AddControllers() invece di Minimal API, la configurazione sarebbe simile:
+// builder.Services.AddControllers().AddJsonOptions(options => {
+//     options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+// });
+
+// --- Configurazione DbContext ---
+var connectionString = builder.Configuration.GetConnectionString("EducationalGamesConnection");
+if (string.IsNullOrEmpty(connectionString))
+{
+    throw new InvalidOperationException("Connection string 'EducationalGamesConnection' not found.");
+}
+var serverVersion = ServerVersion.AutoDetect(connectionString);
+builder.Services.AddDbContext<AppDbContext>(
+    opt => opt.UseMySql(connectionString, serverVersion)
+        .LogTo(Console.WriteLine, LogLevel.Information)
+        .EnableSensitiveDataLogging(builder.Environment.IsDevelopment()) // Log sensibili solo in DEV
+        .EnableDetailedErrors(builder.Environment.IsDevelopment())      // Errori dettagliati solo in DEV
+);
+
+// --- Configurazione Autenticazione Cookie ---
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+    {
+        options.Cookie.Name = ".AspNetCore.Authentication.EducationalGames"; // Nome specifico per l'app
+        options.Cookie.HttpOnly = true;
+        options.SlidingExpiration = true;
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(60); // Esempio: timeout di 60 minuti (resettato da SlidingExpiration)
+
+        options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+            ? CookieSecurePolicy.None
+            : CookieSecurePolicy.Always; // Forza HTTPS in produzione
+
+        options.Cookie.SameSite = builder.Environment.IsDevelopment()
+            ? SameSiteMode.Lax
+            : SameSiteMode.Strict; // Più sicuro in produzione
+
+        options.LoginPath = "/login-required"; // Percorso intermedio gestito sotto
+        options.AccessDeniedPath = "/access-denied"; // Percorso intermedio gestito sotto
+
+        // Gestione personalizzata redirect per API vs HTML
+        options.Events = new CookieAuthenticationEvents
+        {
+            OnRedirectToLogin = context =>
+            {
+                if (context.Request.Path.StartsWithSegments("/api")) // Se è una richiesta API
+                {
+                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    context.Response.Headers.Remove("Location");
+                }
+                else // Altrimenti, redirect standard (che punterà a /login-required)
+                {
+                    context.Response.Redirect(context.RedirectUri);
+                }
+                return Task.CompletedTask;
+            },
+            OnRedirectToAccessDenied = context =>
+            {
+                if (context.Request.Path.StartsWithSegments("/api")) // Se è una richiesta API
+                {
+                    context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    context.Response.Headers.Remove("Location");
+                }
+                else // Altrimenti, redirect standard (che punterà a /access-denied)
+                {
+                    context.Response.Redirect(context.RedirectUri);
+                }
+                return Task.CompletedTask;
+            }
+        };
+    });
+
+// --- Configurazione Autorizzazione con Policy ---
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"))
+    .AddPolicy("DocenteOnly", policy => policy.RequireRole("Docente"))
+    .AddPolicy("AdminOrDocente", policy => policy.RequireRole("Admin", "Docente"))
+    .AddPolicy("RegisteredUsers", policy => policy.RequireAuthenticatedUser()); // Richiede solo utente autenticato
+
+// Aggiungi PasswordHasher come servizio
+builder.Services.AddScoped<PasswordHasher<Utente>>();
+
+
+var app = builder.Build();
+
+// --- APPLICA MIGRAZIONI E SEEDING ADMIN ALL'AVVIO ---
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var logger = services.GetRequiredService<ILogger<Program>>();
+    try
+    {
+        var dbContext = services.GetRequiredService<AppDbContext>();
+        var configuration = services.GetRequiredService<IConfiguration>();
+        var passwordHasher = services.GetRequiredService<PasswordHasher<Utente>>();
+
+        // Applica migrazioni (solo in sviluppo)
+        if (app.Environment.IsDevelopment())
+        {
+            logger.LogInformation("Development environment detected. Applying database migrations...");
+            await dbContext.Database.MigrateAsync();
+            logger.LogInformation("Database migrations applied successfully.");
+        }
+
+        // Seed Admin User
+        logger.LogInformation("Checking for existing Admin user...");
+        if (!await dbContext.Utenti.AnyAsync(u => u.Ruolo == RuoloUtente.Admin))
+        {
+            logger.LogWarning("No Admin user found. Attempting to seed default Admin...");
+            var adminEmail = configuration["DefaultAdminCredentials:Email"];
+            var adminPassword = configuration["DefaultAdminCredentials:Password"];
+            var adminNome = configuration["DefaultAdminCredentials:Nome"] ?? "Admin";
+            var adminCognome = configuration["DefaultAdminCredentials:Cognome"] ?? "Default";
+
+            if (string.IsNullOrEmpty(adminEmail) || string.IsNullOrEmpty(adminPassword))
+            {
+                logger.LogError("Default Admin Email or Password not found in configuration. Cannot seed Admin user.");
+            }
+            else if (adminPassword.Length < 8)
+            {
+                logger.LogError("Default Admin Password must be at least 8 characters long. Cannot seed Admin user.");
+            }
+            else
+            {
+                var adminUser = new Utente
+                {
+                    Nome = adminNome,
+                    Cognome = adminCognome,
+                    Email = adminEmail,
+                    Ruolo = RuoloUtente.Admin
+                };
+                adminUser.PasswordHash = passwordHasher.HashPassword(adminUser, adminPassword);
+                dbContext.Utenti.Add(adminUser);
+                await dbContext.SaveChangesAsync();
+                logger.LogInformation("Default Admin user '{Email}' created successfully.", adminEmail);
+            }
+        }
+        else
+        {
+            logger.LogInformation("Admin user already exists. Skipping seeding.");
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "An error occurred during database migration or seeding.");
+    }
+}
+// --- FINE MIGRAZIONI E SEEDING ---
+
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+    app.UseOpenApi();
+    app.UseSwaggerUi(config =>
+    {
+        config.DocumentTitle = "Educational Games v1";
+        config.Path = "/swagger";
+        config.DocumentPath = "/swagger/{documentName}/swagger.json";
+        config.DocExpansion = "list";
+    });
+}
+else
+{
+    app.UseExceptionHandler("/error");
+    app.UseHsts();
+    app.UseHttpsRedirection();
+}
+
+// Middleware per file statici
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
+// Middleware Autenticazione/Autorizzazione
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Middleware per gestire gli errori di stato delle API
+// Riepilogo della Logica Risultante:
+// Richiesta API(/api/...) con Errore(401/403/404): 
+//  Il StatusCodeMiddleware intercetta l'errore e restituisce una risposta JSON standardizzata.
+// Richiesta NON API (/pagina-protetta) che richiede Login (401): 
+//  CookieAuthenticationEvents reindirizza a /login-required, che poi reindirizza a /login-page.html?ReturnUrl=....
+// Richiesta NON API (/area-admin) senza Permessi (403): 
+//  CookieAuthenticationEvents reindirizza a /access-denied, che poi reindirizza a /access-denied.html?ReturnUrl=....
+// Richiesta NON API (/pagina-inesistente.html) non trovata (404):
+//   UseStatusCodePagesWithRedirects reindirizza a /not-found.html.
+
+app.UseMiddleware<StatusCodeMiddleware>();
+
+// Reindirizza a /not-found.html per errori 404 che non sono stati gestiti
+// e non sono richieste API (perché il middleware StatusCodeMiddleware
+// intercetterebbe gli errori API prima che questo venga eseguito completamente)
+
+// NOTA: Questo catturerà anche richieste a file statici non esistenti.
+app.UseStatusCodePagesWithRedirects("/not-found.html");
+
+// Map API endpoints
+app.MapGroup("/api/account")
+   .WithTags("Account")
+   .MapAccountEndpoints();
+
+// Endpoint per gestire i redirect a pagine HTML specifiche
+// Questi endpoint vengono chiamati dal middleware dei cookie quando rileva
+// una richiesta non API che richiede login o non ha i permessi.
+app.MapGet("/login-required", (HttpContext context) =>
+{
+    // Legge il parametro ReturnUrl aggiunto automaticamente dal middleware
+    context.Request.Query.TryGetValue("ReturnUrl", out StringValues returnUrlSv);
+    var returnUrl = returnUrlSv.FirstOrDefault();
+
+    // Costruisce l'URL per la pagina di login HTML
+    var redirectUrl = "/login-page.html";
+    if (!string.IsNullOrEmpty(returnUrl))
+    {
+        // Aggiunge il ReturnUrl alla pagina di login, così può reindirizzare dopo il login
+        redirectUrl += $"?ReturnUrl={Uri.EscapeDataString(returnUrl)}";
+    }
+    // Esegue il redirect alla pagina di login HTML
+    return Results.Redirect(redirectUrl);
+
+}).AllowAnonymous();
+
+app.MapGet("/access-denied", (HttpContext context) =>
+{
+    // Legge il parametro ReturnUrl aggiunto automaticamente dal middleware
+    context.Request.Query.TryGetValue("ReturnUrl", out StringValues returnUrlSv);
+    var returnUrl = returnUrlSv.FirstOrDefault();
+
+    // Costruisce l'URL per la pagina di accesso negato HTML
+    var redirectUrl = "/access-denied.html";
+    if (!string.IsNullOrEmpty(returnUrl))
+    {
+        // Aggiunge il ReturnUrl alla pagina di accesso negato (utile per logging o messaggi)
+        redirectUrl += $"?ReturnUrl={Uri.EscapeDataString(returnUrl)}";
+    }
+    // Esegue il redirect alla pagina di accesso negato HTML
+    return Results.Redirect(redirectUrl);
+
+}).AllowAnonymous();
+
+// Endpoint di fallback per errori generici
+app.MapGet("/error", () => Results.Problem("Si è verificato un errore interno.")).AllowAnonymous();
+
+
+app.Run();
+```
+
+Il codice del middleware `StatusCodeMiddleware` per il controllo dei codici di risposta nel caso di richiesta API (`/api/...`) è:
+
+```cs
+using System.Text.Json; // Per JsonSerializerOptions
+
+namespace EducationalGames.Middlewares
+{
+    public class StatusCodeMiddleware
+    {
+        private readonly RequestDelegate _next;
+        private readonly ILogger<StatusCodeMiddleware> _logger;
+
+        // Opzioni per la serializzazione JSON (camelCase)
+        private static readonly JsonSerializerOptions _jsonOptions = new()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+
+
+        public StatusCodeMiddleware(RequestDelegate next, ILogger<StatusCodeMiddleware> logger)
+        {
+            _next = next;
+            _logger = logger;
+        }
+
+        public async Task InvokeAsync(HttpContext context)
+        {
+            await _next(context); // Esegui il resto della pipeline
+
+            var response = context.Response;
+
+            // Controlla solo se la richiesta è per un'API e la risposta non è già iniziata
+            // e c'è un errore client/server rilevante (401, 403, 404).
+            if (response.HasStarted || !context.Request.Path.StartsWithSegments("/api") || response.StatusCode < 400 || response.StatusCode >= 600)
+            {
+                return; // Non fare nulla se non è un errore API gestibile
+            }
+
+            // Se è un errore API (401, 403, 404), formatta la risposta come JSON standard
+            // senza fare redirect. I redirect per non-API sono gestiti altrove.
+
+            if (response.StatusCode == StatusCodes.Status401Unauthorized)
+            {
+                _logger.LogWarning("API Request Unauthorized (401) for {Path}", context.Request.Path);
+                response.ContentType = "application/json";
+                await response.WriteAsJsonAsync(new ApiErrorResponse
+                {
+                    Status = 401,
+                    Title = "Unauthorized",
+                    Detail = "Autenticazione richiesta per accedere a questa risorsa API.",
+                    Path = context.Request.Path,
+                    Timestamp = DateTime.UtcNow
+                }, _jsonOptions);
+            }
+            else if (response.StatusCode == StatusCodes.Status403Forbidden)
+            {
+                _logger.LogWarning("API Request Forbidden (403) for {Path}", context.Request.Path);
+                response.ContentType = "application/json";
+                await response.WriteAsJsonAsync(new ApiErrorResponse
+                {
+                    Status = 403,
+                    Title = "Forbidden",
+                    Detail = "Non hai i permessi necessari per accedere a questa risorsa API.",
+                    Path = context.Request.Path,
+                    Timestamp = DateTime.UtcNow
+                }, _jsonOptions);
+            }
+            else if (response.StatusCode == StatusCodes.Status404NotFound)
+            {
+                _logger.LogWarning("API Resource Not Found (404) for {Path}", context.Request.Path);
+                response.ContentType = "application/json";
+                await response.WriteAsJsonAsync(new ApiErrorResponse
+                {
+                    Status = 404,
+                    Title = "Not Found",
+                    Detail = "La risorsa API richiesta non è stata trovata.",
+                    Path = context.Request.Path,
+                    Timestamp = DateTime.UtcNow
+                }, _jsonOptions);
+            }
+            // Puoi aggiungere altri 'else if' per gestire altri codici di stato per le API
+        }
+
+        // Classe helper per standardizzare le risposte di errore API
+        private sealed class ApiErrorResponse
+        {
+            public int Status { get; set; }
+            public string Title { get; set; } = string.Empty;
+            public string Detail { get; set; } = string.Empty;
+            public string Path { get; set; } = string.Empty;
+            public DateTime Timestamp { get; set; }
+        }
+    }
+}
+```
+
+### Implementazione del seeding del database in produzione
+
+Il seeding automatico all'avvio, come implementato nel `Program.cs` (all'interno di `if (app.Environment.IsDevelopment())`), è comodo per lo sviluppo ma **non è la pratica consigliata per la produzione** per diversi motivi:
+
+1. **Controllo:** In produzione, vuoi avere un controllo preciso su quando e come vengono apportate modifiche al database, inclusa l'aggiunta di utenti iniziali. Un avvio automatico potrebbe fallire o avere effetti indesiderati.
+2. **Sicurezza delle Credenziali:** Leggere la password dell'admin da `appsettings.Production.json` è rischioso. Anche se usi Azure Key Vault o variabili d'ambiente, eseguire questa logica ad ogni avvio potrebbe esporre le credenziali più del necessario.
+3. **Idempotenza:** La logica attuale controlla se l'admin esiste già (`!await dbContext.Utenti.AnyAsync(...)`), il che è buono, ma in scenari complessi, eseguire seeding ad ogni avvio può essere problematico.
+
+**Approcci Comuni per il Seeding in Produzione:**
+
+Due metodi robusti e sicuri per creare l'utente admin iniziale in un ambiente di produzione, tenendo conto dell'hashing della password sono i seguenti:
+
+**Metodo 1: Script SQL Manuale (con Password Pre-Hashed):**
+
+1. **Generare l'Hash:** Bisogna generare l'hash della password che si vuole usare per l'admin *usando lo stesso algoritmo di hashing* che ASP.NET Core Identity utilizza (`PasswordHasher`). Si può farlo:
+    - Creando una piccola utility console temporanea che usa `PasswordHasher<Utente>` per generare l'hash di una password data.
+    - Temporaneamente aggiungendo un endpoint di debug nella tua applicazione (da rimuovere prima del deploy!) che prende una password e restituisce il suo hash.
+    - Eseguendo la logica di hashing in un ambiente di sviluppo e copiando l'hash risultante.
+2. **Creare lo Script SQL:** Scrivere uno script SQL `INSERT` che inserisca l'utente admin nella tabella `UTENTI`. Includere tutti i campi necessari (`Nome`, `Cognome`, `Email`, `Ruolo`) e **usare l'hash generato al punto 1** per il campo `PasswordHash`.SQL
+
+    ```sql
+    -- Esempio di script SQL (verifica i nomi esatti delle colonne/tabella)
+    -- Assicurati che l'email non esista già prima di eseguire!
+    INSERT INTO UTENTI (Nome, Cognome, Email, PasswordHash, Ruolo)
+    VALUES (
+        'Admin',
+        'Produzione',
+        'admin.prod@tuodominio.com',
+        'AQAAAAIAAYagAAAAEBLongGeneratedHashStringFromStep1...', -- Incollare l'hash qui
+        'Admin' -- Assumendo che gli enumerativi siano salvati come stringa
+    );
+
+    ```
+
+3. **Eseguire lo Script:** Si esegua questo script SQL manualmente sul database di produzione *una sola volta* dopo aver applicato le migrazioni del database e prima di avviare l'applicazione per la prima volta, o come parte del tuo processo di deployment iniziale.
+
+- **Pro:** Controllo completo, nessuna credenziale in chiaro nella configurazione dell'app, pratica standard per DBA.
+- **Contro:** Richiede un passaggio manuale o script di deployment separato, devi generare l'hash esternamente.
+
+**Metodo 2: Comando CLI Personalizzato nell'Applicazione:**
+
+1. **Modificare `Program.cs`:** Adattare `Program.cs` per accettare argomenti da riga di comando specifici per il seeding.
+2. **Logica di Seeding:** Creare una funzione (es. `SeedAdminUserAsync`) che contenga la logica attuale di seeding (controllo esistenza, lettura credenziali *passate come argomenti*, hashing, salvataggio).
+3. **Esecuzione Condizionale:** All'inizio di `Program.cs`, controllare se sono stati passati gli argomenti per il seeding (es. `dotnet run --seed-admin --admin-email="..." --admin-password="..."`). Se sì, eseguire la funzione `SeedAdminUserAsync` e poi terminare l'applicazione (`Environment.Exit(0)`). Altrimenti, procedere con la normale configurazione e avvio del web host (`var app = builder.Build(); ... app.Run();`).
+4. **Deployment:** Nello script di deployment per l'ambiente di produzione, dopo aver installato l'applicazione e applicato le migrazioni, eseguire il comando una volta:
+
+    ```sh
+    # Esempio (le credenziali vanno passate in modo sicuro, es. da variabili della pipeline)
+    dotnet YourApp.dll --seed-admin --admin-email="admin.prod@tuodominio.com" --admin-password="PASSWORD_SICURA_DA_VARIABILE"
+    ```
+
+- **Pro:** Riutilizza la logica C# dell'applicazione (DbContext, PasswordHasher), può essere automatizzato negli script di deployment, le credenziali possono essere gestite in modo sicuro tramite variabili d'ambiente o segreti della pipeline di deployment.
+- **Contro:** Richiede modifiche a `Program.cs` per gestire gli argomenti, leggermente più complesso dello script SQL.
+
+**In sintesi:** Per la produzione, evitare il seeding automatico all'avvio dell'applicazione web. Scegliere tra uno script SQL manuale (più semplice per un'operazione una tantum) o un comando CLI integrato nell'app (più flessibile e riutilizza la logica C#) per creare l'utente admin iniziale in modo controllato e sicuro.
+
+### Autenticazione basata su Google
+

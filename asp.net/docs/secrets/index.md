@@ -22,14 +22,7 @@ Secret Manager tool è un sistema integrato in ASP.NET Core per gestire configur
 
 I passaggi per la gestione dei secrets in fase di sviluppo sono riportati di seguito:
 
-1. Aprire il terminale nella root del progetto (dove si trova il file con estensione `.csproj`) ed eseguire:
-
-	```sh
-		# Nella directory del progetto, si inizializza il secret manager
-		dotnet user-secrets init
-	```
-
-2. Aprire il file del progetto (il file con estensione `.csproj`) e aggiungere manualmente un `PropertyGroup` come indicato di seguito:
+1. Aprire il file del progetto (il file con estensione `.csproj`) e aggiungere manualmente un `PropertyGroup` come indicato di seguito:
 
 	```xml
 		<PropertyGroup>
@@ -37,12 +30,19 @@ I passaggi per la gestione dei secrets in fase di sviluppo sono riportati di seg
 		</PropertyGroup>
 	```
 
-3. Inserire all'interno del tag `UserSecretId` un identificativo univoco che sia facilmente riconducibile al progetto. Per creare questo identificativo si può, ad esempio, utilizzare il nome del progetto seguito da un GUID (Globally Unique Identifier). Per generare un GUID valido si può utilizzare una delle tante estensioni disponibili per VS Code, come ad esempio, `Insert GUID` (Extension ID = `heaths.vscode-guid`). Una volta installata l'estensione si potrà inserire un UserSecretId come mostrato di seguito:
+2. Inserire all'interno del tag `UserSecretId` un identificativo univoco che sia facilmente riconducibile al progetto. Per creare questo identificativo si può, ad esempio, utilizzare il nome del progetto seguito da un GUID (Globally Unique Identifier). Per generare un GUID valido si può utilizzare una delle tante estensioni disponibili per VS Code, come ad esempio, `Insert GUID` (Extension ID = `heaths.vscode-guid`). Una volta installata l'estensione si potrà inserire un UserSecretId come mostrato di seguito:
 
 	```xml
 		<PropertyGroup>
 			<UserSecretsId>NomeProgetto-acd69e4f-34c8-4275-85e2-34100e896360</UserSecretsId>
 		</PropertyGroup>
+	```
+
+3. Aprire il terminale nella root del progetto (dove si trova il file con estensione `.csproj`) ed eseguire:
+
+	```sh
+		# Nella directory del progetto, si inizializza il secret manager
+		dotnet user-secrets init
 	```
 
 4. Aggiungere i secrets con il comando `dotnet user-secrets "key" "value"`. Ad esempio:
