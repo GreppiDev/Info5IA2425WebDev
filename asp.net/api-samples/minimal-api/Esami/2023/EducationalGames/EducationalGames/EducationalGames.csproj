@@ -25,6 +25,9 @@
   <ItemGroup>
     <Folder Include="Middlewares\" />
     <Folder Include="wwwroot\" />
+    <Folder Include="wwwroot\assets\" />
+    <Folder Include="wwwroot\components\" />
+    <Folder Include="wwwroot\css\" />
   </ItemGroup>
 
 </Project>

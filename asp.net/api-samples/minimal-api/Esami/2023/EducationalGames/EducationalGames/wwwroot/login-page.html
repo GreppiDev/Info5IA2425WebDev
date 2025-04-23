@@ -1,30 +1,17 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="it">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Login - Educational Games</title>
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
     <style>
-        body {
-            padding-top: 56px;
-            /* Altezza standard navbar Bootstrap */
-            background-color: #f8f9fa;
-            display: flex;
-            /* Aggiunto per centrare il contenuto */
-            align-items: center;
-            /* Aggiunto per centrare verticalmente */
-            min-height: 100vh;
-            /* Aggiunto per centrare verticalmente */
-        }
-
-        .navbar {
-            /* Puoi personalizzare lo stile della navbar qui se vuoi */
-        }
-
+        /* Stili specifici per questa pagina */
         .login-card {
             min-height: 350px;
             display: flex;
@@ -32,174 +19,158 @@
             justify-content: center;
         }
 
-        /* Stile per il contenitore principale delle card di login */
         .login-container {
             width: 100%;
             max-width: 960px;
             /* Larghezza massima per contenere due card affiancate */
-            margin: auto;
+            margin: 1rem auto;
+            /* Margine sopra/sotto e auto laterale */
         }
     </style>
 </head>
 
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow-sm">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="/">
-                <i class="bi bi-joystick me-2"></i> Educational Games
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
-                aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarContent">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/">Home</a>
-                    </li>
-                    <li id="nav-admin-dashboard" class="nav-item d-none"> <a class="nav-link"
-                            href="/dashboard.html">Dashboard Admin</a></li>
-                    <li id="nav-studente-classi" class="nav-item d-none"> <a class="nav-link" href="/mie-classi.html">Le
-                            Mie Classi</a></li>
-                    <li id="nav-docente-gestione" class="nav-item dropdown d-none"> <a class="nav-link dropdown-toggle"
-                            href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Gestione Docente</a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="/gestione-classi.html">Gestione Classi</a></li>
-                            <li><a class="dropdown-item" href="/gestione-giochi.html">Gestione Giochi</a></li>
-                        </ul>
-                    </li>
-                </ul>
-                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                    <li id="nav-login" class="nav-item d-none">
-                        <a class="btn btn-outline-light me-2 active" aria-current="page"
-                            href="/login-page.html">Login</a>
-                    </li>
-                    <li id="nav-register" class="nav-item d-none">
-                        <a class="btn btn-warning" href="/register.html">Registrati</a>
-                    </li>
-                    <li id="nav-profile" class="nav-item d-none">
-                        <a class="nav-link" href="/loggedIn.html"><i class="bi bi-person-circle me-1"></i> Profilo
-                            (<span id="nav-username"></span>)</a>
-                    </li>
-                    <li id="nav-logout" class="nav-item d-none">
-                        <a class="btn btn-outline-danger" href="/api/account/logout"
-                            onclick="event.preventDefault(); postLogout();"><i class="bi bi-box-arrow-right me-1"></i>
-                            Logout</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <form id="logoutForm" action="/api/account/logout" method="post" style="display: none;"></form>
-
-    <div class="container login-container">
-        <div class="row justify-content-center g-4">
-
-            <div class="col-md-6 col-lg-5">
-                <div class="card shadow-sm login-card">
-                    <div class="card-body p-4 p-md-5">
-                        <h1 class="h3 card-title text-center mb-4">Login Locale</h1>
-                        <form id="loginForm">
-                            <div id="loginError" class="alert alert-danger d-none" role="alert"></div>
-                            <div class="mb-3">
-                                <label for="email" class="form-label">Indirizzo Email</label>
-                                <input type="email" class="form-control" id="email" name="email" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="password" class="form-label">Password</label>
-                                <input type="password" class="form-control" id="password" name="password" required>
-                            </div>
-                            <div class="mb-3 form-check">
-                                <input type="checkbox" class="form-check-input" id="rememberMe" name="rememberMe"
-                                    value="true">
-                                <label class="form-check-label" for="rememberMe">Ricordami</label>
-                            </div>
-                            <div class="d-grid">
-                                <button type="submit" class="btn btn-success btn-block">Accedi</button>
-                            </div>
-                            <p class="mt-3 text-center text-muted">
-                                Non hai un account? <a href="/register.html">Registrati</a>
-                            </p>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-6 col-lg-5">
-                <div class="card shadow-sm login-card">
-                    <div class="card-body p-4 p-md-5 text-center">
-                        <h1 class="h3 card-title mb-4">Login con Google</h1>
-                        <p class="text-muted">Usa il tuo account Google per accedere rapidamente.</p>
-                        <a href="/login-google" class="btn btn-primary btn-lg mt-3">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor"
-                                class="bi bi-google me-2" viewBox="0 0 16 16">
-                                <path
-                                    d="M15.545 6.558a9.4 9.4 0 0 1 .139 1.626c0 2.434-.87 4.492-2.384 5.885h.002C11.978 15.292 10.158 16 8 16A8 8 0 1 1 8 0a7.7 7.7 0 0 1 5.352 2.082l-2.284 2.284A4.35 4.35 0 0 0 8 3.166c-2.087 0-3.86 1.408-4.492 3.304a4.8 4.8 0 0 0 0 3.063h.003c.635 1.896 2.405 3.301 4.492 3.301 1.078 0 2.004-.276 2.722-.764h-.003a3.7 3.7 0 0 0 1.599-2.431H8v-3.08z" />
-                            </svg>
-                            Accedi con Google
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-        </div>
+    <div id="navbar-container">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+            <div class="container-fluid"><span class="navbar-brand">Caricamento...</span></div>
+        </nav>
     </div>
+
+    <main class="main-content">
+        <div class="container login-container">
+            <div class="row justify-content-center g-4">
+
+                <div class="col-md-6 col-lg-5">
+                    <div class="card shadow-sm login-card">
+                        <div class="card-body p-4 p-md-5">
+                            <h1 class="h3 card-title text-center mb-4">Login Locale</h1>
+                            <form id="loginForm">
+                                <div id="loginError" class="alert alert-danger d-none" role="alert"></div>
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Indirizzo Email</label>
+                                    <input type="email" class="form-control" id="email" name="email" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="password" class="form-label">Password</label>
+                                    <input type="password" class="form-control" id="password" name="password" required>
+                                </div>
+                                <div class="mb-3 form-check">
+                                    <input type="checkbox" class="form-check-input" id="rememberMe" name="rememberMe"
+                                        value="true">
+                                    <label class="form-check-label" for="rememberMe">Ricordami</label>
+                                </div>
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-success btn-block">Accedi</button>
+                                </div>
+                                <p class="mt-3 text-center text-muted">
+                                    Non hai un account? <a href="/register.html">Registrati</a>
+                                </p>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-5">
+                    <div class="card shadow-sm login-card">
+                        <div class="card-body p-4 p-md-5 text-center">
+                            <h1 class="h3 card-title mb-4">Login con Google</h1>
+                            <p class="text-muted">Usa il tuo account Google per accedere rapidamente.</p>
+                            <a href="/login-google" class="btn btn-primary btn-lg mt-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor"
+                                    class="bi bi-google me-2" viewBox="0 0 16 16">
+                                    <path
+                                        d="M15.545 6.558a9.4 9.4 0 0 1 .139 1.626c0 2.434-.87 4.492-2.384 5.885h.002C11.978 15.292 10.158 16 8 16A8 8 0 1 1 8 0a7.7 7.7 0 0 1 5.352 2.082l-2.284 2.284A4.35 4.35 0 0 0 8 3.166c-2.087 0-3.86 1.408-4.492 3.304a4.8 4.8 0 0 0 0 3.063h.003c.635 1.896 2.405 3.301 4.492 3.301 1.078 0 2.004-.276 2.722-.764h-.003a3.7 3.7 0 0 0 1.599-2.431H8v-3.08z" />
+                                </svg>
+                                Accedi con Google
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-container"></div>
+
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
         crossorigin="anonymous"></script>
-
-    <script>
-        // Riferimenti Navbar
-        const navLogin = document.getElementById('nav-login');
-        const navRegister = document.getElementById('nav-register');
-        const navProfile = document.getElementById('nav-profile');
-        const navLogout = document.getElementById('nav-logout');
-        const navUsernameSpan = document.getElementById('nav-username');
-        const navAdminDashboard = document.getElementById('nav-admin-dashboard');
-        const navStudenteClassi = document.getElementById('nav-studente-classi');
-        const navDocenteGestione = document.getElementById('nav-docente-gestione');
-
-        // Script per gestire la visibilità della navbar (identico a index.html)
-        document.addEventListener('DOMContentLoaded', function () {
-            fetch('/api/account/my-roles')
-                .then(response => {
-                    if (response.ok) return response.json();
-                    else throw new Error('User not authenticated');
-                })
-                .then(data => { // Utente Loggato
-                    navProfile.classList.remove('d-none');
-                    navLogout.classList.remove('d-none');
-                    if (navUsernameSpan && data.username) navUsernameSpan.textContent = data.username;
-                    if (data.isAdmin) navAdminDashboard.classList.remove('d-none');
-                    if (data.isDocente) navDocenteGestione.classList.remove('d-none');
-                    if (data.isStudente) navStudenteClassi.classList.remove('d-none');
-                })
-                .catch(error => { // Utente non Loggato
-                    console.warn('User not logged in or API error:', error.message);
-                    navLogin.classList.remove('d-none');
-                    navRegister.classList.remove('d-none');
-                });
-        });
-        function postLogout() { document.getElementById('logoutForm').submit(); }
-    </script>
-
+    <script src="/js/template-loader.js"></script>
+    <script src="/js/navbar.js"></script>
     <script>
         const loginForm = document.getElementById('loginForm');
         const loginErrorDiv = document.getElementById('loginError');
 
-        if (loginForm) { // Aggiunto controllo esistenza form
+        // --- Funzione per controllare stato e aggiornare navbar ---
+        document.addEventListener('DOMContentLoaded', async function () { // Reso ASYNC
+            console.log("Login page: Initializing templates...");
+            try {
+                // --- ATTENDI IL CARICAMENTO DEI TEMPLATE ---
+                await TemplateLoader.initializeCommonTemplates();
+                console.log("Login page: Templates loaded. Adding short delay...");
+
+                // --- AGGIUNTO DELAY per permettere al DOM di aggiornarsi ---
+                await new Promise(resolve => setTimeout(resolve, 0));
+                console.log("Login page: Delay finished. Checking auth status...");
+                // --- FINE DELAY ---
+
+                // --- ORA ESEGUI LA FETCH PER LO STATO UTENTE ---
+                let userData = null; // Assume not logged in initially
+                try {
+                    const response = await fetch('/api/account/my-roles');
+                    console.log("Login page: fetch /my-roles status:", response.status);
+                    if (response.ok) {
+                        userData = await response.json(); // Aspetta il parsing JSON
+                        console.log("Login page: User data received:", userData);
+                    } else {
+                        console.warn("Login page: /my-roles request failed or user not authenticated.");
+                    }
+                } catch (fetchError) {
+                    console.error("Login page: Error fetching user status:", fetchError);
+                    // Keep userData as null
+                }
+
+                // --- ORA AGGIORNA NAVBAR ---
+                console.log("Login page: Calling updateNavbar with data:", userData);
+                if (typeof updateNavbar === 'function') {
+                    updateNavbar(userData); // Chiama la funzione da navbar.js
+                    console.log("Login page: updateNavbar called successfully.");
+                } else {
+                    console.error("Login page: updateNavbar function is not defined!");
+                }
+
+                // Se l'utente è GIA' loggato su questa pagina, reindirizza
+                if (userData) {
+                    console.log("User already logged in, redirecting to loggedIn.html");
+                    window.location.href = '/loggedIn.html'; // Reindirizza subito
+                }
+
+            } catch (error) {
+                console.error('Error during page initialization:', error);
+                // Prova comunque ad aggiornare la navbar assumendo utente non loggato
+                console.log("Login page: Updating navbar with null due to initialization error.");
+                if (typeof updateNavbar === 'function') {
+                    updateNavbar(null); // Passa null esplicitamente
+                } else {
+                    console.error("Login page: updateNavbar function is not defined on error path!");
+                }
+            }
+        });
+
+        // --- Gestione Form Login Locale ---
+        if (loginForm) {
             loginForm.addEventListener('submit', function (event) {
                 event.preventDefault();
-                loginErrorDiv.classList.add('d-none');
-                loginErrorDiv.textContent = '';
-
+                loginErrorDiv.classList.add('d-none'); loginErrorDiv.textContent = '';
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
                 const rememberMe = document.getElementById('rememberMe').checked;
                 const loginData = { email, password, rememberMe };
 
+                // Invia richiesta di login
                 fetch('/api/account/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
@@ -207,25 +178,35 @@
                     redirect: 'follow'
                 })
                     .then(response => {
-                        if (response.ok) {
-                            console.log('Login successful, redirecting client-side to /loggedIn.html');
-                            window.location.href = '/loggedIn.html'; // Redirect su successo
-                        } else {
-                            return response.json().then(errorData => {
-                                const message = errorData.detail || errorData.title || 'Credenziali non valide o errore sconosciuto.';
-                                throw new Error(message);
-                            }).catch(() => {
-                                throw new Error(`Errore ${response.status}: ${response.statusText || 'Impossibile completare il login.'}`);
-                            });
-                        }
+                        if (response.ok) { return fetch('/api/account/my-roles'); } // Se OK, ottieni dati utente
+                        else { throw response; } // Altrimenti lancia per il catch
                     })
-                    .catch(error => {
-                        console.error('Errore durante il login:', error);
-                        loginErrorDiv.textContent = error.message || 'Si è verificato un errore durante il login.';
+                    .then(rolesResponse => { // Eseguito solo se login OK
+                        if (rolesResponse && rolesResponse.ok) { return rolesResponse.json(); }
+                        else { throw new Error("Could not fetch user data after login."); }
+                    })
+                    .then(userData => { // Eseguito solo se login OK e dati ottenuti
+                        // Salva in sessionStorage (se usi l'ottimizzazione)
+                        sessionStorage.setItem('isLoggedIn', 'true');
+                        if (userData && userData.username) { sessionStorage.setItem('loggedInUser', userData.username); }
+                        else { sessionStorage.removeItem('loggedInUser'); }
+                        window.location.href = '/loggedIn.html'; // Redirect finale
+                    })
+                    .catch(async errorResponseOrFetchError => { // Gestione errori unificata
+                        let errorMessage = 'Si è verificato un errore durante il login.';
+                        if (errorResponseOrFetchError instanceof Response) { // Errore HTTP da /login
+                            try {
+                                const errorData = await errorResponseOrFetchError.json();
+                                errorMessage = errorData.detail || errorData.title || `Errore ${errorResponseOrFetchError.status}`;
+                            } catch { errorMessage = `Errore ${errorResponseOrFetchError.status}: ${errorResponseOrFetchError.statusText}`; }
+                        } else { errorMessage = errorResponseOrFetchError.message; } // Errore fetch o recupero dati
+                        console.error('Errore durante il processo di login:', errorMessage);
+                        loginErrorDiv.textContent = errorMessage;
                         loginErrorDiv.classList.remove('d-none');
                     });
             });
         }
+        // La funzione postLogout() è definita in navbar.js ed è usata dalla navbar caricata
     </script>
 
 </body>

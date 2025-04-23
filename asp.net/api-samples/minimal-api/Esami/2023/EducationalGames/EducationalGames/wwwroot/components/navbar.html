@@ -1,0 +1,44 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow-sm">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">
+            <i class="bi bi-joystick me-2"></i> Educational Games
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+            aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item"> <a class="nav-link" href="/">Home</a> </li>
+                <li id="nav-admin-dashboard" class="nav-item d-none"> <a class="nav-link"
+                        href="/dashboard.html">Dashboard Admin</a></li>
+                <li id="nav-studente-classi" class="nav-item d-none"> <a class="nav-link" href="/mie-classi.html">Le Mie
+                        Classi</a></li>
+                <li id="nav-docente-gestione" class="nav-item dropdown d-none">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                        aria-expanded="false">Gestione Docente</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/gestione-classi.html">Gestione Classi</a></li>
+                        <li><a class="dropdown-item" href="/gestione-giochi.html">Gestione Giochi</a></li>
+                    </ul>
+                </li>
+            </ul>
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                <li id="nav-login" class="nav-item d-none"> <a class="btn btn-outline-light me-2"
+                        href="/login-page.html">Login</a> </li>
+                <li id="nav-register" class="nav-item d-none"> <a class="btn btn-warning"
+                        href="/register.html">Registrati</a> </li>
+                <li id="nav-profile" class="nav-item d-none">
+                    <a class="nav-link" href="/loggedIn.html"><i class="bi bi-person-circle me-1"></i> Profilo (<span
+                            id="nav-username"></span>)</a>
+                </li>
+                <li id="nav-logout" class="nav-item d-none">
+                    <a class="btn btn-outline-danger" href="#" onclick="event.preventDefault(); postLogout();"><i
+                            class="bi bi-box-arrow-right me-1"></i> Logout</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<form id="logoutForm" action="/api/account/logout" method="post" style="display: none;"></form>

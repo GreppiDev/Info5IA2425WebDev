@@ -2,18 +2,18 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
-using Microsoft.AspNetCore.Authentication.OAuth; 
-using Microsoft.AspNetCore.DataProtection; 
-using Microsoft.AspNetCore.HttpOverrides; 
-using Microsoft.AspNetCore.Identity; 
+using Microsoft.AspNetCore.Authentication.OAuth;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Primitives; 
+using Microsoft.Extensions.Primitives;
 using EducationalGames.Data;
 using EducationalGames.Endpoints;
 using EducationalGames.Middlewares;
 using EducationalGames.Models;
-using Microsoft.AspNetCore.Mvc; 
-using Microsoft.AspNetCore.Mvc.Routing; 
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Mvc.Abstractions;
 using EducationalGames.Auth;
 using System.Net;
@@ -28,12 +28,12 @@ builder.Services.AddDataProtection()
     .SetDefaultKeyLifetime(TimeSpan.FromDays(30));
 
 // *** Configurazione CORS (da appsettings) ***
-var corsSettings = builder.Configuration.GetSection("CorsSettings"); 
+var corsSettings = builder.Configuration.GetSection("CorsSettings");
 var tunnelOrProxyOrigin = corsSettings["TunnelOrProxyOrigin"]; // Legge l'URL del tunnel/proxy
 var allowedLocalOrigins = corsSettings.GetSection("AllowedLocalOrigins").Get<string[]>(); // Legge l'array di URL locali
 
-var AllowTunnelPolicy = "_allowTunnelPolicy"; 
-var AllowLocalhostPolicy = "_allowLocalhostPolicy"; 
+var AllowTunnelPolicy = "_allowTunnelPolicy";
+var AllowLocalhostPolicy = "_allowLocalhostPolicy";
 
 builder.Services.AddCors(options =>
 {
@@ -117,7 +117,7 @@ builder.Services.AddDbContext<AppDbContext>(
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme; 
+    options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
     options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 })
 .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
@@ -143,7 +143,11 @@ builder.Services.AddAuthentication(options =>
                 logger.LogWarning(">>> API path detected. Setting status code 401 for path: {Path}", context.Request.Path);
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
             }
-            else { logger.LogWarning(">>> Non-API path detected. Redirecting to: {RedirectUri}", context.RedirectUri); context.Response.Redirect(context.RedirectUri); }
+            else
+            {
+                logger.LogWarning(">>> Non-API path detected. Redirecting to: {RedirectUri}", context.RedirectUri);
+                context.Response.Redirect(context.RedirectUri);
+            }
             return Task.CompletedTask;
         },
         OnRedirectToAccessDenied = context =>
@@ -155,7 +159,11 @@ builder.Services.AddAuthentication(options =>
                 logger.LogWarning(">>> API path detected. Setting status code 403 for path: {Path}", context.Request.Path);
                 context.Response.StatusCode = StatusCodes.Status403Forbidden;
             }
-            else { logger.LogWarning(">>> Non-API path detected. Redirecting to: {RedirectUri}", context.RedirectUri); context.Response.Redirect(context.RedirectUri); }
+            else
+            {
+                logger.LogWarning(">>> Non-API path detected. Redirecting to: {RedirectUri}", context.RedirectUri);
+                context.Response.Redirect(context.RedirectUri);
+            }
             return Task.CompletedTask;
         }
     };
@@ -169,7 +177,6 @@ builder.Services.AddAuthentication(options =>
     options.Scope.Add("email");
     options.SaveTokens = true; // Salva i token per eventuale uso futuro
 
-    
     options.Events = new OAuthEvents
     {
         //Logica Callback in seguito alla verifica delle credenziali di Google spostata nell'evento OnTicketReceived
@@ -179,7 +186,7 @@ builder.Services.AddAuthentication(options =>
         //o durante l'elaborazione della sua risposta (ad esempio, se Google restituisce un errore, o se si verificano problemi di rete,...
         OnRemoteFailure = GoogleAuthEvents.HandleRemoteFailure,
         //OnAccessDenied: Scatta specificamente se l'utente, sulla pagina di consenso di Google, nega esplicitamente l'accesso alla tua applicazione.
-        OnAccessDenied = GoogleAuthEvents.HandleAccessDenied   
+        OnAccessDenied = GoogleAuthEvents.HandleAccessDenied
     };
 });
 
@@ -198,7 +205,7 @@ builder.Services.AddScoped<PasswordHasher<Utente>>();
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;
-    
+
     options.KnownNetworks.Clear();// NON USARE .Clear() in produzione!
     options.KnownProxies.Clear();// NON USARE .Clear() in produzione!
     // Aggiungi qui eventuali reti/proxy noti se necessario
@@ -294,69 +301,9 @@ app.MapGroup("/api/account")
    .WithTags("Account")
    .MapAccountEndpoints();
 
-
-// Endpoint di sfida a Google
-app.MapGet("/login-google", async (HttpContext httpContext, [FromQuery] string? returnUrl) =>
-{
-    // Logica per validare returnUrl e costruire target...
-    var actionContext = new ActionContext(httpContext, httpContext.GetRouteData(), new ActionDescriptor());
-    var urlHelper = new UrlHelper(actionContext);
-    var target = "/";
-    if (!string.IsNullOrEmpty(returnUrl) && urlHelper.IsLocalUrl(returnUrl)) { target = returnUrl; }
-
-    // Proprietà passate alla sfida. 
-    var props = new AuthenticationProperties
-    {
-        Items = { ["returnUrl"] = target } // Passiamo solo la destinazione finale
-    };
-
-    // Esegui la sfida esplicita
-    await httpContext.ChallengeAsync(GoogleDefaults.AuthenticationScheme, props);
-
-}).AllowAnonymous();
-
-
-// Endpoint per gestire i redirect a pagine HTML specifiche
-// Questi endpoint vengono chiamati dal middleware dei cookie quando rileva
-// una richiesta non API che richiede login o non ha i permessi.
-app.MapGet("/login-required", (HttpContext context) =>
-{
-    // Legge il parametro ReturnUrl aggiunto automaticamente dal middleware
-    context.Request.Query.TryGetValue("ReturnUrl", out StringValues returnUrlSv);
-    var returnUrl = returnUrlSv.FirstOrDefault();
-
-    // Costruisce l'URL per la pagina di login HTML
-    var redirectUrl = "/login-page.html";
-    if (!string.IsNullOrEmpty(returnUrl))
-    {
-        // Aggiunge il ReturnUrl alla pagina di login, così può reindirizzare dopo il login
-        redirectUrl += $"?ReturnUrl={Uri.EscapeDataString(returnUrl)}";
-    }
-    // Esegue il redirect alla pagina di login HTML
-    return Results.Redirect(redirectUrl);
-
-}).AllowAnonymous();
-
-app.MapGet("/access-denied", (HttpContext context) =>
-{
-    // Legge il parametro ReturnUrl aggiunto automaticamente dal middleware
-    context.Request.Query.TryGetValue("ReturnUrl", out StringValues returnUrlSv);
-    var returnUrl = returnUrlSv.FirstOrDefault();
-
-    // Costruisce l'URL per la pagina di accesso negato HTML
-    var redirectUrl = "/access-denied.html";
-    if (!string.IsNullOrEmpty(returnUrl))
-    {
-        // Aggiunge il ReturnUrl alla pagina di accesso negato (utile per logging o messaggi)
-        redirectUrl += $"?ReturnUrl={Uri.EscapeDataString(returnUrl)}";
-    }
-    // Esegue il redirect alla pagina di accesso negato HTML
-    return Results.Redirect(redirectUrl);
-
-}).AllowAnonymous();
-
-// Endpoint di fallback per errori generici
-app.MapGet("/error", () => Results.Problem("Si è verificato un errore interno.")).AllowAnonymous();
-
+//Map pages endpoints
+app.MapGroup("")
+    .WithTags("Main")
+    .MapPageEndpoints();
 
 app.Run();

@@ -1,36 +1,23 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="it">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Pagina Non Trovata - Educational Games</title>
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
     <style>
-        body {
-            padding-top: 70px;
-            /* Aggiunto padding per navbar fissa + margine */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            background-color: #f8f9fa;
-            /* Grigio chiaro Bootstrap */
-            padding-bottom: 2rem;
-        }
-
-        .navbar {
-            /* Stile Navbar */
-        }
-
+        /* Stili specifici per questa pagina */
         .card {
             max-width: 500px;
             /* Larghezza massima per la card */
             width: 100%;
-            margin: auto;
-            /* Centra la card */
+            margin: 1rem auto;
+            /* Margine sopra/sotto e auto laterale */
         }
 
         .icon-not-found {
@@ -50,79 +37,96 @@
 
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow-sm">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="/">
-                <i class="bi bi-joystick me-2"></i> Educational Games
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
-                aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarContent">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item"> <a class="nav-link" href="/">Home</a> </li>
-                    <li id="nav-admin-dashboard" class="nav-item d-none"> <a class="nav-link"
-                            href="/dashboard.html">Dashboard Admin</a></li>
-                    <li id="nav-studente-classi" class="nav-item d-none"> <a class="nav-link" href="/mie-classi.html">Le
-                            Mie Classi</a></li>
-                    <li id="nav-docente-gestione" class="nav-item dropdown d-none"> <a class="nav-link dropdown-toggle"
-                            href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Gestione Docente</a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="/gestione-classi.html">Gestione Classi</a></li>
-                            <li><a class="dropdown-item" href="/gestione-giochi.html">Gestione Giochi</a></li>
-                        </ul>
-                    </li>
-                </ul>
-                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                    <li id="nav-login" class="nav-item d-none"> <a class="btn btn-outline-light me-2"
-                            href="/login-page.html">Login</a> </li>
-                    <li id="nav-register" class="nav-item d-none"> <a class="btn btn-warning"
-                            href="/register.html">Registrati</a> </li>
-                    <li id="nav-profile" class="nav-item d-none">
-                        <a class="nav-link" href="/loggedIn.html"><i class="bi bi-person-circle me-1"></i> Profilo
-                            (<span id="nav-username"></span>)</a>
-                    </li>
-                    <li id="nav-logout" class="nav-item d-none">
-                        <a class="btn btn-outline-danger" href="/api/account/logout"
-                            onclick="event.preventDefault(); postLogout();"><i class="bi bi-box-arrow-right me-1"></i>
-                            Logout</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <form id="logoutForm" action="/api/account/logout" method="post" style="display: none;"></form>
-
-    <div class="container">
-        <div class="card shadow-sm text-center">
-            <div class="card-body p-5">
-                <svg class="icon-not-found" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                    stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75 8.25 8.25" />
-                </svg>
-
-                <h1 class="h2 card-title fw-bold mb-3">Oops! Pagina Non Trovata</h1>
-                <p class="card-text text-muted mb-4">
-                    La risorsa che stai cercando non esiste o è stata spostata.
-                </p>
-                <p class="card-text text-muted mb-4">
-                    Controlla l'indirizzo URL o torna alla pagina principale.
-                </p>
-                <a href="/" class="btn btn-primary fw-semibold">
-                    Torna alla Home
-                </a>
-            </div>
-        </div>
+    <div id="navbar-container">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+            <div class="container-fluid"><span class="navbar-brand">Caricamento...</span></div>
+        </nav>
     </div>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="card shadow-sm text-center">
+                <div class="card-body p-5">
+                    <svg class="icon-not-found" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                        stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75 8.25 8.25" />
+                    </svg>
+
+                    <h1 class="h2 card-title fw-bold mb-3">Oops! Pagina Non Trovata</h1>
+                    <p class="card-text text-muted mb-4">
+                        La risorsa che stai cercando non esiste o è stata spostata.
+                    </p>
+                    <p class="card-text text-muted mb-4">
+                        Controlla l'indirizzo URL o torna alla pagina principale.
+                    </p>
+                    <a href="/" class="btn btn-primary fw-semibold">
+                        Torna alla Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-container"></div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
         crossorigin="anonymous"></script>
+    <script src="/js/template-loader.js"></script>
+    <script src="/js/navbar.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function () { // Reso ASYNC
+            console.log("Not Found page: Initializing templates...");
+            try {
+                // --- ATTENDI IL CARICAMENTO DEI TEMPLATE ---
+                await TemplateLoader.initializeCommonTemplates();
+                console.log("Not Found page: Templates loaded. Adding short delay...");
 
-    <script src="/js/navbar.js" defer></script>
+                // --- AGGIUNTO DELAY per permettere al DOM di aggiornarsi ---
+                await new Promise(resolve => setTimeout(resolve, 0));
+                console.log("Not Found page: Delay finished. Checking auth status...");
+                // --- FINE DELAY ---
+
+                // --- ORA ESEGUI LA FETCH PER LO STATO UTENTE ---
+                let userData = null; // Assume not logged in initially
+                try {
+                    const response = await fetch('/api/account/my-roles');
+                    console.log("Not Found page: fetch /my-roles status:", response.status);
+                    if (response.ok) {
+                        userData = await response.json();
+                        console.log("Not Found page: User data received:", userData);
+                    } else {
+                        console.warn("Not Found page: /my-roles request failed or user not authenticated.");
+                    }
+                } catch (fetchError) {
+                    console.error("Not Found page: Error fetching user status:", fetchError);
+                    // Keep userData as null
+                }
+
+                // --- ORA AGGIORNA NAVBAR ---
+                console.log("Not Found page: Calling updateNavbar with data:", userData);
+                if (typeof updateNavbar === 'function') {
+                    updateNavbar(userData); // Chiama la funzione da navbar.js
+                    console.log("Not Found page: updateNavbar called successfully.");
+                } else {
+                    console.error("Not Found page: updateNavbar function is not defined!");
+                }
+
+            } catch (error) {
+                console.error('Error during page initialization:', error);
+                // Prova comunque ad aggiornare la navbar assumendo utente non loggato
+                console.log("Not Found page: Updating navbar with null due to initialization error.");
+                if (typeof updateNavbar === 'function') {
+                    updateNavbar(null); // Passa null esplicitamente
+                } else {
+                    console.error("Not Found page: updateNavbar function is not defined on error path!");
+                }
+            }
+        });
+        // La funzione postLogout() è definita in navbar.js ed è usata dalla navbar caricata
+    </script>
 
 </body>
 

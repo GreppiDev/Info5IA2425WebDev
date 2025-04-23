@@ -1,28 +1,20 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="it">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Educational Games</title>
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
     <style>
-        body {
-            padding-top: 56px;
-            /* Altezza navbar */
-            background-color: #f8f9fa;
-        }
-
-        .navbar {
-            /* Stile Navbar */
-        }
-
-        /* Contenuto principale: flex per centrare verticalmente se necessario */
+        /* Stili specifici se necessari */
         .main-content {
-            min-height: calc(100vh - 56px);
-            /* Altezza minima schermo meno navbar */
+            min-height: calc(100vh - 56px - 58px);
+            /* Altezza minima schermo meno navbar meno altezza footer approx */
             display: flex;
             align-items: center;
             /* Allinea verticalmente al centro */
@@ -42,56 +34,18 @@
             /* Centra la card se la colonna è più larga */
             margin-right: auto;
         }
-
-        /* Aggiungiamo un po' di padding sopra/sotto il contenuto principale */
-        .main-content .container {
-            padding-top: 2rem;
-            padding-bottom: 2rem;
-        }
     </style>
 </head>
 
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow-sm">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="/"><i class="bi bi-joystick me-2"></i> Educational Games</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
-                <span class="navbar-toggler-icon"></span> </button>
-            <div class="collapse navbar-collapse" id="navbarContent">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item"> <a class="nav-link active" aria-current="page" href="/">Home</a> </li>
-                    <li id="nav-admin-dashboard" class="nav-item d-none"> <a class="nav-link"
-                            href="/dashboard.html">Dashboard Admin</a></li>
-                    <li id="nav-studente-classi" class="nav-item d-none"> <a class="nav-link" href="/mie-classi.html">Le
-                            Mie Classi</a></li>
-                    <li id="nav-docente-gestione" class="nav-item dropdown d-none"> <a class="nav-link dropdown-toggle"
-                            href="#" role="button" data-bs-toggle="dropdown">Gestione Docente</a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="/gestione-classi.html">Gestione Classi</a></li>
-                            <li><a class="dropdown-item" href="/gestione-giochi.html">Gestione Giochi</a></li>
-                        </ul>
-                    </li>
-                </ul>
-                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                    <li id="nav-login" class="nav-item d-none"> <a class="btn btn-outline-light me-2"
-                            href="/login-page.html">Login</a> </li>
-                    <li id="nav-register" class="nav-item d-none"> <a class="btn btn-warning"
-                            href="/register.html">Registrati</a> </li>
-                    <li id="nav-profile" class="nav-item d-none"> <a class="nav-link" href="/loggedIn.html"><i
-                                class="bi bi-person-circle me-1"></i> Profilo (<span id="nav-username"></span>)</a>
-                    </li>
-                    <li id="nav-logout" class="nav-item d-none"> <a class="btn btn-outline-danger"
-                            href="/api/account/logout" onclick="event.preventDefault(); postLogout();"><i
-                                class="bi bi-box-arrow-right me-1"></i> Logout</a> </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    <div id="navbar-container">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+            <div class="container-fluid"><span class="navbar-brand">Caricamento...</span></div>
+        </nav>
+    </div>
 
-    <form id="logoutForm" action="/api/account/logout" method="post" style="display: none;"></form>
-
-    <div class="main-content">
+    <main class="main-content">
         <div class="container">
             <div id="logoutSection" class="d-none mt-5">
                 <div class="row justify-content-center">
@@ -103,8 +57,6 @@
                                 </p>
                                 <p class="text-muted mb-4">Puoi vedere il tuo profilo o uscire.</p>
                                 <a href="/loggedIn.html" class="btn btn-info me-2">Vedi Profilo</a>
-                                <a href="/api/account/logout" onclick="event.preventDefault(); postLogout();"
-                                    class="btn btn-danger">Logout</a>
                             </div>
                         </div>
                     </div>
@@ -116,36 +68,85 @@
                 <p class="text-info">Effettua il login o registrati per iniziare.</p>
             </div>
         </div>
-    </div>
+    </main>
+
+    <div id="footer-container"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
         crossorigin="anonymous"></script>
-
-    <script src="/js/navbar.js" defer></script>
-
+    <script src="/js/template-loader.js"></script>
+    <script src="/js/navbar.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', async function () { // Reso ASYNC
             // Riferimenti Contenuto Pagina
             const logoutSection = document.getElementById('logoutSection');
             const loggedInUsernameSpan = document.getElementById('loggedInUsername');
             const welcomeMessageDiv = document.getElementById('welcomeMessage');
 
-            fetch('/api/account/my-roles')
-                .then(response => {
-                    if (response.ok) return response.json();
-                    else throw new Error('User not authenticated');
-                })
-                .then(data => { // --- UTENTE LOGGATO ---
-                    welcomeMessageDiv.classList.add('d-none');
-                    logoutSection.classList.remove('d-none'); // Mostra sezione logout
-                    if (loggedInUsernameSpan && data.username) loggedInUsernameSpan.textContent = data.username;
-                })
-                .catch(error => { // --- UTENTE NON LOGGATO ---
-                    welcomeMessageDiv.classList.remove('d-none'); // Mostra benvenuto
-                    logoutSection.classList.add('d-none');
-                });
+            console.log("Index page: Initializing templates...");
+            try {
+                // --- ATTENDI IL CARICAMENTO DEI TEMPLATE ---
+                await TemplateLoader.initializeCommonTemplates();
+                console.log("Index page: Templates loaded. Adding short delay...");
+
+                // --- AGGIUNTO DELAY per permettere al DOM di aggiornarsi ---
+                await new Promise(resolve => setTimeout(resolve, 0));
+                console.log("Index page: Delay finished. Checking auth status...");
+                // --- FINE DELAY ---
+
+
+                // --- ORA ESEGUI LA FETCH PER LO STATO UTENTE ---
+                let userData = null; // Assume not logged in initially
+                try {
+                    const response = await fetch('/api/account/my-roles');
+                    console.log("Index page: fetch /my-roles status:", response.status);
+                    if (response.ok) {
+                        userData = await response.json();
+                        console.log("Index page: User data received:", userData);
+                    } else {
+                        console.warn("Index page: /my-roles request failed or user not authenticated.");
+                    }
+                } catch (fetchError) {
+                    console.error("Index page: Error fetching user status:", fetchError);
+                    // Keep userData as null
+                }
+
+                // --- ORA AGGIORNA NAVBAR E CONTENUTO (elementi navbar esistono) ---
+                console.log("Index page: Calling updateNavbar with data:", userData);
+                if (typeof updateNavbar === 'function') {
+                    updateNavbar(userData); // Chiama la funzione da navbar.js
+                    console.log("Index page: updateNavbar called successfully.");
+                } else {
+                    console.error("Index page: updateNavbar function is not defined!");
+                }
+
+                // Aggiorna il contenuto specifico di QUESTA pagina
+                if (userData) { // Utente Loggato
+                    if (welcomeMessageDiv) welcomeMessageDiv.classList.add('d-none');
+                    if (logoutSection) logoutSection.classList.remove('d-none');
+                    if (loggedInUsernameSpan && userData.username) loggedInUsernameSpan.textContent = userData.username;
+                } else { // Utente Non Loggato
+                    if (welcomeMessageDiv) welcomeMessageDiv.classList.remove('d-none');
+                    if (logoutSection) logoutSection.classList.add('d-none');
+                }
+
+            } catch (error) {
+                // Errore nel caricamento template o nella fetch iniziale
+                console.error('Error during page initialization:', error);
+                // Prova comunque ad aggiornare la navbar assumendo utente non loggato
+                console.log("Index page: Updating navbar with null due to initialization error.");
+                if (typeof updateNavbar === 'function') {
+                    updateNavbar(null); // Passa null esplicitamente
+                } else {
+                    console.error("Index page: updateNavbar function is not defined on error path!");
+                }
+                // Mostra messaggio di benvenuto come fallback
+                if (welcomeMessageDiv) welcomeMessageDiv.classList.remove('d-none');
+                if (logoutSection) logoutSection.classList.add('d-none');
+            }
         });
+        // La funzione postLogout() è definita in navbar.js ed è usata dalla navbar caricata
     </script>
 
 </body>
