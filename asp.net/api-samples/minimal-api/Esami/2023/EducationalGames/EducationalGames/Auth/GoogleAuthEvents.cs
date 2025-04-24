@@ -79,6 +79,7 @@ public static class GoogleAuthEvents
                 Cognome = surname,
                 Email = email,
                 Ruolo = RuoloUtente.Studente, // Ruolo di default
+                EmailVerificata = true, // Imposta a true per Google
                 PasswordHash = hasher.HashPassword(null!, Guid.NewGuid().ToString()) // Hash fittizio
             };
             dbContext.Utenti.Add(newUser);
@@ -141,7 +142,7 @@ public static class GoogleAuthEvents
             // 2. Determina redirect finale
             string finalRedirectUri;
             var isSpecificLocalReturnUrl = !string.IsNullOrEmpty(callbackReturnUrl) && callbackReturnUrl.StartsWith('/') && callbackReturnUrl != "/";
-            if (isSpecificLocalReturnUrl) { finalRedirectUri = callbackReturnUrl!; } else { finalRedirectUri = "/loggedIn.html"; }
+            if (isSpecificLocalReturnUrl) { finalRedirectUri = callbackReturnUrl!; } else { finalRedirectUri = "/profile.html"; }
             logger.LogWarning(">>> [EVENT OnTicketReceived] Final redirect check: Target='{FinalRedirectUri}'", finalRedirectUri);
 
             // 3. Esegui Redirect ESPLICITAMENTE

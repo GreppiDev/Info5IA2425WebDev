@@ -17,15 +17,85 @@ using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Mvc.Abstractions;
 using EducationalGames.Auth;
 using System.Net;
+using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using EducationalGames.Services;
 var builder = WebApplication.CreateBuilder(args);
 
-// Configura DataProtection esplicitamente
-var keysFolder = Path.Combine(builder.Environment.ContentRootPath, "DataProtection-Keys");
-Directory.CreateDirectory(keysFolder);
-builder.Services.AddDataProtection()
-    .SetApplicationName("EducationalGames")
-    .PersistKeysToFileSystem(new DirectoryInfo(keysFolder))
-    .SetDefaultKeyLifetime(TimeSpan.FromDays(30));
+// Configurazione del sistema DataProtection per supportare più istanze
+var dataProtectionSection = builder.Configuration.GetSection("DataProtection");
+
+// Legge il percorso configurato o usa un default se mancante/vuoto
+string? configuredKeysFolder = dataProtectionSection["KeysFolder"];
+string defaultProductionPath = "/app/shared/keys"; // Default se non specificato
+
+// Determina il percorso effettivo per le chiavi in produzione
+string productionKeysPath = string.IsNullOrEmpty(configuredKeysFolder)
+    ? defaultProductionPath
+    : configuredKeysFolder;
+
+string keysPath = builder.Environment.IsDevelopment()
+    ? Path.Combine(builder.Environment.ContentRootPath, "DataProtection-Keys")
+    : productionKeysPath; // Usa il valore da appsettings (o il default se mancava)
+
+// Assicurarsi che la directory esista (particolarmente utile in sviluppo)
+if (!Directory.Exists(keysPath))
+{
+    try
+    {
+        Directory.CreateDirectory(keysPath);
+    }
+    catch (Exception ex)
+    {
+        // Logga un errore se non è possibile creare la directory,
+        // specialmente rilevante per il percorso di produzione.
+        // Potrebbe indicare un problema di permessi o configurazione.
+        var loggerFactoryTemp = LoggerFactory.Create(b => b.AddConsole().SetMinimumLevel(LogLevel.Error));
+        var loggerTemp = loggerFactoryTemp.CreateLogger("DataProtectionSetup");
+        loggerTemp.LogError(ex, "Impossibile creare la directory per le chiavi DataProtection: {KeysPath}", keysPath);
+        // Potrebbe essere utile sollevare l'eccezione o gestire l'errore in modo appropriato con un throw
+    }
+}
+
+var dataProtectionBuilder = builder.Services.AddDataProtection()
+    .SetApplicationName("EducationalGames") // Importante: stesso nome su tutte le istanze
+    .PersistKeysToFileSystem(new DirectoryInfo(keysPath)) // Usa il percorso determinato
+    .SetDefaultKeyLifetime(TimeSpan.FromDays(
+        dataProtectionSection.GetValue<int?>("KeyLifetime") ?? 30)); // Usa GetValue<int?> per sicurezza
+
+// Applica l'impostazione AutoGenerateKeys
+// GetValue<bool> restituisce false se la chiave non è trovata o non è un booleano valido.
+// Dato che hai true in appsettings, questo leggerà true.
+if (!dataProtectionSection.GetValue<bool>("AutoGenerateKeys"))
+{
+    dataProtectionBuilder.DisableAutomaticKeyGeneration();
+
+    // Crea un logger temporaneo per il logging durante la configurazione
+    using var loggerFactory = LoggerFactory.Create(logging =>
+    {
+        logging.AddConsole();
+        logging.SetMinimumLevel(LogLevel.Warning);
+    });
+    var logger = loggerFactory.CreateLogger("DataProtectionSetup");
+
+    logger.LogWarning("DataProtection:AutoGenerateKeys è impostato a false. La generazione automatica delle chiavi è disabilitata. " +
+                   "Assicurarsi che le chiavi di protezione dati siano gestite manualmente o distribuite.");
+}
+else
+{
+    // Log opzionale per confermare che la generazione automatica è attiva (se desiderato)
+    // using var loggerFactory = LoggerFactory.Create(logging => logging.AddConsole().SetMinimumLevel(LogLevel.Information));
+    // var logger = loggerFactory.CreateLogger("DataProtectionSetup");
+    // logger.LogInformation("DataProtection:AutoGenerateKeys è impostato a true. La generazione automatica delle chiavi è abilitata.");
+}
+
+// Configure Email Settings and Service
+builder.Services.Configure<EmailSettings>(
+    builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddTransient<IEmailService, EmailService>();
+// Aggiungi l'adattatore per IEmailSender (Identity UI) se necessario
+builder.Services.AddTransient<IEmailSender, EmailSenderAdapter>();
+
 
 // *** Configurazione CORS (da appsettings) ***
 var corsSettings = builder.Configuration.GetSection("CorsSettings");
@@ -113,7 +183,7 @@ builder.Services.AddDbContext<AppDbContext>(
         .EnableDetailedErrors(builder.Environment.IsDevelopment())      // Errori dettagliati solo in DEV
 );
 
-// --- Configurazione Autenticazione ---
+// --- Configurazione Autenticazione (Cookie + Google + Microsoft) ---
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -188,7 +258,39 @@ builder.Services.AddAuthentication(options =>
         //OnAccessDenied: Scatta specificamente se l'utente, sulla pagina di consenso di Google, nega esplicitamente l'accesso alla tua applicazione.
         OnAccessDenied = GoogleAuthEvents.HandleAccessDenied
     };
+})
+.AddMicrosoftAccount(MicrosoftAccountDefaults.AuthenticationScheme, options =>
+{
+    options.ClientId = builder.Configuration["Authentication:Microsoft:ClientId"] ?? throw new InvalidOperationException("Microsoft ClientId not configured.");
+    options.ClientSecret = builder.Configuration["Authentication:Microsoft:ClientSecret"] ?? throw new InvalidOperationException("Microsoft ClientSecret not configured.");
+    options.CallbackPath = "/signin-microsoft";
+
+    // --- Configura Endpoint Specifici del Tenant ---
+    // Leggi il Tenant ID dalla configurazione
+    var tenantId = builder.Configuration["Authentication:Microsoft:TenantId"];
+    if (string.IsNullOrEmpty(tenantId))
+    {
+        // È FONDAMENTALE per app single-tenant
+        throw new InvalidOperationException("Microsoft TenantId not configured for single-tenant application.");
+    }
+    else
+    {
+        // Costruisci gli URL degli endpoint specifici per il tenant
+        // e assegnali alle proprietà corrette delle opzioni.
+        options.AuthorizationEndpoint = $"https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/authorize";
+        options.TokenEndpoint = $"https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/token";
+    }
+    // --- FINE Configurazione Endpoint ---
+
+    // Usa i metodi statici dalla classe helper MicrosoftAuthEvents
+    options.Events = new OAuthEvents
+    {
+        OnTicketReceived = MicrosoftAuthEvents.HandleTicketReceived,
+        OnRemoteFailure = MicrosoftAuthEvents.HandleRemoteFailure,
+        OnAccessDenied = MicrosoftAuthEvents.HandleAccessDenied
+    };
 });
+// --- FINE Configurazione Autenticazione ---
 
 // --- Configurazione Autorizzazione con Policy ---
 builder.Services.AddAuthorizationBuilder()
@@ -218,6 +320,23 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     // ...
 });
 // --- FINE Configurazione Forwarded Headers Options ---
+
+// Validate required configuration on startup
+
+builder.Services.AddOptions<EmailSettings>()
+    .Bind(builder.Configuration.GetSection("EmailSettings"))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+builder.Services.AddOptions<AdminCredentialsOptions>()
+    .Bind(builder.Configuration.GetSection("DefaultAdminCredentials"))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+builder.Services.AddOptions<DataProtectionOptions>()
+    .Bind(builder.Configuration.GetSection("DataProtection"))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
@@ -298,8 +417,8 @@ app.UseStatusCodePagesWithRedirects("/not-found.html");
 
 // Map API endpoints
 app.MapGroup("/api/account")
-   .WithTags("Account")
-   .MapAccountEndpoints();
+   .MapAccountEndpoints(app.Services.GetRequiredService<ILoggerFactory>())
+   .WithTags("Account");
 
 //Map pages endpoints
 app.MapGroup("")

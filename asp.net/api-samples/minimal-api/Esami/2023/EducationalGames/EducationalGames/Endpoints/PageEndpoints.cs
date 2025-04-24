@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Routing;
@@ -23,14 +24,14 @@ public static class PageEndpoints
         //Non per forza bisogna usare questo approccio per impedire l'accesso a file riservati a utenti non autenticati
         //Si può anche non effettuare questo controllo e lasciare che la pagina sia accessibile a tutti
         //ma poi fare assicurare che ja JavaScript non sia possibile accedere a funzioni o dati riservati
-        group.MapGet("/loggedIn.html", (HttpContext context, IWebHostEnvironment env) =>
+        group.MapGet("/profile.html", (HttpContext context, IWebHostEnvironment env) =>
         {
             // RequireAuthorization ensures this endpoint is only accessible by authenticated users.
             // The authentication middleware (configured earlier) will handle redirecting
             // unauthenticated browser requests to the login page or returning 401/403 for API requests.
 
             // Construct the physical path to the file within wwwroot
-            var filePath = Path.Combine(env.WebRootPath, "loggedIn.html");
+            var filePath = Path.Combine(env.WebRootPath, "profile.html");
 
             // Check if the file exists
             if (!System.IO.File.Exists(filePath))
@@ -63,6 +64,22 @@ public static class PageEndpoints
             await httpContext.ChallengeAsync(GoogleDefaults.AuthenticationScheme, props);
 
         }).AllowAnonymous();
+
+
+        // Endpoint di sfida a Microsoft
+        group.MapGet("/login-microsoft", async (HttpContext httpContext, [FromQuery] string? returnUrl) =>
+        {
+            var target = "/";
+            // ... validazione returnUrl (identica a Google) ...
+            var actionContext = new ActionContext(httpContext, httpContext.GetRouteData(), new ActionDescriptor());
+            var urlHelper = new UrlHelper(actionContext);
+            if (!string.IsNullOrEmpty(returnUrl) && urlHelper.IsLocalUrl(returnUrl)) { target = returnUrl; }
+
+            var props = new AuthenticationProperties { Items = { [".redirect"] = target } };
+            // Sfida lo schema MicrosoftAccount
+            await httpContext.ChallengeAsync(MicrosoftAccountDefaults.AuthenticationScheme, props);
+        }).AllowAnonymous();
+
 
 
         // Endpoint per gestire i redirect a pagine HTML specifiche

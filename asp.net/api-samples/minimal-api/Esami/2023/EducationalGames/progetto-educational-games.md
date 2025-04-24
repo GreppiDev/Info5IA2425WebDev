@@ -478,48 +478,61 @@ Questo richiederebbe la scelta di tecnologie specifiche (es. ASP.NET Core + HTML
 ## Fase 6: Parte Significativa dell'Applicazione Web (Esempio)
 
 Per lo sviluppo di questo esempio verrà mostrato il codice necessario alla realizzazione di una **Applicazione Unificata (Minimal API serve sia API che Pagine)**. Realizziamo una struttura di progetto ASP.NET Core Minimal API che funge sia da backend API sia da server per le pagine HTML statiche, utilizzando l'autenticazione basata su cookie.
-**1. Struttura del Progetto (Cartelle e File Principali)**
+
+**1. Struttura del Progetto (cartelle e file principali):**
 
 ```text
 EducationalGames/
-|-- EducationalGames.csproj
-|-- appsettings.json
-|-- Program.cs           # Cuore dell'applicazione Minimal API
-|-- Properties
-|   |-- launchSettings.json
-|-- Data/
-|   |-- AppDbContext.cs    # Contesto Entity Framework Core
-|-- Endpoints
-|   |--
-|-- Migrations/          # Generate da EF Core
-|   |-- ...
-|-- Models/
-|   |-- Utente.cs
-|   |-- ClasseVirtuale.cs
-|   |-- ClasseGioco.cs
-|   |-- GiocoArgomento.cs
-|   |-- Videogioco.cs
-|   |-- ProgressoStudente.cs
-|   |-- Iscrizione.cs
-|   |-- Materia.cs         
-|   |-- Argomento.cs       
-|-- ModelsDTO/
-|   |-- LoginModel.cs      # Modello per il form di login
-|-- wwwroot/               # Contenuto statico servito al client
-|   |-- index.html         # Landing page
-|   |-- login-page.html
-|   |-- classifica-generale.html
-|   |-- crea-classe.html   # Esempio pagina protetta per Docente
-|   |-- access-denied.html
-|   |-- css/
-|   |   |-- bootstrap.min.css
-|   |   |-- style.css
-|   |-- js/
-|   |   |-- auth.js          # Funzioni comuni auth (logout, get status)
-|   |   |-- navbar.js        # Gestione dinamica navbar
-|   |   |-- login.js         # Logica per login.html
-|   |   |-- classifica-generale.js # Logica per la classifica
-|   |-- img/               # Eventuali immagini
-|   |-- partials/          # (Opzionale) Frammenti HTML riutilizzabili
-|       |-- navbar.html      # Struttura base navbar (caricata da JS)
+│
+├── Dependencies/                     # Dipendenze del progetto (NuGet, etc.)
+│
+├── Properties/
+│   └── launchSettings.json           # Impostazioni di avvio per IIS Express, Kestrel
+│
+├── Auth/                             # Classi relative all'autenticazione esterna
+│   ├── GoogleAuthEvents.cs           # Logica per eventi callback Google
+│   └── MicrosoftAuthEvents.cs        # Logica per eventi callback Microsoft
+│
+├── Data/                             # Classi relative all'accesso ai dati
+│   ├── AppDbContext.cs               # Contesto Entity Framework Core
+│   └── DatabaseInitializer.cs        # Logica per migrazioni e seeding DB
+│
+├── DataProtection-Keys/              # Cartella per le chiavi di Data Protection
+│
+├── Endpoints/                        # Definizioni degli endpoint Minimal API
+│   ├── AccountEndpoints.cs           # Endpoint relativi all'account (/api/account/*)
+│   └── PageEndpoints.cs              # Endpoint per altre pagine/API 
+│
+├── Middlewares/                      # Middleware personalizzati
+│   └── StatusCodeMiddleware.cs       # Middleware per gestione errori API
+│
+├── Migrations/                       # File generati da EF Core Migrations
+│
+├── Models/                           # Classi dei modelli del dominio/database
+│
+├── ModelsDTO/                        # Classi Data Transfer Object (se usate)
+│
+├── Utils/                            # Classi di utilità
+│   └── RoleUtils.cs                  # Funzioni helper per i ruoli
+│
+├── wwwroot/                          # Radice per i file statici serviti dal web server
+│   ├── assets/                       # Immagini, favicon, etc.
+│   ├── components/                   # Componenti HTML riutilizzabili
+│   │   ├── navbar.html
+│   │   └── footer.html
+│   ├── css/                          # Fogli di stile CSS
+│   │   └── styles.css
+│   ├── js/                           # Script JavaScript
+│   │   ├── navbar.js                 # Logica comune navbar e logout
+│   │   └── template-loader.js        # Script per caricare componenti HTML
+│   ├── index.html                    # Pagina principale/Home
+│   ├── profile.html                 # Pagina profilo utente loggato
+│   ├── login-failed.html             # Pagina errore login esterno
+│   ├── login-page.html               # Pagina dedicata al login
+│   ├── not-found.html                # Pagina errore 404
+│   └── register.html                 # Pagina dedicata alla registrazione
+│
+├── appsettings.json                  # File di configurazione principale
+├── EducationalGames.http             # File per testare API con estensione REST Client (VS Code)
+└── Program.cs                        # File principale di avvio e configurazione dell'applicazione Minimal API
 ```

@@ -42,6 +42,17 @@
         .or-separator:not(:empty)::after {
             margin-left: .25em;
         }
+
+        /* Stile per pulsante Microsoft */
+        .btn-microsoft {
+            background-color: #0067b8;
+            color: white;
+        }
+
+        .btn-microsoft:hover {
+            background-color: #005da6;
+            color: white;
+        }
     </style>
 </head>
 
@@ -109,7 +120,7 @@
                     <div class="or-separator">oppure</div>
 
                     <div class="text-center">
-                        <a href="/login-google" class="btn btn-primary">
+                        <a href="/login-google" class="btn btn-primary mb-2 d-block">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor"
                                 class="bi bi-google me-2" viewBox="0 0 16 16">
                                 <path
@@ -117,8 +128,11 @@
                             </svg>
                             Registrati o Accedi con Google
                         </a>
-                        <p class="form-text mt-2"> (Se accedi con Google per la prima volta, verrà creato un account
-                            Studente) </p>
+                        <a href="/login-microsoft" class="btn btn-microsoft mb-2 d-block">
+                            <i class="bi bi-microsoft me-2"></i> Registrati o Accedi con Microsoft
+                        </a>
+                        <p class="form-text mt-2"> (Se accedi con un provider esterno per la prima volta, verrà creato
+                            un account Studente) </p>
                     </div>
 
                 </div>
@@ -139,25 +153,58 @@
         const registerSuccessDiv = document.getElementById('registerSuccess');
 
         // --- Funzione per controllare stato e aggiornare navbar ---
-        document.addEventListener('DOMContentLoaded', async function () {
+        document.addEventListener('DOMContentLoaded', async function () { // Reso ASYNC
             console.log("Register page: Initializing templates...");
             try {
+                // --- ATTENDI IL CARICAMENTO DEI TEMPLATE ---
                 await TemplateLoader.initializeCommonTemplates();
                 console.log("Register page: Templates loaded. Adding short delay...");
+
+                // --- AGGIUNTO DELAY per permettere al DOM di aggiornarsi ---
                 await new Promise(resolve => setTimeout(resolve, 0));
                 console.log("Register page: Delay finished. Checking auth status...");
-                let userData = null;
+                // --- FINE DELAY ---
+
+                // --- ORA ESEGUI LA FETCH PER LO STATO UTENTE ---
+                let userData = null; // Assume not logged in initially
                 try {
                     const response = await fetch('/api/account/my-roles');
-                    if (response.ok) { userData = await response.json(); }
-                } catch (fetchError) { console.error("Register page: Error fetching user status:", fetchError); }
-                if (typeof updateNavbar === 'function') { updateNavbar(userData); }
-                else { console.error("Register page: updateNavbar function is not defined!"); }
-                if (userData) { console.log("User already logged in, redirecting from register page..."); /* window.location.href = '/loggedIn.html'; */ }
+                    console.log("Register page: fetch /my-roles status:", response.status);
+                    if (response.ok) {
+                        userData = await response.json();
+                        console.log("Register page: User data received:", userData);
+                    } else {
+                        console.warn("Register page: /my-roles request failed or user not authenticated.");
+                    }
+                } catch (fetchError) {
+                    console.error("Register page: Error fetching user status:", fetchError);
+                    // Keep userData as null
+                }
+
+                // --- ORA AGGIORNA NAVBAR ---
+                console.log("Register page: Calling updateNavbar with data:", userData);
+                if (typeof updateNavbar === 'function') {
+                    updateNavbar(userData); // Chiama la funzione da navbar.js
+                    console.log("Register page: updateNavbar called successfully.");
+                } else {
+                    console.error("Register page: updateNavbar function is not defined!");
+                }
+
+                // Se l'utente è già loggato, magari reindirizza via dalla pagina di registrazione?
+                if (userData) {
+                    console.log("User already logged in, redirecting from register page...");
+                    // window.location.href = '/profile.html'; // Opzionale
+                }
+
             } catch (error) {
                 console.error('Error during page initialization:', error);
-                if (typeof updateNavbar === 'function') { updateNavbar(null); }
-                else { console.error("Register page: updateNavbar function not defined on error path!"); }
+                // Prova comunque ad aggiornare la navbar assumendo utente non loggato
+                console.log("Register page: Updating navbar with null due to initialization error.");
+                if (typeof updateNavbar === 'function') {
+                    updateNavbar(null); // Passa null esplicitamente
+                } else {
+                    console.error("Register page: updateNavbar function is not defined on error path!");
+                }
             }
         });
 
@@ -165,21 +212,32 @@
         if (registerForm) {
             registerForm.addEventListener('submit', function (event) {
                 event.preventDefault();
-                registerErrorDiv.classList.add('d-none'); registerSuccessDiv.classList.add('d-none');
-                registerErrorDiv.textContent = ''; registerSuccessDiv.textContent = '';
+                registerErrorDiv.classList.add('d-none');
+                registerSuccessDiv.classList.add('d-none');
+                registerErrorDiv.textContent = '';
+                registerSuccessDiv.textContent = '';
 
-                // Recupera e valida dati form...
+                // Recupera e valida dati form
                 const nome = document.getElementById('registerNome').value;
                 const cognome = document.getElementById('registerCognome').value;
                 const email = document.getElementById('registerEmail').value;
                 const password = document.getElementById('registerPassword').value;
                 const confirmPassword = document.getElementById('registerConfirmPassword').value;
                 const ruolo = document.getElementById('registerRuolo').value;
-                let isValid = true; let errorMessage = '';
+                let isValid = true;
+                let errorMessage = '';
                 if (password !== confirmPassword) { errorMessage = 'Le password non coincidono.'; isValid = false; }
                 else if (password.length < 8) { errorMessage = 'La password deve essere lunga almeno 8 caratteri.'; isValid = false; }
                 else if (!ruolo) { errorMessage = 'Seleziona un ruolo (Studente o Docente).'; isValid = false; }
-                if (!isValid) { registerErrorDiv.textContent = errorMessage; registerErrorDiv.classList.remove('d-none'); return; }
+                // Aggiungi altre validazioni se necessario (es. campi non vuoti)
+                if (!nome || !cognome || !email) { errorMessage = 'Tutti i campi sono obbligatori.'; isValid = false; }
+
+
+                if (!isValid) {
+                    registerErrorDiv.textContent = errorMessage;
+                    registerErrorDiv.classList.remove('d-none');
+                    return; // Interrompe se validazione fallisce
+                }
 
                 const registerData = { nome, cognome, email, password, ruolo };
 
@@ -194,11 +252,12 @@
                         else { throw response; } // Lancia la risposta per gestirla nel catch
                     })
                     .then(data => {
-                        // SUCCESSO
-                        registerSuccessDiv.textContent = data.message || 'Registrazione completata! Ora puoi effettuare il login.';
+                        // SUCCESSO: Mostra messaggio (che ora invita a controllare email)
+                        registerSuccessDiv.textContent = data.message || 'Registrazione quasi completata! Controlla la tua email per il link di verifica.';
                         registerSuccessDiv.classList.remove('d-none');
-                        registerForm.reset();
-                        setTimeout(() => { window.location.href = '/login-page.html'; }, 2500);
+                        registerForm.reset(); // Pulisce i campi del form
+                        // NON reindirizzare subito, l'utente deve verificare l'email
+                        // setTimeout(() => { window.location.href = '/login-page.html'; }, 2500);
                     })
                     .catch(async errorResponseOrFetchError => { // Gestione Errori MIGLIORATA
                         let errorMessage = 'Si è verificato un errore durante la registrazione.'; // Default
@@ -221,7 +280,7 @@
                     });
             });
         }
-        // La funzione postLogout() è definita in navbar.js
+        // La funzione postLogout() è definita in navbar.js ed è usata dalla navbar caricata
     </script>
 
 </body>

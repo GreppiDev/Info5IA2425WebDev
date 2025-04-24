@@ -7,9 +7,13 @@
     - [Implementazione del seeding del database in produzione](#implementazione-del-seeding-del-database-in-produzione)
     - [Autenticazione basata su Google - Applicazione ASP.NET Core Minimal API](#autenticazione-basata-su-google---applicazione-aspnet-core-minimal-api)
       - [Prerequisiti](#prerequisiti)
-    - [Diagramma di Sequenza (Mermaid)](#diagramma-di-sequenza-mermaid)
-    - [Codice completo per il prototipo](#codice-completo-per-il-prototipo)
-    - [Conclusione sull'autenticazione basata su Google](#conclusione-sullautenticazione-basata-su-google)
+      - [Diagramma di Sequenza OAuth 2.0 - Google Auth](#diagramma-di-sequenza-oauth-20---google-auth)
+      - [Codice completo per il prototipo (Autenticazione basata su Google)](#codice-completo-per-il-prototipo-autenticazione-basata-su-google)
+      - [Conclusione sull'autenticazione basata su Google](#conclusione-sullautenticazione-basata-su-google)
+    - [Autenticazione basata su Microsoft e Google - Minimal API](#autenticazione-basata-su-microsoft-e-google---minimal-api)
+      - [Diagramma di Sequenza per OAuth 2.0 Microsoft](#diagramma-di-sequenza-per-oauth-20-microsoft)
+      - [Codice completo per il prototipo (Autenticazione basata su Google e Microsoft)](#codice-completo-per-il-prototipo-autenticazione-basata-su-google-e-microsoft)
+      - [Conclusione sull'autenticazione basata su Google e Microsoft](#conclusione-sullautenticazione-basata-su-google-e-microsoft)
 
 Dobbiamo realizzare un prototipo funzionante per la [traccia di esame di maturità di informatica del 2023](https://www.istruzione.it/esame_di_stato/202223/Istituti%20tecnici/Ordinaria/A038_ORD23.pdf) (con particolare riferimento al punto 6 della prima parte della traccia)
 
@@ -1038,7 +1042,7 @@ app.Run();
 
 ```
 
-**Spiegazione delle Scelte Chiave in `Program.cs`:**
+**Spiegazione delle scelte chiave in `Program.cs`:**
 
 - **Data Protection:** Configurare `PersistKeysToFileSystem` è fondamentale in qualsiasi scenario (anche sviluppo) per garantire che le chiavi usate per proteggere i cookie (sia quello di sessione sia quello di correlazione OAuth) siano stabili tra riavvii dell'applicazione. Senza questo, si verificano errori come "Unprotect ticket failed" o "state missing or invalid".
 
@@ -1058,7 +1062,7 @@ app.Run();
 
     4. **Eseguire `SignInAsync` locale esplicitamente** passando il `localPrincipal` (questo crea il cookie di sessione).
 
-    5. **Eseguire `Redirect` esplicitamente** alla destinazione finale (`returnUrl` o `/loggedIn.html`).
+    5. **Eseguire `Redirect` esplicitamente** alla destinazione finale (`returnUrl` o `/profile.html`).
 
     6. **Chiamare `context.HandleResponse()`** per indicare che l'evento ha gestito tutto e il middleware non deve proseguire con azioni di default.
 
@@ -1098,7 +1102,7 @@ Creare una classe statica (es. `GoogleAuthEvents.cs`) con metodi statici `Handle
 
     - **Eseguire `SignInAsync` locale esplicitamente** passando il `localPrincipal`.
 
-    - **Eseguire `Redirect` esplicitamente** alla destinazione finale (`returnUrl` o `/loggedIn.html`).
+    - **Eseguire `Redirect` esplicitamente** alla destinazione finale (`returnUrl` o `/profile.html`).
 
     - **Chiamare `context.HandleResponse()`** per indicare che l'evento ha gestito tutto.
 
@@ -1120,7 +1124,7 @@ Oppure, se si volesse passare un `returnUrl`:
 
 **Passaggio 6: Pagina Post-Login (Opzionale):**
 
-Creare una pagina (es. `loggedIn.html`) a cui reindirizzare dopo il login. Questa pagina può usare JavaScript per chiamare un endpoint API protetto (es. `/api/account/my-roles`) e visualizzare i dati dell'utente loggato. Ricordarsi di aggiornare il redirect finale in `HandleTicketReceived` perché punti a questa pagina.
+Creare una pagina (es. `profile.html`) a cui reindirizzare dopo il login. Questa pagina può usare JavaScript per chiamare un endpoint API protetto (es. `/api/account/my-roles`) e visualizzare i dati dell'utente loggato. Ricordarsi di aggiornare il redirect finale in `HandleTicketReceived` perché punti a questa pagina.
 
 **Passaggio 7: Flusso OAuth 2.0 (Authorization Code Flow):**
 
@@ -1164,13 +1168,13 @@ Questo è il flusso di interazione che avviene dietro le quinte:
 
     - Chiama `HandleResponse()`.
 
-12. **App -> Browser:** Invia la risposta HTTP 302 con `Location` impostato sull'URL di redirect finale (es. `/loggedIn.html`).
+12. **App -> Browser:** Invia la risposta HTTP 302 con `Location` impostato sull'URL di redirect finale (es. `/profile.html`).
 
-13. **Browser -> App:** Il browser segue il redirect finale, richiedendo la pagina `/loggedIn.html` (o `/`). Questa volta, invia il nuovo cookie di autenticazione (`.AspNetCore.Authentication.EducationalGames`).
+13. **Browser -> App:** Il browser segue il redirect finale, richiedendo la pagina `/profile.html` (o `/`). Questa volta, invia il nuovo cookie di autenticazione (`.AspNetCore.Authentication.EducationalGames`).
 
 14. **App -> Browser:** L'applicazione serve la pagina richiesta, riconoscendo l'utente come autenticato grazie al cookie.
 
-### Diagramma di Sequenza (Mermaid)
+#### Diagramma di Sequenza OAuth 2.0 - Google Auth
 
 ```mermaid
 sequenceDiagram
@@ -1193,16 +1197,22 @@ sequenceDiagram
     Note over AppServer: Middleware decodifica id_token, ottiene claims esterni -> Scatena OnTicketReceived
     AppServer->>AppServer: Esegue Logica OnTicketReceived (DB lookup/create, build localPrincipal)
     AppServer->>AppServer: Chiama SignInAsync(CookieScheme, localPrincipal) -> Crea Cookie .AspNetCore.Auth...
-    AppServer->>AppServer: Determina finalRedirectUri (es. /loggedIn.html)
+    AppServer->>AppServer: Determina finalRedirectUri (es. /profile.html)
     AppServer->>AppServer: Chiama context.Response.Redirect(finalRedirectUri)
     AppServer->>AppServer: Chiama context.HandleResponse()
-    AppServer->>Browser: HTTP 302 Redirect to /loggedIn.html (con Set-Cookie .AspNetCore.Auth...)
-    Browser->>+AppServer: GET /loggedIn.html (Invia Cookie .AspNetCore.Auth...)
+    AppServer->>Browser: HTTP 302 Redirect to /profile.html (con Set-Cookie .AspNetCore.Auth...)
+    Browser->>+AppServer: GET /profile.html (Invia Cookie .AspNetCore.Auth...)
     Note over AppServer: App riconosce utente loggato
-    AppServer->>-Browser: 200 OK (Pagina loggedIn.html)
+    AppServer->>-Browser: 200 OK (Pagina profile.html)
 ```
 
-### Codice completo per il prototipo
+#### Codice completo per il prototipo (Autenticazione basata su Google)
+
+Di seguito si riportano le parti più significative del progetto, per l'implementazione dell'autenticazione basata su Google. Per i dettagli si veda direttamente la [cartella del progetto](../EducationalGames/EducationalGames/).
+
+Il frontend è basato su pagine statiche `HTML, CSS, JavaScript` che accedono alle API dell'applicazione (`/api/...`). Il frontend è servito dalla stessa applicazione che serve anche le Minimal API ASP.NET.
+
+Il backend è basato su un Endpoint che gestisce le rotte per gli account e un endpoint che gestisce le pagine statiche (dalla cartella `wwwroot`)
 
 ```cs
 //DatabaseInitializer.cs
@@ -1399,7 +1409,7 @@ public static class AccountEndpoints
             }
             else
             {
-                return Results.Redirect("/loggedIn.html"); // Reindirizza a una pagina di successo predefinita
+                return Results.Redirect("/profile.html"); // Reindirizza a una pagina di successo predefinita
             }
 
         }).AllowAnonymous(); // Permette accesso anonimo al login
@@ -1586,14 +1596,14 @@ public static class PageEndpoints
         //Non per forza bisogna usare questo approccio per impedire l'accesso a file riservati a utenti non autenticati
         //Si può anche non effettuare questo controllo e lasciare che la pagina sia accessibile a tutti
         //ma poi fare assicurare che ja JavaScript non sia possibile accedere a funzioni o dati riservati
-        group.MapGet("/loggedIn.html", (HttpContext context, IWebHostEnvironment env) =>
+        group.MapGet("/profile.html", (HttpContext context, IWebHostEnvironment env) =>
         {
             // RequireAuthorization ensures this endpoint is only accessible by authenticated users.
             // The authentication middleware (configured earlier) will handle redirecting
             // unauthenticated browser requests to the login page or returning 401/403 for API requests.
 
             // Construct the physical path to the file within wwwroot
-            var filePath = Path.Combine(env.WebRootPath, "loggedIn.html");
+            var filePath = Path.Combine(env.WebRootPath, "profile.html");
 
             // Check if the file exists
             if (!System.IO.File.Exists(filePath))
@@ -1742,10 +1752,8 @@ public static class GoogleAuthEvents
         catch (Exception ex_search)
         {
             logger.LogError(ex_search, ">>> [EVENT OnTicketReceived] Database error while searching for user with email {Email}", email);
-            // --- Gestione Errore Utente ---
             context.Response.Redirect("/login-failed.html?reason=db_search_error");
             context.HandleResponse();
-            // --- Fine Gestione ---
             return;
         }
 
@@ -1771,10 +1779,8 @@ public static class GoogleAuthEvents
             catch (Exception ex_save) // Cattura generica per semplicità qui
             {
                 logger.LogError(ex_save, ">>> [EVENT OnTicketReceived] Error while saving new user for Google login {Email}.", email);
-                // --- Gestione Errore Utente ---
                 context.Response.Redirect("/login-failed.html?reason=user_creation_error");
                 context.HandleResponse();
-                // --- Fine Gestione ---
                 return;
             }
         }
@@ -1821,7 +1827,7 @@ public static class GoogleAuthEvents
             // 2. Determina redirect finale
             string finalRedirectUri;
             var isSpecificLocalReturnUrl = !string.IsNullOrEmpty(callbackReturnUrl) && callbackReturnUrl.StartsWith('/') && callbackReturnUrl != "/";
-            if (isSpecificLocalReturnUrl) { finalRedirectUri = callbackReturnUrl!; } else { finalRedirectUri = "/loggedIn.html"; }
+            if (isSpecificLocalReturnUrl) { finalRedirectUri = callbackReturnUrl!; } else { finalRedirectUri = "/profile.html"; }
             logger.LogWarning(">>> [EVENT OnTicketReceived] Final redirect check: Target='{FinalRedirectUri}'", finalRedirectUri);
 
             // 3. Esegui Redirect ESPLICITAMENTE
@@ -2196,6 +2202,812 @@ app.MapGroup("")
 app.Run();
 ```
 
-### Conclusione sull'autenticazione basata su Google
+```json
+{
+  "ConnectionStrings": {
+    "EducationalGamesConnection": "Server=localhost;Port=3306;Database=educational_games;User Id=root;Password=root;"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+
+  "DefaultAdminCredentials": {
+    "Nome": "YOUR_ADMIN_NAME",
+    "Cognome": "YOUR_ADMIN_LAST_NAME",
+    "Email": "YOUR_ADMIN_EMAIL",
+    "Password": "YOUR_ADMIN_PASSWORD"
+  },
+  "Authentication": {
+    "Google": {
+      "ClientId": "YOUR_GOOGLE_CLIENT_ID",
+      "ClientSecret": "YOUR_GOOGLE_CLIENT_SECRET"
+    }
+  },
+  "CorsSettings": {
+    "AllowedLocalOrigins": [
+      "https://localhost:7269",
+      "http://localhost:5173"
+    ],
+    "TunnelOrProxyOrigin": "YOUR_PROXY_OR_TUNNEL_ORIGIN"
+  }
+}
+```
+
+#### Conclusione sull'autenticazione basata su Google
 
 L'incorporazione del meccanismo di autenticazione Google all'interno di un'applicazione necessita inevitabilmente di una duplice configurazione: una sulla piattaforma Google Cloud, finalizzata alla registrazione dell'applicazione e all'ottenimento delle credenziali OAuth 2.0, e una nel codice ASP.NET Core, per l'integrazione dei gestori appropriati. In contesti applicativi che non implementano il framework ASP.NET Core Identity nella sua interezza, o laddove si presentino impedimenti nel flusso di autenticazione standard del middleware, l'utilizzo dell'evento `OnTicketReceived` si configura come una strategia efficace. Tale evento, infatti, offre un punto di intervento specifico che permette un controllo granulare sul processo di associazione tra l'utente esterno e l'entità utente locale. È imperativo, infine, porre la massima attenzione alla gestione sicura delle credenziali ottenute da Google, con particolare riguardo per il Client Secret.
+
+### Autenticazione basata su Microsoft e Google - Minimal API
+
+Questa sezione illustra come integrare l'autenticazione esterna basata su Microsoft Account (MSA) o Microsoft Entra ID (Azure AD) in un'applicazione ASP.NET Core Minimal API che già gestisce l'autenticazione locale tramite cookie e potenzialmente altri provider come Google. L'approccio descritto non utilizza il framework ASP.NET Core Identity completo.
+
+**Contesto:**
+
+Dopo aver implementato l'autenticazione locale e quella con Google, aggiungere Microsoft come provider offre agli utenti un'ulteriore opzione di accesso comune, specialmente in contesti scolastici o aziendali che utilizzano Microsoft 365 / Entra ID. Il processo è simile a quello di Google ma richiede una registrazione sulla piattaforma Microsoft Identity (Azure Portal) e la gestione di alcune specificità, come la configurazione single-tenant vs multi-tenant.
+
+**Passaggio 1: Registrazione dell'Applicazione su Azure Portal:**
+
+Il primo passo è registrare l'applicazione nella piattaforma di identità Microsoft per ottenere le credenziali necessarie.
+
+1. **Accedere al Portale di Azure:** Andare su <https://portal.azure.com/>.
+
+2. **Microsoft Entra ID:** Cercare e selezionare "Microsoft Entra ID".
+
+3. **Portale Microsoft Entra:** Da Azure viene suggerito di andare sul portale dedicato a [Microsoft Entra](https://entra.microsoft.com/)
+
+4. **Registrazioni app:** Nel menu a sinistra, selezionare "App" > "App registrations".
+
+5. **Nuova registrazione:** Cliccare su "+ Nuova registrazione".
+
+6. **Nome:** Inserire un nome significativo per la tua applicazione (es. "Educational Games Login").
+
+7. **Tipi di account supportati:** Questa è una scelta cruciale:
+
+    - **Single-tenant (Scelta per questo progetto):** Selezionare `Account solo in questa directory organizzativa (NOME_ORGANIZZAZIONE only - Single tenant)`. Questo limita l'accesso **solo** agli account appartenenti al tenant specifico (es. `@issgreppi.it`). È l'opzione più semplice e sicura se l'app è destinata solo a quell'organizzazione.
+
+    - **Multi-tenant (Solo Organizzazioni):** Selezionare `Account in qualsiasi directory organizzativa (qualsiasi tenant di Microsoft Entra ID - Multitenant)`. Permette l'accesso da account di qualsiasi organizzazione che usa Entra ID, ma non account personali.
+
+    - **Multi-tenant + Account Personali:** Seleziona `Account in qualsiasi directory organizzativa ... e account Microsoft personali ...`. Apre l'accesso a tutti, ma richiede la verifica come "Publisher Verificato" da parte di Microsoft per motivi di sicurezza, specialmente per nuove registrazioni.
+
+8. **URI di Reindirizzamento:**
+
+    - Selezionare "Web" come piattaforma.
+
+    - Inserire l'URI **esatto** a cui Microsoft reindirizzerà l'utente dopo l'autenticazione. Deve corrispondere al `CallbackPath` nel codice. Aggiungere tutte le varianti necessarie:
+
+        - Sviluppo locale: `https://localhost:PORTA/signin-microsoft` (es. `https://localhost:7269/signin-microsoft`)
+
+        - Eventuale Tunnel: `https://<url-tunnel>/signin-microsoft`
+
+        - Produzione: `https://tuo-dominio.com/signin-microsoft`
+
+9. **Registrazione:** Cliccare sul pulsante "Registra".
+
+10. **Copiare ID Applicazione (Client) e ID Directory (Tenant):** Nella pagina di panoramica dell'app registrata, copiare e salvare in modo sicuro l'**ID applicazione (client)** e l'**ID della directory (tenant)**. Quest'ultimo è **fondamentale** per la configurazione single-tenant.
+
+11. **Creare Segreto Client:**
+
+    - Andare su "Certificati e segreti" -> "Segreti client".
+
+    - Cliccare "+ Nuovo segreto client".
+
+    - Dare una descrizione (es. "WebAppSecret") e scegliere una scadenza.
+
+    - **Copiare immediatamente il** ***Valore*** **del segreto.** Non sarà più visibile. Salvarlo in modo sicuro (User Secrets, Key Vault, ecc.).
+
+**Passaggio 2 - Installare Pacchetto NuGet:**
+
+Assicurarsi che il pacchetto necessario sia installato nel tuo progetto:
+
+```ps
+dotnet add package Microsoft.AspNetCore.Authentication.MicrosoftAccount
+
+```
+
+**Passaggio 3 - Configurazione Codice (`Program.cs` e `MicrosoftAuthEvents.cs`):**
+
+1. **Creare `MicrosoftAuthEvents.cs`:** Creare una nuova classe statica `MicrosoftAuthEvents` (simile a `GoogleAuthEvents`) nello stesso namespace (`EducationalGames.Auth`). Copiare al suo interno i metodi `HandleTicketReceived`, `HandleRemoteFailure` e `HandleAccessDenied` dalla classe `GoogleAuthEvents`.
+
+    - **Modificare i Logger:** Cambiare la categoria del logger in ogni metodo per riflettere che si tratta di eventi Microsoft (es. `loggerFactory.CreateLogger("EducationalGames.MicrosoftOnTicketReceived")`).
+
+    - **Adattare Estrazione Claims in `HandleTicketReceived`:** Modificare la sezione di estrazione dei claims per considerare i tipi comuni usati da Microsoft (usando fallback per email e ID). È consigliabile aggiungere log per visualizzare tutti i claims ricevuti durante il primo test per confermare i tipi corretti.
+
+    - **Modificare i Codici Errore:** Si potrebbe voler usare codici `reason` leggermente diversi nei redirect a `login-failed.html` per distinguere gli errori Microsoft da quelli Google (es. `unknown_microsoft_error`, `access_denied_microsoft`).
+
+2. **Aggiornare `Program.cs`:**
+
+    - **Aggiungere using:** `using Microsoft.AspNetCore.Authentication.MicrosoftAccount;`.
+
+    - **Aggiungere Credenziali e Tenant ID a `appsettings`/User Secrets:** Assicurarsi di avere le sezioni `Authentication:Microsoft:ClientId`, `Authentication:Microsoft:ClientSecret` e `Authentication:Microsoft:TenantId` nella configurazione (User Secrets).
+
+    - **Aggiungere `.AddMicrosoftAccount()`:** All'interno della chiamata a `builder.Services.AddAuthentication(...)`, dopo `.AddGoogle(...)`, aggiungere:
+
+        ```cs
+        .AddMicrosoftAccount(MicrosoftAccountDefaults.AuthenticationScheme, options => {
+            options.ClientId = builder.Configuration["Authentication:Microsoft:ClientId"] ?? throw new InvalidOperationException("...");
+            options.ClientSecret = builder.Configuration["Authentication:Microsoft:ClientSecret"] ?? throw new InvalidOperationException("...");
+            options.CallbackPath = "/signin-microsoft"; // Corrisponde ad Azure
+
+            // --- Configura Endpoint Specifici del Tenant (per Single-Tenant) ---
+            var tenantId = builder.Configuration["Authentication:Microsoft:TenantId"];
+            if (string.IsNullOrEmpty(tenantId)) {
+                 throw new InvalidOperationException("Microsoft TenantId not configured for single-tenant application.");
+            } else {
+                // Costruisci gli URL specifici del tenant
+                options.AuthorizationEndpoint = $"https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/authorize";
+                options.TokenEndpoint = $"https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/token";
+            }
+            // --- Fine Configurazione Endpoint ---
+
+            // Assegna i gestori eventi dalla classe helper
+            options.Events = new OAuthEvents {
+                OnTicketReceived = MicrosoftAuthEvents.HandleTicketReceived,
+                OnRemoteFailure = MicrosoftAuthEvents.HandleRemoteFailure,
+                OnAccessDenied = MicrosoftAuthEvents.HandleAccessDenied
+            };
+        });
+
+        ```
+
+    - **Aggiungere Endpoint Sfida:** Mappare un nuovo endpoint per avviare il login Microsoft:
+
+        ```cs
+        app.MapGet("/login-microsoft", async (HttpContext httpContext, [FromQuery] string? returnUrl) => {
+             var target = "/";
+             // ... validazione returnUrl ...
+             var props = new AuthenticationProperties { Items = { [".redirect"] = target } };
+             await httpContext.ChallengeAsync(MicrosoftAccountDefaults.AuthenticationScheme, props);
+        }).AllowAnonymous();
+
+        ```
+
+**Passaggio 4 - Aggiorna Interfaccia Utente:**
+
+Aggiungere i pulsanti "Accedi con Microsoft" nelle pagine `login-page.html` e `register.html`, facendoli puntare a `/login-microsoft`. Assicurarsi di usare uno stile appropriato (es. classe `btn-microsoft`).
+
+**Passaggio 5 - Flusso OAuth 2.0 con Microsoft (Authorization Code Flow):**
+
+Il flusso è concettualmente identico a quello di Google, ma utilizza gli endpoint Microsoft specifici del tenant (se configurato come single-tenant) o gli endpoint comuni (se multi-tenant).
+
+1. **Utente -> App:** Click su "Accedi con Microsoft" (`/login-microsoft`).
+
+2. **App -> Browser:** `ChallengeAsync` genera l'URL `https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/authorize?...` e un cookie di correlazione. Risposta 302.
+
+3. **Browser -> Microsoft:** Contatta l'endpoint di autorizzazione Microsoft.
+
+4. **Microsoft <-> Utente:** Autenticazione e consenso (se necessario).
+
+5. **Microsoft -> Browser:** Redirect a `https://localhost:7269/signin-microsoft?code=...&state=...`.
+
+6. **Browser -> App:** Richiesta `GET` al callback con codice e stato (e cookie di correlazione).
+
+7. **App (Middleware):** Intercetta `/signin-microsoft`, valida lo stato.
+
+8. **App -> Microsoft:** Contatta l'endpoint token (`https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/token`) inviando codice, credenziali app, ecc.
+
+9. **Microsoft -> App:** Restituisce i token (access, ID).
+
+10. **App (Middleware/Evento):** Riceve i token, estrae i claims dall'ID token, scatena `OnTicketReceived`.
+
+11. **App (OnTicketReceived):** Il codice in `MicrosoftAuthEvents.HandleTicketReceived` viene eseguito: lookup/creazione utente DB, costruzione `localPrincipal`, `SignInAsync` locale, `Redirect` esplicito, `HandleResponse()`.
+
+12. **App -> Browser:** Risposta 302 con `Location` impostato sull'URL finale (es. `/profile.html`) e il cookie di sessione locale.
+
+13. **Browser -> App:** Richiesta per la pagina finale, inviando il cookie di sessione.
+
+14. **App -> Browser:** Serve la pagina finale all'utente autenticato.
+
+#### Diagramma di Sequenza per OAuth 2.0 Microsoft
+
+```mermaid
+sequenceDiagram
+    participant Browser
+    participant AppServer as Applicazione Web (ASP.NET Core)
+    participant MicrosoftServer as Microsoft Identity Platform
+
+    Browser->>+AppServer: GET /login-microsoft?returnUrl=/target
+    AppServer->>AppServer: Genera 'state', PKCE challenge/verifier
+    AppServer->>Browser: HTTP 302 Redirect to Microsoft (login.microsoftonline.com/TENANT_ID/... con client_id, state, etc.) + Set-Cookie (.Correlation)
+    Browser->>+MicrosoftServer: GET login.microsoftonline.com/TENANT_ID/oauth2/v2.0/authorize?...
+    MicrosoftServer->>Browser: Pagina Login/Consenso Microsoft
+    Note over Browser: Utente effettua Login e/o dà Consenso
+    MicrosoftServer->>Browser: HTTP 302 Redirect to App (/signin-microsoft con code, state)
+    Browser->>+AppServer: GET /signin-microsoft?code=...&state=... (Invia Cookie .Correlation)
+    Note over AppServer: Middleware MicrosoftAccountHandler intercetta /signin-microsoft
+    AppServer->>AppServer: Valida 'state' usando Cookie .Correlation
+    AppServer->>+MicrosoftServer: POST /TENANT_ID/oauth2/v2.0/token (invia code, client_id, secret, etc.)
+    MicrosoftServer->>-AppServer: Risposta JSON con access_token, id_token, etc.
+    Note over AppServer: Middleware decodifica id_token, ottiene claims -> Scatena OnTicketReceived
+    AppServer->>AppServer: Esegue Logica MicrosoftAuthEvents.HandleTicketReceived (DB lookup/create, build localPrincipal)
+    AppServer->>AppServer: Chiama SignInAsync(CookieScheme, localPrincipal) -> Crea Cookie .AspNetCore.Auth...
+    AppServer->>AppServer: Determina finalRedirectUri
+    AppServer->>AppServer: Chiama context.Response.Redirect(finalRedirectUri)
+    AppServer->>AppServer: Chiama context.HandleResponse()
+    AppServer->>Browser: HTTP 302 Redirect to /profile.html (con Set-Cookie .AspNetCore.Auth...)
+    Browser->>+AppServer: GET /profile.html (Invia Cookie .AspNetCore.Auth...)
+    Note over AppServer: App riconosce utente loggato
+    AppServer->>-Browser: 200 OK (Pagina profile.html)
+```
+
+**Passaggio 6 - Differenze nei Claims (Microsoft vs Google):**
+
+Sebbene entrambi usino standard come `OpenID Connect`, i tipi (URI) e i nomi dei claims restituiti possono differire leggermente:
+
+- **ID Univoco:** Google usa `ClaimTypes.NameIdentifier`. Microsoft può usare `ClaimTypes.NameIdentifier` ma per account Entra ID spesso l'identificativo più stabile è l'Object ID (OID), rappresentato dal tipo `http://schemas.microsoft.com/identity/claims/objectidentifier`. Il codice in `MicrosoftAuthEvents` prova a cercare entrambi.
+
+- **Email:** Google usa `ClaimTypes.Email`. Microsoft può usare `ClaimTypes.Email`, `ClaimTypes.Upn` (User Principal Name, spesso uguale all'email per account aziendali/scolastici), o `preferred_username`. Il codice di fallback cerca di coprire questi casi.
+
+- **Nome/Cognome:** Entrambi dovrebbero usare `ClaimTypes.GivenName` e `ClaimTypes.Surname`, ma è sempre bene verificare i claims effettivi ricevuti.
+
+- **Altri Claims:** Microsoft Entra ID può restituire molti altri claims specifici dell'organizzazione (es. `tid` per Tenant ID, `groups` per appartenenza a gruppi, ecc.), mentre Google restituisce un set più standard legato al profilo pubblico.
+
+È **fondamentale**, quando si aggiunge un nuovo provider, ispezionare i `context.Principal.Claims` ricevuti nell'evento `OnTicketReceived` (usando il logging Debug) per capire quali claims sono effettivamente disponibili e usare i tipi corretti per estrarre le informazioni necessarie per il proprio database e per costruire il `ClaimsPrincipal` locale. È importante notare che il **`ClaimsPrincipal` locale** dovrebbe sempre usare i tipi di claim **standard** (`ClaimTypes.NameIdentifier`, `ClaimTypes.Name`, `ClaimTypes.Role`, ecc.) per garantire la coerenza all'interno della propria applicazione.
+
+#### Codice completo per il prototipo (Autenticazione basata su Google e Microsoft)
+
+Di seguito si riportano le parti più significative del progetto, per l'implementazione dell'autenticazione basata su Microsoft, in aggiunta all'autenticazione basata su Google. Per i dettagli si veda direttamente la [cartella del progetto](../EducationalGames/EducationalGames/).
+
+Il frontend è basato su pagine statiche `HTML, CSS, JavaScript` che accedono alle API dell'applicazione (`/api/...`). Il frontend è servito dalla stessa applicazione che serve anche le Minimal API ASP.NET.
+
+Il backend è basato su un Endpoint che gestisce le rotte per gli account e un endpoint che gestisce le pagine statiche (dalla cartella `wwwroot`)
+
+```cs
+//MicrosoftAuthEvents.cs
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using EducationalGames.Data; 
+using EducationalGames.Models; 
+using EducationalGames.Utils; 
+
+
+namespace EducationalGames.Auth; 
+
+public static class MicrosoftAuthEvents
+{
+    // Gestore per il successo dell'autenticazione esterna Microsoft
+    public static async Task HandleTicketReceived(TicketReceivedContext context)
+    {
+        var dbContext = context.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
+        var hasher = context.HttpContext.RequestServices.GetRequiredService<PasswordHasher<Utente>>();
+        var loggerFactory = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>();
+        var logger = loggerFactory.CreateLogger("EducationalGames.MicrosoftOnTicketReceived");
+
+        logger.LogInformation(">>> [EVENT MS OnTicketReceived] Started processing Microsoft callback.");
+
+        // Controlla Principal
+        if (context.Principal == null)
+        {
+            logger.LogError(">>> [EVENT MS OnTicketReceived] Principal is null.");
+            context.Fail("Principal is null.");
+            return;
+        }
+        // Estrai Claims (NOTA: I tipi di claim potrebbero differire leggermente da Google)
+        // --- Estrazione Claims (Logica per Microsoft) ---
+        var claims = context.Principal.Claims;
+        logger.LogDebug(">>> [EVENT MS OnTicketReceived] Received Claims from Microsoft:");
+        foreach (var claim in claims) { logger.LogDebug("   - Type: {ClaimType}, Value: {ClaimValue}", claim.Type, claim.Value); }
+
+        // Prova diversi tipi comuni per l'email
+        var email = claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value
+                 ?? claims.FirstOrDefault(c => c.Type == ClaimTypes.Upn)?.Value // User Principal Name
+                 ?? claims.FirstOrDefault(c => c.Type == "preferred_username")?.Value;
+
+        // Prova diversi tipi comuni per l'ID univoco
+        var microsoftUserId = claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value
+                           ?? claims.FirstOrDefault(c => c.Type == "http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value; // Object ID (OID)
+
+        // Nome e Cognome (standard dovrebbero funzionare, ma aggiungiamo log)
+        var givenName = claims.FirstOrDefault(c => c.Type == ClaimTypes.GivenName)?.Value ?? "Utente";
+        var surname = claims.FirstOrDefault(c => c.Type == ClaimTypes.Surname)?.Value;
+        if (string.IsNullOrWhiteSpace(surname)) { surname = "-"; }
+
+        logger.LogInformation(">>> [EVENT MS OnTicketReceived] Extracted Claims: Email={Email}, UserId={UserId}, GivenName={GivenName}, Surname={Surname}", email, microsoftUserId, givenName, surname);
+        // --- Fine Estrazione Claims ---
+
+        // Valida Claims essenziali
+        if (string.IsNullOrEmpty(microsoftUserId) || string.IsNullOrEmpty(email))
+        {
+            logger.LogWarning(">>> [EVENT MS OnTicketReceived] Microsoft authentication succeeded but missing required claims (UserId or Email). Redirecting to failure page.");
+            context.Response.Redirect("/login-failed.html?reason=microsoft_missing_claims");
+            context.HandleResponse();
+            return;
+        }
+
+        // Cerca o Crea Utente Locale (Logica IDENTICA a Google)
+        Utente? user = null;
+        try { user = await dbContext.Utenti.FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower()); }
+        catch (Exception ex_search) { logger.LogError(ex_search, "DB search error"); context.Fail(ex_search); return; }
+
+        if (user is null)
+        {
+            logger.LogInformation(">>> [EVENT MS OnTicketReceived] No local user found for email {Email}. Creating new user.", email);
+            var newUser = new Utente
+            {
+                Nome = givenName,
+                Cognome = surname,
+                Email = email,
+                Ruolo = RuoloUtente.Studente, // Default
+                PasswordHash = hasher.HashPassword(null!, Guid.NewGuid().ToString())
+            };
+            dbContext.Utenti.Add(newUser);
+            try { await dbContext.SaveChangesAsync(); user = newUser; logger.LogInformation("New user saved ID {UserId}", user.Id); }
+            catch (Exception ex_save) { logger.LogError(ex_save, "Error saving new user"); context.Fail(ex_save); return; }
+        }
+        else { logger.LogInformation(">>> [EVENT MS OnTicketReceived] Found existing local user {Email} with ID {UserId}", email, user.Id); }
+
+        if (user is null) { context.Fail("User could not be found or created."); return; }
+
+        // --- Costruisci Principal Locale (IMPORTANTE USARE I TIPI STANDARD QUI) ---
+        logger.LogInformation(">>> [EVENT MS OnTicketReceived] Preparing local principal for user {Email}", user.Email);
+        var cascadedRoles = RoleUtils.GetCascadedRoles(user.Ruolo);
+        var cookieClaims = new List<Claim>
+        {
+            // Usiamo SEMPRE i ClaimTypes standard per il nostro cookie locale
+            new(ClaimTypes.NameIdentifier, user.Id.ToString()), // ID del NOSTRO DB
+            new(ClaimTypes.Name,           user.Email),         // Email come Name
+            new(ClaimTypes.GivenName,      user.Nome),
+            new(ClaimTypes.Surname,        user.Cognome)
+        };
+        foreach (var role in cascadedRoles)
+        {
+            cookieClaims.Add(new Claim(ClaimTypes.Role, role));
+        }
+        // Specifichiamo lo schema di autenticazione (Cookies) e i tipi per Name e Role
+        var identity = new ClaimsIdentity(cookieClaims, CookieAuthenticationDefaults.AuthenticationScheme, ClaimTypes.Name, ClaimTypes.Role);
+        var localPrincipal = new ClaimsPrincipal(identity);
+        // --- Fine Costruzione Principal Locale ---
+
+
+        // Recupera returnUrl
+        var properties = context.Properties;
+        string? callbackReturnUrl = null;
+        properties?.Items.TryGetValue(".redirect", out callbackReturnUrl);
+        if (string.IsNullOrEmpty(callbackReturnUrl)) { properties?.Items.TryGetValue("returnUrl", out callbackReturnUrl); }
+
+        // AZIONI ESPLICITE (SignIn e Redirect  - Logica IDENTICA a Google)
+        try
+        {
+            logger.LogInformation(">>> [EVENT MS OnTicketReceived] Executing explicit local SignInAsync for user {Email}", user.Email);
+            await context.HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, localPrincipal, properties);
+            logger.LogInformation(">>> [EVENT MS OnTicketReceived] Explicit local SignInAsync completed.");
+
+            string finalRedirectUri;
+            var isSpecificLocalReturnUrl = !string.IsNullOrEmpty(callbackReturnUrl) && callbackReturnUrl.StartsWith('/') && callbackReturnUrl != "/";
+            if (isSpecificLocalReturnUrl) { finalRedirectUri = callbackReturnUrl!; } else { finalRedirectUri = "/profile.html"; }
+            logger.LogWarning(">>> [EVENT MS OnTicketReceived] Final redirect check: Target='{FinalRedirectUri}'", finalRedirectUri);
+
+            logger.LogInformation(">>> [EVENT MS OnTicketReceived] Issuing explicit redirect to {Url}", finalRedirectUri);
+            context.Response.Redirect(finalRedirectUri);
+            context.HandleResponse();
+            logger.LogInformation(">>> [EVENT MS OnTicketReceived] Finished processing and redirect issued.");
+        }
+        catch (Exception ex_signin)
+        {
+            logger.LogError(ex_signin, ">>> [EVENT MS OnTicketReceived] Error during explicit SignInAsync or Redirect for user {Email}", user.Email);
+            context.Response.Redirect("/login-failed.html?reason=signin_error");
+            context.HandleResponse();
+        }
+    }
+
+    // Gestore per fallimenti generici (Logica IDENTICA a Google, cambia solo categoria logger)
+    public static Task HandleRemoteFailure(RemoteFailureContext context)
+    {
+        var loggerFactory = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>();
+        var logger = loggerFactory.CreateLogger("EducationalGames.MicrosoftOnRemoteFailure"); // Categoria diversa
+        logger.LogError(context.Failure, ">>> [EVENT MS OnRemoteFailure] External login failed. Path={Path}, Error={Error}", context.Request.Path, context.Failure?.Message);
+        var reason = context.Failure?.Message ?? "unknown_microsoft_error"; // Motivo diverso
+        var reasonCode = Uri.EscapeDataString(reason.Length > 100 ? reason[..100] : reason);
+        context.Response.Redirect($"/login-failed.html?reason={reasonCode}");
+        context.HandleResponse();
+        return Task.CompletedTask;
+    }
+
+    // Gestore per accesso negato dall'utente (Logica IDENTICA a Google, cambia solo categoria logger)
+    public static Task HandleAccessDenied(AccessDeniedContext context)
+    {
+        var loggerFactory = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>();
+        var logger = loggerFactory.CreateLogger("EducationalGames.MicrosoftOnAccessDenied"); // Categoria diversa
+        logger.LogWarning(">>> [EVENT MS OnAccessDenied] User denied access during external login.");
+        context.Response.Redirect("/login-failed.html?reason=access_denied_microsoft"); // Motivo diverso
+        context.HandleResponse();
+        return Task.CompletedTask;
+    }
+}
+```
+
+```cs
+//Program.cs
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authentication.OAuth;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Primitives;
+using EducationalGames.Data;
+using EducationalGames.Endpoints;
+using EducationalGames.Middlewares;
+using EducationalGames.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Routing;
+using Microsoft.AspNetCore.Mvc.Abstractions;
+using EducationalGames.Auth;
+using System.Net;
+using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
+var builder = WebApplication.CreateBuilder(args);
+
+// Configura DataProtection esplicitamente
+var keysFolder = Path.Combine(builder.Environment.ContentRootPath, "DataProtection-Keys");
+Directory.CreateDirectory(keysFolder);
+builder.Services.AddDataProtection()
+    .SetApplicationName("EducationalGames")
+    .PersistKeysToFileSystem(new DirectoryInfo(keysFolder))
+    .SetDefaultKeyLifetime(TimeSpan.FromDays(30));
+
+// *** Configurazione CORS (da appsettings) ***
+var corsSettings = builder.Configuration.GetSection("CorsSettings");
+var tunnelOrProxyOrigin = corsSettings["TunnelOrProxyOrigin"]; // Legge l'URL del tunnel/proxy
+var allowedLocalOrigins = corsSettings.GetSection("AllowedLocalOrigins").Get<string[]>(); // Legge l'array di URL locali
+
+var AllowTunnelPolicy = "_allowTunnelPolicy";
+var AllowLocalhostPolicy = "_allowLocalhostPolicy";
+
+builder.Services.AddCors(options =>
+{
+    // Policy per Tunnel/Proxy (aggiunta solo se l'URL è configurato)
+    if (!string.IsNullOrEmpty(tunnelOrProxyOrigin) && Uri.TryCreate(tunnelOrProxyOrigin, UriKind.Absolute, out var tunnelUri))
+    {
+        options.AddPolicy(name: AllowTunnelPolicy, policy =>
+        {
+            policy.WithOrigins(tunnelUri.GetLeftPart(UriPartial.Authority)) // Usa solo scheme://host:port
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        });
+    }
+
+    // Policy per Localhost (usa la lista letta da appsettings)
+    if (allowedLocalOrigins != null && allowedLocalOrigins.Length > 0)
+    {
+        options.AddPolicy(name: AllowLocalhostPolicy, policy =>
+        {
+            policy.WithOrigins([.. allowedLocalOrigins.Select(u => u.TrimEnd('/'))]) // Pulisce e usa l'array
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        });
+    }
+    else
+    {
+        // Fallback o log se non configurato? Per ora non aggiunge la policy localhost.
+        Console.WriteLine("WARN: CorsSettings:AllowedLocalOrigins non trovato o vuoto in appsettings.json");
+    }
+});
+// *** FINE Configurazione CORS ***
+
+// Add services to the container.
+builder.Services.AddOpenApi();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddOpenApiDocument(config =>
+{
+    config.Title = "Educational Games v1";
+    config.DocumentName = "Educational Games API";
+    config.Version = "v1";
+});
+
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+}
+
+
+// Configura le opzioni di System.Text.Json per gestire gli enum come stringhe
+builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
+{
+    // Aggiunge il convertitore che permette di leggere/scrivere enum come stringhe
+    options.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+
+    // Opzionale: Rende i nomi delle proprietà JSON case-insensitive durante la deserializzazione
+    options.SerializerOptions.PropertyNameCaseInsensitive = true;
+});
+
+// Se si stesse usando AddControllers() invece di Minimal API, la configurazione sarebbe simile:
+// builder.Services.AddControllers().AddJsonOptions(options => {
+//     options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+// });
+
+// --- Configurazione DbContext ---
+var connectionString = builder.Configuration.GetConnectionString("EducationalGamesConnection");
+if (string.IsNullOrEmpty(connectionString))
+{
+    throw new InvalidOperationException("Connection string 'EducationalGamesConnection' not found.");
+}
+var serverVersion = ServerVersion.AutoDetect(connectionString);
+builder.Services.AddDbContext<AppDbContext>(
+    opt => opt.UseMySql(connectionString, serverVersion)
+        .LogTo(Console.WriteLine, LogLevel.Information)
+        .EnableSensitiveDataLogging(builder.Environment.IsDevelopment()) // Log sensibili solo in DEV
+        .EnableDetailedErrors(builder.Environment.IsDevelopment())      // Errori dettagliati solo in DEV
+);
+
+// --- Configurazione Autenticazione (Cookie + Google + Microsoft) ---
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+})
+.AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+{ // Configurazione Cookie
+    options.Cookie.Name = ".AspNetCore.Authentication.EducationalGames";
+    options.Cookie.HttpOnly = true;
+    options.SlidingExpiration = true;
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() ? CookieSecurePolicy.None : CookieSecurePolicy.Always;
+    options.Cookie.SameSite = builder.Environment.IsDevelopment() ? SameSiteMode.Lax : SameSiteMode.Strict;
+    options.LoginPath = "/login-required";
+    options.AccessDeniedPath = "/access-denied";
+
+    // Gestione personalizzata redirect per API vs HTML
+    options.Events = new CookieAuthenticationEvents
+    {
+        OnRedirectToLogin = context =>
+        {
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+            logger.LogWarning(">>> OnRedirectToLogin triggered for path: {Path}", context.Request.Path);
+            if (context.Request.Path.StartsWithSegments("/api"))
+            {
+                logger.LogWarning(">>> API path detected. Setting status code 401 for path: {Path}", context.Request.Path);
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            }
+            else
+            {
+                logger.LogWarning(">>> Non-API path detected. Redirecting to: {RedirectUri}", context.RedirectUri);
+                context.Response.Redirect(context.RedirectUri);
+            }
+            return Task.CompletedTask;
+        },
+        OnRedirectToAccessDenied = context =>
+        {
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+            logger.LogWarning(">>> OnRedirectToAccessDenied triggered for path: {Path}", context.Request.Path);
+            if (context.Request.Path.StartsWithSegments("/api"))
+            {
+                logger.LogWarning(">>> API path detected. Setting status code 403 for path: {Path}", context.Request.Path);
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            }
+            else
+            {
+                logger.LogWarning(">>> Non-API path detected. Redirecting to: {RedirectUri}", context.RedirectUri);
+                context.Response.Redirect(context.RedirectUri);
+            }
+            return Task.CompletedTask;
+        }
+    };
+})
+.AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
+{ // Configurazione Google
+    options.ClientId = builder.Configuration["Authentication:Google:ClientId"] ?? throw new InvalidOperationException("Google ClientId not configured.");
+    options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"] ?? throw new InvalidOperationException("Google ClientSecret not configured.");
+    options.CallbackPath = "/signin-google"; // Il middleware ascolta qui
+    options.Scope.Add("profile");
+    options.Scope.Add("email");
+    options.SaveTokens = true; // Salva i token per eventuale uso futuro
+
+    options.Events = new OAuthEvents
+    {
+        //Logica Callback in seguito alla verifica delle credenziali di Google spostata nell'evento OnTicketReceived
+        //OnTicketReceived : Scatta quando il ticket di autenticazione è stato ricevuto e validato con successo da Google.
+        OnTicketReceived = GoogleAuthEvents.HandleTicketReceived,
+        //OnRemoteFailure: Scatta quando si verifica un errore durante la comunicazione con il provider esterno (Google) 
+        //o durante l'elaborazione della sua risposta (ad esempio, se Google restituisce un errore, o se si verificano problemi di rete,...
+        OnRemoteFailure = GoogleAuthEvents.HandleRemoteFailure,
+        //OnAccessDenied: Scatta specificamente se l'utente, sulla pagina di consenso di Google, nega esplicitamente l'accesso alla tua applicazione.
+        OnAccessDenied = GoogleAuthEvents.HandleAccessDenied
+    };
+})
+.AddMicrosoftAccount(MicrosoftAccountDefaults.AuthenticationScheme, options =>
+{
+    options.ClientId = builder.Configuration["Authentication:Microsoft:ClientId"] ?? throw new InvalidOperationException("Microsoft ClientId not configured.");
+    options.ClientSecret = builder.Configuration["Authentication:Microsoft:ClientSecret"] ?? throw new InvalidOperationException("Microsoft ClientSecret not configured.");
+    options.CallbackPath = "/signin-microsoft";
+
+    // --- Configura Endpoint Specifici del Tenant ---
+    // Leggi il Tenant ID dalla configurazione
+    var tenantId = builder.Configuration["Authentication:Microsoft:TenantId"];
+    if (string.IsNullOrEmpty(tenantId))
+    {
+        // È FONDAMENTALE per app single-tenant
+        throw new InvalidOperationException("Microsoft TenantId not configured for single-tenant application.");
+    }
+    else
+    {
+        // Costruisci gli URL degli endpoint specifici per il tenant
+        // e assegnali alle proprietà corrette delle opzioni.
+        options.AuthorizationEndpoint = $"https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/authorize";
+        options.TokenEndpoint = $"https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/token";
+    }
+    // --- FINE Configurazione Endpoint ---
+
+    // Usa i metodi statici dalla classe helper MicrosoftAuthEvents
+    options.Events = new OAuthEvents
+    {
+        OnTicketReceived = MicrosoftAuthEvents.HandleTicketReceived,
+        OnRemoteFailure = MicrosoftAuthEvents.HandleRemoteFailure,
+        OnAccessDenied = MicrosoftAuthEvents.HandleAccessDenied
+    };
+});
+// --- FINE Configurazione Autenticazione ---
+
+// --- Configurazione Autorizzazione con Policy ---
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"))
+    .AddPolicy("DocenteOnly", policy => policy.RequireRole("Docente"))
+    .AddPolicy("AdminOrDocente", policy => policy.RequireRole("Admin", "Docente"))
+    .AddPolicy("RegisteredUsers", policy => policy.RequireAuthenticatedUser()); // Richiede solo utente autenticato
+
+// Aggiungi PasswordHasher come servizio
+builder.Services.AddScoped<PasswordHasher<Utente>>();
+
+// --- Configurazione Forwarded Headers Options ---
+// Lasciamo configurato nel caso si usi un tunnel o proxy
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;
+
+    options.KnownNetworks.Clear();// NON USARE .Clear() in produzione!
+    options.KnownProxies.Clear();// NON USARE .Clear() in produzione!
+    // Aggiungi qui eventuali reti/proxy noti se necessario
+    // Esempio: Aggiungi gli IP specifici dei tuoi reverse proxy/load balancer fidati
+    //options.KnownProxies.Add(IPAddress.Parse("10.0.5.23")); // IP del tuo proxy 1
+    //options.KnownProxies.Add(IPAddress.Parse("10.0.5.24")); // IP del tuo proxy 2
+
+    // Oppure, se i proxy sono in una subnet specifica:
+    //options.KnownNetworks.Add(new Microsoft.AspNetCore.HttpOverrides.IPNetwork(IPAddress.Parse("10.0.5.0"), 24)); // Esempio: Subnet 10.0.5.0/24
+    // ...
+});
+// --- FINE Configurazione Forwarded Headers Options ---
+
+var app = builder.Build();
+
+// --- APPLICA MIGRAZIONI E SEEDING ADMIN ALL'AVVIO (Refactored) ---
+// Crea uno scope per risolvere i servizi necessari all'inizializzatore
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    // Chiama il metodo statico dell'inizializzatore passando i servizi e l'ambiente
+    await DatabaseInitializer.InitializeAndSeedAsync(services, app.Environment);
+}
+// --- FINE MIGRAZIONI E SEEDING ---
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+    app.UseOpenApi();
+    app.UseSwaggerUi(config =>
+    {
+        config.DocumentTitle = "Educational Games v1";
+        config.Path = "/swagger";
+        config.DocumentPath = "/swagger/{documentName}/swagger.json";
+        config.DocExpansion = "list";
+    });
+}
+else
+{
+    app.UseExceptionHandler("/error");
+    app.UseHsts();
+
+}
+
+// Middleware Forwarded Headers (se si usa tunnel/proxy)
+app.UseForwardedHeaders();
+app.UseHttpsRedirection();
+
+// --- Applica CORS (usando i nomi delle policy) ---
+// Applica la policy del tunnel solo se è stata definita (cioè se l'URL era presente)
+if (!string.IsNullOrEmpty(tunnelOrProxyOrigin) && Uri.TryCreate(tunnelOrProxyOrigin, UriKind.Absolute, out _))
+{
+    app.UseCors(AllowTunnelPolicy);
+}
+// Applica la policy localhost solo se è stata definita
+if (allowedLocalOrigins != null && allowedLocalOrigins.Length > 0)
+{
+    app.UseCors(AllowLocalhostPolicy);
+}
+// --- FINE Applica CORS ---
+
+// Middleware per file statici
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
+// Middleware Autenticazione/Autorizzazione
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Middleware per gestire gli errori di stato delle API
+// Riepilogo della Logica Risultante:
+// Richiesta API(/api/...) con Errore(401/403/404): 
+//  Il StatusCodeMiddleware intercetta l'errore e restituisce una risposta JSON standardizzata.
+// Richiesta NON API (/pagina-protetta) che richiede Login (401): 
+//  CookieAuthenticationEvents reindirizza a /login-required, che poi reindirizza a /login-page.html?ReturnUrl=....
+// Richiesta NON API (/area-admin) senza Permessi (403): 
+//  CookieAuthenticationEvents reindirizza a /access-denied, che poi reindirizza a /access-denied.html?ReturnUrl=....
+// Richiesta NON API (/pagina-inesistente.html) non trovata (404):
+//   UseStatusCodePagesWithRedirects reindirizza a /not-found.html.
+
+app.UseMiddleware<StatusCodeMiddleware>();
+
+// Reindirizza a /not-found.html per errori 404 che non sono stati gestiti
+// e non sono richieste API (perché il middleware StatusCodeMiddleware
+// intercetterebbe gli errori API prima che questo venga eseguito completamente)
+
+// NOTA: Questo catturerà anche richieste a file statici non esistenti.
+app.UseStatusCodePagesWithRedirects("/not-found.html");
+
+// Map API endpoints
+app.MapGroup("/api/account")
+   .WithTags("Account")
+   .MapAccountEndpoints();
+
+//Map pages endpoints
+app.MapGroup("")
+    .WithTags("Main")
+    .MapPageEndpoints();
+
+app.Run();
+```
+
+```json
+{
+  "ConnectionStrings": {
+    "EducationalGamesConnection": "Server=localhost;Port=3306;Database=educational_games;User Id=root;Password=root;"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+
+  "DefaultAdminCredentials": {
+    "Nome": "YOUR_ADMIN_NAME",
+    "Cognome": "YOUR_ADMIN_LAST_NAME",
+    "Email": "YOUR_ADMIN_EMAIL",
+    "Password": "YOUR_ADMIN_PASSWORD"
+  },
+  "Authentication": {
+    "Google": {
+      "ClientId": "YOUR_GOOGLE_CLIENT_ID",
+      "ClientSecret": "YOUR_GOOGLE_CLIENT_SECRET"
+    },
+    "Microsoft": {
+      "ClientId": "IL_TUO_MICROSOFT_CLIENT_ID",
+      "ClientSecret": "IL_TUO_MICROSOFT_CLIENT_SECRET",
+      "TenantId": "IL_TUO_TENANT_ID_COPIATO_DA_AZURE" 
+    }
+  },
+  "CorsSettings": {
+    "AllowedLocalOrigins": [
+      "https://localhost:7269",
+      "http://localhost:5173"
+    ],
+    "TunnelOrProxyOrigin": "YOUR_PROXY_OR_TUNNEL_ORIGIN"
+  }
+}
+```
+
+#### Conclusione sull'autenticazione basata su Google e Microsoft
+
+L'aggiunta dell'autenticazione Microsoft Account segue un pattern simile all'integrazione di Google, richiedendo la registrazione dell'applicazione sulla piattaforma Microsoft Identity e la configurazione del gestore corrispondente in ASP.NET Core. La distinzione tra configurazione single-tenant e multi-tenant è cruciale e impatta la scelta degli endpoint da utilizzare. L'uso degli eventi del middleware (`OnTicketReceived`, `OnRemoteFailure`, `OnAccessDenied`) rimane un approccio efficace per gestire la logica personalizzata e gli errori in assenza del framework Identity completo. La verifica attenta dei claims restituiti dal provider è essenziale per un corretto mapping con i dati utente locali.

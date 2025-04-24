@@ -41,6 +41,13 @@ public static class DatabaseInitializer
                 var adminPassword = configuration["DefaultAdminCredentials:Password"];
                 var adminNome = configuration["DefaultAdminCredentials:Nome"] ?? "Admin";
                 var adminCognome = configuration["DefaultAdminCredentials:Cognome"] ?? "Default";
+                // Attempt to parse the configuration value, default to true if missing or invalid
+                bool adminEmailVerified = true; // Default value
+                string? emailVerifiedString = configuration["DefaultAdminCredentials:EmailVerificata"];
+                if (!string.IsNullOrEmpty(emailVerifiedString) && bool.TryParse(emailVerifiedString, out bool parsedValue))
+                {
+                    adminEmailVerified = parsedValue;
+                }
 
                 if (string.IsNullOrEmpty(adminEmail) || string.IsNullOrEmpty(adminPassword))
                 {
@@ -57,7 +64,8 @@ public static class DatabaseInitializer
                         Nome = adminNome,
                         Cognome = adminCognome,
                         Email = adminEmail,
-                        Ruolo = RuoloUtente.Admin
+                        Ruolo = RuoloUtente.Admin,
+                        EmailVerificata = adminEmailVerified
                     };
                     adminUser.PasswordHash = passwordHasher.HashPassword(adminUser, adminPassword);
 

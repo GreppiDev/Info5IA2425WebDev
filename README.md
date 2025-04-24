@@ -65,5 +65,7 @@
     3. [Casi d'Uso, Progettazione Concettuale e Logica](./rasd/use-cases-er-requirements/index.md)
     4. [Normalizzazione](./rasd/normalizzazione/index.md)
 
-11. Verso l'Esame di Stato
+11. [Cenni ai protocolli OAuth2.0 e OpenID Connect](./web/web-docs/oauth-oidc/index.md)
+
+12. Verso l'Esame di Stato
     1. [Traccia di Informatica del 2023](./esame/tracce-svolte/2023/index.md)
