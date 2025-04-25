@@ -289,7 +289,7 @@ public static class AccountEndpoints
             var user = await db.Utenti.FirstOrDefaultAsync(u => u.Email.ToLower() == model.Email.ToLower());
 
             // Restituisci sempre OK anche se l'utente non esiste, per non rivelare email registrate
-            if (user is not null)
+            if (user is not null && user.EmailVerificata)
             {
                 // Genera token di reset e scadenza
                 user.TokenResetPassword = Convert.ToBase64String(Guid.NewGuid().ToByteArray()).Replace("+", "-").Replace("/", "_").TrimEnd('=');

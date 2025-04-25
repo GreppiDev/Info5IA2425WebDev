@@ -95,12 +95,10 @@ function updateNavbar(userData) {
  * Esegue il logout tramite POST e reindirizza alla home.
  */
 function postLogout() {
-  // Non è più necessario pulire sessionStorage
   fetch("/api/account/logout", { method: "POST" }).finally(() => {
     console.log("Logout request sent, redirecting to home page.");
     window.location.href = "/"; // Reindirizza alla home page
   });
 }
 
-// --- RIMOSSO event listener DOMContentLoaded da navbar.js ---
 // La chiamata a fetch e updateNavbar verrà fatta dallo script della pagina host.

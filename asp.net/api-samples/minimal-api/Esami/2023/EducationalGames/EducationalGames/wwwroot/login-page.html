@@ -175,7 +175,7 @@
 
                 // Se l'utente è GIA' loggato su questa pagina, reindirizza
                 if (userData) {
-                    console.log("User already logged in, redirecting to profile.html");
+                    console.log("User already logged in, redirecting to profile.html"); // Aggiornato redirect
                     window.location.href = '/profile.html'; // Reindirizza subito
                     return; // Esce per evitare di mostrare messaggi di verifica
                 }
@@ -236,7 +236,7 @@
                         sessionStorage.setItem('isLoggedIn', 'true');
                         if (userData && userData.username) { sessionStorage.setItem('loggedInUser', userData.username); }
                         else { sessionStorage.removeItem('loggedInUser'); }
-                        window.location.href = '/profile.html'; // Redirect finale
+                        window.location.href = '/profile.html'; // Redirect finale a profile.html
                     })
                     .catch(async errorResponseOrFetchError => { // Gestione errori unificata
                         let errorMessage = 'Si è verificato un errore durante il login.';
@@ -245,9 +245,10 @@
                             try {
                                 const errorData = await errorResponseOrFetchError.json();
                                 errorMessage = errorData.title || errorData.detail || `Errore ${errorResponseOrFetchError.status}`;
-                                // Controlla se l'errore è specifico per email non verificata (status 403 e titolo specifico)
-                                if (errorResponseOrFetchError.status === 403 && errorData.title === "Email non verificata.") {
-                                    showResend = true; // Imposta il flag per mostrare il pulsante/link per reinviare
+                                // Controlla se lo status è 403 E se la proprietà 'resendAvailable' esiste ed è true
+                                // direttamente sull'oggetto errorData, non su errorData.extensions
+                                if (errorResponseOrFetchError.status === 403 && errorData?.resendAvailable === true) {
+                                    showResend = true;
                                 }
                             } catch { errorMessage = `Errore ${errorResponseOrFetchError.status}: ${errorResponseOrFetchError.statusText || 'Risposta non valida dal server.'}`; }
                         } else { errorMessage = errorResponseOrFetchError.message; } // Errore fetch o recupero dati
@@ -257,7 +258,8 @@
 
                         // Mostra il pulsante per reinviare l'email se necessario
                         if (showResend && resendVerificationDiv) {
-                            resendVerificationDiv.classList.remove('d-none');
+                            console.log("Showing resend verification button.");
+                            resendVerificationDiv.classList.remove('d-none'); // Rendi visibile il div
                         }
                     });
             });
@@ -267,7 +269,7 @@
         if (resendVerificationBtn) {
             resendVerificationBtn.addEventListener('click', function () {
                 const emailInput = document.getElementById('email');
-                const email = emailInput.value;
+                const email = emailInput?.value; // Usa optional chaining per sicurezza
                 if (!email) {
                     // Usa showLoginMessage per mostrare l'errore nello stesso div
                     showLoginMessage('Inserisci l\'indirizzo email nel campo sopra prima di richiedere un nuovo invio.', true);
@@ -283,7 +285,14 @@
                     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                     body: JSON.stringify({ email: email })
                 })
-                    .then(response => response.json()) // Legge sempre il JSON (OK o errore gestito dal backend)
+                    .then(response => {
+                        // Controlla se la risposta è OK prima di leggere JSON
+                        if (!response.ok) {
+                            // Prova a leggere un errore JSON se disponibile
+                            return response.json().then(errData => { throw new Error(errData.title || errData.detail || `Errore ${response.status}`); });
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         // Mostra messaggio di successo nel div dedicato sotto il pulsante
                         resendMessageDiv.textContent = data.message || 'Richiesta inviata. Controlla la tua email.';
@@ -292,7 +301,7 @@
                     .catch(error => {
                         console.error("Errore reinvio email:", error);
                         // Mostra messaggio di errore nel div dedicato sotto il pulsante
-                        resendMessageDiv.textContent = 'Errore durante l\'invio della richiesta. Riprova.';
+                        resendMessageDiv.textContent = error.message || 'Errore durante l\'invio della richiesta. Riprova.';
                         resendMessageDiv.className = 'form-text mt-1 text-danger';
                     })
                     .finally(() => {
