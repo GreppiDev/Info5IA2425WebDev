@@ -200,7 +200,6 @@ builder.Services.AddAuthentication(options =>
     options.Cookie.SameSite = builder.Environment.IsDevelopment() ? SameSiteMode.Lax : SameSiteMode.Strict;
     options.LoginPath = "/login-required";
     options.AccessDeniedPath = "/access-denied";
-
     // Gestione personalizzata redirect per API vs HTML
     options.Events = new CookieAuthenticationEvents
     {
@@ -212,6 +211,15 @@ builder.Services.AddAuthentication(options =>
             {
                 logger.LogWarning(">>> API path detected. Setting status code 401 for path: {Path}", context.Request.Path);
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                context.Response.ContentType = "application/json";
+                return context.Response.WriteAsJsonAsync(new
+                {
+                    status = 401,
+                    title = "Unauthorized",
+                    detail = "Devi eseguire il login per accedere a questa risorsa.",
+                    path = context.Request.Path,
+                    timestamp = DateTime.UtcNow
+                });
             }
             else
             {
@@ -228,6 +236,15 @@ builder.Services.AddAuthentication(options =>
             {
                 logger.LogWarning(">>> API path detected. Setting status code 403 for path: {Path}", context.Request.Path);
                 context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                context.Response.ContentType = "application/json";
+                return context.Response.WriteAsJsonAsync(new
+                {
+                    status = 403,
+                    title = "Forbidden",
+                    detail = "Non hai i permessi necessari per visualizzare questa risorsa.",
+                    path = context.Request.Path,
+                    timestamp = DateTime.UtcNow
+                });
             }
             else
             {
@@ -420,9 +437,39 @@ app.MapGroup("/api/account")
    .MapAccountEndpoints(app.Services.GetRequiredService<ILoggerFactory>())
    .WithTags("Account");
 
+// Map Game Endpoints
+app.MapGroup("/api") // Gruppo API generico
+   .WithTags("Games & Topics") // Tag per Swagger
+   .MapGameEndpoints(app.Services.GetRequiredService<ILoggerFactory>());
+
+app.MapGroup("/api") // Gruppo API generico
+   .WithTags("Classi")
+   .MapClassiEndpoints(app.Services.GetRequiredService<ILoggerFactory>());
+   
+app.MapGroup("/api")
+   .WithTags("Iscrizioni") // Tag per Swagger
+   .MapIscrizioniEndpoints(app.Services.GetRequiredService<ILoggerFactory>());
+
+app.MapGroup("/api")
+   .WithTags("Progressi") // Tag per Swagger
+   .MapProgressoEndpoints(app.Services.GetRequiredService<ILoggerFactory>());
+   
+app.MapGroup("/api")
+   .WithTags("Classifiche") // Tag per Swagger
+   .MapClassificheEndpoints(app.Services.GetRequiredService<ILoggerFactory>());
+
+app.MapGroup("/api") 
+   .WithTags("Dashboard") // Tag per Swagger
+   .MapDashboardEndpoints(app.Services.GetRequiredService<ILoggerFactory>());
+
+app.MapGroup("/api/admin") // Prefisso specifico per API admin
+   .WithTags("Admin") // Tag per Swagger
+   .MapAdminEndpoints(app.Services.GetRequiredService<ILoggerFactory>());
+
 //Map pages endpoints
 app.MapGroup("")
     .WithTags("Main")
     .MapPageEndpoints();
+    
 
 app.Run();

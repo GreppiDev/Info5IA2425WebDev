@@ -1,9 +1,22 @@
 # Indicazioni per lo sviluppo del progetto
 
 - [Indicazioni per lo sviluppo del progetto](#indicazioni-per-lo-sviluppo-del-progetto)
+  - [Introduzione](#introduzione)
   - [Setup del progetto](#setup-del-progetto)
   - [Configurazione del database (Modello, DbContext, Migrazione)](#configurazione-del-database-modello-dbcontext-migrazione)
-  - [Autenticazione e autorizzazione degli utenti e seed del database all'avvio (funzionalità non richieste dalla traccia, ma fondamentali per il prototipo)](#autenticazione-e-autorizzazione-degli-utenti-e-seed-del-database-allavvio-funzionalità-non-richieste-dalla-traccia-ma-fondamentali-per-il-prototipo)
+  - [Processo strutturato per lo sviluppo incrementale della piattaforma (moduli funzionali)](#processo-strutturato-per-lo-sviluppo-incrementale-della-piattaforma-moduli-funzionali)
+    - [Fase 0: Gestione Utenti](#fase-0-gestione-utenti)
+    - [Fase 1: Gestione Catalogo Giochi e Argomenti (Base)](#fase-1-gestione-catalogo-giochi-e-argomenti-base)
+    - [Fase 2: Gestione Classi (Docente - Creazione e Visualizzazione)](#fase-2-gestione-classi-docente---creazione-e-visualizzazione)
+    - [Fase 3: Gestione Classi (Docente - Dettagli e Associazione Giochi)](#fase-3-gestione-classi-docente---dettagli-e-associazione-giochi)
+    - [Fase 4: Gestione Iscrizioni (Studente)](#fase-4-gestione-iscrizioni-studente)
+    - [Fase 5: Interfaccia di Gioco e Progresso](#fase-5-interfaccia-di-gioco-e-progresso)
+    - [Fase 6: Visualizzazione Classifiche](#fase-6-visualizzazione-classifiche)
+    - [Fase 7: Dashboard Docente](#fase-7-dashboard-docente)
+    - [Fase 8: Dashboard Studente](#fase-8-dashboard-studente)
+    - [Fase 9: Dashboard Admin (Aggiunta)](#fase-9-dashboard-admin-aggiunta)
+    - [Processo generale di implementazione dei moduli](#processo-generale-di-implementazione-dei-moduli)
+  - [(Fase 0) Autenticazione e autorizzazione degli utenti e seed del database all'avvio (due funzionalità non richieste dalla traccia, ma fondamentali per il prototipo)](#fase-0-autenticazione-e-autorizzazione-degli-utenti-e-seed-del-database-allavvio-due-funzionalità-non-richieste-dalla-traccia-ma-fondamentali-per-il-prototipo)
     - [Implementazione del seeding del database in produzione](#implementazione-del-seeding-del-database-in-produzione)
     - [Autenticazione basata su Google - Applicazione ASP.NET Core Minimal API](#autenticazione-basata-su-google---applicazione-aspnet-core-minimal-api)
       - [Prerequisiti](#prerequisiti)
@@ -24,6 +37,8 @@
       - [Passaggio 5: Implementazione Modifica Profilo](#passaggio-5-implementazione-modifica-profilo)
       - [Passaggio 6: Modifiche al Frontend](#passaggio-6-modifiche-al-frontend)
       - [Codice completo per il prototipo (gestione e-mail e profilo)](#codice-completo-per-il-prototipo-gestione-e-mail-e-profilo)
+
+## Introduzione
 
 Dobbiamo realizzare un prototipo funzionante per la [traccia di esame di maturità di informatica del 2023](https://www.istruzione.it/esame_di_stato/202223/Istituti%20tecnici/Ordinaria/A038_ORD23.pdf) (con particolare riferimento al punto 6 della prima parte della traccia)
 
@@ -406,7 +421,306 @@ Procediamo con i seguenti step:
     dotnet ef database update --project EducationalGames
   ```
 
-## Autenticazione e autorizzazione degli utenti e seed del database all'avvio (funzionalità non richieste dalla traccia, ma fondamentali per il prototipo)
+## Processo strutturato per lo sviluppo incrementale della piattaforma (moduli funzionali)
+
+Di seguito riportiamo un processo strutturato che possiamo seguire per implementare i moduli richiesti, costruendo funzionalità in modo incrementale:
+
+### Fase 0: Gestione Utenti
+
+- **Obiettivo:** Fornire registrazione, login (locale, Google, Microsoft), gestione profilo base, verifica email e recupero password.
+
+- **Passaggi Backend:**
+
+    1. **Modello `Utente`:** Aggiornato con campi per `EmailVerificata`, token/scadenze per verifica e reset.
+
+    2. **Servizio Email:** Implementato `IEmailService` con MailKit.
+
+    3. **Endpoint Account (`AccountEndpoints.cs`):**
+
+        - `/login`: Verifica password E `EmailVerificata`.
+
+        - `/register`: Crea utente con `EmailVerificata=false`, genera token verifica, invia email.
+
+        - `/verify-email`: Gestisce il link di verifica.
+
+        - `/forgot-password`: Invia email di reset (solo per utenti verificati).
+
+        - `/reset-password`: Imposta nuova password tramite token.
+
+        - `/resend-verification`: Invia nuovo link di verifica per email non verificate.
+
+        - `/admin/create-user`: Crea utente con `EmailVerificata=true`.
+
+        - `/my-roles`: Restituisce i dati dell'utente loggato (inclusi i flag `isAdmin`, `isDocente`, `isStudente`).
+
+        - `/profile` (PUT): Permette all'utente loggato di modificare Nome, Cognome, Ruolo (Studente/Docente) e aggiorna il cookie di sessione.
+
+        - `/logout`: Esegue il logout.
+
+    4. **Autenticazione Esterna (`Program.cs`, `GoogleAuthEvents.cs`, `MicrosoftAuthEvents.cs`):**
+
+        - Configurati i provider Google e Microsoft.
+
+        - Implementata la logica negli eventi `OnTicketReceived` per cercare/creare l'utente locale (impostando `EmailVerificata=true` per questi utenti), costruire il `ClaimsPrincipal` locale con ruoli corretti, eseguire `SignInAsync` e `Redirect` esplicitamente.
+
+        - Implementati `OnRemoteFailure` e `OnAccessDenied` per reindirizzare a `login-failed.html`.
+
+    5. **Configurazione `Program.cs`:** Registrati servizi (Auth, DB, Email, CORS, DataProtection), configurati middleware nell'ordine corretto.
+
+- **Passaggi Frontend:**
+
+    1. **Pagine HTML:** Create `index.html`, `login-page.html`, `register.html`, `profile.html`, `login-failed.html`, `not-found.html`, `forgot-password.html`, `reset-password-page.html`, `email-verified.html`.
+
+    2. **Struttura Comune:** Creati `components/navbar.html`, `components/footer.html`, `css/styles.css`.
+
+    3. **Script Comuni:** Creati `js/template-loader.js` (per caricare componenti) e `js/navbar.js` (per logica navbar dinamica e logout).
+
+    4. **Script Specifici Pagine:** Ogni pagina HTML include `template-loader.js`, `navbar.js` e uno script specifico che attende il caricamento dei template (`await TemplateLoader.initializeCommonTemplates(); await new Promise(resolve => setTimeout(resolve, 0));`), chiama l'API `/my-roles`, aggiorna la navbar (`updateNavbar(userData)`) e gestisce la logica specifica della pagina (es. invio form login/registrazione/reset, visualizzazione profilo/errori).
+
+### Fase 1: Gestione Catalogo Giochi e Argomenti (Base)
+
+- **Obiettivo:** Permettere la visualizzazione dei giochi disponibili e filtrarli per argomento. Creare le basi per la gestione futura.
+- **Passaggi Backend:**
+    1. **Modelli:** Verificare/Completare i modelli C# per `Videogioco`, `Argomento` e la tabella associativa `GiochiArgomenti` basandoci sullo schema logico definito nel documento di progetto. Assicurarsi che `Videogioco` includa la colonna `DefinizioneGioco` (JSON o TEXT).
+    2. **DbContext:** Assicurarsi che `AppDbContext` includa i `DbSet<>` per queste entità e definisca le relazioni (specialmente la many-to-many tra Giochi e Argomenti).
+    3. **Migrazione:** Creare e applicare una nuova migrazione EF Core per aggiungere queste tabelle al database.
+    4. **Seeding Dati:** Modificare `DatabaseInitializer.cs` per aggiungere alcuni dati di esempio: creare 2-3 `Argomenti` e 3-5 `Videogiochi` (con titoli, descrizioni, MaxMonete e, per ora, un JSON vuoto o semplice in `DefinizioneGioco`), e associarli tramite `GiochiArgomenti`.
+    5. **DTOs:** Creare Data Transfer Object (DTO) per rappresentare i dati da esporre via API (es. `GiocoDto`, `ArgomentoDto`).
+    6. **Endpoint API (Nuovo File `GameEndpoints.cs`):**
+        - `GET /api/argomenti`: Restituisce l'elenco di tutti gli argomenti (`List<ArgomentoDto>`). Accessibile a utenti autenticati.
+        - `GET /api/giochi`: Restituisce l'elenco di tutti i giochi (`List<GiocoDto>`), potenzialmente includendo gli argomenti associati. Permette filtri opzionali (es. `?argomentoId=`). Accessibile a utenti autenticati.
+- **Passaggi Frontend:**
+    1. **Nuova Pagina:** Creare `catalogo-giochi.html` in `wwwroot`.
+    2. **Struttura:** Applicare la struttura comune (navbar, footer) usando `template-loader.js`.
+    3. **Navbar:** Aggiungere un link "Catalogo Giochi" in `components/navbar.html`, visibile agli utenti loggati (da gestire in `navbar.js`).
+    4. **Script Pagina:**
+        - Aggiungere lo script `DOMContentLoaded` che attende i template, aggiorna la navbar.
+        - Effettuare chiamate `fetch` a `/api/argomenti` e `/api/giochi`.
+        - Popolare dinamicamente un'area della pagina (es. usando card Bootstrap) per visualizzare i giochi.
+        - Implementare un filtro (es. dropdown `<select>`) basato sugli argomenti caricati per richiamare `fetch('/api/giochi?argomentoId=...')` e aggiornare la lista dei giochi visualizzati.
+
+### Fase 2: Gestione Classi (Docente - Creazione e Visualizzazione)
+
+- **Obiettivo:** Permettere ai docenti di creare nuove classi virtuali e visualizzare quelle che hanno creato.
+- **Passaggi Backend:**
+    1. **Modelli:** Verificare/Completare i modelli C# per `ClasseVirtuale` e `Materia`.
+    2. **DbContext:** Assicurarsi che `AppDbContext` includa i `DbSet<>` e le relazioni (Classe -> Docente, Classe -> Materia).
+    3. **Migrazione:** Creare/applicare migrazione se necessaria.
+    4. **Seeding Dati:** Aggiungere alcune `Materie` di esempio in `DatabaseInitializer.cs`.
+    5. **DTOs:** Creare `ClasseDto` (per visualizzazione), `CreaClasseDto` (per la creazione, richiede solo Nome e ID Materia), `MateriaDto`.
+    6. **Endpoint API (Nuovo File `ClassiEndpoints.cs`):**
+        - `GET /api/materie`: Restituisce l'elenco delle materie (`List<MateriaDto>`). Accessibile a Docenti.
+        - `POST /api/classi`: Riceve `CreaClasseDto`. Verifica che l'utente sia un Docente. Recupera l'ID del docente dai claims. Genera un `CodiceIscrizione` univoco e sicuro. Crea la nuova `ClasseVirtuale` nel DB associandola al docente e alla materia. Restituisce la `ClasseDto` creata (o solo 201 Created). **Richiede autorizzazione (Docente).**
+        - `GET /api/classi/mie`: Recupera l'ID del docente loggato dai claims. Restituisce l'elenco delle classi (`List<ClasseDto>`) create da quel docente. **Richiede autorizzazione (Docente).**
+- **Passaggi Frontend:**
+    1. **Nuova Pagina:** Creare `gestione-classi.html` in `wwwroot`.
+    2. **Struttura:** Applicare la struttura comune.
+    3. **Navbar:** Aggiungere il link/dropdown "Gestione Classi" in `components/navbar.html`, visibile **solo** ai docenti (modificare `navbar.js` per usare il flag `isDocente` restituito da `/my-roles`).
+    4. **Script Pagina:**
+        - Script `DOMContentLoaded` (attende template, aggiorna navbar).
+        - Fetch a `/api/materie` per popolare un dropdown nel form di creazione.
+        - Fetch a `/api/classi/mie` per ottenere e visualizzare l'elenco delle classi esistenti del docente (es. in una tabella).
+        - Implementare un form HTML (`#creaClasseForm`) per inserire Nome Classe e selezionare Materia.
+        - Aggiungere JavaScript per gestire l'invio del form (`fetch` `POST` a `/api/classi`), mostrando messaggi di successo/errore e aggiornando l'elenco delle classi dopo la creazione.
+
+### Fase 3: Gestione Classi (Docente - Dettagli e Associazione Giochi)
+
+- **Obiettivo:** Mostrare il codice iscrizione e permettere ai docenti di aggiungere/rimuovere giochi dalle loro classi.
+- **Passaggi Backend:**
+    1. **DTOs:** Potrebbe servire un `ClasseDetailDto` che includa il `CodiceIscrizione` e l'elenco dei `GiocoDto` associati. Creare `AssociaGiocoDto` (contenente `ID_Gioco`).
+    2. **Endpoint API (`ClassiEndpoints.cs`):**
+        - Modificare `GET /api/classi/mie` (o aggiungere `GET /api/classi/{idClasse}`) per restituire anche il `CodiceIscrizione` e l'elenco dei giochi associati (usando `ClasseDetailDto`). La query dovrà includere i dati dalla tabella `CLASSI_GIOCHI` e `VIDEOGIOCHI`. **Richiede autorizzazione (Docente proprietario della classe).**
+        - `POST /api/classi/{idClasse}/giochi`: Riceve `AssociaGiocoDto` nel corpo. Verifica che l'utente loggato sia il docente proprietario della `{idClasse}`. Verifica che il gioco esista. Aggiunge un record alla tabella `CLASSI_GIOCHI`. Restituisce 201 Created o 204 No Content. **Richiede autorizzazione (Docente).**
+        - `DELETE /api/classi/{idClasse}/giochi/{idGioco}`: Verifica ownership classe. Rimuove il record corrispondente da `CLASSI_GIOCHI`. Restituisce 204 No Content. **Richiede autorizzazione (Docente).**
+- **Passaggi Frontend (`gestione-classi.html`):**
+    1. **Visualizzazione Dettagli:** Modificare la visualizzazione dell'elenco classi per mostrare il `CodiceIscrizione` e un pulsante/link "Gestisci Giochi" per ogni classe.
+    2. **Sezione/Modal Gestione Giochi:** Al click su "Gestisci Giochi":
+        - Mostrare l'elenco dei giochi già associati a quella classe (ottenuti dalla fetch a `/api/classi/mie` o `/api/classi/{idClasse}`).
+        - Aggiungere un pulsante "Rimuovi" per ogni gioco associato (che chiama l'API `DELETE`).
+        - Mostrare un'interfaccia per aggiungere nuovi giochi:
+            - Potrebbe includere un campo di ricerca/filtro per argomento.
+            - Effettuare una `fetch` a `/api/giochi` (eventualmente filtrata) per mostrare i giochi disponibili.
+            - Permettere la selezione di uno o più giochi.
+            - Aggiungere un pulsante "Aggiungi Selezionati" che chiama l'API `POST /api/classi/{idClasse}/giochi` per ogni gioco selezionato.
+        - Aggiornare dinamicamente la lista dei giochi associati dopo aggiunta/rimozione.
+
+### Fase 4: Gestione Iscrizioni (Studente)
+
+- **Obiettivo:** Permettere agli studenti di iscriversi a una classe tramite codice e visualizzare le classi/giochi a cui sono iscritti.
+- **Passaggi Backend:**
+    1. **Modelli:** Verificare/Completare il modello `Iscrizione`.
+    2. **DTOs:** Creare `IscrivitiDto` (contenente `CodiceIscrizione`), `ClasseIscrittaDto` (potrebbe includere nome classe, materia, nome docente, e lista `GiocoDto`).
+    3. **Endpoint API:**
+        - `POST /api/iscrizioni`: Riceve `IscrivitiDto`. Verifica che l'utente sia uno Studente. Trova la `ClasseVirtuale` corrispondente al `CodiceIscrizione`. Verifica che la classe esista e che lo studente non sia già iscritto. Crea un nuovo record `Iscrizione` nel DB collegando lo studente (ID dai claims) e la classe. Restituisce 201 Created o un messaggio di successo/errore. **Richiede autorizzazione (Studente).**
+        - `GET /api/iscrizioni/mie`: Recupera l'ID dello studente loggato. Trova tutte le `Iscrizione` per quello studente. Per ogni iscrizione, recupera i dettagli della `ClasseVirtuale` (inclusi materia, docente) e i `Videogiochi` associati a quella classe. Restituisce `List<ClasseIscrittaDto>`. **Richiede autorizzazione (Studente).**
+- **Passaggi Frontend:**
+    1. **Nuova Pagina:** Creare `mie-classi.html` in `wwwroot`.
+    2. **Struttura:** Applicare la struttura comune.
+    3. **Navbar:** Aggiungere il link "Le Mie Classi" in `components/navbar.html`, visibile **solo** agli studenti (modificare `navbar.js`).
+    4. **Pagina `mie-classi.html` Script:**
+        - Script `DOMContentLoaded` (attende template, aggiorna navbar).
+        - Fetch a `/api/iscrizioni/mie` per ottenere le classi dello studente.
+        - Visualizzare le classi (es. card o righe di tabella), mostrando nome classe, materia, docente e l'elenco dei giochi disponibili per ogni classe.
+    5. **Pagina/Componente Iscrizione:**
+        - Aggiungere un form (magari nella pagina `profile.html` o in una nuova `iscriviti.html`) con un campo per inserire il `CodiceIscrizione`.
+        - Aggiungere JavaScript per inviare il codice con `fetch` `POST` a `/api/iscrizioni`.
+        - Mostrare messaggi di successo ("Iscrizione avvenuta!") o errore ("Codice non valido", "Già iscritto"). Dopo successo, magari reindirizzare a `mie-classi.html`.
+
+### Fase 5: Interfaccia di Gioco e Progresso
+
+- **Obiettivo:** Lanciare il gioco e permettere la registrazione delle monete.
+- **Passaggi Backend:**
+    1. **Modelli:** Verificare/Completare `ProgressoStudente`.
+    2. **DTOs:** Creare `AggiornaProgressoDto` (con `ID_Gioco`, `ID_Classe`, `MoneteRaccolte`). Potrebbe servire un `GiocoDetailDto` con `DefinizioneGioco` o `UrlEsterno`.
+    3. **Endpoint API:**
+        - **(Opzionale) `GET /api/giochi/{idGioco}/play`:** Endpoint protetto che restituisce l'URL del gioco esterno o la definizione JSON del gioco interno, verificando che lo studente loggato possa accedere a quel gioco tramite una delle sue classi iscritte.
+        - `POST /api/progressi`: Riceve `AggiornaProgressoDto`. Recupera l'ID studente dai claims. **Verifica cruciale:** Lo studente è iscritto alla `ID_Classe` fornita? Il `ID_Gioco` è associato a quella `ID_Classe`? Le `MoneteRaccolte` non superano `MaxMonete` per quel gioco? Se tutto valido, inserisce o aggiorna (`UPSERT`) il record in `PROGRESSI_STUDENTI`. Restituisce 200 OK o 204 No Content. **Richiede autorizzazione (Studente).**
+- **Passaggi Frontend:**
+    1. **Pagina `mie-classi.html` (o pagina dedicata al gioco):**
+        - Per ogni gioco elencato, aggiungere un link/pulsante "Gioca".
+        - Al click:
+            - Se è un gioco esterno, il link punta direttamente all'URL esterno (ottenuto magari tramite l'API `/api/giochi/{idGioco}/play`).
+            - Se è un gioco interno (JSON quiz): Caricare la pagina "player" generica, passare l'ID del gioco e l'ID della classe. Lo script della pagina player farà la fetch a `/api/giochi/{idGioco}/play` per ottenere il JSON, renderizzerà il quiz, e al termine chiamerà `POST /api/progressi`.
+    2. **Logica Invio Progresso (JavaScript del gioco/player):** Dopo che lo studente ha completato il gioco/quiz e sono state calcolate le `MoneteRaccolte`, lo script deve eseguire una `fetch` `POST` a `/api/progressi`, inviando l'ID del gioco, l'ID della classe in cui è stato giocato, e le monete. La richiesta invierà automaticamente il cookie di sessione per l'autenticazione.
+
+### Fase 6: Visualizzazione Classifiche
+
+- **Obiettivo:** Mostrare classifiche per gioco e generali per classe.
+- **Passaggi Backend:**
+    1. **DTOs:** Creare `ClassificaEntryDto` (con NomeStudente, CognomeStudente, Monete).
+    2. **Endpoint API (`ClassificheEndpoints.cs`?):**
+        - `GET /api/classifiche/classe/{idClasse}/gioco/{idGioco}`: Recupera i dati da `PROGRESSI_STUDENTI` per la classe e il gioco specificati, fa il join con `UTENTI` per prendere nome/cognome, ordina per `MoneteRaccolte` DESC. Restituisce `List<ClassificaEntryDto>`. **Richiede autorizzazione (Docente della classe o Studente iscritto).**
+        - `GET /api/classifiche/classe/{idClasse}`: Recupera i dati da `PROGRESSI_STUDENTI` per la classe specificata, raggruppa per `ID_Studente`, somma le `MoneteRaccolte` per ogni studente, fa il join con `UTENTI`, ordina per somma monete DESC. Restituisce `List<ClassificaEntryDto>`. **Richiede autorizzazione (Docente della classe o Studente iscritto).**
+- **Passaggi Frontend:**
+    1. **Nuova Pagina/Componente:** aggiungere sezioni alle pagine `gestione-classi.html` (per docente) e `mie-classi.html` (per studente). Sia lo studente che il docente devono poter vedere le classifiche delle classi e del singolo gioco.
+    2. **Script Pagina:**
+        - Permettere la selezione della classe e (opzionalmente) del gioco.
+        - Effettuare chiamate `fetch` agli endpoint `/api/classifiche/...` appropriati.
+        - Visualizzare i dati ricevuti in tabelle ordinate.
+
+### Fase 7: Dashboard Docente
+
+- **Obiettivo:** Riepilogo classi e progressi generali.
+
+- **Passaggi Backend:**
+
+    1. **DTOs:** Creare `DashboardDocenteDto` (es. `List<ClasseRiepilogoDto>`, `List<StudenteAttivitaDto>`). `ClasseRiepilogoDto` potrebbe contenere nome, materia, numero iscritti, numero giochi. `StudenteAttivitaDto` potrebbe contenere nome studente, ultima attività, monete totali (aggregazione).
+
+    2. **Endpoint API:** `GET /api/dashboard/docente`: Recupera ID docente loggato. Esegue query aggregate per ottenere numero classi, numero studenti totali (distinti), magari le ultime classi modificate o gli studenti con più/meno progressi. Restituisce `DashboardDocenteDto`. Auth: Docente.
+
+- **Passaggi Frontend:**
+
+    1. **Pagina:** Creare `dashboard.html`.
+
+    2. **Struttura:** Applicare struttura comune.
+
+    3. **Navbar:** Aggiungere link "Dashboard" (o renderlo la home page per docenti), visibile solo a Docenti.
+
+    4. **Script:** `DOMContentLoaded` -> `await TemplateLoader` -> `await delay` -> `fetch /my-roles` -> `updateNavbar`. Fetch a `/api/dashboard/docente`. Visualizzare i dati aggregati in card o piccole sezioni informative. Fornire link a "Gestione Classi" per dettagli.
+
+### Fase 8: Dashboard Studente
+
+- **Obiettivo:** Riepilogo classi, giochi, progressi personali.
+
+- **Passaggi Backend:**
+
+    1. **DTOs:** Creare `DashboardStudenteDto` (es. `List<ClasseIscrittaRiepilogoDto>`, `StatistichePersonaliDto`). `ClasseIscrittaRiepilogoDto` potrebbe avere nome classe, nome docente, numero giochi da completare. `StatistichePersonaliDto` potrebbe avere monete totali, giochi completati.
+
+    2. **Endpoint API:** `GET /api/dashboard/studente`: Recupera ID studente loggato. Esegue query per ottenere le classi a cui è iscritto (magari solo le prime N o quelle con attività recenti), conta i giochi totali/da fare, somma le monete totali da `PROGRESSI_STUDENTI`. Restituisce `DashboardStudenteDto`. Auth: Studente.
+
+- **Passaggi Frontend:**
+
+    1. **Pagina:** Potrebbe essere la stessa `index.html` (se l'utente è studente) o una `dashboard-studente.html` dedicata.
+
+    2. **Struttura:** Applicare struttura comune.
+
+    3. **Navbar:** Il link "Le Mie Classi" porta già alla lista dettagliata. La Home potrebbe mostrare la dashboard.
+
+    4. **Script:** `DOMContentLoaded` -> `await TemplateLoader` -> `await delay` -> `fetch /my-roles` -> `updateNavbar`. Fetch a `/api/dashboard/studente`. Visualizzare i dati aggregati (es. "Sei iscritto a X classi", "Hai Y monete totali") e link a "Le Mie Classi".
+
+### Fase 9: Dashboard Admin (Aggiunta)
+
+- **Obiettivo:** Fornire all'amministratore una vista d'insieme della piattaforma e accesso a funzionalità di gestione globali (es. gestione utenti, catalogo giochi/argomenti/materie).
+
+- **Passaggi Backend:**
+
+    1. **DTOs:** Creare `DashboardAdminDto` (es. `NumeroUtenti`, `NumeroClassi`, `NumeroGiochi`, `NumeroArgomenti`, `NumeroMaterie`) e potenzialmente DTO per liste riepilogative (es. `UtenteAdminDto`, `GiocoAdminDto`).
+
+    2. **Endpoint API (`AdminEndpoints.cs`?):**
+
+        - `GET /api/admin/dashboard/stats`: Esegue query `Count()` su varie tabelle (`Utenti`, `ClassiVirtuali`, `Videogiochi`, etc.) per ottenere statistiche generali. Restituisce `DashboardAdminDto`. **Richiede autorizzazione (Admin).**
+
+        - **(Opzionale) Endpoint CRUD per Utenti:**
+
+            - `GET /api/admin/utenti`: Restituisce lista utenti con filtri/paginazione. Auth: Admin.
+
+            - `GET /api/admin/utenti/{id}`: Dettaglio utente. Auth: Admin.
+
+            - `PUT /api/admin/utenti/{id}`: Modifica utente (es. cambio ruolo, blocco account). Auth: Admin.
+
+            - `DELETE /api/admin/utenti/{id}`: Elimina utente (con cautela!). Auth: Admin.
+
+            - (L'endpoint `POST /api/account/admin/create-user` esiste già).
+
+        - **(Opzionale) Endpoint CRUD per Giochi:**
+
+            - `GET /api/admin/giochi`: Lista giochi. Auth: Admin.
+
+            - `POST /api/admin/giochi`: Crea nuovo gioco (inclusa `DefinizioneGioco` JSON). Auth: Admin.
+
+            - `PUT /api/admin/giochi/{id}`: Modifica gioco. Auth: Admin.
+
+            - `DELETE /api/admin/giochi/{id}`: Elimina gioco. Auth: Admin.
+
+        - **(Opzionale) Endpoint CRUD per Argomenti/Materie:** Endpoint simili per gestire le tabelle `ARGOMENTI` e `MATERIE`. Auth: Admin.
+
+- **Passaggi Frontend:**
+
+    1. **Pagina:** Creare `admin-dashboard.html` (o riutilizzare `dashboard.html` con logica condizionale).
+
+    2. **Struttura:** Applicare struttura comune.
+
+    3. **Navbar:** Il link "Dashboard Admin" (`#nav-admin-dashboard`) è già presente e viene mostrato solo agli Admin da `navbar.js`.
+
+    4. **Script `admin-dashboard.html`:**
+
+        - `DOMContentLoaded` -> `await TemplateLoader` -> `await delay` -> `fetch /my-roles` -> `updateNavbar`.
+
+        - Fetch a `/api/admin/dashboard/stats` per ottenere le statistiche generali.
+
+        - Visualizzare le statistiche in card informative.
+
+        - Aggiungere sezioni/link per la gestione utenti, giochi, argomenti, materie (che porteranno a nuove pagine dedicate o useranno modal/componenti nella stessa dashboard).
+
+    5. **(Opzionale) Pagine CRUD Admin:** Creare pagine HTML separate (es. `admin-utenti.html`, `admin-giochi.html`) con tabelle, form di modifica/creazione e script JavaScript per interagire con i relativi endpoint API CRUD admin.
+
+### Processo generale di implementazione dei moduli
+
+Per implementare i moduli richiesti nell'architettura attuale (Minimal API + Frontend Statico), seguiremo un approccio incrementale, affrontando un modulo alla volta. Per ciascun modulo, i passaggi tipici saranno:
+
+1. **Backend:**
+    - **Modelli:** Verificare/Completare i modelli C# necessari per il modulo.
+    - **DbContext:** Assicurarsi che `AppDbContext` includa i `DbSet` e le configurazioni delle relazioni necessarie (incluse chiavi primarie/esterne e comportamenti `OnDelete`).
+    - **Migrazione:** Creare e applicare una migrazione EF Core per aggiornare lo schema del database.
+    - **Seeding (Opzionale):** Aggiungere dati di esempio in `DatabaseInitializer.cs` per facilitare i test.
+    - **DTOs:** Creare Data Transfer Object per definire la struttura dei dati scambiati tra frontend e backend via API.
+    - **Endpoint API:** Creare nuovi endpoint Minimal API (raggruppati logicamente, es. in `GameEndpoints.cs`, `ClassiEndpoints.cs`, ecc.) per esporre le funzionalità del modulo. Applicare l'autorizzazione necessaria (`RequireAuthorization`, policy specifiche).
+    - **Servizi (se necessario):** Creare/utilizzare servizi (come `IEmailService`) per logica trasversale.
+2. **Frontend:**
+    - **Pagine HTML:** Creare nuove pagine statiche (`.html`) in `wwwroot` per le interfacce utente del modulo.
+    - **Struttura Comune:** Applicare la struttura standard includendo i contenitori per navbar (`#navbar-container`) e footer (`#footer-container`) e i link ai CSS comuni (`/css/styles.css`).
+    - **Componenti:** Utilizzare `template-loader.js` per caricare `navbar.html` e `footer.html`.
+    - **Navbar:** Aggiornare `components/navbar.html` e `js/navbar.js` per aggiungere/gestire nuovi link specifici per il modulo e i ruoli utente.
+    - **Script Specifici Pagina:** In ogni nuova pagina HTML, aggiungere uno script JavaScript (`DOMContentLoaded`) che:
+        - Attenda il caricamento dei template (`await TemplateLoader.initializeCommonTemplates()`).
+        - Attenda il micro-delay (`await new Promise(resolve => setTimeout(resolve, 0));`).
+        - Chiami l'API `/api/account/my-roles` per ottenere lo stato utente.
+        - Chiami `updateNavbar()` per configurare la navbar.
+        - Esegua le chiamate `fetch` agli endpoint API specifici del modulo.
+        - Manipoli il DOM per visualizzare i dati, gestire i form e l'interazione utente.
+        - Gestisca stati di caricamento ed errori.
+
+## (Fase 0) Autenticazione e autorizzazione degli utenti e seed del database all'avvio (due funzionalità non richieste dalla traccia, ma fondamentali per il prototipo)
 
 Per la gestione degli accessi nel prototipo verrà utilizzato il seguente approccio:
 
@@ -510,26 +824,50 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         {
             OnRedirectToLogin = context =>
             {
-                if (context.Request.Path.StartsWithSegments("/api")) // Se è una richiesta API
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogWarning(">>> OnRedirectToLogin triggered for path: {Path}", context.Request.Path);
+                if (context.Request.Path.StartsWithSegments("/api"))
                 {
+                    logger.LogWarning(">>> API path detected. Setting status code 401 for path: {Path}", context.Request.Path);
                     context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    context.Response.Headers.Remove("Location");
+                    context.Response.ContentType = "application/json";
+                    return context.Response.WriteAsJsonAsync(new
+                    {
+                        status = 401,
+                        title = "Unauthorized",
+                        detail = "Devi eseguire il login per accedere a questa risorsa.",
+                        path = context.Request.Path,
+                        timestamp = DateTime.UtcNow
+                    });
                 }
-                else // Altrimenti, redirect standard (che punterà a /login-required)
+                else
                 {
+                    logger.LogWarning(">>> Non-API path detected. Redirecting to: {RedirectUri}", context.RedirectUri);
                     context.Response.Redirect(context.RedirectUri);
                 }
                 return Task.CompletedTask;
             },
             OnRedirectToAccessDenied = context =>
             {
-                if (context.Request.Path.StartsWithSegments("/api")) // Se è una richiesta API
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogWarning(">>> OnRedirectToAccessDenied triggered for path: {Path}", context.Request.Path);
+                if (context.Request.Path.StartsWithSegments("/api"))
                 {
+                    logger.LogWarning(">>> API path detected. Setting status code 403 for path: {Path}", context.Request.Path);
                     context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                    context.Response.Headers.Remove("Location");
+                    context.Response.ContentType = "application/json";
+                    return context.Response.WriteAsJsonAsync(new
+                    {
+                        status = 403,
+                        title = "Forbidden",
+                        detail = "Non hai i permessi necessari per visualizzare questa risorsa.",
+                        path = context.Request.Path,
+                        timestamp = DateTime.UtcNow
+                    });
                 }
-                else // Altrimenti, redirect standard (che punterà a /access-denied)
+                else
                 {
+                    logger.LogWarning(">>> Non-API path detected. Redirecting to: {RedirectUri}", context.RedirectUri);
                     context.Response.Redirect(context.RedirectUri);
                 }
                 return Task.CompletedTask;
@@ -2045,6 +2383,15 @@ builder.Services.AddAuthentication(options =>
             {
                 logger.LogWarning(">>> API path detected. Setting status code 401 for path: {Path}", context.Request.Path);
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                context.Response.ContentType = "application/json";
+                return context.Response.WriteAsJsonAsync(new
+                {
+                    status = 401,
+                    title = "Unauthorized",
+                    detail = "Devi eseguire il login per accedere a questa risorsa.",
+                    path = context.Request.Path,
+                    timestamp = DateTime.UtcNow
+                });
             }
             else
             {
@@ -2061,6 +2408,15 @@ builder.Services.AddAuthentication(options =>
             {
                 logger.LogWarning(">>> API path detected. Setting status code 403 for path: {Path}", context.Request.Path);
                 context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                context.Response.ContentType = "application/json";
+                return context.Response.WriteAsJsonAsync(new
+                {
+                    status = 403,
+                    title = "Forbidden",
+                    detail = "Non hai i permessi necessari per visualizzare questa risorsa.",
+                    path = context.Request.Path,
+                    timestamp = DateTime.UtcNow
+                });
             }
             else
             {
@@ -2779,6 +3135,15 @@ builder.Services.AddAuthentication(options =>
             {
                 logger.LogWarning(">>> API path detected. Setting status code 401 for path: {Path}", context.Request.Path);
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                context.Response.ContentType = "application/json";
+                return context.Response.WriteAsJsonAsync(new
+                {
+                    status = 401,
+                    title = "Unauthorized",
+                    detail = "Devi eseguire il login per accedere a questa risorsa.",
+                    path = context.Request.Path,
+                    timestamp = DateTime.UtcNow
+                });
             }
             else
             {
@@ -2795,6 +3160,15 @@ builder.Services.AddAuthentication(options =>
             {
                 logger.LogWarning(">>> API path detected. Setting status code 403 for path: {Path}", context.Request.Path);
                 context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                context.Response.ContentType = "application/json";
+                return context.Response.WriteAsJsonAsync(new
+                {
+                    status = 403,
+                    title = "Forbidden",
+                    detail = "Non hai i permessi necessari per visualizzare questa risorsa.",
+                    path = context.Request.Path,
+                    timestamp = DateTime.UtcNow
+                });
             }
             else
             {
@@ -3206,7 +3580,7 @@ Sono state necessarie diverse modifiche al frontend (pagine HTML e script JS):
 
     - Aggiunta la gestione dei messaggi `?message=email_verified_success` e `email_already_verified` nell'URL (dopo redirect da `/verify-email`).
 
-- **`profile.html` (ex `loggedIn.html`):**
+- **`profile.html`:**
 
     - Aggiunto un pulsante "Modifica".
 
@@ -4211,6 +4585,7 @@ public static class AccountEndpoints
 ```
 
 ```cs
+//Program.cs
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -4425,6 +4800,15 @@ builder.Services.AddAuthentication(options =>
             {
                 logger.LogWarning(">>> API path detected. Setting status code 401 for path: {Path}", context.Request.Path);
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                context.Response.ContentType = "application/json";
+                return context.Response.WriteAsJsonAsync(new
+                {
+                    status = 401,
+                    title = "Unauthorized",
+                    detail = "Devi eseguire il login per accedere a questa risorsa.",
+                    path = context.Request.Path,
+                    timestamp = DateTime.UtcNow
+                });
             }
             else
             {
@@ -4441,6 +4825,15 @@ builder.Services.AddAuthentication(options =>
             {
                 logger.LogWarning(">>> API path detected. Setting status code 403 for path: {Path}", context.Request.Path);
                 context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                context.Response.ContentType = "application/json";
+                return context.Response.WriteAsJsonAsync(new
+                {
+                    status = 403,
+                    title = "Forbidden",
+                    detail = "Non hai i permessi necessari per visualizzare questa risorsa.",
+                    path = context.Request.Path,
+                    timestamp = DateTime.UtcNow
+                });
             }
             else
             {
@@ -5740,3 +6133,6 @@ A titolo esemplificativo, vengono riportati alcune pagine e componenti del front
     </html>
     ```
 
+Ora che abbiamo una base solida con l'autenticazione, la verifica email, il recupero password e una struttura frontend ben organizzata, possiamo passare all'implementazione dei moduli principali della piattaforma "Educational Games", come descritto nel documento `progetto-educational-games.md`.
+
+In queste note non verranno discussi tutti i passaggi conseguenti allo sviluppo dei singoli moduli perché questo richiederebbe una discussione lunghissima e perché, di fatto, il meccanismo di produzione del software a partire dai casi d'uso e dai requisiti di dato ha delineato i moduli software che sono già descritti nel file `progetto-educational-games.md`. Per i dettagli implementativi si guardi direttamente il codice del progetto [`EducationalGames`](../EducationalGames/EducationalGames/).

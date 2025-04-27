@@ -24,15 +24,8 @@
             padding: 2rem;
         }
 
-        .logout-card {
-            min-height: 250px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            max-width: 500px;
-            margin-left: auto;
-            /* Centra la card se la colonna è più larga */
-            margin-right: auto;
+        .role-buttons .btn {
+            margin: 0.5rem;
         }
     </style>
 </head>
@@ -47,25 +40,338 @@
 
     <main class="main-content">
         <div class="container">
-            <div id="logoutSection" class="d-none mt-5">
+
+            <div id="page-loading" class="text-center py-5">
+                <div class="spinner-border text-primary"></div>
+            </div>
+            <div id="page-error" class="alert alert-danger d-none"></div>
+
+            <!-- Sezione per utente loggato  -->
+            <div id="loggedInUserSection" class="d-none mt-5">
                 <div class="row justify-content-center">
                     <div class="col-md-8 col-lg-6">
-                        <div class="card shadow-sm logout-card">
+                        <div class="card shadow-sm">
                             <div class="card-body p-4 p-md-5 text-center">
-                                <h1 class="h3 card-title mb-3">Sei già connesso</h1>
-                                <p class="text-muted">Risulti autenticato come <strong id="loggedInUsername"></strong>.
-                                </p>
-                                <p class="text-muted mb-4">Puoi vedere il tuo profilo o uscire.</p>
-                                <a href="/profile.html" class="btn btn-info me-2">Vedi Profilo</a>
+                                <h1 class="h3 card-title mb-3">Bentornato, <strong id="loggedInUsername"></strong>!</h1>
+                                <p class="text-muted mb-4">Seleziona la dashboard che vuoi visualizzare:</p>
+                                <div class="role-buttons">
+                                    <!-- I bottoni verranno aggiunti qui dinamicamente -->
+                                </div>
+                                <hr class="my-4">
+                                <a href="/profile.html" class="btn btn-outline-secondary btn-sm me-2">Vedi Profilo</a>
+                                <button onclick="postLogout()" class="btn btn-outline-danger btn-sm">Esci</button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Messaggio di benvenuto per utente non loggato -->
             <div id="welcomeMessage" class="mt-5 d-none">
-                <h1>Benvenuto in Educational Games!</h1>
-                <p class="lead">La piattaforma per imparare giocando.</p>
-                <p class="text-info">Effettua il login o registrati per iniziare.</p>
+                <div class="text-center mb-4">
+                    <i class="bi bi-joystick" style="font-size: 5rem; color: var(--bs-primary);"></i>
+                    <!-- Icona Joystick Grande -->
+                </div>
+                <div class="text-center">
+                    <h1>Benvenuto in Educational Games!</h1>
+                    <p class="lead">La piattaforma per imparare giocando.</p>
+                    <p class="text-info">Effettua il login o registrati per iniziare.</p>
+                </div>
+
+                <hr class="my-4">
+
+                <div class="row justify-content-center mt-4">
+                    <div class="col-lg-10 col-xl-8">
+                        <div class="card shadow-sm">
+                            <div class="card-body p-4 text-start">
+                                <h2 class="h4 card-title mb-4 text-center">Informazioni sul Progetto</h2>
+                                <p class="mb-4 text-center">Questo progetto è un <strong>prototipo dimostrativo a scopo
+                                        didattico</strong>, sviluppato come possibile svolgimento della <a
+                                        href="https://www.istruzione.it/esame_di_stato/202223/Istituti%20tecnici/Ordinaria/A038_ORD23.pdf"
+                                        target="_blank" rel="noopener noreferrer">prima parte della traccia ministeriale
+                                        A038</a> per l'Esame di Stato 2023 degli Istituti Tecnici Superiori, indirizzo
+                                    Informatica.</p>
+
+                                <h3 class="h5 mt-4 mb-3 border-bottom pb-2"><i class="bi bi-diagram-3 me-2"></i>Scelte
+                                    Architetturali Chiave</h3>
+
+                                <div class="mb-4">
+                                    <h4 class="h6 fw-bold"><i class="bi bi-server me-2"></i>Backend: ASP.NET Minimal API
+                                    </h4>
+                                    <p class="text-muted small">Per il backend, si è optato per l'approccio delle
+                                        Minimal API introdotto con .NET 6. Questa scelta mira a ridurre il boilerplate e
+                                        la complessità associati al tradizionale framework MVC/Web API, rendendo il
+                                        codice più snello e focalizzato sulla logica degli endpoint. L'intera
+                                        configurazione dell'applicazione, inclusi servizi, middleware e la mappatura
+                                        delle route, è centralizzata nel file <code>Program.cs</code>. Questo approccio
+                                        non solo semplifica la struttura del progetto ma migliora anche le prestazioni,
+                                        aspetto cruciale per applicazioni web moderne. Il backend gestisce tutte le
+                                        richieste API RESTful, tipicamente prefissate con <code>/api</code> (ad esempio,
+                                        <code>/api/account</code>, <code>/api/classi</code>), e serve anche i file
+                                        statici (HTML, CSS, JavaScript, immagini) necessari per il frontend,
+                                        direttamente dalla cartella <code>wwwroot</code>. Questa configurazione
+                                        integrata facilita lo sviluppo e il deployment di applicazioni full-stack senza
+                                        la necessità di separare completamente frontend e backend in progetti distinti,
+                                        pur mantenendo una chiara separazione logica grazie all'organizzazione degli
+                                        endpoint in file dedicati (come <code>AccountEndpoints.cs</code>,
+                                        <code>ClassiEndpoints.cs</code>, ecc.) all'interno della cartella
+                                        <code>Endpoints</code>. L'uso di dependency injection è pervasivo per gestire
+                                        servizi come il contesto del database (<code>AppDbContext</code>) e i servizi di
+                                        posta elettronica.</p>
+                                </div>
+
+                                <div class="mb-4">
+                                    <h4 class="h6 fw-bold"><i class="bi bi-filetype-html me-2"></i>Frontend: Multi-Page
+                                        Application (MPA) con Vanilla JS</h4>
+                                    <p class="text-muted small">Il frontend è stato realizzato come una Multi-Page
+                                        Application (MPA) tradizionale, utilizzando HTML standard, CSS (con il supporto
+                                        del framework Bootstrap 5 per un design responsive e componenti UI predefiniti)
+                                        e JavaScript "vanilla" (senza l'uso di framework frontend complessi come React,
+                                        Angular o Vue). Ogni pagina principale dell'applicazione (es.
+                                        <code>index.html</code>, <code>login.html</code>, <code>dashboard.html</code>) è
+                                        un file HTML separato servito staticamente dal backend ASP.NET. La dinamicità
+                                        all'interno di queste pagine è ottenuta tramite JavaScript: dopo il caricamento
+                                        iniziale dell'HTML, script specifici per pagina (o script comuni come
+                                        <code>navbar.js</code> e <code>template-loader.js</code>) eseguono chiamate
+                                        <code>fetch</code> agli endpoint API del backend per recuperare i dati necessari
+                                        (es. informazioni utente, elenco classi, giochi disponibili). Questi dati
+                                        vengono poi utilizzati per manipolare il DOM, popolando dinamicamente sezioni
+                                        della pagina, mostrando o nascondendo elementi in base allo stato dell'utente
+                                        (loggato/non loggato, ruolo) e gestendo l'interazione utente. L'uso di
+                                        <code>template-loader.js</code> permette di caricare componenti comuni come la
+                                        barra di navigazione e il footer in modo asincrono, mantenendo la coerenza tra
+                                        le pagine senza duplicazione di codice HTML. Questa scelta, sebbene meno
+                                        "moderna" rispetto alle Single-Page Application (SPA), è didatticamente valida
+                                        per illustrare i fondamenti delle interazioni web client-server e risulta più
+                                        semplice da implementare e comprendere in un contesto prototipale.</p>
+                                </div>
+
+                                <div class="mb-4">
+                                    <h4 class="h6 fw-bold"><i class="bi bi-shield-lock me-2"></i>Autenticazione e
+                                        Autorizzazione: Cookie Authentication & Manual Integration</h4>
+                                    <p class="text-muted small">La gestione degli accessi si basa principalmente sullo
+                                        schema di autenticazione Cookie standard di ASP.NET Core, configurato in
+                                        <code>Program.cs</code>. Dopo un login locale riuscito (gestito da
+                                        <code>AccountEndpoints.cs</code>, probabilmente utilizzando
+                                        <code>PasswordHasher&lt;Utente&gt;</code> per verificare la password rispetto
+                                        all'hash salvato nel modello <code>Utente.cs</code>), viene emesso un cookie di
+                                        autenticazione sicuro (HttpOnly). Questo approccio è stato preferito rispetto
+                                        all'integrazione completa di ASP.NET Core Identity con
+                                        <code>IdentityDbContext</code> e le relative UI scaffolded, per mantenere un
+                                        maggiore controllo sul flusso di autenticazione e sulla struttura del database.
+                                        La registrazione (<code>RegisterModel</code>) e la gestione dei profili
+                                        (<code>UpdateProfileModel</code>) sono implementate tramite endpoint API
+                                        dedicati che interagiscono direttamente con <code>AppDbContext</code>. Il
+                                        sistema supporta anche l'autenticazione tramite provider esterni come Google e
+                                        Microsoft. Questa integrazione è gestita manualmente configurando i rispettivi
+                                        handler OAuth (<code>AddGoogle</code>, <code>AddMicrosoftAccount</code>) e
+                                        utilizzando classi helper (<code>GoogleAuthEvents.cs</code>,
+                                        <code>MicrosoftAuthEvents.cs</code>) per intercettare gli eventi del flusso
+                                        OAuth (come <code>OnTicketReceived</code>) e creare o collegare l'utente esterno
+                                        all'entità <code>Utente</code> locale. L'autorizzazione si basa sui ruoli
+                                        ("Studente", "Docente", "Admin"), definiti come stringhe e associati all'entità
+                                        <code>Utente</code>. Le policy di autorizzazione (es. "AdminOnly",
+                                        "DocenteOnly") sono definite in <code>Program.cs</code> e applicate agli
+                                        endpoint API tramite attributi <code>[Authorize]</code> o metodi come
+                                        <code>RequireAuthorization()</code>, garantendo un controllo granulare degli
+                                        accessi.</p>
+                                </div>
+
+                                <div class="mb-4">
+                                    <h4 class="h6 fw-bold"><i class="bi bi-database me-2"></i>Database: Entity Framework
+                                        Core (Code-First) con MariaDB</h4>
+                                    <p class="text-muted small">La persistenza dei dati è affidata a Entity Framework
+                                        Core (EF Core), l'ORM standard per .NET. È stato adottato l'approccio
+                                        Code-First: le classi del modello C# (definite nella cartella
+                                        <code>Models</code>, come <code>Utente.cs</code>, <code>Videogioco.cs</code>,
+                                        <code>ClasseVirtuale.cs</code>, ecc.) definiscono la struttura dei dati. Il
+                                        contesto del database, <code>AppDbContext.cs</code> (nella cartella
+                                        <code>Data</code>), configura il mapping tra queste classi e le tabelle del
+                                        database relazionale. Come si evince dalla configurazione in
+                                        <code>Program.cs</code>, il database utilizzato è MariaDB (compatibile con
+                                        MySQL), a cui l'applicazione si connette tramite il provider
+                                        <code>Pomelo.EntityFrameworkCore.MySql</code>. La stringa di connessione è letta
+                                        da <code>appsettings.json</code> e la versione del server viene rilevata
+                                        automaticamente (<code>ServerVersion.AutoDetect(connectionString)</code>). Le
+                                        modifiche allo schema del database sono gestite tramite le Migrazioni di EF Core
+                                        (i file si trovano nella cartella <code>Migrations</code>), che permettono di
+                                        applicare aggiornamenti incrementali e controllati allo schema del database
+                                        MariaDB. La classe <code>DatabaseInitializer.cs</code> viene eseguita all'avvio
+                                        per applicare automaticamente le migrazioni pendenti e per popolare il database
+                                        con dati iniziali (seeding), come l'utente amministratore predefinito, i ruoli
+                                        base, materie, argomenti e alcuni giochi di esempio, garantendo che
+                                        l'applicazione sia pronta all'uso dopo il setup iniziale.</p>
+                                </div>
+
+                                <div class="mb-4">
+                                    <h4 class="h6 fw-bold"><i class="bi bi-controller me-2"></i>Gestione Giochi:
+                                        Simulazione Quiz da JSON</h4>
+                                    <p class="text-muted small">Poiché la traccia ministeriale non richiedeva
+                                        l'implementazione effettiva dei videogiochi, ma solo la loro gestione e
+                                        l'integrazione con la piattaforma, il prototipo simula i giochi educativi come
+                                        semplici quiz a risposta multipla. La struttura e il contenuto di questi quiz
+                                        (domande, opzioni di risposta, indicazione delle risposte corrette,
+                                        punteggio/monete associate) non sono codificati direttamente nell'applicazione
+                                        ma vengono definiti in una struttura dati, probabilmente un array di oggetti C#
+                                        o letti da un file JSON esterno durante l'inizializzazione. La classe
+                                        <code>DatabaseInitializer.cs</code> è responsabile del caricamento di questi
+                                        dati e della creazione delle entità <code>Videogioco</code> corrispondenti nel
+                                        database. Ogni <code>Videogioco</code> ha metadati come titolo, descrizione,
+                                        materia (<code>Materia.cs</code>) e argomenti (<code>Argomento.cs</code>, con
+                                        una relazione molti-a-molti gestita da <code>GiocoArgomento.cs</code>). La
+                                        logica di "gioco" effettiva non risiede nel backend; la piattaforma si limita a
+                                        presentare il link o le informazioni per accedere al gioco (che potrebbe essere
+                                        un'applicazione esterna o, in questa simulazione, una pagina dedicata come
+                                        <code>play-game.html</code> che carica dinamicamente il quiz). L'aspetto
+                                        cruciale è la capacità di tracciare i progressi: si ipotizza un meccanismo
+                                        (probabilmente un endpoint API in <code>ProgressoEndpoints.cs</code> che accetta
+                                        un DTO come <code>AggiornaProgressoDto.cs</code>) attraverso cui il "gioco" (o
+                                        la pagina di simulazione) comunica alla piattaforma il punteggio o le monete
+                                        ottenute da uno studente in un determinato gioco all'interno di una classe
+                                        specifica. Questi dati vengono salvati nell'entità
+                                        <code>ProgressoStudente.cs</code>.</p>
+                                </div>
+
+
+                                <h3 class="h5 mt-5 mb-3 border-bottom pb-2"><i class="bi bi-list-check me-2"></i>Moduli
+                                    Funzionali Implementati</h3>
+
+                                <div class="mb-4">
+                                    <h4 class="h6 fw-bold"><i class="bi bi-people me-2"></i>Gestione Utenti e Ruoli</h4>
+                                    <p class="text-muted small">Questo modulo fondamentale copre tutte le operazioni
+                                        relative agli account utente. La registrazione di nuovi utenti avviene tramite
+                                        un endpoint specifico (probabilmente in <code>AccountEndpoints.cs</code>) che
+                                        riceve i dati dal frontend (strutturati secondo <code>RegisterModel.cs</code>),
+                                        valida l'input, crea una nuova istanza dell'entità <code>Utente.cs</code> (che
+                                        estende <code>IdentityUser</code> di ASP.NET Core Identity) e la salva nel
+                                        database, assegnando di default il ruolo "Studente". Il processo include l'invio
+                                        di un'email di conferma per verificare l'indirizzo email dell'utente. Il login
+                                        (utilizzando <code>LoginModel.cs</code>) verifica le credenziali rispetto ai
+                                        dati salvati e, in caso di successo, stabilisce una sessione autenticata tramite
+                                        cookie. Gli utenti possono visualizzare e aggiornare il proprio profilo (nome,
+                                        cognome, email - tramite <code>UpdateProfileModel.cs</code> e un endpoint
+                                        dedicato). Il sistema distingue nettamente i ruoli ("Studente", "Docente",
+                                        "Admin"), memorizzati nel database e associati all'utente. L'autorizzazione
+                                        basata sui ruoli viene applicata a livello di API per controllare l'accesso alle
+                                        diverse funzionalità. Ad esempio, solo gli utenti con ruolo "Docente" possono
+                                        creare classi, mentre solo gli "Admin" possono accedere alla dashboard di
+                                        amministrazione (<code>AdminEndpoints.cs</code>) per gestire utenti
+                                        (visualizzazione con <code>UtenteAdminDto.cs</code>, modifica ruoli, ecc.) e
+                                        giochi. La gestione delle password dimenticate e il reset sono anch'essi
+                                        supportati (<code>ForgotPasswordModel.cs</code>,
+                                        <code>ResetPasswordModel.cs</code>).</p>
+                                </div>
+
+                                <div class="mb-4">
+                                    <h4 class="h6 fw-bold"><i class="bi bi-easel me-2"></i>Gestione Classi Virtuali e
+                                        Iscrizioni</h4>
+                                    <p class="text-muted small">Questo modulo è centrale per l'organizzazione didattica
+                                        della piattaforma. I docenti hanno la facoltà di creare nuove classi virtuali
+                                        (endpoint in <code>ClassiEndpoints.cs</code>, dati tramite
+                                        <code>CreaClasseDto.cs</code>), specificando un nome e una descrizione. Ogni
+                                        classe creata (rappresentata dall'entità <code>ClasseVirtuale.cs</code>) ottiene
+                                        automaticamente un codice di iscrizione univoco, generato dal sistema. I docenti
+                                        possono visualizzare le proprie classi (<code>ClasseDto.cs</code>,
+                                        <code>ClasseRiepilogoDto.cs</code>) e i dettagli di ciascuna
+                                        (<code>ClasseDetailDto.cs</code>), inclusi gli studenti iscritti
+                                        (<code>StudenteIscrittoDto.cs</code>) e i giochi associati. Una funzionalità
+                                        chiave per i docenti è l'associazione di specifici videogiochi educativi (dal
+                                        catalogo generale) alle proprie classi (endpoint che riceve
+                                        <code>AssociaGiocoDto.cs</code>, creando record nella tabella ponte
+                                        <code>ClasseGioco.cs</code>). Gli studenti, d'altra parte, possono iscriversi a
+                                        una classe inserendo il codice univoco fornito dal docente (endpoint in
+                                        <code>IscrizioniEndpoints.cs</code>, dati tramite <code>IscrivitiDto.cs</code>).
+                                        Una volta iscritti (record creato nell'entità <code>Iscrizione.cs</code>), gli
+                                        studenti possono visualizzare l'elenco delle classi a cui appartengono
+                                        (<code>ClasseIscrittaDto.cs</code>, <code>ClasseIscrittaRiepilogoDto.cs</code>)
+                                        e accedere ai giochi educativi associati a ciascuna classe direttamente dalla
+                                        loro dashboard.</p>
+                                </div>
+
+                                <div class="mb-4">
+                                    <h4 class="h6 fw-bold"><i class="bi bi-book me-2"></i>Gestione Catalogo Giochi e
+                                        Simulazione Gioco</h4>
+                                    <p class="text-muted small">La piattaforma include un catalogo di videogiochi
+                                        educativi. Questo catalogo è visualizzabile dagli utenti (principalmente docenti
+                                        per l'associazione alle classi e amministratori per la gestione). Gli endpoint
+                                        in <code>GameEndpoints.cs</code> forniscono l'elenco dei giochi disponibili
+                                        (<code>GiocoDto.cs</code>), potenzialmente con funzionalità di ricerca e filtro
+                                        per materia (<code>Materia.cs</code>/<code>MateriaDto.cs</code>) o argomento
+                                        (<code>Argomento.cs</code>/<code>ArgomentoDto.cs</code>). Gli amministratori
+                                        hanno privilegi speciali per gestire questo catalogo attraverso endpoint
+                                        dedicati in <code>AdminEndpoints.cs</code>: possono aggiungere nuovi giochi
+                                        (fornendo metadati e la struttura JSON del quiz tramite
+                                        <code>GiocoCreateUpdateDto.cs</code>), modificarli o rimuoverli. La
+                                        visualizzazione per l'admin potrebbe usare un DTO più dettagliato come
+                                        <code>GiocoAdminDto.cs</code>. Come menzionato, il "gioco" vero e proprio è
+                                        simulato. Quando uno studente accede a un gioco associato a una classe, viene
+                                        probabilmente reindirizzato a una pagina (es. <code>play-game.html</code>) che
+                                        carica i dati del quiz (domande/risposte dal JSON associato al
+                                        <code>Videogioco.cs</code>, magari tramite un DTO specifico come
+                                        <code>GiocoPlayDto.cs</code> o <code>GiocoDetailsDto.cs</code>). L'interfaccia
+                                        di questa pagina permette allo studente di rispondere alle domande. Al termine
+                                        del quiz (o durante), la pagina invia i risultati (punteggio/monete) a un
+                                        endpoint API (in <code>ProgressoEndpoints.cs</code>, usando
+                                        <code>AggiornaProgressoDto.cs</code>) che registra il progresso dello studente
+                                        (<code>ProgressoStudente.cs</code>) per quel gioco specifico all'interno di
+                                        quella classe.</p>
+                                </div>
+
+                                <div class="mb-4">
+                                    <h4 class="h6 fw-bold"><i class="bi bi-graph-up me-2"></i>Visualizzazione Progressi
+                                        e Classifiche</h4>
+                                    <p class="text-muted small">Un aspetto fondamentale della gamification è la
+                                        visibilità dei progressi e delle classifiche. Gli studenti possono monitorare i
+                                        propri risultati nella loro dashboard personale
+                                        (<code>DashboardStudenteDto.cs</code> servita da
+                                        <code>DashboardEndpoints.cs</code>), visualizzando le monete/punti accumulati
+                                        per ciascun gioco nelle classi a cui sono iscritti (dati provenienti da
+                                        <code>ProgressoStudente.cs</code>, magari aggregati in
+                                        <code>StatistichePersonaliDto.cs</code>). La piattaforma offre anche classifiche
+                                        (gestite da <code>ClassificheEndpoints.cs</code>) per stimolare la competizione
+                                        amichevole. Sono previste classifiche specifiche per singolo gioco all'interno
+                                        di una classe (mostrando gli studenti con i punteggi migliori per quel gioco) e
+                                        una classifica generale per l'intera classe (aggregando i punteggi/monete
+                                        ottenuti da tutti i giochi associati a quella classe). Queste classifiche (i cui
+                                        dati sono probabilmente rappresentati da <code>ClassificaEntryDto.cs</code>)
+                                        sono visibili sia agli studenti della classe sia al docente titolare. I docenti,
+                                        nella loro dashboard (<code>DashboardDocenteDto.cs</code>), hanno una visione
+                                        d'insieme dei progressi degli studenti nelle loro classi, potendo identificare
+                                        chi è più attivo o chi potrebbe aver bisogno di supporto (ad esempio tramite
+                                        dati come <code>StudenteAttivitaDto.cs</code>).</p>
+                                </div>
+
+                                <div class="mb-4">
+                                    <h4 class="h6 fw-bold"><i class="bi bi-speedometer2 me-2"></i>Dashboard Dedicate per
+                                        Ruolo</h4>
+                                    <p class="text-muted small">Per fornire un'esperienza utente mirata ed efficiente,
+                                        la piattaforma implementa dashboard specifiche per ciascun ruolo principale. La
+                                        Dashboard Studente (accessibile tramite <code>student-dashboard.html</code>, con
+                                        dati forniti da <code>DashboardEndpoints.cs</code> e strutturati in
+                                        <code>DashboardStudenteDto.cs</code>) offre una panoramica delle classi a cui lo
+                                        studente è iscritto, i giochi assegnati in ciascuna classe, i progressi
+                                        personali (monete/punti totali e per gioco) e l'accesso rapido alle classifiche
+                                        e ai giochi da svolgere. La Dashboard Docente (<code>dashboard.html</code>, dati
+                                        da <code>DashboardEndpoints.cs</code> tramite
+                                        <code>DashboardDocenteDto.cs</code>) funge da centro di controllo per
+                                        l'insegnante: permette di visualizzare e gestire le proprie classi virtuali,
+                                        vedere gli studenti iscritti per ciascuna classe, monitorare i loro progressi
+                                        complessivi e nei singoli giochi (forse con dettagli come
+                                        <code>StudenteAttivitaDto.cs</code>), associare nuovi giochi alle classi e
+                                        accedere alle classifiche. Infine, la Dashboard Admin
+                                        (<code>admin-dashboard.html</code>, dati da <code>AdminEndpoints.cs</code>
+                                        tramite <code>DashboardAdminDto.cs</code>) fornisce agli amministratori una
+                                        visione generale dello stato della piattaforma (numero di utenti, classi,
+                                        giochi) e link rapidi agli strumenti di gestione per utenti (elenco, modifica
+                                        ruoli - <code>UtenteAdminDto.cs</code>), giochi (aggiunta, modifica, rimozione -
+                                        <code>GiocoAdminDto.cs</code>, <code>GiocoCreateUpdateDto.cs</code>) e
+                                        potenzialmente altre configurazioni globali del sistema.</p>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
@@ -78,75 +384,88 @@
     <script src="/js/template-loader.js"></script>
     <script src="/js/navbar.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', async function () { // Reso ASYNC
+        // Funzione helper escape HTML
+        function escapeHtml(unsafe) {
+            if (typeof unsafe !== 'string') return unsafe;
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        document.addEventListener('DOMContentLoaded', async function () {
             // Riferimenti Contenuto Pagina
-            const logoutSection = document.getElementById('logoutSection');
+            const pageLoadingDiv = document.getElementById('page-loading');
+            const pageErrorDiv = document.getElementById('page-error');
+            const loggedInUserSection = document.getElementById('loggedInUserSection');
             const loggedInUsernameSpan = document.getElementById('loggedInUsername');
+            const roleButtonsDiv = loggedInUserSection.querySelector('.role-buttons'); // Div per i bottoni ruolo
             const welcomeMessageDiv = document.getElementById('welcomeMessage');
 
             console.log("Index page: Initializing templates...");
             try {
-                // --- ATTENDI IL CARICAMENTO DEI TEMPLATE ---
                 await TemplateLoader.initializeCommonTemplates();
-                console.log("Index page: Templates loaded. Adding short delay...");
+                await new Promise(resolve => setTimeout(resolve, 0)); // Delay
+                console.log("Index page: Templates loaded. Checking auth status...");
 
-                // --- AGGIUNTO DELAY per permettere al DOM di aggiornarsi ---
-                await new Promise(resolve => setTimeout(resolve, 0));
-                console.log("Index page: Delay finished. Checking auth status...");
-                // --- FINE DELAY ---
-
-
-                // --- ORA ESEGUI LA FETCH PER LO STATO UTENTE ---
-                let userData = null; // Assume not logged in initially
+                let userData = null;
                 try {
                     const response = await fetch('/api/account/my-roles');
-                    console.log("Index page: fetch /my-roles status:", response.status);
-                    if (response.ok) {
-                        userData = await response.json();
-                        console.log("Index page: User data received:", userData);
-                    } else {
-                        console.warn("Index page: /my-roles request failed or user not authenticated.");
-                    }
-                } catch (fetchError) {
-                    console.error("Index page: Error fetching user status:", fetchError);
-                    // Keep userData as null
-                }
+                    if (response.ok) userData = await response.json();
+                } catch (fetchError) { console.error("Index page: Error fetching user status:", fetchError); }
 
-                // --- ORA AGGIORNA NAVBAR E CONTENUTO (elementi navbar esistono) ---
-                console.log("Index page: Calling updateNavbar with data:", userData);
-                if (typeof updateNavbar === 'function') {
-                    updateNavbar(userData); // Chiama la funzione da navbar.js
-                    console.log("Index page: updateNavbar called successfully.");
-                } else {
-                    console.error("Index page: updateNavbar function is not defined!");
-                }
+                updateNavbar(userData); // Aggiorna navbar in ogni caso
 
-                // Aggiorna il contenuto specifico di QUESTA pagina
                 if (userData) { // Utente Loggato
-                    if (welcomeMessageDiv) welcomeMessageDiv.classList.add('d-none');
-                    if (logoutSection) logoutSection.classList.remove('d-none');
-                    if (loggedInUsernameSpan && userData.username) loggedInUsernameSpan.textContent = userData.username;
-                } else { // Utente Non Loggato
+                    console.log("Index page: User is logged in.", userData);
+                    if (loggedInUserSection) loggedInUserSection.classList.remove('d-none');
+                    if (loggedInUsernameSpan && userData.givenName) loggedInUsernameSpan.textContent = escapeHtml(userData.givenName);
+                    else if (loggedInUsernameSpan && userData.username) loggedInUsernameSpan.textContent = escapeHtml(userData.username); // Fallback a username
+
+                    // Pulisce eventuali bottoni precedenti e aggiunge quelli corretti
+                    if (roleButtonsDiv) roleButtonsDiv.innerHTML = '';
+
+                    if (userData.isStudente) {
+                        console.log("Index page: Adding student dashboard button.");
+                        const studentBtn = document.createElement('a');
+                        studentBtn.href = '/student-dashboard.html';
+                        studentBtn.className = 'btn btn-primary';
+                        studentBtn.textContent = 'Dashboard Studente';
+                        if (roleButtonsDiv) roleButtonsDiv.appendChild(studentBtn);
+                    }
+                    if (userData.isDocente) {
+                        console.log("Index page: Adding teacher dashboard button.");
+                        const teacherBtn = document.createElement('a');
+                        teacherBtn.href = '/dashboard.html'; // Assumendo che questa sia la dashboard docente
+                        teacherBtn.className = 'btn btn-success';
+                        teacherBtn.textContent = 'Dashboard Docente';
+                        if (roleButtonsDiv) roleButtonsDiv.appendChild(teacherBtn);
+                    }
+                    if (userData.isAdmin) {
+                        console.log("Index page: Adding admin dashboard button.");
+                        const adminBtn = document.createElement('a');
+                        adminBtn.href = '/admin-dashboard.html'; // Assumendo che questa sia la dashboard admin
+                        adminBtn.className = 'btn btn-danger';
+                        adminBtn.textContent = 'Dashboard Admin';
+                        if (roleButtonsDiv) roleButtonsDiv.appendChild(adminBtn);
+                    }
+                } else {
+                    // --- Utente Non Loggato ---
+                    console.log("Index page: User is not logged in.");
                     if (welcomeMessageDiv) welcomeMessageDiv.classList.remove('d-none');
-                    if (logoutSection) logoutSection.classList.add('d-none');
                 }
 
             } catch (error) {
-                // Errore nel caricamento template o nella fetch iniziale
                 console.error('Error during page initialization:', error);
-                // Prova comunque ad aggiornare la navbar assumendo utente non loggato
-                console.log("Index page: Updating navbar with null due to initialization error.");
-                if (typeof updateNavbar === 'function') {
-                    updateNavbar(null); // Passa null esplicitamente
-                } else {
-                    console.error("Index page: updateNavbar function is not defined on error path!");
-                }
-                // Mostra messaggio di benvenuto come fallback
-                if (welcomeMessageDiv) welcomeMessageDiv.classList.remove('d-none');
-                if (logoutSection) logoutSection.classList.add('d-none');
+                if (typeof updateNavbar === 'function') updateNavbar(null);
+                if (pageErrorDiv) { pageErrorDiv.textContent = 'Errore durante l\'inizializzazione della pagina.'; pageErrorDiv.classList.remove('d-none'); }
+            } finally {
+                if (pageLoadingDiv) pageLoadingDiv.classList.add('d-none'); // Nasconde loading generale
             }
         });
-        // La funzione postLogout() è definita in navbar.js ed è usata dalla navbar caricata
+        // La funzione postLogout() è definita in navbar.js
     </script>
 
 </body>

@@ -118,7 +118,7 @@ public static class AccountEndpoints
             }
             else
             {
-                return Results.Redirect("/profile.html"); // Reindirizza a una pagina di successo predefinita
+                return Results.Redirect("/"); // Reindirizza a una pagina di successo predefinita
             }
 
         }).AllowAnonymous(); // Permette accesso anonimo al login

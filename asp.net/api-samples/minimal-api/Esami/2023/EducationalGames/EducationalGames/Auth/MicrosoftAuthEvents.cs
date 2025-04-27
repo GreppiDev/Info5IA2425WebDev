@@ -122,7 +122,7 @@ public static class MicrosoftAuthEvents
 
             string finalRedirectUri;
             var isSpecificLocalReturnUrl = !string.IsNullOrEmpty(callbackReturnUrl) && callbackReturnUrl.StartsWith('/') && callbackReturnUrl != "/";
-            if (isSpecificLocalReturnUrl) { finalRedirectUri = callbackReturnUrl!; } else { finalRedirectUri = "/profile.html"; }
+            if (isSpecificLocalReturnUrl) { finalRedirectUri = callbackReturnUrl!; } else { finalRedirectUri = "/"; }
             logger.LogWarning(">>> [EVENT MS OnTicketReceived] Final redirect check: Target='{FinalRedirectUri}'", finalRedirectUri);
 
             logger.LogInformation(">>> [EVENT MS OnTicketReceived] Issuing explicit redirect to {Url}", finalRedirectUri);

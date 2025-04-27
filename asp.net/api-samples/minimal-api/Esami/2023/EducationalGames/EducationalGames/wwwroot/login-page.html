@@ -175,8 +175,8 @@
 
                 // Se l'utente è GIA' loggato su questa pagina, reindirizza
                 if (userData) {
-                    console.log("User already logged in, redirecting to profile.html"); // Aggiornato redirect
-                    window.location.href = '/profile.html'; // Reindirizza subito
+                    console.log("User already logged in, redirecting to home"); // Aggiornato redirect
+                    window.location.href = '/'; // Reindirizza subito
                     return; // Esce per evitare di mostrare messaggi di verifica
                 }
 
@@ -236,7 +236,7 @@
                         sessionStorage.setItem('isLoggedIn', 'true');
                         if (userData && userData.username) { sessionStorage.setItem('loggedInUser', userData.username); }
                         else { sessionStorage.removeItem('loggedInUser'); }
-                        window.location.href = '/profile.html'; // Redirect finale a profile.html
+                        window.location.href = '/'; // Redirect finale a home
                     })
                     .catch(async errorResponseOrFetchError => { // Gestione errori unificata
                         let errorMessage = 'Si è verificato un errore durante il login.';

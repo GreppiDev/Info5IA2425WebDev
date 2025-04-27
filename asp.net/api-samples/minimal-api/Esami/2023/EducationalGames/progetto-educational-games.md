@@ -1,18 +1,23 @@
-# Progetto "Educational Games"
+# Traccia "Educational Games"
 
-- [Progetto "Educational Games"](#progetto-educational-games)
-  - [Punto 1: Analisi della Realtà di Riferimento, Requisiti, Schema Concettuale](#punto-1-analisi-della-realtà-di-riferimento-requisiti-schema-concettuale)
-  - [Punto 2: Schema Logico Relazionale](#punto-2-schema-logico-relazionale)
-  - [Punto 3: Definizione SQL (MariaDB) - Sottoinsieme con Vincoli](#punto-3-definizione-sql-mariadb---sottoinsieme-con-vincoli)
-  - [Punto 4: Interrogazioni SQL](#punto-4-interrogazioni-sql)
-  - [Punto 5: Progetto di Massima dell'Applicazione Web](#punto-5-progetto-di-massima-dellapplicazione-web)
-    - [Architettura software/hardware](#architettura-softwarehardware)
-    - [Moduli Principali](#moduli-principali)
-    - [Diagrammi dei Casi d'Uso (Use Case)](#diagrammi-dei-casi-duso-use-case)
-    - [Possibili stack implementativi](#possibili-stack-implementativi)
-  - [Fase 6: Parte Significativa dell'Applicazione Web (Esempio)](#fase-6-parte-significativa-dellapplicazione-web-esempio)
+- [Traccia "Educational Games"](#traccia-educational-games)
+  - [Prima parte](#prima-parte)
+    - [Punto 1: Analisi della Realtà di Riferimento, Requisiti, Schema Concettuale](#punto-1-analisi-della-realtà-di-riferimento-requisiti-schema-concettuale)
+    - [Punto 2: Schema Logico Relazionale](#punto-2-schema-logico-relazionale)
+    - [Punto 3: Definizione SQL (MariaDB) - Sottoinsieme con Vincoli](#punto-3-definizione-sql-mariadb---sottoinsieme-con-vincoli)
+    - [Punto 4: Interrogazioni SQL](#punto-4-interrogazioni-sql)
+    - [Punto 5: Progetto di Massima dell'Applicazione Web](#punto-5-progetto-di-massima-dellapplicazione-web)
+      - [Architettura software/hardware](#architettura-softwarehardware)
+      - [Moduli Principali](#moduli-principali)
+      - [Diagrammi dei Casi d'Uso (Use Case)](#diagrammi-dei-casi-duso-use-case)
+      - [Possibili stack implementativi](#possibili-stack-implementativi)
+    - [Fase 6: Parte Significativa dell'Applicazione Web (Esempio)](#fase-6-parte-significativa-dellapplicazione-web-esempio)
+  - [Seconda parte](#seconda-parte)
+    - [Domanda 1: *`In relazione al tema proposto nella prima parte, si sviluppi, in un linguaggio a scelta, una porzione di codice significativa delle pagine web necessarie a presentare la classifica generale degli studenti di una certa classe virtuale, in base alle monete raccolte in tutti i videogiochi di quella classe.`*](#domanda-1-in-relazione-al-tema-proposto-nella-prima-parte-si-sviluppi-in-un-linguaggio-a-scelta-una-porzione-di-codice-significativa-delle-pagine-web-necessarie-a-presentare-la-classifica-generale-degli-studenti-di-una-certa-classe-virtuale-in-base-alle-monete-raccolte-in-tutti-i-videogiochi-di-quella-classe)
 
-## Punto 1: Analisi della Realtà di Riferimento, Requisiti, Schema Concettuale
+## Prima parte
+
+### Punto 1: Analisi della Realtà di Riferimento, Requisiti, Schema Concettuale
 
 Identifichiamo prima i requisiti basandoci sulla traccia, distinguendo tra quelli che definiscono i *dati* da memorizzare (utili per il modello E/R) e quelli che descrivono le *funzionalità* del sistema (utili per i casi d'uso).
 
@@ -142,7 +147,7 @@ Identifichiamo prima i requisiti basandoci sulla traccia, distinguendo tra quell
 
   Qui si riporta il diagramma E/R ristrutturato.
 
-## Punto 2: Schema Logico Relazionale
+### Punto 2: Schema Logico Relazionale
 
 Traduciamo il modello E/R in uno schema relazionale (praticamente già delineato sopra):
 
@@ -156,7 +161,7 @@ Traduciamo il modello E/R in uno schema relazionale (praticamente già delineato
 8. `GIOCHI_ARGOMENTI` (<u>*ID_Gioco*</u> INT NOT NULL, <u>*ID_Argomento*</u> INT NOT NULL, PRIMARY KEY (ID_Gioco, ID_Argomento), FOREIGN KEY (ID_Gioco) REFERENCES VIDEOGIOCHI(ID_Gioco) ON DELETE CASCADE, FOREIGN KEY (ID_Argomento) REFERENCES ARGOMENTI(ID_Argomento) ON DELETE CASCADE) - *Nota: CASCADE: se gioco o argomento spariscono, la classificazione sparisce.*
 9. `PROGRESSI_STUDENTI` (<u>*ID_Studente*</u> INT NOT NULL, <u>*ID_Gioco*</u> INT NOT NULL, <u>*ID_Classe*</u> INT NOT NULL, MoneteRaccolte INT UNSIGNED NOT NULL DEFAULT 0, UltimoAggiornamento TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, PRIMARY KEY (ID_Studente, ID_Gioco, ID_Classe), FOREIGN KEY (ID_Studente) REFERENCES UTENTI(ID_Utente) ON DELETE CASCADE, FOREIGN KEY (ID_Gioco) REFERENCES VIDEOGIOCHI(ID_Gioco) ON DELETE CASCADE, FOREIGN KEY (ID_Classe) REFERENCES CLASSI_VIRTUALI(ID_Classe) ON DELETE CASCADE, CHECK (MoneteRaccolte >= 0)) - *Nota: CASCADE qui. Il check su MoneteRaccolte >= 0 è un vincolo di dominio.*
 
-## Punto 3: Definizione SQL (MariaDB) - Sottoinsieme con Vincoli
+### Punto 3: Definizione SQL (MariaDB) - Sottoinsieme con Vincoli
 
 Creiamo le tabelle del database in SQL. Le stesse tabelle potrebbero essere create anche a partire da una migrazione del modello dei dati dal codice applicativo (usando EF Core).
 
@@ -179,6 +184,35 @@ CREATE TABLE UTENTI (
     Ruolo ENUM('Docente', 'Studente', 'Admin') NOT NULL COMMENT 'Ruolo dell utente nella piattaforma'
     -- L ENGINE, CHARSET e COLLATE useranno i default del database/server MariaDB
 );
+
+-- Tabella UTENTI nel prototipo (per testare il login, cambio password, ecc.)
+    /* CREATE TABLE UTENTI (
+        -- Colonne esistenti
+        ID_Utente INT AUTO_INCREMENT PRIMARY KEY,
+        Nome VARCHAR(50) NOT NULL,
+        Cognome VARCHAR(50) NOT NULL,
+        Email VARCHAR(100) NOT NULL UNIQUE,
+        PasswordHash VARCHAR(255) NOT NULL COMMENT 'Contiene l hash sicuro della password',
+        Ruolo ENUM('Admin', 'Docente', 'Studente') NOT NULL COMMENT 'Ruolo dell utente nella piattaforma', -- Assicurati che l'ordine corrisponda all'enum C#
+
+    -- Nuove colonne per verifica email
+    EmailVerificata BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'Indica se l email è stata verificata',
+    TokenVerificaEmail VARCHAR(100) NULL DEFAULT NULL COMMENT 'Token inviato per la verifica email',
+    ScadenzaTokenVerificaEmail DATETIME NULL DEFAULT NULL COMMENT 'Scadenza del token di verifica email (UTC)',
+
+    -- Nuove colonne per reset password
+    TokenResetPassword VARCHAR(100) NULL DEFAULT NULL COMMENT 'Token inviato per il reset password',
+    ScadenzaTokenResetPassword DATETIME NULL DEFAULT NULL COMMENT 'Scadenza del token di reset password (UTC)'
+
+    -- L ENGINE, CHARSET e COLLATE useranno i default del database/server MariaDB/MySQL
+    ) COMMENT 'Tabella degli utenti della piattaforma';
+
+    -- Indici aggiuntivi (consigliati per performance)
+    -- Indice sul token di verifica per velocizzare la ricerca
+    CREATE INDEX IX_UTENTI_TokenVerificaEmail ON UTENTI (TokenVerificaEmail);
+    -- Indice sul token di reset per velocizzare la ricerca
+    CREATE INDEX IX_UTENTI_TokenResetPassword ON UTENTI (TokenResetPassword); */
+    --
 
 -- Tabella Materie
 CREATE TABLE MATERIE (
@@ -299,7 +333,7 @@ CREATE TABLE PROGRESSI_STUDENTI (
 -- --- FINE DELLO SCHEMA ---
 ```
 
-## Punto 4: Interrogazioni SQL
+### Punto 4: Interrogazioni SQL
 
 a) **Elenco giochi per argomento (es. 'Legge di Ohm') in ordine alfabetico:**
 
@@ -358,9 +392,9 @@ ORDER BY
     V.Titolo ASC;
 ```
 
-## Punto 5: Progetto di Massima dell'Applicazione Web
+### Punto 5: Progetto di Massima dell'Applicazione Web
 
-### Architettura software/hardware
+#### Architettura software/hardware
 
 - Applicazione Web multi-tier
     - **Client-Side (Browser):** HTML per la struttura, CSS (es. Bootstrap) per lo stile, JavaScript (es. Vanilla JS, React, Vue, Angular) per l'interattività, gestione eventi, chiamate API asincrone (Fetch API).
@@ -370,7 +404,7 @@ ORDER BY
         - API RESTful per permettere la comunicazione tra client e server.
     - **Database:** MariaDB o MySQL.
 
-### Moduli Principali
+#### Moduli Principali
 
 - Componenti Funzionali richiesti dalla traccia
     - **Gestione Utenti:** Registrazione, Login, Gestione Profilo, Distinzione Ruoli (Docente/Studente).
@@ -383,11 +417,12 @@ ORDER BY
     - **Visualizzazione Classifiche:** Per gioco e generale per classe (sia per studenti che per docenti).
     - **Dashboard Docente:** Riepilogo classi, monitoraggio progressi studenti.
     - **Dashboard Studente:** Riepilogo classi, giochi da svolgere, progressi personali.
+- Componenti Funzionali non richiesti dalla traccia (ma molto importanti)
+  - **Dashboard Admin:** Riepilogo delle principali risorse della piattaforma (videogiochi, classi virtuali, studenti, docenti, e link a pannelli amministrativi per la gestione dei giochi, degli utenti, delle classi virtuali)
+  - **Simulazione della creazione dei giochi (non richiesta dalla traccia, ma utile per la creazione del prototipo**
+    - Per la scrittura del prototipo dell'applicazione si può ipotizzare che la creazione del gioco sia fatta semplicemente con il caricamento di un oggetto JSON che contiene la struttura del quiz, con le domande, le possibili risposte e l'indicazione delle risposte corrette.
 
-- **Simulazione della creazione dei giochi (non richiesta dalla traccia, ma utile per la creazione del prototipo**
-  - Per la scrittura del prototipo dell'applicazione si può ipotizzare che la creazione del gioco sia fatta semplicemente con il caricamento di un oggetto JSON che contiene la struttura del quiz, con le domande, le possibili risposte e l'indicazione delle risposte corrette.
-
-### Diagrammi dei Casi d'Uso (Use Case)
+#### Diagrammi dei Casi d'Uso (Use Case)
 
 Mostriamo l'interazione degli attori (Docente, Studente) con le funzionalità principali (derivate da RF).
 
@@ -424,7 +459,7 @@ Mostriamo l'interazione degli attori (Docente, Studente) con le funzionalità pr
 - `Registra Monete Raccolte` potrebbe essere collegato a `Avvia Videogioco` o essere un caso d'uso separato attivato da un attore "Sistema Esterno (Gioco)".
 - Potrebbero esserci relazioni `<<include>>` (es. `Autentica Utente` è inclusa in quasi tutte le azioni post-login) o `<<extend>>`.
 
-### Possibili stack implementativi
+#### Possibili stack implementativi
 
 Questo richiederebbe la scelta di tecnologie specifiche (es. ASP.NET Core + HTML/JS/Fetch API) e la scrittura di codice sia client che server. Ad esempio:
 
@@ -475,7 +510,7 @@ Questo richiederebbe la scelta di tecnologie specifiche (es. ASP.NET Core + HTML
       3. **Vantaggi:** Applicazione singola da gestire e installare, meccanismo di autenticazione (cookie) unificato sia per le chiamate API dal frontend JS sia per l'accesso diretto alle pagine.
       4. **Svantaggi:** L'applicazione Minimal API diventa un po' meno "minimal", dovendo gestire anche la logica di serving delle pagine. La separazione tra frontend e backend è meno netta, me in compenso l'applicazione è semplice da gestire.
 
-## Fase 6: Parte Significativa dell'Applicazione Web (Esempio)
+### Fase 6: Parte Significativa dell'Applicazione Web (Esempio)
 
 Per lo sviluppo di questo esempio verrà mostrato il codice necessario alla realizzazione di una **Applicazione Unificata (Minimal API serve sia API che Pagine)**. Realizziamo una struttura di progetto ASP.NET Core Minimal API che funge sia da backend API sia da server per le pagine HTML statiche, utilizzando l'autenticazione basata su cookie.
 
@@ -536,3 +571,1115 @@ EducationalGames/
 ├── EducationalGames.http             # File per testare API con estensione REST Client (VS Code)
 └── Program.cs                        # File principale di avvio e configurazione dell'applicazione Minimal API
 ```
+
+**2. Visualizzazione delle classi a cui uno studente è iscritto:**
+
+In questa sezione verrà descritto come creare la pagina del sito che permette di visualizzare le classi a cui uno studente è iscritto.
+
+## Seconda parte
+
+### Domanda 1: *`In relazione al tema proposto nella prima parte, si sviluppi, in un linguaggio a scelta, una porzione di codice significativa delle pagine web necessarie a presentare la classifica generale degli studenti di una certa classe virtuale, in base alle monete raccolte in tutti i videogiochi di quella classe.`*
+
+Di seguito vengono riportate due implementazioni con difficoltà differenti.
+
+1. La prima implementazione proposta (`classifica-classe.html`) è una pagina che presenta la classifica generale per classe prendendo l'idClasse da un form presente nella pagina stessa.
+2. La seconda versione (`classifica-classe-form.html`) è più strutturata e presenta due dropdown list che vengono popolate con le classi e i giochi dell'utente autenticato (che può essere `Docente` o `Studente`). La seconda dropdown viene popolata dopo che è stata selezionata la prima poiché viene caricata con i nomi dei giochi della classe selezionata nella prima dropdown.
+
+- File: `classifica-classe.html`
+
+    Si potrebbe ottenere l'idClasse dalla query string con un codice come quello riportato di seguito:
+
+    ```js
+
+    // Ottieni idClasse dalla query string
+    const urlParams = new URLSearchParams(window.location.search);
+    const idClasse = urlParams.get('idClasse');
+    ```
+
+    Nell'esempio seguente è stato scelto di prendere il parametro `idClasse` dal form della pagina stessa.
+
+    ```html
+    <!doctype html>
+    <html lang="it">
+
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Classifica Classe - Educational Games</title>
+        <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+            integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+        <link rel="stylesheet" href="/css/styles.css">
+        <style>
+            .table th {
+                white-space: nowrap;
+            }
+        </style>
+    </head>
+
+    <body>
+
+        <div id="navbar-container">
+            <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+                <div class="container-fluid"><span class="navbar-brand">Caricamento...</span></div>
+            </nav>
+        </div>
+
+        <main>
+            <div class="container mt-4">
+                <h1 id="pageTitle" class="mb-4">Visualizza Classifica Classe</h1>
+
+                <!-- Form per inserire ID Classe -->
+                <form id="classeForm" class="mb-4 card shadow-sm">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="idClasseInput" class="form-label">Inserisci ID Classe:</label>
+                            <input type="text" class="form-control" id="idClasseInput" placeholder="Es: 1" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Mostra Classifica</button>
+                    </div>
+                </form>
+
+                <div id="loading" class="text-center py-5 d-none"> <!-- Nascosto inizialmente -->
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Caricamento...</span>
+                    </div>
+                </div>
+
+                <div id="error" class="alert alert-danger d-none" role="alert"></div>
+
+                <div id="leaderboardContent" class="card shadow-sm d-none"> <!-- Nascosto inizialmente -->
+                    <div class="card-header">
+                        <h2 id="leaderboardSubtitle" class="h5 mb-0">Dettaglio Classifica</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">#</th>
+                                        <th scope="col">Studente</th>
+                                        <th scope="col" class="text-end">Monete Totali</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="leaderboardTableBody">
+                                    <!-- Righe classifica verranno inserite qui -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <p id="noLeaderboardData" class="text-center text-muted mt-3 d-none">
+                            Nessun dato disponibile per questa classifica al momento.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <div id="footer-container"></div>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+            crossorigin="anonymous"></script>
+        <script src="/js/template-loader.js"></script>
+        <script src="/js/navbar.js"></script>
+        <script>
+            // Riferimenti UI
+            const loadingDiv = document.getElementById('loading');
+            const errorDiv = document.getElementById('error');
+            const leaderboardContentDiv = document.getElementById('leaderboardContent');
+            const leaderboardTableBody = document.getElementById('leaderboardTableBody');
+            const noLeaderboardDataP = document.getElementById('noLeaderboardData');
+            const pageTitleH1 = document.getElementById('pageTitle'); // Titolo principale pagina
+            const leaderboardSubtitleH2 = document.getElementById('leaderboardSubtitle'); // Sottotitolo nel card
+            const classeForm = document.getElementById('classeForm');
+            const idClasseInput = document.getElementById('idClasseInput');
+
+            // Funzione helper escape HTML
+            function escapeHtml(unsafe) {
+                if (typeof unsafe !== 'string') return unsafe;
+                return unsafe
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+
+            // Funzione per mostrare errori
+            function showError(message) {
+                console.error("Errore visualizzato:", message); // Log dell'errore
+                if (errorDiv) {
+                    errorDiv.textContent = message;
+                    errorDiv.classList.remove('d-none');
+                }
+                if (loadingDiv) loadingDiv.classList.add('d-none');
+                if (leaderboardContentDiv) leaderboardContentDiv.classList.add('d-none'); // Nasconde la tabella se c'è errore
+            }
+
+            // Funzione principale per caricare la classifica
+            async function loadClassifica(idClasse) {
+                if (!idClasse || idClasse.trim() === '') {
+                    showError("ID della classe non specificato o non valido.");
+                    return;
+                }
+
+                if (loadingDiv) loadingDiv.classList.remove('d-none');
+                if (errorDiv) errorDiv.classList.add('d-none'); // Nasconde errori precedenti
+                if (leaderboardContentDiv) leaderboardContentDiv.classList.add('d-none'); // Nasconde la tabella durante il caricamento
+
+                try {
+                    // Tentativo 1: Caricare la classifica
+                    const responseClassifica = await fetch(`/api/classifiche/classe/${idClasse}`);
+
+                    if (!responseClassifica.ok) {
+                        let errorMsg = `Errore nel caricamento della classifica (Status: ${responseClassifica.status})`;
+                        try {
+                            const errData = await responseClassifica.json();
+                            errorMsg = errData.title || errData.detail || errorMsg;
+                        } catch { /* Ignora errore parsing JSON */ }
+                        if (responseClassifica.status === 401) errorMsg = "Non sei autenticato. Effettua il login.";
+                        if (responseClassifica.status === 403) errorMsg = "Non hai i permessi per visualizzare questa classifica.";
+                        if (responseClassifica.status === 404) errorMsg = `Classe con ID ${idClasse} non trovata.`; // Messaggio specifico per 404
+                        throw new Error(errorMsg);
+                    }
+
+                    const classifica = await responseClassifica.json();
+
+                    // Tentativo 2: Caricare i dettagli della classe per il titolo (opzionale ma utile)
+                    let nomeClasse = `ID: ${idClasse}`; // Default
+                    try {
+                        const responseClasse = await fetch(`/api/classi/${idClasse}`);
+                        if (responseClasse.ok) {
+                            const classeInfo = await responseClasse.json();
+                            nomeClasse = classeInfo.nome || nomeClasse;
+                        } else if (responseClasse.status === 404) {
+                            // Se la classe non esiste, potremmo volerlo segnalare anche qui,
+                            // ma l'errore principale dovrebbe arrivare dalla chiamata alla classifica.
+                            console.warn(`Classe con ID ${idClasse} non trovata durante il recupero del nome.`);
+                        }
+                    } catch (classeError) {
+                        console.warn("Errore nel recupero del nome della classe:", classeError);
+                        // Non blocca la visualizzazione della classifica se la chiamata principale ha funzionato
+                    }
+
+                    // Aggiorna Titoli (Sottotitolo nel card)
+                    if (leaderboardSubtitleH2) leaderboardSubtitleH2.textContent = `Classifica - Classe: ${escapeHtml(nomeClasse)}`;
+                    // pageTitleH1 rimane statico o può essere aggiornato se preferito
+
+                    // Popola la tabella
+                    if (leaderboardTableBody) leaderboardTableBody.innerHTML = ''; // Pulisce prima
+                    if (classifica && classifica.length > 0) {
+                        if (noLeaderboardDataP) noLeaderboardDataP.classList.add('d-none');
+                        classifica.forEach((entry, index) => {
+                            const row = leaderboardTableBody.insertRow();
+                            row.innerHTML = `
+                                <th scope="row">${index + 1}</th>
+                                <td>${escapeHtml(entry.nomeStudente)}</td>
+                                <td class="text-end">${entry.monete}</td>
+                            `;
+                        });
+                        // Mostra il contenuto della classifica
+                        if (leaderboardContentDiv) leaderboardContentDiv.classList.remove('d-none');
+                    } else {
+                        // Mostra messaggio "nessun dato" se l'API ritorna array vuoto
+                        if (noLeaderboardDataP) noLeaderboardDataP.classList.remove('d-none');
+                        // Mostra comunque il contenitore della tabella/messaggio
+                        if (leaderboardContentDiv) leaderboardContentDiv.classList.remove('d-none');
+                    }
+
+
+                } catch (error) {
+                    console.error("Errore durante il caricamento:", error);
+                    showError(error.message || "Si è verificato un errore imprevisto.");
+                } finally {
+                    // Nasconde l'indicatore di caricamento
+                    if (loadingDiv) loadingDiv.classList.add('d-none');
+                }
+            }
+
+            // --- Inizializzazione Pagina ---
+            document.addEventListener('DOMContentLoaded', async function () {
+                console.log("Classifica Classe page: Initializing templates...");
+                try {
+                    await TemplateLoader.initializeCommonTemplates();
+
+                    let userData = null;
+                    try {
+                        const response = await fetch('/api/account/my-roles');
+                        if (response.ok) {
+                            userData = await response.json();
+                        } else if (response.status === 401) {
+                            // Non autenticato, mostra errore e disabilita form
+                            showError("Non sei autenticato. Effettua il login per visualizzare le classifiche.");
+                            if (classeForm) classeForm.classList.add('d-none'); // Nasconde il form
+                            if (typeof updateNavbar === 'function') updateNavbar(null);
+                            return; // Interrompe
+                        } else {
+                            throw new Error("Errore nel controllo autenticazione.");
+                        }
+                    } catch (authError) {
+                        showError(authError.message);
+                        if (classeForm) classeForm.classList.add('d-none'); // Nasconde il form
+                        if (typeof updateNavbar === 'function') updateNavbar(null);
+                        return; // Interrompe
+                    }
+
+                    // Se autenticato, aggiorna la navbar
+                    if (typeof updateNavbar === 'function') {
+                        updateNavbar(userData);
+                    } else {
+                        console.error("Funzione updateNavbar non trovata dopo il caricamento di navbar.js");
+                    }
+
+                    // Aggiungi listener per il submit del form
+                    if (classeForm) {
+                        classeForm.addEventListener('submit', function (event) {
+                            event.preventDefault(); // Impedisce il submit tradizionale
+                            const idClasse = idClasseInput.value;
+                            loadClassifica(idClasse); // Carica la classifica con l'ID inserito
+                        });
+                    } else {
+                        showError("Errore: Impossibile trovare il form per l'ID della classe.");
+                    }
+
+                    // NON caricare la classifica all'avvio, aspetta il submit del form
+
+                } catch (error) {
+                    console.error("Errore durante l'inizializzazione della pagina:", error);
+                    showError("Errore grave durante l'inizializzazione della pagina.");
+                    if (classeForm) classeForm.classList.add('d-none'); // Nasconde il form in caso di errore grave
+                    if (typeof updateNavbar === 'function') updateNavbar(null); // Fallback navbar
+                }
+            });
+
+        </script>
+
+    </body>
+
+    </html>
+    ```
+
+- **Spiegazione dettagliata del codice della pagina `classifica-classe.html` e del backend correlato:**
+
+    Questa pagina HTML permette agli utenti (studenti o docenti) di visualizzare la classifica generale di una specifica classe virtuale, basata sulla somma delle monete raccolte dagli studenti in tutti i giochi associati a quella classe.
+
+    - Struttura HTML (classifica-classe.html)
+
+        La pagina è strutturata utilizzando Bootstrap per il layout e lo stile. Gli elementi principali sono:
+
+        * **Navbar:** Caricata dinamicamente tramite `template-loader.js` e gestita da `navbar.js`.
+        * **Titolo:** `<h1>Visualizza Classifica Classe</h1>`.
+        * **Form (`#classeForm`):**
+            * Un input (`#idClasseInput`) per inserire l'ID della classe.
+            * Un pulsante (`type="submit"`) per inviare la richiesta.
+        * **Indicatore di Caricamento (`#loading`):** Un elemento `spinner-border` mostrato durante le chiamate API.
+        * **Area Errori (`#error`):** Un `div` per mostrare messaggi di errore.
+        * **Contenuto Classifica (`#leaderboardContent`):**
+            * Un `card` Bootstrap che contiene:
+                * Un sottotitolo (`#leaderboardSubtitle`) che mostrerà il nome della classe.
+                * Una tabella (`table`) con un `tbody` (`#leaderboardTableBody`) dove verranno inserite le righe della classifica.
+                * Un paragrafo (`#noLeaderboardData`) mostrato se la classifica è vuota.
+        * **Footer:** Caricato dinamicamente tramite `template-loader.js`.
+        * **Script:** Include Bootstrap JS, i loader per template/navbar e lo script principale della pagina.
+
+    - Logica JavaScript (`<script>` in classifica-classe.html)
+
+        Lo script gestisce l'interattività della pagina.
+
+        **a) Riferimenti agli Elementi DOM:** Vengono ottenuti riferimenti agli elementi HTML principali usando `document.getElementById` per poterli manipolare (mostrare/nascondere, aggiornare contenuto).
+
+        ```js
+            // ...existing code...
+            // Riferimenti UI
+            const loadingDiv = document.getElementById('loading');
+            const errorDiv = document.getElementById('error');
+            const leaderboardContentDiv = document.getElementById('leaderboardContent');
+            const leaderboardTableBody = document.getElementById('leaderboardTableBody');
+            const noLeaderboardDataP = document.getElementById('noLeaderboardData');
+            const pageTitleH1 = document.getElementById('pageTitle'); // Titolo principale pagina
+            const leaderboardSubtitleH2 = document.getElementById('leaderboardSubtitle'); // Sottotitolo nel card
+            const classeForm = document.getElementById('classeForm');
+            const idClasseInput = document.getElementById('idClasseInput');
+            // ...existing code...
+        ```
+
+        **b) Funzioni Helper:**
+
+        * `escapeHtml(unsafe)`: Previene attacchi XSS (Cross-Site Scripting) sostituendo caratteri HTML speciali nel testo prima di inserirlo nel DOM.
+        * `showError(message)`: Mostra un messaggio di errore nell'elemento `#error`, nasconde il caricamento e la tabella.
+
+        **c) Funzione Principale `loadClassifica(idClasse)`:**
+        Questa funzione asincrona è il cuore della pagina. Viene chiamata quando l'utente invia il form.
+
+        1. **Validazione Input:** Controlla se `idClasse` è stato fornito.
+        2. **Gestione UI Iniziale:** Mostra l'indicatore di caricamento (`#loading`), nasconde eventuali errori precedenti (`#error`) e la tabella (`#leaderboardContent`).
+        3. **Try...Catch...Finally:** Utilizzato per gestire le chiamate asincrone e gli eventuali errori.
+        4. **Chiamata API 1: Recupero Classifica (`fetch('/api/classifiche/classe/{idClasse}')`)**
+            * Effettua una richiesta `GET` all'endpoint del backend per ottenere i dati della classifica per la classe specificata.
+            * **Controllo Risposta (`responseClassifica.ok`):** Verifica se la richiesta HTTP ha avuto successo (status code 2xx).
+            * **Gestione Errori API:** Se la risposta non è `ok`:
+                * Tenta di leggere un messaggio di errore JSON dal corpo della risposta.
+                * Imposta messaggi specifici per errori comuni (401 Non Autorizzato, 403 Accesso Negato, 404 Non Trovato).
+                * Lancia un `Error` che verrà catturato dal blocco `catch`.
+            * **Parsing JSON:** Se la risposta è `ok`, estrae i dati della classifica (`classifica`) dal corpo della risposta JSON.
+
+            ```mermaid
+            sequenceDiagram
+                participant Browser (classifica-classe.html)
+                participant Server (ASP.NET Core API)
+                participant Database
+
+                Browser->>Server: GET /api/classifiche/classe/{idClasse}
+                Server->>Server: Verifica Autenticazione/Autorizzazione (Cookie, Ruoli)
+                alt Accesso Consentito
+                    Server->>Database: Query ProgressiStudenti (WHERE ClasseId, GROUP BY StudenteId, SUM Monete)
+                    Database-->>Server: Dati Aggregati (StudenteId, TotalMonete)
+                    Server->>Database: Query Utenti (WHERE Id IN lista_studenti)
+                    Database-->>Server: Dettagli Studenti (Id, Nome, Cognome)
+                    Server->>Server: Combina dati e ordina -> List<ClassificaEntryDto>
+                    Server-->>Browser: 200 OK (JSON: List<ClassificaEntryDto>)
+                else Accesso Negato (401/403)
+                    Server-->>Browser: 401 Unauthorized / 403 Forbidden (JSON Error)
+                else Classe Non Trovata (Verifica Accesso)
+                    Server-->>Browser: 403 Forbidden (Perché l'utente non ha accesso a una classe inesistente)
+                    Note over Server: La verifica accesso fallisce se la classe non esiste o l'utente non è associato.
+                end
+                Browser->>Browser: Processa JSON o mostra errore
+            ```
+
+        5. **Chiamata API 2: Recupero Nome Classe (`fetch('/api/classi/{idClasse}')`)**
+            * Effettua una seconda richiesta `GET` (opzionale ma utile) per ottenere il nome della classe da mostrare nel sottotitolo.
+            * Viene eseguita solo se la prima chiamata ha avuto successo.
+            * Gestisce la risposta in modo simile, ma un errore qui non blocca la visualizzazione della classifica (usa `console.warn`). Se la classe non viene trovata (404), usa l'ID come fallback.
+
+            ```mermaid
+            sequenceDiagram
+                participant Browser (classifica-classe.html)
+                participant Server (ASP.NET Core API)
+                participant Database
+
+                Browser->>Server: GET /api/classi/{idClasse}
+                Server->>Server: Verifica Autenticazione/Autorizzazione (Docente/Admin)
+                alt Accesso Consentito
+                    Server->>Database: Query ClassiVirtuali (WHERE Id = idClasse, INCLUDE Materia, Docente)
+                    alt Classe Trovata
+                        Database-->>Server: Dati Classe
+                        Server->>Server: Crea ClasseDetailDto (estrae nome)
+                        Server-->>Browser: 200 OK (JSON: ClasseDetailDto)
+                    else Classe Non Trovata
+                        Database-->>Server: null
+                        Server-->>Browser: 404 Not Found (JSON Error)
+                    end
+                else Accesso Negato (401/403)
+                    Server-->>Browser: 401 Unauthorized / 403 Forbidden (JSON Error)
+                end
+                Browser->>Browser: Estrae nome classe o gestisce errore (warn)
+            ```
+
+        6. **Aggiornamento UI:**
+            * Aggiorna il sottotitolo (`#leaderboardSubtitle`) con il nome della classe recuperato (o l'ID).
+            * Pulisce il corpo della tabella (`#leaderboardTableBody`).
+            * Se `classifica` contiene dati:
+                * Nasconde il messaggio `#noLeaderboardData`.
+                * Itera sull'array `classifica` e crea una riga (`<tr>`) per ogni studente, inserendo posizione, nome (escaped) e monete.
+                * Mostra il contenitore della classifica (`#leaderboardContent`).
+            * Se `classifica` è vuoto:
+                * Mostra il messaggio `#noLeaderboardData`.
+                * Mostra comunque il contenitore (`#leaderboardContent`) per visualizzare il messaggio.
+        7. **Blocco `finally`:** Nasconde sempre l'indicatore di caricamento (`#loading`) al termine della funzione, sia in caso di successo che di errore.
+
+        **d) Inizializzazione Pagina (`DOMContentLoaded`):**
+        Questo codice viene eseguito quando il DOM della pagina è completamente caricato.
+
+        1. **Caricamento Template:** Usa `TemplateLoader.initializeCommonTemplates()` per caricare navbar e footer.
+        2. **Controllo Autenticazione:** Effettua una chiamata `fetch('/api/account/my-roles')` per verificare se l'utente è loggato e ottenere i suoi ruoli.
+            * Se **non autenticato (401)**: Mostra un errore, nasconde il form e interrompe l'esecuzione.
+            * Se **errore diverso**: Mostra un errore generico.
+            * Se **autenticato**: Procede.
+        3. **Aggiornamento Navbar:** Chiama `updateNavbar(userData)` (definita in `navbar.js`) per mostrare lo stato di login corretto.
+        4. **Listener Form:** Aggiunge un listener all'evento `submit` del form (`#classeForm`):
+            * `event.preventDefault()`: Impedisce al browser di ricaricare la pagina.
+            * Recupera l'ID della classe dall'input (`idClasseInput.value`).
+            * Chiama `loadClassifica(idClasse)` per avviare il caricamento dei dati.
+        5. **Gestione Errori Inizializzazione:** Un blocco `try...catch` generale gestisce eventuali problemi durante l'inizializzazione.
+
+    - Backend API Endpoints
+
+        **a) `GET /api/classifiche/classe/{idClasse}` (in ClassificheEndpoints.cs)**
+
+        * **Scopo:** Fornire la classifica *generale* per una data classe, sommando le monete di *tutti* i giochi per ogni studente.
+        * **Autorizzazione:**
+            * Recupera l'ID dell'utente loggato (`userId`) dai claims del token/cookie.
+            * Verifica se l'utente è:
+                * Uno studente iscritto a quella classe (`db.Iscrizioni`).
+                * Il docente di quella classe (`db.ClassiVirtuali`).
+                * Un amministratore (`ctx.User.IsInRole(nameof(RuoloUtente.Admin))`).
+            * Se nessuna condizione è vera, restituisce `403 Forbidden`. Se l'utente non è loggato, restituisce `401 Unauthorized`.
+        * **Logica Dati:**
+            1. **Aggregazione:** Esegue una query LINQ sul database (`db.ProgressiStudenti`):
+                * Filtra i progressi per `ClasseId`.
+                * Raggruppa (`GroupBy`) i risultati per `StudenteId`.
+                * Seleziona (`Select`) l'ID dello studente (`g.Key`) e la somma (`Sum`) delle `MoneteRaccolte` per quel gruppo (cast a `long` per evitare overflow durante la somma SQL, poi riconvertito a `uint`).
+                * `ToListAsync()` esegue la query di aggregazione sul DB.
+            2. **Recupero Dettagli Studenti:**
+                * Estrae gli ID degli studenti (`studenteIds`) dai risultati aggregati.
+                * Esegue una seconda query su `db.Utenti` per recuperare Nome e Cognome degli studenti i cui ID sono nella lista `studenteIds`.
+                * `ToDictionaryAsync(u => u.Id)` crea un dizionario per un accesso rapido ai dati dello studente tramite ID.
+            3. **Combinazione Dati:**
+                * Itera sui risultati aggregati (`progressiAggregati`).
+                * Per ogni studente, cerca i suoi dettagli nel dizionario `studenti`.
+                * Crea un oggetto `ClassificaEntryDto` combinando l'ID, il nome completo (o "Studente Sconosciuto" se non trovato) e il totale delle monete.
+            4. **Ordinamento:** Ordina la lista finale (`classificaGenerale`) in memoria per monete (discendente) e poi per nome studente (ascendente).
+        * **Risposta:** Restituisce `200 OK` con la lista di `ClassificaEntryDto` in formato JSON, oppure `500 Internal Server Error` in caso di eccezioni durante l'accesso ai dati.
+
+        **b) `GET /api/classi/{idClasse}` (in ClassiEndpoints.cs)**
+
+        * **Scopo:** Fornire i dettagli di una specifica classe virtuale. In questo contesto, viene usato solo per recuperare il nome della classe.
+        * **Autorizzazione:**
+            * Recupera l'ID utente.
+            * Trova la classe nel DB (`db.ClassiVirtuali`). Se non esiste, restituisce `404 Not Found`.
+            * Verifica se l'utente loggato è il `DocenteId` associato alla classe o un `Admin`.
+            * Se non autorizzato, restituisce `403 Forbidden`.
+        * **Logica Dati:**
+            * Usa `FirstOrDefaultAsync` per trovare la classe con l'ID specificato.
+            * `Include(c => c.Materia)` e `Include(c => c.Docente)` caricano i dati correlati necessari per costruire il DTO. `AsNoTracking()` migliora le prestazioni per query di sola lettura.
+        * **Risposta:** Restituisce `200 OK` con un oggetto `ClasseDetailDto` (che contiene il nome della classe, della materia, del docente, ecc.) in formato JSON.
+
+    - Ruolo di Program.cs
+
+        Il file Program.cs è il punto di ingresso dell'applicazione ASP.NET Core Minimal API. È responsabile di:
+
+        * **Configurazione Servizi:** Imposta il database (`AddDbContext`), l'autenticazione (Cookie, Google, Microsoft), l'autorizzazione (policy come "AdminOnly"), CORS, Data Protection, servizi email, ecc.
+        * **Configurazione Pipeline HTTP:** Definisce i middleware che gestiscono le richieste HTTP in arrivo:
+            * `UseHttpsRedirection`, `UseStaticFiles`, `UseRouting`.
+            * `UseCors`: Applica le policy CORS definite.
+            * `UseAuthentication`: Legge i cookie/token per identificare l'utente.
+            * `UseAuthorization`: Applica le regole di accesso basate sui ruoli o policy.
+            * `UseMiddleware<StatusCodeMiddleware>`: Middleware personalizzato per restituire risposte JSON standard per errori API (401, 403, 404).
+            * `UseStatusCodePagesWithRedirects`: Reindirizza a pagine HTML per errori non gestiti da API (es. 404 per file non trovati).
+        * **Mapping Endpoint:** Collega gli URL (es. `/api/classifiche/classe/{idClasse}`) alle funzioni handler definite nei file `Endpoints` (come ClassificheEndpoints.cs, ClassiEndpoints.cs) usando `MapGroup` e i metodi di estensione specifici (`MapClassificheEndpoints`, `MapClassiEndpoints`, ecc.).
+        * **Inizializzazione Database:** Esegue le migrazioni del database e il seeding (es. creazione utente admin) all'avvio tramite `DatabaseInitializer`.
+
+        In sintesi, Program.cs orchestra l'intera applicazione, configurando come le richieste vengono gestite, come gli utenti vengono autenticati/autorizzati e quali pezzi di codice (gli endpoint) rispondono a specifici URL API.
+
+- File: `classifica-classe-form.html`
+
+    ```html
+    <!doctype html>
+    <html lang="it">
+
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Classifiche - Educational Games</title>
+        <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+            integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+        <link rel="stylesheet" href="/css/styles.css">
+        <style>
+            .table th {
+                white-space: nowrap;
+            }
+
+            #form-container {
+                margin-bottom: 2rem;
+            }
+        </style>
+    </head>
+
+    <body>
+
+        <div id="navbar-container">
+            <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+                <div class="container-fluid"><span class="navbar-brand">Caricamento...</span></div>
+            </nav>
+        </div>
+
+        <main>
+            <div class="container mt-4">
+                <h1 id="pageTitle" class="mb-4">Classifiche</h1>
+
+                <!-- Form per selezione classe e gioco -->
+                <div id="form-container" class="card shadow-sm mb-4">
+                    <div class="card-header">
+                        Seleziona Classe e Gioco
+                    </div>
+                    <div class="card-body">
+                        <form id="selectClassificaForm">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="selectClasse" class="form-label">Classe</label>
+                                    <select id="selectClasse" class="form-select" aria-label="Seleziona classe" disabled>
+                                        <option selected value="">Caricamento classi...</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="selectGioco" class="form-label">Gioco</label>
+                                    <select id="selectGioco" class="form-select" aria-label="Seleziona gioco" disabled>
+                                        <option selected value="">-- Prima seleziona una classe --</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </form>
+                        <div id="formLoading" class="text-center py-3 d-none">
+                            <div class="spinner-border spinner-border-sm text-secondary" role="status">
+                                <span class="visually-hidden">Caricamento dati...</span>
+                            </div>
+                        </div>
+                        <div id="formError" class="alert alert-warning mt-3 d-none" role="alert"></div>
+                    </div>
+                </div>
+
+                <!-- Area visualizzazione classifica -->
+                <div id="loading" class="text-center py-5 d-none">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Caricamento classifica...</span>
+                    </div>
+                </div>
+
+                <div id="error" class="alert alert-danger d-none" role="alert"></div>
+
+                <div id="leaderboardContent" class="card shadow-sm d-none">
+                    <div class="card-header">
+                        <h2 id="leaderboardSubtitle" class="h5 mb-0">Dettaglio Classifica</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">#</th>
+                                        <th scope="col">Studente</th>
+                                        <th scope="col" class="text-end">Monete</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="leaderboardTableBody">
+                                    <!-- Righe classifica verranno inserite qui -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <p id="noLeaderboardData" class="text-center text-muted mt-3 d-none">
+                            Nessun dato disponibile per questa classifica al momento.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <div id="footer-container"></div>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+            crossorigin="anonymous"></script>
+        <script src="/js/template-loader.js"></script>
+        <script src="/js/navbar.js"></script>
+        <script>
+            // Riferimenti UI Form
+            const formContainer = document.getElementById('form-container');
+            const selectClasse = document.getElementById('selectClasse');
+            const selectGioco = document.getElementById('selectGioco');
+            const formLoading = document.getElementById('formLoading');
+            const formError = document.getElementById('formError');
+
+            // Riferimenti UI Classifica
+            const loadingDiv = document.getElementById('loading');
+            const errorDiv = document.getElementById('error');
+            const leaderboardContentDiv = document.getElementById('leaderboardContent');
+            const leaderboardTableBody = document.getElementById('leaderboardTableBody');
+            const noLeaderboardDataP = document.getElementById('noLeaderboardData');
+            const pageTitleH1 = document.getElementById('pageTitle');
+            const leaderboardSubtitleH2 = document.getElementById('leaderboardSubtitle');
+
+            let userRole = null; // 'Docente' o 'Studente'
+            let availableClasses = []; // Cache delle classi caricate [{id, nome, giochi}]
+
+            // Funzione helper escape HTML
+            function escapeHtml(unsafe) {
+                if (typeof unsafe !== 'string') return unsafe;
+                return unsafe
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+
+            // Funzione per mostrare errori nel form
+            function showFormError(message) {
+                console.error("Errore form:", message);
+                if (formError) {
+                    formError.textContent = message;
+                    formError.classList.remove('d-none');
+                }
+                if (formLoading) formLoading.classList.add('d-none');
+                selectClasse.disabled = true;
+                selectGioco.disabled = true;
+            }
+
+            // Funzione per mostrare errori nella sezione classifica
+            function showLeaderboardError(message) {
+                console.error("Errore classifica:", message);
+                if (errorDiv) {
+                    errorDiv.textContent = message;
+                    errorDiv.classList.remove('d-none');
+                }
+                if (loadingDiv) loadingDiv.classList.add('d-none');
+                if (leaderboardContentDiv) leaderboardContentDiv.classList.add('d-none');
+            }
+
+            // Funzione per caricare le classi in base al ruolo
+            async function loadClassesForUser() {
+                if (!userRole) {
+                    showFormError("Ruolo utente non determinato.");
+                    return;
+                }
+
+                const apiUrl = userRole === 'Docente' ? '/api/classi/mie' : '/api/iscrizioni/mie';
+                // Determina i nomi corretti dei campi DTO in base all'endpoint
+                const idField = userRole === 'Docente' ? 'id' : 'idClasse';
+                const nameField = userRole === 'Docente' ? 'nome' : 'nomeClasse';
+                const gamesField = userRole === 'Studente' ? 'giochiDisponibili' : null; // Solo Studente ha giochi qui
+
+                if (formLoading) formLoading.classList.remove('d-none');
+                if (formError) formError.classList.add('d-none');
+                selectClasse.disabled = true;
+                selectGioco.disabled = true;
+
+                try {
+                    const response = await fetch(apiUrl);
+                    if (!response.ok) {
+                        let errorMsg = `Errore nel caricamento delle classi (Status: ${response.status})`;
+                        if (response.status === 401) errorMsg = "Non sei autenticato.";
+                        if (response.status === 403) errorMsg = `Non hai i permessi (${userRole}) per vedere le classi.`;
+                        throw new Error(errorMsg);
+                    }
+                    const classesData = await response.json();
+
+                    availableClasses = []; // Resetta cache
+                    selectClasse.innerHTML = '<option selected value="">-- Seleziona una classe --</option>';
+
+                    if (classesData && classesData.length > 0) {
+                        for (const classe of classesData) {
+                            const classeInfo = {
+                                id: classe[idField],
+                                nome: classe[nameField],
+                                // Inizializza giochi come array vuoto; verrà popolato dopo se Docente
+                                // o direttamente qui se Studente
+                                giochi: (userRole === 'Studente' && classe[gamesField]) ? classe[gamesField] : []
+                            };
+
+                            availableClasses.push(classeInfo);
+
+                            const option = document.createElement('option');
+                            option.value = classeInfo.id;
+                            option.textContent = escapeHtml(classeInfo.nome);
+                            selectClasse.appendChild(option);
+                        }
+                        selectClasse.disabled = false;
+                    } else {
+                        selectClasse.innerHTML = '<option selected value="">-- Nessuna classe trovata --</option>';
+                    }
+
+                } catch (error) {
+                    showFormError(error.message || "Errore imprevisto durante il caricamento delle classi.");
+                } finally {
+                    if (formLoading) formLoading.classList.add('d-none');
+                }
+            }
+
+            // Funzione per popolare il dropdown dei giochi
+            async function populateGiocoDropdown(selectedClasseId) {
+                selectGioco.innerHTML = '<option selected value="">-- Caricamento giochi... --</option>';
+                selectGioco.disabled = true;
+                leaderboardContentDiv.classList.add('d-none'); // Nasconde vecchia classifica
+
+                const selectedClassData = availableClasses.find(c => c.id == selectedClasseId);
+
+                if (!selectedClassData) {
+                    selectGioco.innerHTML = '<option selected value="">-- Errore classe non trovata --</option>';
+                    return;
+                }
+
+                try {
+                    // Se Docente E i giochi non sono ancora stati caricati per questa classe
+                    if (userRole === 'Docente' && selectedClassData.giochi.length === 0) {
+                        if (formLoading) formLoading.classList.remove('d-none'); // Mostra loading form
+                        console.log(`Docente: Caricamento giochi per classe ${selectedClasseId}...`);
+                        // Usa l'endpoint GET /api/classi/{idClasse} che restituisce ClasseDetailDto
+                        const detailResponse = await fetch(`/api/classi/${selectedClasseId}`);
+                        if (!detailResponse.ok) {
+                            throw new Error(`Errore ${detailResponse.status} caricamento giochi per classe ${selectedClasseId}`);
+                        }
+                        const classeDetail = await detailResponse.json();
+                        // Il DTO ClasseDetailDto viene serializzato in JSON con camelCase
+                        selectedClassData.giochi = classeDetail.giochiAssociati || []; // <-- Usa camelCase
+                        console.log(`Giochi caricati per classe ${selectedClasseId}:`, selectedClassData.giochi);
+                        if (formLoading) formLoading.classList.add('d-none');
+                    }
+
+                    // Popola dropdown
+                    selectGioco.innerHTML = '<option selected value="">-- Classifica Generale --</option>'; // Opzione default per classifica generale
+                    if (selectedClassData.giochi && selectedClassData.giochi.length > 0) {
+                        // Ordina i giochi per titolo prima di aggiungerli
+                        selectedClassData.giochi.sort((a, b) => a.titolo.localeCompare(b.titolo)).forEach(gioco => {
+                            const option = document.createElement('option');
+                            option.value = gioco.id;
+                            option.textContent = escapeHtml(gioco.titolo);
+                            selectGioco.appendChild(option);
+                        });
+                    }
+                    selectGioco.disabled = false;
+
+                    // Carica subito la classifica generale per la classe selezionata
+                    await loadClassifica(selectedClasseId, null);
+
+                } catch (error) {
+                    console.error("Errore popolamento giochi:", error);
+                    selectGioco.innerHTML = `<option selected value="">-- Errore caricamento giochi --</option>`;
+                    showLeaderboardError("Impossibile caricare i giochi per la classe selezionata: " + error.message);
+                    if (formLoading) formLoading.classList.add('d-none');
+                }
+            }
+
+
+            // Funzione principale per caricare la classifica
+            async function loadClassifica(idClasse, idGioco) {
+                if (!idClasse) {
+                    // Non fare nulla se non c'è una classe selezionata
+                    leaderboardContentDiv.classList.add('d-none');
+                    errorDiv.classList.add('d-none');
+                    loadingDiv.classList.add('d-none');
+                    return;
+                }
+
+                if (loadingDiv) loadingDiv.classList.remove('d-none');
+                if (errorDiv) errorDiv.classList.add('d-none');
+                if (leaderboardContentDiv) leaderboardContentDiv.classList.add('d-none');
+                if (leaderboardTableBody) leaderboardTableBody.innerHTML = '';
+                if (noLeaderboardDataP) noLeaderboardDataP.classList.add('d-none');
+
+                let apiUrl = `/api/classifiche/classe/${idClasse}`;
+                let subtitleText = `Classifica Generale`;
+                let nomeClasse = availableClasses.find(c => c.id == idClasse)?.nome || `ID: ${idClasse}`;
+                let nomeGioco = null;
+
+                if (idGioco) {
+                    apiUrl += `/gioco/${idGioco}`;
+                    // Trova il gioco nella cache per ottenere il nome
+                    const gioco = availableClasses.find(c => c.id == idClasse)?.giochi.find(g => g.id == idGioco);
+                    nomeGioco = gioco?.titolo || `ID: ${idGioco}`;
+                    subtitleText = `Classifica Gioco: ${escapeHtml(nomeGioco)}`;
+                }
+
+                if (pageTitleH1) pageTitleH1.textContent = `Classifica - Classe: ${escapeHtml(nomeClasse)}`;
+                if (leaderboardSubtitleH2) leaderboardSubtitleH2.textContent = subtitleText;
+
+                try {
+                    const responseClassifica = await fetch(apiUrl);
+
+                    if (!responseClassifica.ok) {
+                        let errorMsg = `Errore nel caricamento della classifica (Status: ${responseClassifica.status})`;
+                        try {
+                            const errData = await responseClassifica.json();
+                            errorMsg = errData.title || errData.detail || errData.message || errorMsg;
+                        } catch { /* Ignora errore parsing JSON */ }
+                        if (responseClassifica.status === 401) errorMsg = "Non sei autenticato. Effettua il login.";
+                        if (responseClassifica.status === 403) errorMsg = "Non hai i permessi per visualizzare questa classifica.";
+                        throw new Error(errorMsg);
+                    }
+
+                    const classifica = await responseClassifica.json();
+
+                    // Popola la tabella
+                    if (leaderboardTableBody) leaderboardTableBody.innerHTML = ''; // Pulisce prima
+                    if (classifica && classifica.length > 0) {
+                        if (noLeaderboardDataP) noLeaderboardDataP.classList.add('d-none');
+                        classifica.forEach((entry, index) => {
+                            const row = leaderboardTableBody.insertRow();
+                            // L'endpoint restituisce ClassificaEntryDto { StudenteId, NomeStudente, Monete }
+                            row.innerHTML = `
+                                <th scope="row">${index + 1}</th>
+                                <td>${escapeHtml(entry.nomeStudente)}</td>
+                                <td class="text-end">${entry.monete}</td>
+                            `;
+                        });
+                        // Mostra il contenuto della classifica
+                        if (leaderboardContentDiv) leaderboardContentDiv.classList.remove('d-none');
+                    } else {
+                        // Mostra messaggio "nessun dato"
+                        if (noLeaderboardDataP) noLeaderboardDataP.classList.remove('d-none');
+                        // Mostra comunque il contenitore per far vedere il messaggio "nessun dato"
+                        if (leaderboardContentDiv) leaderboardContentDiv.classList.remove('d-none');
+                    }
+
+                } catch (error) {
+                    console.error("Errore durante il caricamento della classifica:", error);
+                    showLeaderboardError(error.message || "Si è verificato un errore imprevisto durante il caricamento della classifica.");
+                } finally {
+                    // Nasconde l'indicatore di caricamento
+                    if (loadingDiv) loadingDiv.classList.add('d-none');
+                }
+            }
+
+            // --- Event Listeners ---
+            selectClasse.addEventListener('change', async (event) => {
+                const selectedClasseId = event.target.value;
+                if (selectedClasseId) {
+                    await populateGiocoDropdown(selectedClasseId);
+                    // La classifica generale viene caricata automaticamente da populateGiocoDropdown
+                } else {
+                    selectGioco.innerHTML = '<option selected value="">-- Prima seleziona una classe --</option>';
+                    selectGioco.disabled = true;
+                    leaderboardContentDiv.classList.add('d-none'); // Nasconde classifica
+                    loadingDiv.classList.add('d-none');
+                    errorDiv.classList.add('d-none');
+                }
+            });
+
+            selectGioco.addEventListener('change', async (event) => {
+                const selectedClasseId = selectClasse.value;
+                const selectedGiocoId = event.target.value; // Può essere "" per generale
+                if (selectedClasseId) {
+                    await loadClassifica(selectedClasseId, selectedGiocoId || null); // Passa null se ""
+                }
+            });
+
+
+            // --- Inizializzazione Pagina ---
+            document.addEventListener('DOMContentLoaded', async function () {
+                console.log("Classifica Form page: Initializing templates...");
+                try {
+                    await TemplateLoader.initializeCommonTemplates();
+
+                    let userData = null;
+                    try {
+                        const response = await fetch('/api/account/my-roles');
+                        if (response.ok) {
+                            userData = await response.json();
+                            // Determina il ruolo primario (Docente ha priorità se entrambi veri?)
+                            if (userData.isDocente) userRole = 'Docente';
+                            else if (userData.isStudente) userRole = 'Studente';
+                            else userRole = null; // Admin o altro ruolo non gestito qui
+                            console.log("Ruolo utente determinato:", userRole);
+                        } else if (response.status === 401) {
+                            throw new Error("Non autenticato. Effettua il login per vedere le classifiche.");
+                        } else {
+                            throw new Error("Errore nel controllo autenticazione.");
+                        }
+                    } catch (authError) {
+                        showFormError(authError.message); // Mostra errore nel form
+                        showLeaderboardError(authError.message); // Mostra errore anche sotto
+                        if (typeof updateNavbar === 'function') updateNavbar(null);
+                        return; // Interrompe
+                    }
+
+                    if (typeof updateNavbar === 'function') updateNavbar(userData);
+
+                    if (userRole) {
+                        await loadClassesForUser(); // Carica le classi nel dropdown
+                    } else {
+                        const msg = "Ruolo utente non supportato (necessario Docente o Studente).";
+                        showFormError(msg);
+                        showLeaderboardError(msg);
+                    }
+
+                } catch (error) {
+                    console.error("Errore durante l'inizializzazione della pagina:", error);
+                    const initErrorMsg = "Errore grave durante l'inizializzazione della pagina.";
+                    showFormError(initErrorMsg);
+                    showLeaderboardError(initErrorMsg);
+                    if (typeof updateNavbar === 'function') updateNavbar(null);
+                }
+            });
+
+        </script>
+
+    </body>
+
+    </html>
+    ```
+
+- **Spiegazione dettagliata del codice: classifica-classe-form.html:**
+
+    Questa pagina web permette agli utenti (sia Docenti che Studenti) di visualizzare le classifiche dei giochi educativi. Offre la possibilità di selezionare una classe specifica e, opzionalmente, un gioco all'interno di quella classe per vedere la classifica corrispondente (punteggio basato sulle "monete" guadagnate). Se non viene selezionato un gioco specifico, viene mostrata la classifica generale della classe (somma delle monete di tutti i giochi).
+
+    - Struttura HTML (`<body>`)
+
+        La pagina è strutturata in diverse sezioni principali:
+
+        - **Navbar (`<div id="navbar-container">`):** Contiene la barra di navigazione superiore, caricata dinamicamente tramite JavaScript (`template-loader.js` e `navbar.js`). Mostra il nome dell'utente e link utili.
+        - **Contenuto Principale (`<main>`):**
+            * **Titolo (`<h1>`):** "Classifiche".
+            * **Form di Selezione (`<div id="form-container">`):**
+                * Una `card` Bootstrap che contiene i controlli per selezionare la classe e il gioco.
+                * **Dropdown Classe (`<select id="selectClasse">`):** Permette all'utente di scegliere una classe dall'elenco delle classi a cui ha accesso. Inizialmente è disabilitato e mostra "Caricamento classi...".
+                * **Dropdown Gioco (`<select id="selectGioco">`):** Permette di scegliere un gioco specifico della classe selezionata o l'opzione "Classifica Generale". È disabilitato finché non viene scelta una classe.
+                * **Indicatori di Caricamento/Errore (`#formLoading`, `#formError`):** Mostrano feedback visivo durante il caricamento dei dati del form o in caso di errori.
+            * **Area Visualizzazione Classifica:**
+                * **Indicatore di Caricamento (`<div id="loading">`):** Mostra uno spinner mentre la classifica viene caricata.
+                * **Messaggio di Errore (`<div id="error">`):** Mostra eventuali errori durante il caricamento della classifica.
+                * **Contenuto Classifica (`<div id="leaderboardContent">`):**
+                    * Una `card` Bootstrap che contiene il titolo della classifica specifica (`#leaderboardSubtitle`) e la tabella.
+                    * **Tabella (`<table>`):** Mostra la classifica con le colonne: Posizione (#), Studente, Monete. Il corpo della tabella (`<tbody id="leaderboardTableBody">`) viene popolato dinamicamente con i dati ricevuti dal backend.
+                    * **Messaggio "Nessun Dato" (`<p id="noLeaderboardData">`):** Mostrato se la classifica richiesta è vuota.
+            **Footer (`<div id="footer-container">`):** Contiene il piè di pagina, caricato dinamicamente.
+        - Styling CSS (`<style>`)
+
+            Viene utilizzato Bootstrap 5 per la struttura e lo stile generale. Ci sono alcune regole CSS personalizzate per:
+
+            * Evitare che il testo nelle intestazioni della tabella vada a capo (`white-space: nowrap`).
+            * Aggiungere un margine inferiore al contenitore del form (`#form-container`).
+
+    - Logica JavaScript (`<script>`)
+
+        Questo è il cuore della pagina, dove avviene l'interazione con l'utente e la comunicazione con il backend (API).
+
+        **Variabili Globali e Riferimenti UI:**
+
+        * Vengono ottenuti riferimenti agli elementi HTML principali (dropdown, contenitori di loading/error, tabella, ecc.) usando `document.getElementById`.
+        * `userRole`: Memorizza il ruolo dell'utente ('Docente' o 'Studente'), determinato all'avvio.
+        * `availableClasses`: Un array che funge da cache per le classi caricate, inclusi i giochi associati (per evitare chiamate API ripetute).
+
+        **Funzioni Chiave:**
+
+        1. **`escapeHtml(unsafe)`:** Una funzione di utilità per prevenire attacchi Cross-Site Scripting (XSS) "sanificando" il testo prima di inserirlo nell'HTML.
+        2. **`showFormError(message)` / `showLeaderboardError(message)`:** Funzioni per mostrare messaggi di errore nelle rispettive sezioni della pagina e loggare l'errore in console.
+        3. **Inizializzazione (`DOMContentLoaded` event listener):** Questo codice viene eseguito non appena la struttura HTML della pagina è pronta.
+            * **Caricamento Template:** Carica navbar e footer (`TemplateLoader.initializeCommonTemplates()`).
+            * **Autenticazione e Ruolo Utente:**
+                * Effettua una chiamata `fetch` all'endpoint backend **`GET /api/account/my-roles`**.
+                * **Come funziona l'autenticazione?** Quando l'utente ha effettuato il login, il backend ha inviato al browser un **cookie** sicuro (spesso chiamato `.AspNetCore.Identity.Application` o simile). Questo cookie viene memorizzato dal browser e inviato automaticamente con *ogni* successiva richiesta allo stesso dominio (incluso questo `fetch`).
+                * Il backend riceve la richiesta, legge il cookie, verifica l'identità dell'utente e determina i suoi ruoli.
+                * Se l'utente è autenticato, l'endpoint risponde con un JSON tipo: `{ "userName": "nome.utente", "isStudente": true, "isDocente": false }`.
+                * Se il cookie non è valido o mancante, il backend risponde con uno stato `401 Unauthorized`.
+                * Il JavaScript frontend legge la risposta:
+                    * Se `response.ok` è `true`, estrae i ruoli e imposta la variabile `userRole` ('Docente' o 'Studente').
+                    * Se lo stato è `401`, mostra un errore "Non autenticato" e interrompe l'esecuzione.
+                    * Gestisce altri eventuali errori di rete o del server.
+            * **Aggiornamento Navbar:** Chiama `updateNavbar(userData)` (definita in `navbar.js`) per mostrare il nome utente corretto.
+            * **Caricamento Classi Iniziale:** Se `userRole` è stato determinato correttamente, chiama `loadClassesForUser()`. Altrimenti, mostra un errore.
+        4. **`loadClassesForUser()`:**
+            * Determina quale endpoint API chiamare in base al `userRole`:
+                * **Docente:** `GET /api/classi/mie` (restituisce un elenco di `ClasseSimpleDto` gestite dal docente).
+                * **Studente:** `GET /api/iscrizioni/mie` (restituisce un elenco di `ClasseIscrizioneDto` a cui lo studente è iscritto, *includendo già i giochi disponibili per quella classe*).
+            * Effettua la chiamata `fetch` all'endpoint scelto (il cookie di autenticazione viene inviato automaticamente).
+            * **Autorizzazione:** Il backend, prima di eseguire la logica dell'endpoint, verifica non solo che l'utente sia autenticato (tramite cookie) ma anche che abbia il **ruolo corretto** (es. `[Authorize(Roles = "Docente")]` o `.RequireAuthorization(policy => policy.RequireRole("Studente"))`). Se il ruolo non corrisponde, risponde con `403 Forbidden`.
+            * Processa la risposta JSON:
+                * Itera sull'array di classi ricevuto.
+                * Per ogni classe, estrae `id` e `nome` (usando i nomi dei campi corretti a seconda del DTO ricevuto: `id`/`nome` per Docente, `idClasse`/`nomeClasse` per Studente).
+                * Se l'utente è Studente, estrae anche l'elenco dei `giochiDisponibili`.
+                * Crea un oggetto `classeInfo` e lo aggiunge all'array `availableClasses`.
+                * Crea un elemento `<option>` per il dropdown `selectClasse` e lo popola.
+            * Abilita il dropdown `selectClasse`.
+            * Gestisce errori (401, 403, altri errori).
+        5. **`populateGiocoDropdown(selectedClasseId)`:**
+            * Viene chiamata quando l'utente seleziona una classe dal primo dropdown.
+            * Trova i dati della classe selezionata nella cache `availableClasses`.
+            * **Logica Specifica per Docente:** Se l'utente è 'Docente' *e* i giochi per quella classe non sono ancora stati caricati nella cache (`selectedClassData.giochi.length === 0`):
+                * Effettua una chiamata `fetch` all'endpoint **`GET /api/classi/{idClasse}`** (passando l'ID della classe selezionata). Questo endpoint restituisce un `ClasseDetailDto` che contiene informazioni dettagliate, inclusa la lista `giochiAssociati`.
+                * Il backend verifica che il docente autenticato abbia i permessi per vedere i dettagli di *quella specifica* classe.
+                * Aggiorna l'oggetto `selectedClassData` nella cache `availableClasses` con l'elenco dei giochi ricevuto (`classeDetail.giochiAssociati`).
+            * **Popolamento Dropdown Giochi:**
+                * Aggiunge l'opzione fissa `"-- Classifica Generale --"` con `value=""`.
+                * Itera sull'array `selectedClassData.giochi` (che ora contiene i giochi sia per Docente che per Studente).
+                * Ordina i giochi alfabeticamente per titolo.
+                * Per ogni gioco, crea un `<option>` nel dropdown `selectGioco` con `value` pari all'ID del gioco e testo pari al titolo del gioco.
+            * Abilita il dropdown `selectGioco`.
+            * **Caricamento Automatico Classifica Generale:** Chiama `loadClassifica(selectedClasseId, null)` per mostrare subito la classifica generale della classe appena selezionata.
+        6. **`loadClassifica(idClasse, idGioco)`:**
+            * È la funzione che recupera e visualizza i dati della classifica vera e propria.
+            * Mostra l'indicatore di caricamento (`loadingDiv`).
+            * Determina l'URL dell'API da chiamare:
+                * Se `idGioco` è `null` o `""`: `GET /api/classifiche/classe/{idClasse}` (Classifica Generale).
+                * Se `idGioco` ha un valore: `GET /api/classifiche/classe/{idClasse}/gioco/{idGioco}` (Classifica Specifica).
+            * Aggiorna i titoli della pagina (`pageTitleH1`, `leaderboardSubtitleH2`) per riflettere la classe e il gioco (se selezionato) correnti.
+            * Effettua la chiamata `fetch` all'endpoint scelto (il cookie viene inviato).
+            * **Autorizzazione Backend:** Il backend verifica che l'utente (Docente o Studente) abbia i permessi per visualizzare la classifica di *quella specifica* classe (ed eventualmente gioco). Risponde con `403 Forbidden` se non autorizzato.
+            * Processa la risposta JSON. L'API restituisce un array di oggetti `ClassificaEntryDto`, ognuno con `nomeStudente` e `monete`.
+            * **Popolamento Tabella:**
+                * Pulisce il corpo della tabella precedente (`leaderboardTableBody.innerHTML = ''`).
+                * Se l'array `classifica` contiene dati:
+                    * Itera su ogni `entry` della classifica.
+                    * Crea una nuova riga (`<tr>`) nella tabella.
+                    * Popola le celle (`<td>`) con la posizione (`index + 1`), `entry.nomeStudente` (sanificato con `escapeHtml`) e `entry.monete`.
+                    * Nasconde il messaggio "Nessun dato".
+                * Se l'array `classifica` è vuoto:
+                    * Mostra il messaggio "Nessun dato disponibile" (`noLeaderboardDataP`).
+            * Mostra il contenitore della classifica (`leaderboardContentDiv`) e nasconde l'indicatore di caricamento (`loadingDiv`).
+            * Gestisce errori (401, 403, altri errori) mostrando il messaggio in `errorDiv`.
+        7. **Event Listeners:**
+            * `selectClasse.addEventListener('change', ...)`: Quando l'utente cambia la selezione della classe, chiama `populateGiocoDropdown`. Se l'utente deseleziona la classe, resetta il dropdown dei giochi e nasconde la classifica.
+            * `selectGioco.addEventListener('change', ...)`: Quando l'utente cambia la selezione del gioco (o sceglie "Classifica Generale"), chiama `loadClassifica` passando l'ID della classe e l'ID del gioco selezionato (o `null` per la generale).
+
+    - Interazione Frontend-Backend (Diagrammi di Sequenza)
+
+        **Diagramma 1: Caricamento Pagina e Classi (Utente Docente)**
+
+        ```mermaid
+        sequenceDiagram
+            participant Browser
+            participant WebServer (Backend)
+
+            Browser->>WebServer: GET /classifica-classe-form.html
+            WebServer-->>Browser: HTML della pagina
+
+            Note over Browser: Esegue JS (DOMContentLoaded)
+            Browser->>WebServer: GET /api/account/my-roles (invia Cookie)
+            WebServer-->>Browser: 200 OK, JSON: { isDocente: true, ... }
+
+            Note over Browser: Ruolo = 'Docente'
+            Browser->>WebServer: GET /api/classi/mie (invia Cookie)
+            Note over WebServer: Verifica Auth (Cookie) + Authz (Ruolo Docente)
+            WebServer-->>Browser: 200 OK, JSON: [ {id: 1, nome: 'Classe Alpha'}, {id: 2, nome: 'Classe Beta'} ]
+
+            Note over Browser: Popola dropdown Classi
+        ```
+
+        **Diagramma 2: Selezione Classe e Gioco (Utente Docente)**
+
+        ```mermaid
+        sequenceDiagram
+            participant User
+            participant Browser (JS)
+            participant WebServer (Backend)
+
+            User->>Browser (JS): Seleziona 'Classe Alpha' (ID: 1)
+            Note over Browser (JS): Chiama populateGiocoDropdown(1)
+            Note over Browser (JS): Giochi per classe 1 non in cache? Sì.
+            Browser (JS)->>WebServer: GET /api/classi/1 (invia Cookie)
+            Note over WebServer: Verifica Auth + Authz (Docente è owner/membro di classe 1?)
+            WebServer-->>Browser (JS): 200 OK, JSON: { ..., giochiAssociati: [ {id: 10, titolo: 'Gioco Matematica'}, ... ] }
+
+            Note over Browser (JS): Aggiorna cache 'availableClasses', Popola dropdown Giochi
+            Note over Browser (JS): Chiama loadClassifica(1, null)
+            Browser (JS)->>WebServer: GET /api/classifiche/classe/1 (invia Cookie)
+            Note over WebServer: Verifica Auth + Authz (Accesso a classifica classe 1?)
+            WebServer-->>Browser (JS): 200 OK, JSON: [ {nomeStudente: 'Mario', monete: 150}, ... ]
+
+            Note over Browser (JS): Mostra Classifica Generale per 'Classe Alpha'
+
+            User->>Browser (JS): Seleziona 'Gioco Matematica' (ID: 10)
+            Note over Browser (JS): Chiama loadClassifica(1, 10)
+            Browser (JS)->>WebServer: GET /api/classifiche/classe/1/gioco/10 (invia Cookie)
+            Note over WebServer: Verifica Auth + Authz (Accesso a classifica gioco 10 in classe 1?)
+            WebServer-->>Browser (JS): 200 OK, JSON: [ {nomeStudente: 'Luigi', monete: 80}, ... ]
+
+            Note over Browser (JS): Mostra Classifica per 'Gioco Matematica' in 'Classe Alpha'
+        ```
+
+        *(Nota: Il flusso per lo Studente è simile, ma `loadClassesForUser` chiama `/api/iscrizioni/mie` che restituisce già i giochi, e `populateGiocoDropdown` non necessita della chiamata aggiuntiva a `/api/classi/{idClasse}`)*.
+
+    - Riepilogo Backend Utilizzato
+
+    * **Autenticazione:** Basata su Cookie HTTP-only impostati al login.
+    * **Autorizzazione:** Basata sui ruoli ('Docente', 'Studente') verificati tramite attributi `[Authorize]` o policy `.RequireAuthorization()` sugli endpoint Minimal API.
+    * **Endpoint API Coinvolti:**
+        * `GET /api/account/my-roles`: Verifica autenticazione e recupera ruoli.
+        * `GET /api/classi/mie`: Recupera classi del docente. (Richiede ruolo Docente)
+        * `GET /api/iscrizioni/mie`: Recupera classi dello studente e giochi associati. (Richiede ruolo Studente)
+        * `GET /api/classi/{idClasse}`: Recupera dettagli classe (inclusi giochi) per popolare dropdown giochi del docente. (Richiede Auth/Authz sulla classe)
+        * `GET /api/classifiche/classe/{idClasse}`: Recupera classifica generale. (Richiede Auth/Authz sulla classe)
+        * `GET /api/classifiche/classe/{idClasse}/gioco/{idGioco}`: Recupera classifica specifica gioco. (Richiede Auth/Authz sulla classe/gioco)
+

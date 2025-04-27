@@ -78,6 +78,202 @@ public static class DatabaseInitializer
             {
                 logger.LogInformation("Admin user already exists. Skipping seeding.");
             }
+            // --- SEEDING MATERIE, ARGOMENTI, GIOCHI ---
+
+            // Seed Materie (se non presenti)
+            if (!await dbContext.Materie.AnyAsync())
+            {
+                logger.LogInformation("Seeding Materie...");
+                var materie = new List<Materia>
+                {
+                    new Materia { Nome = "Matematica" },
+                    new Materia { Nome = "Fisica" },
+                    new Materia { Nome = "Italiano" },
+                    new Materia { Nome = "Storia" },
+                    new Materia { Nome = "Inglese" }
+                };
+                await dbContext.Materie.AddRangeAsync(materie);
+                await dbContext.SaveChangesAsync();
+            }
+            else { logger.LogInformation("Materie already exist."); }
+
+            // Seed Argomenti (se non presenti)
+            List<Argomento> argomentiDb; // Lista per tenere traccia degli argomenti (nuovi o esistenti)
+            if (!await dbContext.Argomenti.AnyAsync())
+            {
+                logger.LogInformation("Seeding Argomenti...");
+                argomentiDb =
+                 [
+                     new Argomento { Nome = "Algebra di Base" },
+                     new Argomento { Nome = "Geometria Piana" },
+                     new Argomento { Nome = "Meccanica Classica" },
+                     new Argomento { Nome = "Elettromagnetismo" },
+                     new Argomento { Nome = "Analisi Grammaticale" },
+                     new Argomento { Nome = "Analisi Logica" },
+                     new Argomento { Nome = "Letteratura Italiana Medievale" }
+                 ];
+                await dbContext.Argomenti.AddRangeAsync(argomentiDb);
+                await dbContext.SaveChangesAsync(); // Salva per ottenere gli ID generati
+            }
+            else
+            {
+                logger.LogInformation("Argomenti already exist. Fetching existing ones...");
+                argomentiDb = await dbContext.Argomenti.ToListAsync(); // Recupera argomenti esistenti
+            }
+
+            // Seed Videogiochi (se non presenti)
+            if (!await dbContext.Videogiochi.AnyAsync())
+            {
+                logger.LogInformation("Seeding Videogiochi...");
+                // Recupera gli argomenti specifici per l'associazione
+                var algebra = argomentiDb.FirstOrDefault(a => a.Nome == "Algebra di Base");
+                var geometria = argomentiDb.FirstOrDefault(a => a.Nome == "Geometria Piana");
+                var meccanica = argomentiDb.FirstOrDefault(a => a.Nome == "Meccanica Classica");
+                var grammatica = argomentiDb.FirstOrDefault(a => a.Nome == "Analisi Grammaticale");
+                var logica = argomentiDb.FirstOrDefault(a => a.Nome == "Analisi Logica"); 
+
+                // Verifica che gli argomenti necessari siano stati trovati
+                if (algebra != null && geometria != null && meccanica != null && grammatica != null && logica != null)
+                {
+                    var giochi = new List<Videogioco>
+                        {
+                            new() {
+                                Titolo = "Quiz Equazioni 1° Grado",
+                                DescrizioneBreve = "Risolvi equazioni lineari semplici.",
+                                DescrizioneEstesa = "Un quiz a risposta multipla per testare la capacità di risolvere equazioni di primo grado con una incognita.",
+                                Immagine1 = "/assets/images/math.png",
+                                MaxMonete = 100,
+                                DefinizioneGioco = """
+                                {
+                                    "versioneFormato": "1.0-quiz-multiplo",
+                                    "domande": [
+                                        {
+                                            "id": "q1",
+                                            "testo": "2x + 3 = 7, x = ?",
+                                            "risposte": [
+                                                {"id": "a", "testo": "1"},
+                                                {"id": "b", "testo": "2"},
+                                                {"id": "c", "testo": "3"},
+                                                {"id": "d", "testo": "4"}
+                                            ],
+                                            "corretta": "b"
+                                        }
+                                    ]
+                                }
+                                """,
+                                Argomenti = [algebra]
+                            },
+                            new() {
+                                Titolo = "Aree Poligoni Fondamentali",
+                                DescrizioneBreve = "Calcola l'area di quadrati e rettangoli.",
+                                MaxMonete = 120,
+                                DescrizioneEstesa = "Un quiz a risposta multipla per testare la capacità di calcolare le aree di poligoni fondamentali.",
+                                Immagine1 = "/assets/images/geometry.png",
+                                DefinizioneGioco =
+                                """
+                                {
+                                    "versioneFormato": "1.0-quiz-multiplo",
+                                    "domande": [
+                                        {
+                                            "id": "q1",
+                                            "testo": "Area rettangolo base 5, altezza 3?",
+                                            "risposte": [
+                                                {"id": "a", "testo": "15"},
+                                                {"id": "b", "testo": "8"},
+                                                {"id": "c", "testo": "16"}
+                                            ],
+                                            "corretta": "a"
+                                        },
+                                        {
+                                            "id": "q2",
+                                            "testo": "Area quadrato lato 4?",
+                                            "risposte": [
+                                                {"id": "a", "testo": "8"},
+                                                {"id": "b", "testo": "16"},
+                                                {"id": "c", "testo": "12"}
+                                            ],
+                                            "corretta": "b"
+                                        }
+                                    ]
+                                }
+                                """,
+                                Argomenti = [geometria]
+                            },
+                            new() {
+                                Titolo = "Quiz Principi della Dinamica",
+                                DescrizioneBreve = "Domande sui tre principi di Newton.",
+                                DescrizioneEstesa = "Un quiz a risposta multipla per testare la conoscenza dei principi della dinamica.",
+                                Immagine1 = "/assets/images/physics.png",
+                                MaxMonete = 150,
+                                DefinizioneGioco =
+                                """
+                                {
+                                    "versioneFormato": "1.0-quiz-multiplo",
+                                    "domande": [
+                                        {
+                                            "id": "q1",
+                                            "testo": "F = ?",
+                                            "risposte": [
+                                                {"id": "a", "testo": "m/a"},
+                                                {"id": "b", "testo": "m*a"},
+                                                {"id": "c", "testo": "a/m"}
+                                            ],
+                                            "corretta": "b"
+                                        }
+                                    ]
+                                }
+                                """,
+                                Argomenti = [meccanica]
+                            },
+                            new() {
+                                Titolo = "Soggetto e Predicato",
+                                DescrizioneBreve = "Identifica il soggetto e il predicato nelle frasi.",
+                                DescrizioneEstesa = "Un quiz a risposta multipla per testare la conoscenza della grammatica italiana.",
+                                Immagine1 = "/assets/images/grammar.png",
+                                MaxMonete = 80,
+                                DefinizioneGioco =
+                                """
+                                {
+                                    "versioneFormato": "1.0-quiz-multiplo",
+                                    "domande": [
+                                        {
+                                            "id": "q1",
+                                            "testo": "Il cane abbaia. Soggetto?",
+                                            "risposte": [
+                                                {"id": "a", "testo": "abbaia"},
+                                                {"id": "b", "testo": "Il cane"}
+                                            ],
+                                            "corretta": "b"
+                                        },
+                                        {
+                                            "id": "q2",
+                                            "testo": "Il cane abbaia. Predicato?",
+                                            "risposte": [
+                                                {"id": "a", "testo": "abbaia"},
+                                                {"id": "b", "testo": "Il cane"}
+                                            ],
+                                            "corretta": "a"
+                                        }
+                                    ]
+                                }
+                                """,
+                                Argomenti = [grammatica, logica]
+                            }
+                        };
+                    await dbContext.Videogiochi.AddRangeAsync(giochi);
+                    // SaveChanges si occuperà di creare i record nelle tabelle GIOCHI_ARGOMENTI e VIDEOGIOCHI
+                    await dbContext.SaveChangesAsync();
+                    logger.LogInformation("Videogiochi and relations seeded successfully.");
+                }
+                else
+                {
+                    logger.LogError("Cannot seed Videogiochi: required Argomenti not found in database.");
+                }
+            }
+            else { logger.LogInformation("Videogiochi already exist."); }
+
+            // --- FINE NUOVO SEEDING ---
+
         }
         catch (Exception ex)
         {

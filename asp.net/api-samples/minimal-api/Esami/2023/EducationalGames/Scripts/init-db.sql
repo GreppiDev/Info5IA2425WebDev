@@ -16,6 +16,36 @@ CREATE TABLE UTENTI (
     -- L ENGINE, CHARSET e COLLATE useranno i default del database/server MariaDB
 );
 
+
+-- Tabella UTENTI nel prototipo (per testare il login, cambio password, ecc.)
+    /* CREATE TABLE UTENTI (
+        -- Colonne esistenti
+        ID_Utente INT AUTO_INCREMENT PRIMARY KEY,
+        Nome VARCHAR(50) NOT NULL,
+        Cognome VARCHAR(50) NOT NULL,
+        Email VARCHAR(100) NOT NULL UNIQUE,
+        PasswordHash VARCHAR(255) NOT NULL COMMENT 'Contiene l hash sicuro della password',
+        Ruolo ENUM('Admin', 'Docente', 'Studente') NOT NULL COMMENT 'Ruolo dell utente nella piattaforma', -- Assicurati che l'ordine corrisponda all'enum C#
+
+    -- Nuove colonne per verifica email
+    EmailVerificata BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'Indica se l email è stata verificata',
+    TokenVerificaEmail VARCHAR(100) NULL DEFAULT NULL COMMENT 'Token inviato per la verifica email',
+    ScadenzaTokenVerificaEmail DATETIME NULL DEFAULT NULL COMMENT 'Scadenza del token di verifica email (UTC)',
+
+    -- Nuove colonne per reset password
+    TokenResetPassword VARCHAR(100) NULL DEFAULT NULL COMMENT 'Token inviato per il reset password',
+    ScadenzaTokenResetPassword DATETIME NULL DEFAULT NULL COMMENT 'Scadenza del token di reset password (UTC)'
+
+    -- L ENGINE, CHARSET e COLLATE useranno i default del database/server MariaDB/MySQL
+    ) COMMENT 'Tabella degli utenti della piattaforma';
+
+    -- Indici aggiuntivi (consigliati per performance)
+    -- Indice sul token di verifica per velocizzare la ricerca
+    CREATE INDEX IX_UTENTI_TokenVerificaEmail ON UTENTI (TokenVerificaEmail);
+    -- Indice sul token di reset per velocizzare la ricerca
+    CREATE INDEX IX_UTENTI_TokenResetPassword ON UTENTI (TokenResetPassword); */
+    --
+
 -- Tabella Materie
 CREATE TABLE MATERIE (
     ID_Materia INT AUTO_INCREMENT PRIMARY KEY,

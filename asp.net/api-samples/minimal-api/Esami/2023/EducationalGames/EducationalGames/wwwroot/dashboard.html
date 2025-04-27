@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="it">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dashboard Docente - Educational Games</title>
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        .stat-card {
+            text-align: center;
+        }
+
+        .stat-card .display-4 {
+            font-weight: 500;
+        }
+
+        .list-group-item small {
+            font-size: 0.85em;
+        }
+
+        .list-group-item .badge {
+            font-size: 0.8em;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="navbar-container">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+            <div class="container-fluid"><span class="navbar-brand">Caricamento...</span></div>
+        </nav>
+    </div>
+
+    <main>
+        <div class="container mt-4">
+            <h1 class="mb-4">Dashboard Docente</h1>
+
+            <div id="loading-dashboard" class="text-center py-5">
+                <div class="spinner-border text-primary"></div>
+                <p>Caricamento dati...</p>
+            </div>
+            <div id="error-dashboard" class="alert alert-danger d-none"></div>
+
+            <div id="dashboard-content" class="d-none">
+                <div class="row g-4 mb-4">
+                    <div class="col-md-6">
+                        <div class="card shadow-sm stat-card h-100">
+                            <div class="card-body d-flex flex-column justify-content-center">
+                                <h5 class="card-title text-muted">Classi Create</h5>
+                                <p class="display-4 text-primary my-2" id="stat-totale-classi">0</p>
+                                <a href="/gestione-classi.html" class="btn btn-outline-primary btn-sm mt-2">Gestisci
+                                    Classi</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card shadow-sm stat-card h-100">
+                            <div class="card-body d-flex flex-column justify-content-center">
+                                <h5 class="card-title text-muted">Studenti Iscritti (Unici)</h5>
+                                <p class="display-4 text-info my-2" id="stat-totale-studenti">0</p>
+                                <a href="#" onclick="alert('TODO: Link a gestione studenti'); return false;"
+                                    class="btn btn-outline-info btn-sm mt-2">Vedi Studenti</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-lg-6">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0">Ultime Classi Create/Modificate</h5>
+                            </div>
+                            <ul class="list-group list-group-flush" id="lista-ultime-classi">
+                                <li class="list-group-item text-muted text-center p-3" id="no-ultime-classi">Nessuna
+                                    classe recente.</li>
+                            </ul>
+                            <div class="card-footer text-end bg-light">
+                                <a href="/gestione-classi.html" class="btn btn-sm btn-link">Vedi tutte</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0">Studenti Più Attivi (Top 5 per Monete)</h5>
+                            </div>
+                            <ul class="list-group list-group-flush" id="lista-studenti-attivi">
+                                <li class="list-group-item text-muted text-center p-3" id="no-studenti-attivi">Nessuna
+                                    attività studente registrata.</li>
+                            </ul>
+                            <div class="card-footer text-end bg-light">
+                                <a href="#" onclick="alert('TODO: Link a report studenti'); return false;"
+                                    class="btn btn-sm btn-link">Vedi report completo</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+    <script src="/js/template-loader.js"></script>
+    <script src="/js/navbar.js"></script>
+    <script>
+        // Riferimenti UI
+        const loadingDiv = document.getElementById('loading-dashboard');
+        const errorDiv = document.getElementById('error-dashboard');
+        const dashboardContentDiv = document.getElementById('dashboard-content');
+        const statTotaleClassi = document.getElementById('stat-totale-classi');
+        const statTotaleStudenti = document.getElementById('stat-totale-studenti');
+        const ultimeClassiList = document.getElementById('lista-ultime-classi');
+        const noUltimeClassiLi = document.getElementById('no-ultime-classi');
+        const studentiAttiviList = document.getElementById('lista-studenti-attivi');
+        const noStudentiAttiviLi = document.getElementById('no-studenti-attivi');
+
+        // Funzione helper escape HTML
+        function escapeHtml(unsafe) { if (typeof unsafe !== 'string') return unsafe; return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
+
+        // Funzione per formattare date (opzionale)
+        function formattaData(dateString) {
+            if (!dateString) return 'N/A';
+            try {
+                const date = new Date(dateString);
+                // Formato più compatto per la dashboard
+                return date.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            } catch { return 'Data non valida'; }
+        }
+
+        // Inizializzazione Pagina
+        document.addEventListener('DOMContentLoaded', async function () {
+            console.log("Dashboard Docente page: Initializing templates...");
+            try {
+                await TemplateLoader.initializeCommonTemplates();
+                await new Promise(resolve => setTimeout(resolve, 0)); // Delay
+                let userData = null;
+                try { const response = await fetch('/api/account/my-roles'); if (response.ok) userData = await response.json(); else throw new Error('Not logged in'); }
+                catch { throw new Error('Auth check failed'); }
+
+                updateNavbar(userData); // Aggiorna navbar
+                // Imposta link attivo nel dropdown della navbar
+                const dashboardLink = document.querySelector('#nav-docente-gestione .dropdown-item[href="/dashboard.html"]');
+                if (dashboardLink) dashboardLink.classList.add('active');
+                const gestioneToggle = document.getElementById('nav-docente-gestione');
+                if (gestioneToggle) gestioneToggle.querySelector('.nav-link').classList.add('active'); // Evidenzia anche il dropdown
+
+                // Carica dati dashboard solo se Docente (o Admin, se permesso dall'API)
+                if (userData?.isDocente || userData?.isAdmin) {
+                    if (loadingDiv) loadingDiv.classList.remove('d-none');
+                    const response = await fetch('/api/dashboard/docente');
+                    if (!response.ok) {
+                        let errorMsg = `Errore ${response.status}`;
+                        try { const err = await response.json(); errorMsg = err.title || err.detail || errorMsg; } catch { }
+                        throw new Error(errorMsg);
+                    }
+                    const dashboardData = await response.json();
+                    console.log("Dashboard data received:", dashboardData);
+
+                    // Popola statistiche
+                    if (statTotaleClassi) statTotaleClassi.textContent = dashboardData.totaleClassi ?? 0;
+                    if (statTotaleStudenti) statTotaleStudenti.textContent = dashboardData.totaleStudentiDistinti ?? 0;
+
+                    // Popola lista ultime classi
+                    if (ultimeClassiList && noUltimeClassiLi) {
+                        ultimeClassiList.innerHTML = ''; // Pulisce
+                        if (dashboardData.ultimeClassi && dashboardData.ultimeClassi.length > 0) {
+                            noUltimeClassiLi.classList.add('d-none');
+                            dashboardData.ultimeClassi.forEach(classe => {
+                                const li = document.createElement('li');
+                                li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                                li.innerHTML = `
+                                     <div>
+                                         <strong>${escapeHtml(classe.nome)}</strong><br>
+                                         <small class="text-muted">${escapeHtml(classe.materiaNome)} - ${classe.numeroGiochi} giochi</small>
+                                     </div>
+                                     <span class="badge bg-primary rounded-pill">${classe.numeroIscritti} iscritti</span>
+                                 `;
+                                ultimeClassiList.appendChild(li);
+                            });
+                        } else {
+                            noUltimeClassiLi.classList.remove('d-none');
+                        }
+                    }
+
+                    // Popola lista studenti attivi
+                    if (studentiAttiviList && noStudentiAttiviLi) {
+                        studentiAttiviList.innerHTML = ''; // Pulisce
+                        if (dashboardData.studentiPiuAttivi && dashboardData.studentiPiuAttivi.length > 0) {
+                            noStudentiAttiviLi.classList.add('d-none');
+                            dashboardData.studentiPiuAttivi.forEach(stud => {
+                                const li = document.createElement('li');
+                                li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                                // Aggiungiamo un link al profilo studente (se avessimo una pagina dedicata)
+                                li.innerHTML = `
+                                     <span>${escapeHtml(stud.nomeCompleto)} <small class="text-muted">(ID: ${stud.studenteId})</small></span>
+                                     <span class="badge bg-warning text-dark">${stud.moneteTotali} <i class="bi bi-coin"></i></span>
+                                     `;
+                                studentiAttiviList.appendChild(li);
+                            });
+                        } else {
+                            noStudentiAttiviLi.classList.remove('d-none');
+                        }
+                    }
+
+                    if (dashboardContentDiv) dashboardContentDiv.classList.remove('d-none'); // Mostra contenuto dashboard
+
+                } else {
+                    throw new Error("Accesso non autorizzato (solo Docenti/Admin).");
+                }
+
+            } catch (error) {
+                console.error('Error during page initialization:', error);
+                if (typeof updateNavbar === 'function') updateNavbar(null);
+                if (errorDiv) { errorDiv.textContent = `Errore caricamento dashboard: ${error.message}`; errorDiv.classList.remove('d-none'); }
+                if (dashboardContentDiv) dashboardContentDiv.classList.add('d-none'); // Nasconde contenuto
+            } finally {
+                if (loadingDiv) loadingDiv.classList.add('d-none');
+            }
+        });
+        // La funzione postLogout() è definita in navbar.js
+    </script>
+
+</body>
+
+</html>

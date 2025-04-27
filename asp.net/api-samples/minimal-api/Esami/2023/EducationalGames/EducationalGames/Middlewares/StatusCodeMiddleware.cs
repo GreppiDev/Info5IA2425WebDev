@@ -26,6 +26,11 @@ namespace EducationalGames.Middlewares
 
             var response = context.Response;
 
+            // *** ADD DETAILED LOGGING HERE ***
+            _logger.LogWarning("StatusCodeMiddleware checking path {Path} with status code {StatusCode} and HasStarted={HasStarted}",
+                context.Request.Path, response.StatusCode, response.HasStarted);
+            // *** END LOGGING ***
+
             // Controlla solo se la richiesta è per un'API e la risposta non è già iniziata
             // e c'è un errore client/server rilevante (401, 403, 404).
             if (response.HasStarted || !context.Request.Path.StartsWithSegments("/api") || response.StatusCode < 400 || response.StatusCode >= 600)

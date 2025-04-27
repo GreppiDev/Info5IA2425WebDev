@@ -1,13 +1,13 @@
 // File: wwwroot/js/navbar.js
 
 /**
- * Aggiorna la visibilità degli elementi della navbar in base ai dati utente.
- * @param {object | null} userData - L'oggetto dati utente restituito dall'API (es. da /my-roles) o null se non loggato.
+ * Aggiorna la visibilità degli elementi della navbar.
+ * @param {object | null} userData - L'oggetto dati utente o null.
  */
 function updateNavbar(userData) {
   console.log("[updateNavbar] Called with userData:", userData);
 
-  // Riferimenti Navbar (ottenuti qui per assicurarsi che esistano quando la funzione viene chiamata)
+  // Riferimenti Navbar
   const navLogin = document.getElementById("nav-login");
   const navRegister = document.getElementById("nav-register");
   const navProfile = document.getElementById("nav-profile");
@@ -16,23 +16,28 @@ function updateNavbar(userData) {
   const navAdminDashboard = document.getElementById("nav-admin-dashboard");
   const navStudenteClassi = document.getElementById("nav-studente-classi");
   const navDocenteGestione = document.getElementById("nav-docente-gestione");
+  const navCatalogoGiochi = document.getElementById("nav-catalogo-giochi");
 
-  // Log elementi trovati (utile per debug)
-  console.log("[updateNavbar] Elements found:", {
-    navLogin: !!navLogin,
-    navRegister: !!navRegister,
-    navProfile: !!navProfile,
-    navLogout: !!navLogout,
-    navUsernameSpan: !!navUsernameSpan,
-    navAdminDashboard: !!navAdminDashboard,
-    navStudenteClassi: !!navStudenteClassi,
-    navDocenteGestione: !!navDocenteGestione,
-  });
+  // Verifica esistenza elementi
+  const elements = {
+    navLogin,
+    navRegister,
+    navProfile,
+    navLogout,
+    navUsernameSpan,
+    navAdminDashboard,
+    navStudenteClassi,
+    navDocenteGestione,
+    navCatalogoGiochi,
+  };
+  for (const key in elements) {
+    if (!elements[key]) {
+      console.warn(`[updateNavbar] Element ${key} not found.`);
+    }
+  }
 
-  // Determina lo stato di login dai dati forniti (gestisce userData null)
-  const isLoggedIn = !!userData; // Vero se userData non è null/undefined
-  const username = userData?.username; // Usa optional chaining
-
+  const isLoggedIn = !!userData;
+  const username = userData?.username;
   console.log("[updateNavbar] Determined display state:", {
     isLoggedIn,
     username,
@@ -40,33 +45,24 @@ function updateNavbar(userData) {
 
   // Applica visibilità base
   if (isLoggedIn) {
-    console.log("[updateNavbar] Setting state for LOGGED IN user.");
     if (navProfile) navProfile.classList.remove("d-none");
-    else console.warn("navProfile not found");
     if (navLogout) navLogout.classList.remove("d-none");
-    else console.warn("navLogout not found");
     if (navUsernameSpan && username) navUsernameSpan.textContent = username;
     if (navLogin) navLogin.classList.add("d-none");
-    else console.warn("navLogin not found");
     if (navRegister) navRegister.classList.add("d-none");
-    else console.warn("navRegister not found");
   } else {
-    console.log("[updateNavbar] Setting state for LOGGED OUT user.");
     if (navLogin) navLogin.classList.remove("d-none");
-    else console.warn("navLogin not found");
     if (navRegister) navRegister.classList.remove("d-none");
-    else console.warn("navRegister not found");
     if (navProfile) navProfile.classList.add("d-none");
-    else console.warn("navProfile not found");
     if (navLogout) navLogout.classList.add("d-none");
-    else console.warn("navLogout not found");
     if (navUsernameSpan) navUsernameSpan.textContent = "";
   }
 
-  // Aggiorna link specifici per ruolo (basati su userData, gestisce null)
+  // Aggiorna link specifici per ruolo
   const hasAdminRole = userData?.isAdmin ?? false;
   const hasDocenteRole = userData?.isDocente ?? false;
   const hasStudenteRole = userData?.isStudente ?? false;
+
   console.log("[updateNavbar] Role flags:", {
     hasAdminRole,
     hasDocenteRole,
@@ -74,19 +70,25 @@ function updateNavbar(userData) {
   });
 
   if (navAdminDashboard) {
-    if (hasAdminRole) navAdminDashboard.classList.remove("d-none");
-    else navAdminDashboard.classList.add("d-none");
-  } else console.warn("navAdminDashboard not found");
-
+    hasAdminRole
+      ? navAdminDashboard.classList.remove("d-none")
+      : navAdminDashboard.classList.add("d-none");
+  }
   if (navDocenteGestione) {
-    if (hasDocenteRole) navDocenteGestione.classList.remove("d-none");
-    else navDocenteGestione.classList.add("d-none");
-  } else console.warn("navDocenteGestione not found");
-
+    hasDocenteRole
+      ? navDocenteGestione.classList.remove("d-none")
+      : navDocenteGestione.classList.add("d-none");
+  }
   if (navStudenteClassi) {
-    if (hasStudenteRole) navStudenteClassi.classList.remove("d-none");
-    else navStudenteClassi.classList.add("d-none");
-  } else console.warn("navStudenteClassi not found");
+    hasStudenteRole
+      ? navStudenteClassi.classList.remove("d-none")
+      : navStudenteClassi.classList.add("d-none");
+  }
+  if (navCatalogoGiochi) {
+    hasAdminRole || hasDocenteRole
+      ? navCatalogoGiochi.classList.remove("d-none") // Mostra catalogo
+      : navCatalogoGiochi.classList.add("d-none"); // Nascondi catalogo
+  }
 
   console.log("[updateNavbar] Finished applying styles.");
 }
@@ -96,9 +98,13 @@ function updateNavbar(userData) {
  */
 function postLogout() {
   fetch("/api/account/logout", { method: "POST" }).finally(() => {
+    sessionStorage.removeItem("isLoggedIn");
+    sessionStorage.removeItem("loggedInUser");
     console.log("Logout request sent, redirecting to home page.");
-    window.location.href = "/"; // Reindirizza alla home page
+    window.location.href = "/";
   });
 }
 
-// La chiamata a fetch e updateNavbar verrà fatta dallo script della pagina host.
+// --- Esecuzione all'avvio della pagina ---
+// Lo script della pagina specifica chiamerà await TemplateLoader.initializeCommonTemplates()
+// e poi updateNavbar() dopo aver fatto la sua fetch.
