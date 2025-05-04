@@ -1,5 +1,4 @@
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authentication;
+
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.OAuth;
@@ -7,16 +6,11 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Primitives;
 using EducationalGames.Data;
 using EducationalGames.Endpoints;
 using EducationalGames.Middlewares;
 using EducationalGames.Models;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Routing;
-using Microsoft.AspNetCore.Mvc.Abstractions;
 using EducationalGames.Auth;
-using System.Net;
 using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using EducationalGames.Services;

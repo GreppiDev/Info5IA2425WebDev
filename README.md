@@ -68,4 +68,5 @@
 11. [Cenni ai protocolli OAuth2.0 e OpenID Connect](./web/web-docs/oauth-oidc/index.md)
 
 12. Verso l'Esame di Stato
-    1. [Traccia di Informatica del 2023](./esame/tracce-svolte/2023/index.md)
+    1. [Traccia di informatica del 2017](./esame/tracce-svolte/2017/index.md)
+    2. [Traccia di Informatica del 2023](./esame/tracce-svolte/2023/index.md)
