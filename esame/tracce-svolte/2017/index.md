@@ -238,150 +238,6 @@ end note
     - `LasciaFeedbackPasseggero` (1:N tra `AUTISTA` e `FEEDBACK`, riferito a un viaggio specifico) \- Ternaria tra AUTISTA, PASSEGGERO (ricevente), VIAGGIO. Semplificabile.
     - `RiceveFeedbackAutista` (1:N tra `AUTISTA` e `FEEDBACK`)
     - `RiceveFeedbackPasseggero` (1:N tra `PASSEGGERO` e `FEEDBACK`)
-- Schema E/R Ristrutturato (Semplificato):
-
-    Per semplificare i feedback sono collegati alla PRENOTAZIONE (che lega implicitamente passeggero, autista e viaggio).
-
-    ![Modello E/R](piattaforma-car-pooling-modello-er.svg)
-
-    Il modello E/R è stato ottenuto con il codice per [PlantUML](https://www.plantuml.com/plantuml/uml/):
-
-    ```text
-    @startuml "Car Pooling E/R Diagram"
-
-    !define ENTITY entity
-    !define RELATIONSHIP diamond
-
-    ' Stile delle entità e relazioni
-    skinparam class {
-    BackgroundColor White
-    ArrowColor Black
-    BorderColor Black
-    }
-    skinparam diamond {
-    BackgroundColor LightBlue
-    BorderColor Blue
-    }
-
-    ' Entità
-    ENTITY "UTENTE" as utente {
-    * IdUtente
-    --
-    * Email
-    * Telefono
-    * Nome
-    * Cognome
-    * TipoUtente
-    }
-
-    ENTITY "AUTISTA" as autista {
-    * IdAutista 
-    --
-    * NumPatente
-    * ScadenzaPatente
-    * Fotografia
-    }
-
-    ENTITY "PASSEGGERO" as passeggero {
-    * IdPasseggero
-    --
-    * DocumentoIdentita
-    }
-
-    ENTITY "AUTOMOBILE" as automobile {
-    * IdAuto
-    --
-    * Targa
-    * Marca
-    * Modello
-    * Colore
-    * AnnoImm
-    * IdAutista
-    }
-
-    ENTITY "VIAGGIO" as viaggio {
-    * IdViaggio
-    --
-    * CittaPartenza
-    * CittaDestinazione
-    * DataOraPartenza
-    * ContributoEconomico
-    * TempoStimatoMinuti
-    * DescrizioneAggiuntiva
-    * StatoViaggio
-    * IdAutista
-    * IdAuto
-    }
-
-    ENTITY "PRENOTAZIONE" as prenotazione {
-    * IdPrenotazione
-    --
-    * DataOraPrenotazione
-    * StatoPrenotazione
-    * IdPasseggero  
-    * IdViaggio
-    }
-
-    ENTITY "FEEDBACK_PASSEGGERO" as feedbackP {
-    * IdFeedbackP
-    --
-    * VotoNumerico
-    * GiudizioDiscorsivo
-    * DataOraFeedback
-    * IdPrenotazione
-    }
-
-    ENTITY "FEEDBACK_AUTISTA" as feedbackA {
-    * IdFeedbackA
-    --
-    * VotoNumerico
-    * GiudizioDiscorsivo
-    * DataOraFeedback
-    * IdPrenotazione
-    }
-
-    ' Relazioni con rombi
-    RELATIONSHIP "is_a_autista" as r1
-    RELATIONSHIP "is_a_passeggero" as r2
-    RELATIONSHIP "possesses" as r3
-    RELATIONSHIP "offers" as r4
-    RELATIONSHIP "uses" as r5
-    RELATIONSHIP "requests" as r6
-    RELATIONSHIP "regards" as r7
-    RELATIONSHIP "leaves_feedback_p" as r8
-    RELATIONSHIP "leaves_feedback_a" as r9
-
-    ' Collegamenti
-    utente "0..*" -- r1
-    r1 -- "1" autista
-
-    utente "0..*" -- r2
-    r2 -- "1" passeggero
-
-    autista "0..*" -- r3
-    r3 -- "1" automobile
-
-    autista "0..*" -- r4
-    r4 -- "1" viaggio
-
-    viaggio "1" -- "1" r5
-    r5 -- "1" automobile
-
-    passeggero "0..*" -- r6
-    r6 -- "1" prenotazione
-
-    viaggio "0..*" -- r7
-    r7 -- "1" prenotazione
-
-    prenotazione "0..1" -- r8
-    r8 -- "1" feedbackP
-
-    prenotazione "0..1" -- r9
-    r9 -- "1" feedbackA
-
-    @enduml
-    ```
-
 - **Vincoli e Ipotesi Aggiuntive:**
 
     - Email e Telefono sono unici per `UTENTE`.
@@ -394,6 +250,157 @@ end note
     - `StatoPrenotazione`: 'Richiesta', 'Accettata', 'Rifiutata', 'Completata' (post-viaggio).
     - I feedback possono essere inseriti solo dopo che il viaggio è avvenuto (StatoPrenotazione = 'Completata').
     - Le città potrebbero essere normalizzate in una tabella `CITTA` a parte. Per semplicità le lasciamo come stringhe.
+
+- **Schema E/R Iniziale (Semplificato in versione Mermaid):**
+
+```mermaid
+erDiagram
+    UTENTE {
+        string IdUtente PK
+        string Email
+        string Telefono
+        string Nome
+        string Cognome
+        string TipoUtente
+    }
+    AUTISTA {
+        string IdUtente PK
+        string NumPatente
+        date ScadenzaPatente
+        string Fotografia
+    }
+    PASSEGGERO {
+        string IdUtente PK
+        string DocumentoIdentita
+    }
+    AUTOMOBILE {
+        string IdAuto PK
+        string Targa
+        string Marca
+        string Modello
+        string Colore
+        int AnnoImm
+    }
+    VIAGGIO {
+        string IdViaggio PK
+        string CittaPartenza
+        string CittaDestinazione
+        date DataOraPartenza
+        float ContributoEconomico
+        int TempoStimato
+        string DescrizioneAggiuntiva
+        string StatoViaggio
+    }
+    PRENOTAZIONE {
+        string IdPrenotazione PK
+        date DataOraPrenotazione
+        string StatoPrenotazione
+    }
+    FEEDBACK {
+        string IdFeedback PK
+        int VotoNumerico
+        string GiudizioDiscorsivo
+        date DataOraFeedback
+    }
+    
+    UTENTE ||--|| AUTISTA : "generalizza"
+    UTENTE ||--|| PASSEGGERO : "generalizza"
+    
+    AUTISTA ||--o{ AUTOMOBILE : "Possiede"
+    AUTISTA ||--o{ VIAGGIO : "Offre"
+    AUTOMOBILE ||--o| VIAGGIO : "Utilizza"
+    PASSEGGERO ||--o{ PRENOTAZIONE : "Richiede"
+    VIAGGIO ||--o{ PRENOTAZIONE : "Riguarda"
+    
+    PASSEGGERO ||--o{ FEEDBACK : "LasciaFeedback"
+    AUTISTA ||--o{ FEEDBACK : "RiceveFeedback"
+    AUTISTA ||--o{ FEEDBACK : "LasciaFeedback"
+    PASSEGGERO ||--o{ FEEDBACK : "RiceveFeedback"
+    VIAGGIO ||--o{ FEEDBACK : "Riguarda"
+```
+
+- **Schema E/R ristrutturato (semplificato in versione Mermaid)**
+
+    - Per semplificare i feedback sono collegati alla PRENOTAZIONE (che lega implicitamente passeggero, autista e viaggio).
+    - Per distinguere i feedback ricevuti dall'autista dai feedback ricevuti dai passeggeri decidiamo di sdoppiare l'entità feedback prevedendo un'entità `FeedbackAutista` che rappresenta il feedback ricevuto dall'autista e un'entità `FeedbackPasseggero` che rappresenta il feedback ricevuto dal passeggero.
+    - La gerarchia ISA tra `Utente` e le entità figlie `Autista` e `Passeggero` viene ristrutturata lasciando sia l'entità genitore che le entità figlie poiché i ruoli completamente diversi delle entità figlie fanno in modo che queste siano collegate a parti completamente diverse del modello dei dati, pur conservando diversi attributi in comune (lasciati nell'entità genitore).
+    - Assumiamo che:
+      - StatoViaggio "ENUM('Aperto', 'Chiuso') DEFAULT 'Aperto'"
+      - StatoPrenotazione "ENUM('Richiesta', 'Accettata', 'Rifiutata', 'Completata') DEFAULT 'Richiesta'"
+      - VotoNumerico "CHECK(VotoNumerico BETWEEN 1 AND 5)"
+
+```mermaid
+erDiagram
+    Utenti {
+        int IdUtente PK
+        string Email
+        string Telefono
+        string Nome
+        string Cognome
+    }
+    
+    Autisti {
+        int IdAutista PK
+        string NumPatente
+        date ScadenzaPatente
+        string PathFotografia
+    }
+    
+    Passeggeri {
+        int IdPasseggero
+        string DocumentoIdentita
+    }
+    
+    Automobili {
+        int IdAuto PK
+        string Targa
+        string Marca
+        string Modello
+        string Colore
+        int AnnoImm
+    }
+    
+    Viaggi {
+        int IdViaggio PK
+        string CittaPartenza
+        string CittaDestinazione
+        datetime DataOraPartenza
+        decimal ContributoEconomico
+        int TempoStimatoMinuti
+        string DescrizioneAggiuntiva
+        enum StatoViaggio
+    }
+    
+    Prenotazioni {
+        int IdPrenotazione PK
+        datetime DataOraPrenotazione
+        enum StatoPrenotazione
+    }
+    
+    FeedbackAutisti {
+        int IdFeedbackA PK
+        int VotoNumerico
+        text GiudizioDiscorsivo
+        datetime DataOraFeedback
+    }
+    
+    FeedbackPasseggeri {
+        int IdFeedbackP PK
+        int VotoNumerico
+        text GiudizioDiscorsivo
+        datetime DataOraFeedback
+    }
+    
+    Utenti ||--|| Autisti : Ha
+    Utenti ||--|| Passeggeri : Ha
+    Autisti ||--o{ Automobili : Possiede
+    Autisti ||--o{ Viaggi : Offre
+    Automobili ||--o{ Viaggi : UsataIn
+    Passeggeri ||--o{ Prenotazioni : Effettua
+    Viaggi ||--o{ Prenotazioni : Riceve
+    Prenotazioni ||--o| FeedbackAutisti : "il guidatore lascia"
+    Prenotazioni ||--o| FeedbackPasseggeri : "il passeggero lascia"
+```
 
 #### 2\. Schema Logico Relazionale
 
@@ -869,7 +876,7 @@ sequenceDiagram
 
         ```
 
-    - **SQL Puro (FromSqlRaw - per la query 3a):**
+    - **SQL Puro (FromSql - per la query 3a):**
 
         ```cs
         // Assumiamo che 'db' sia l'istanza del DbContext

@@ -88,6 +88,98 @@ Identifichiamo prima i requisiti basandoci sulla traccia, distinguendo tra quell
         - `GIOCO_ARGOMENTO` (Gioco appartiene a Argomento - M:N): (ID_Gioco FK -> VIDEOGIOCO, ID_Argomento FK -> ARGOMENTO) - PK composita (ID_Gioco, ID_Argomento)
         - `PROGRESSO_STUDENTE` (Tracciamento monete - relazione ternaria Studente-Gioco-Classe): (ID_Studente FK -> UTENTE, ID_Gioco FK -> VIDEOGIOCO, ID_Classe FK -> CLASSE_VIRTUALE, MoneteRaccolte INT >= 0 DEFAULT 0) - PK composita (ID_Studente, ID_Gioco, ID_Classe)
 
+    ```mermaid
+    erDiagram
+    UTENTE {
+        int ID_Utente "PK"
+        string Nome
+        string Cognome
+        string Email
+        string PasswordHash
+        string Ruolo
+        %% ENUM in SQL
+    }
+    MATERIA {
+        int ID_Materia "PK"
+        string NomeMateria
+    }
+    ARGOMENTO {
+        int ID_Argomento "PK"
+        string NomeArgomento
+    }
+    VIDEOGIOCO {
+        int ID_Gioco "PK"
+        string Titolo
+        string DescrizioneBreve
+        string DescrizioneEstesa
+        %% TEXT in SQL
+        int MaxMonete
+        string Immagine1
+        string Immagine2
+        string Immagine3
+        string DefinizioneGioco
+        %% JSON in SQL
+    }
+    CLASSE_VIRTUALE {
+        int ID_Classe "PK"
+        string NomeClasse
+        string CodiceIscrizione
+        %% ID_Docente e ID_Materia sono rappresentati dalle relazioni
+    }
+
+    %% Entità Associative per relazioni M:N e Ternaria
+    ISCRIZIONE {
+        int ID_Studente "PK"
+        int ID_Classe "PK"
+        %% timestamp DataIscrizione omesso per semplicità E/R
+    }
+    CLASSE_GIOCO {
+        int ID_Classe "PK"
+        int ID_Gioco "PK"
+    }
+    GIOCO_ARGOMENTO {
+        int ID_Gioco "PK"
+        int ID_Argomento "PK"
+    }
+    PROGRESSO_STUDENTE {
+        int ID_Studente "PK"
+        int ID_Gioco "PK"
+        int ID_Classe "PK"
+        int MoneteRaccolte
+        %% timestamp UltimoAggiornamento omesso per semplicità E/R
+    }
+
+    %% Relazioni 1:N dirette
+    UTENTE ||--o{ CLASSE_VIRTUALE : "Insegna (Docente)"
+    %% Un docente insegna 0 o più classi
+    MATERIA ||--o{ CLASSE_VIRTUALE : "Tratta"
+    %% Una materia è trattata in 0 o più classi
+
+    %% Relazioni M:N rappresentate tramite Entità Associative
+    UTENTE }o--|| ISCRIZIONE : "Effettua (Studente)"
+    %% Uno studente effettua 0 o più iscrizioni
+    CLASSE_VIRTUALE }o--|| ISCRIZIONE : "Riceve"
+    %% Una classe riceve 0 o più iscrizioni
+
+    CLASSE_VIRTUALE }o--|| CLASSE_GIOCO : "Include"
+    %% Una classe include 0 o più giochi
+    VIDEOGIOCO }o--|| CLASSE_GIOCO : "È incluso in"
+    %% Un gioco è incluso in 0 o più classi
+
+    VIDEOGIOCO }o--|| GIOCO_ARGOMENTO : "Copre"
+    %% Un gioco copre 0 o più argomenti
+    ARGOMENTO }o--|| GIOCO_ARGOMENTO : "È coperto da"
+    %% Un argomento è coperto da 0 o più giochi
+
+    %% Relazione Ternaria rappresentata tramite Entità Associativa
+    UTENTE }o--|| PROGRESSO_STUDENTE : "Ha (Studente)"
+    %% Uno studente ha 0 o più progressi
+    VIDEOGIOCO }o--|| PROGRESSO_STUDENTE : "Registra per"
+    %% Un gioco registra 0 o più progressi
+    CLASSE_VIRTUALE }o--|| PROGRESSO_STUDENTE : "Registra in"
+    %% Una classe registra 0 o più progressi
+    ```
+
     *Nota sull'E/R Diagram:* Un diagramma grafico mostrerebbe queste entità come rettangoli, attributi come ovali (con PK sottolineato), e relazioni come rombi collegati alle entità con linee indicanti le cardinalità (1:N, M:N). Le tabelle associative sopra derivano direttamente dalla risoluzione delle relazioni M:N e della relazione ternaria nel modello logico.
 
 - Raffinamento del modello concettuale (Modello E/R raffinato)
@@ -160,6 +252,80 @@ Traduciamo il modello E/R in uno schema relazionale (praticamente già delineato
 7. `CLASSI_GIOCHI` (<u>*ID_Classe*</u> INT NOT NULL, <u>*ID_Gioco*</u> INT NOT NULL, PRIMARY KEY (ID_Classe, ID_Gioco), FOREIGN KEY (ID_Classe) REFERENCES CLASSI_VIRTUALI(ID_Classe) ON DELETE CASCADE, FOREIGN KEY (ID_Gioco) REFERENCES VIDEOGIOCHI(ID_Gioco) ON DELETE CASCADE) - *Nota: Assumiamo CASCADE qui: se la classe o il gioco vengono rimossi, l'associazione non ha senso.*
 8. `GIOCHI_ARGOMENTI` (<u>*ID_Gioco*</u> INT NOT NULL, <u>*ID_Argomento*</u> INT NOT NULL, PRIMARY KEY (ID_Gioco, ID_Argomento), FOREIGN KEY (ID_Gioco) REFERENCES VIDEOGIOCHI(ID_Gioco) ON DELETE CASCADE, FOREIGN KEY (ID_Argomento) REFERENCES ARGOMENTI(ID_Argomento) ON DELETE CASCADE) - *Nota: CASCADE: se gioco o argomento spariscono, la classificazione sparisce.*
 9. `PROGRESSI_STUDENTI` (<u>*ID_Studente*</u> INT NOT NULL, <u>*ID_Gioco*</u> INT NOT NULL, <u>*ID_Classe*</u> INT NOT NULL, MoneteRaccolte INT UNSIGNED NOT NULL DEFAULT 0, UltimoAggiornamento TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, PRIMARY KEY (ID_Studente, ID_Gioco, ID_Classe), FOREIGN KEY (ID_Studente) REFERENCES UTENTI(ID_Utente) ON DELETE CASCADE, FOREIGN KEY (ID_Gioco) REFERENCES VIDEOGIOCHI(ID_Gioco) ON DELETE CASCADE, FOREIGN KEY (ID_Classe) REFERENCES CLASSI_VIRTUALI(ID_Classe) ON DELETE CASCADE, CHECK (MoneteRaccolte >= 0)) - *Nota: CASCADE qui. Il check su MoneteRaccolte >= 0 è un vincolo di dominio.*
+
+Lo schema logico si può rappresentare anche in forma grafica, come mostrato di seguito:
+
+```mermaid
+erDiagram
+    UTENTI {
+        type ID_Utente "PK"
+        type Nome
+        type Cognome
+        type Email
+        type PasswordHash
+        type Ruolo
+    }
+    MATERIE {
+        type ID_Materia "PK"
+        type NomeMateria
+    }
+    ARGOMENTI {
+        type ID_Argomento "PK"
+        type NomeArgomento
+    }
+    VIDEOGIOCHI {
+        type ID_Gioco "PK"
+        type Titolo
+        type DescrizioneBreve
+        type DescrizioneEstesa
+        type MaxMonete
+        type Immagine1
+        type Immagine2
+        type Immagine3
+        type DefinizioneGioco
+    }
+    CLASSI_VIRTUALI {
+        type ID_Classe "PK"
+        type NomeClasse
+        type CodiceIscrizione
+        type ID_Docente "FK"
+        type ID_Materia "FK"
+    }
+    ISCRIZIONI {
+        type ID_Studente "PK, FK"
+        type ID_Classe "PK, FK"
+        type DataIscrizione
+    }
+    CLASSI_GIOCHI {
+        type ID_Classe "PK, FK"
+        type ID_Gioco "PK, FK"
+    }
+    GIOCHI_ARGOMENTI {
+        type ID_Gioco "PK, FK"
+        type ID_Argomento "PK, FK"
+    }
+    PROGRESSI_STUDENTI {
+        type ID_Studente "PK, FK"
+        type ID_Gioco "PK, FK"
+        type ID_Classe "PK, FK"
+        type MoneteRaccolte
+        type UltimoAggiornamento
+    }
+
+    %% Relazioni basate sulle Foreign Keys
+    UTENTI ||--o{ CLASSI_VIRTUALI : "Crea (Docente)"
+    MATERIE ||--o{ CLASSI_VIRTUALI : "Riguarda"
+    UTENTI ||--|{ ISCRIZIONI : "Effettua (Studente)"
+    CLASSI_VIRTUALI ||--|{ ISCRIZIONI : "Riceve"
+    CLASSI_VIRTUALI ||--|{ CLASSI_GIOCHI : "Include"
+    VIDEOGIOCHI ||--|{ CLASSI_GIOCHI : "È incluso in"
+    VIDEOGIOCHI ||--|{ GIOCHI_ARGOMENTI : "Copre"
+    ARGOMENTI ||--|{ GIOCHI_ARGOMENTI : "È coperto da"
+    UTENTI ||--|{ PROGRESSI_STUDENTI : "Ha (Studente)"
+    VIDEOGIOCHI ||--|{ PROGRESSI_STUDENTI : "Registra per"
+    CLASSI_VIRTUALI ||--|{ PROGRESSI_STUDENTI : "Registra in"
+```
+
 
 ### Punto 3: Definizione SQL (MariaDB) - Sottoinsieme con Vincoli
 
