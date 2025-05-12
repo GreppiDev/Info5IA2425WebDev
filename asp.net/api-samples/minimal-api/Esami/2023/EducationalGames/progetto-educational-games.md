@@ -14,6 +14,9 @@
     - [Fase 6: Parte Significativa dell'Applicazione Web (Esempio)](#fase-6-parte-significativa-dellapplicazione-web-esempio)
   - [Seconda parte](#seconda-parte)
     - [Domanda 1: *`In relazione al tema proposto nella prima parte, si sviluppi, in un linguaggio a scelta, una porzione di codice significativa delle pagine web necessarie a presentare la classifica generale degli studenti di una certa classe virtuale, in base alle monete raccolte in tutti i videogiochi di quella classe.`*](#domanda-1-in-relazione-al-tema-proposto-nella-prima-parte-si-sviluppi-in-un-linguaggio-a-scelta-una-porzione-di-codice-significativa-delle-pagine-web-necessarie-a-presentare-la-classifica-generale-degli-studenti-di-una-certa-classe-virtuale-in-base-alle-monete-raccolte-in-tutti-i-videogiochi-di-quella-classe)
+    - [Domanda 2: Integrazione Feedback Studenti](#domanda-2-integrazione-feedback-studenti)
+    - [Domanda 3: Raggruppamento in SQL (GROUP BY, Funzioni di Aggregazione, HAVING)](#domanda-3-raggruppamento-in-sql-group-by-funzioni-di-aggregazione-having)
+    - [Domanda 4: Normalizzazione Tabella "Progetti"](#domanda-4-normalizzazione-tabella-progetti)
 
 ## Prima parte
 
@@ -243,73 +246,73 @@ Identifichiamo prima i requisiti basandoci sulla traccia, distinguendo tra quell
 
 Traduciamo il modello E/R in uno schema relazionale (praticamente già delineato sopra):
 
-1. `UTENTI` (<u>ID_Utente</u> INT AUTO_INCREMENT, Nome VARCHAR(50) NOT NULL, Cognome VARCHAR(50) NOT NULL, Email VARCHAR(100) NOT NULL UNIQUE, PasswordHash VARCHAR(255) NOT NULL, Ruolo ENUM('Docente', 'Studente') NOT NULL)
-2. `MATERIE` (<u>ID_Materia</u> INT AUTO_INCREMENT, NomeMateria VARCHAR(50) NOT NULL UNIQUE)
-3. `ARGOMENTI` (<u>ID_Argomento</u> INT AUTO_INCREMENT, NomeArgomento VARCHAR(100) NOT NULL UNIQUE)
-4. `VIDEOGIOCHI` (<u>ID_Gioco</u> INT AUTO_INCREMENT, Titolo VARCHAR(100) NOT NULL UNIQUE, DescrizioneBreve VARCHAR(160), DescrizioneEstesa TEXT, MaxMonete INT UNSIGNED NOT NULL DEFAULT 0, Immagine1 VARCHAR(255), Immagine2 VARCHAR(255), Immagine3 VARCHAR(255), DefinizioneGioco JSON)
-5. `CLASSI_VIRTUALI` (<u>ID_Classe</u> INT AUTO_INCREMENT, NomeClasse VARCHAR(50) NOT NULL, CodiceIscrizione VARCHAR(20) NOT NULL UNIQUE, *ID_Docente* INT NOT NULL, *ID_Materia* INT NOT NULL, FOREIGN KEY (ID_Docente) REFERENCES UTENTI(ID_Utente) ON DELETE RESTRICT, FOREIGN KEY (ID_Materia) REFERENCES MATERIE(ID_Materia) ON DELETE RESTRICT, UNIQUE KEY (ID_Docente, NomeClasse))
-6. `ISCRIZIONI` (<u>*ID_Studente*</u> INT NOT NULL, <u>*ID_Classe*</u> INT NOT NULL, DataIscrizione TIMESTAMP DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (ID_Studente, ID_Classe), FOREIGN KEY (ID_Studente) REFERENCES UTENTI(ID_Utente) ON DELETE CASCADE, FOREIGN KEY (ID_Classe) REFERENCES CLASSI_VIRTUALI(ID_Classe) ON DELETE CASCADE) - *Nota: Assumiamo CASCADE qui: se studente o classe vengono rimossi, l'iscrizione non ha più senso.*
-7. `CLASSI_GIOCHI` (<u>*ID_Classe*</u> INT NOT NULL, <u>*ID_Gioco*</u> INT NOT NULL, PRIMARY KEY (ID_Classe, ID_Gioco), FOREIGN KEY (ID_Classe) REFERENCES CLASSI_VIRTUALI(ID_Classe) ON DELETE CASCADE, FOREIGN KEY (ID_Gioco) REFERENCES VIDEOGIOCHI(ID_Gioco) ON DELETE CASCADE) - *Nota: Assumiamo CASCADE qui: se la classe o il gioco vengono rimossi, l'associazione non ha senso.*
-8. `GIOCHI_ARGOMENTI` (<u>*ID_Gioco*</u> INT NOT NULL, <u>*ID_Argomento*</u> INT NOT NULL, PRIMARY KEY (ID_Gioco, ID_Argomento), FOREIGN KEY (ID_Gioco) REFERENCES VIDEOGIOCHI(ID_Gioco) ON DELETE CASCADE, FOREIGN KEY (ID_Argomento) REFERENCES ARGOMENTI(ID_Argomento) ON DELETE CASCADE) - *Nota: CASCADE: se gioco o argomento spariscono, la classificazione sparisce.*
-9. `PROGRESSI_STUDENTI` (<u>*ID_Studente*</u> INT NOT NULL, <u>*ID_Gioco*</u> INT NOT NULL, <u>*ID_Classe*</u> INT NOT NULL, MoneteRaccolte INT UNSIGNED NOT NULL DEFAULT 0, UltimoAggiornamento TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, PRIMARY KEY (ID_Studente, ID_Gioco, ID_Classe), FOREIGN KEY (ID_Studente) REFERENCES UTENTI(ID_Utente) ON DELETE CASCADE, FOREIGN KEY (ID_Gioco) REFERENCES VIDEOGIOCHI(ID_Gioco) ON DELETE CASCADE, FOREIGN KEY (ID_Classe) REFERENCES CLASSI_VIRTUALI(ID_Classe) ON DELETE CASCADE, CHECK (MoneteRaccolte >= 0)) - *Nota: CASCADE qui. Il check su MoneteRaccolte >= 0 è un vincolo di dominio.*
+1. `UTENTI` (<u>ID_Utente</u>, Nome, Cognome, Email UK, PasswordHash, Ruolo ENUM('Docente', 'Studente', 'Admin'))
+2. `MATERIE` (<u>ID_Materia</u>, NomeMateria UK)
+3. `ARGOMENTI` (<u>ID_Argomento</u>, NomeArgomento UK)
+4. `VIDEOGIOCHI` (<u>ID_Gioco</u>, Titolo UK, DescrizioneBreve, DescrizioneEstesa, MaxMonete, Immagine1, Immagine2, Immagine3, DefinizioneGioco)
+5. `CLASSI_VIRTUALI` (<u>ID_Classe</u>, NomeClasse, CodiceIscrizione UK, *ID_Docente* FK -> Utenti.ID_utente, *ID_Materia* FK -> Materia.ID_Materia, UK (ID_Docente, NomeClasse))
+6. `ISCRIZIONI` (<u>*ID_Studente*</u> PK, FK -> Utenti.ID_Utente , <u>*ID_Classe*</u> PK, FK -> Classi_Virtuali.ID_classe, DataIscrizione) - *Nota: Assumiamo CASCADE qui: se studente o classe vengono rimossi, l'iscrizione non ha più senso.*
+7. `CLASSI_GIOCHI` (<u>*ID_Classe*</u> PK, FK -> Classi_Virtuali.ID_classe, <u>*ID_Gioco*</u> PK, FK -> Videogiochi.ID_Gioco) - *Nota: Assumiamo CASCADE qui: se la classe o il gioco vengono rimossi, l'associazione non ha senso.*
+8. `GIOCHI_ARGOMENTI` (<u>*ID_Gioco*</u> PK, FK -> Videogiochi.ID_Gioco, <u>*ID_Argomento*</u> PK, FK -> Argomenti.ID_Argomento) - *Nota: CASCADE: se gioco o argomento spariscono, la classificazione sparisce.*
+9. `PROGRESSI_STUDENTI` (<u>*ID_Studente*</u> PK, FK -> Utenti.ID_Utente, <u>*ID_Gioco*</u> PK, FK -> Videogioghi.ID_Gioco, <u>*ID_Classe*</u> PK, FK -> Classi_Virtuali.ID_Classe, MoneteRaccolte, UltimoAggiornamento) - *Nota: CASCADE qui. Il check su MoneteRaccolte >= 0 è un vincolo di dominio.*
 
 Lo schema logico si può rappresentare anche in forma grafica, come mostrato di seguito:
 
 ```mermaid
 erDiagram
     UTENTI {
-        type ID_Utente "PK"
-        type Nome
-        type Cognome
-        type Email
-        type PasswordHash
-        type Ruolo
+        int ID_Utente "PK"
+        varchar Nome
+        varchar Cognome
+        varchar Email
+        varchar PasswordHash
+        enum Ruolo
     }
     MATERIE {
-        type ID_Materia "PK"
-        type NomeMateria
+        int ID_Materia "PK"
+        varchar NomeMateria
     }
     ARGOMENTI {
-        type ID_Argomento "PK"
-        type NomeArgomento
+        int ID_Argomento "PK"
+        varchar NomeArgomento
     }
     VIDEOGIOCHI {
-        type ID_Gioco "PK"
-        type Titolo
-        type DescrizioneBreve
-        type DescrizioneEstesa
-        type MaxMonete
-        type Immagine1
-        type Immagine2
-        type Immagine3
-        type DefinizioneGioco
+        int ID_Gioco "PK"
+        varchar Titolo
+        varchar DescrizioneBreve
+        text DescrizioneEstesa
+        int MaxMonete
+        varchar Immagine1
+        varchar Immagine2
+        varchar Immagine3
+        json DefinizioneGioco
     }
     CLASSI_VIRTUALI {
-        type ID_Classe "PK"
-        type NomeClasse
-        type CodiceIscrizione
-        type ID_Docente "FK"
-        type ID_Materia "FK"
+        int ID_Classe "PK"
+        varchar NomeClasse
+        varchar CodiceIscrizione
+        int ID_Docente "FK"
+        int ID_Materia "FK"
     }
     ISCRIZIONI {
-        type ID_Studente "PK, FK"
-        type ID_Classe "PK, FK"
-        type DataIscrizione
+        int ID_Studente "PK, FK"
+        int ID_Classe "PK, FK"
+        datetime DataIscrizione
     }
     CLASSI_GIOCHI {
-        type ID_Classe "PK, FK"
-        type ID_Gioco "PK, FK"
+        int ID_Classe "PK, FK"
+        int ID_Gioco "PK, FK"
     }
     GIOCHI_ARGOMENTI {
-        type ID_Gioco "PK, FK"
-        type ID_Argomento "PK, FK"
+        int ID_Gioco "PK, FK"
+        int ID_Argomento "PK, FK"
     }
     PROGRESSI_STUDENTI {
-        type ID_Studente "PK, FK"
-        type ID_Gioco "PK, FK"
-        type ID_Classe "PK, FK"
-        type MoneteRaccolte
-        type UltimoAggiornamento
+        int ID_Studente "PK, FK"
+        int ID_Gioco "PK, FK"
+        int ID_Classe "PK, FK"
+        int MoneteRaccolte
+        datetime UltimoAggiornamento
     }
 
     %% Relazioni basate sulle Foreign Keys
@@ -325,7 +328,6 @@ erDiagram
     VIDEOGIOCHI ||--|{ PROGRESSI_STUDENTI : "Registra per"
     CLASSI_VIRTUALI ||--|{ PROGRESSI_STUDENTI : "Registra in"
 ```
-
 
 ### Punto 3: Definizione SQL (MariaDB) - Sottoinsieme con Vincoli
 
@@ -1849,3 +1851,243 @@ Di seguito vengono riportate due implementazioni con difficoltà differenti.
         * `GET /api/classifiche/classe/{idClasse}`: Recupera classifica generale. (Richiede Auth/Authz sulla classe)
         * `GET /api/classifiche/classe/{idClasse}/gioco/{idGioco}`: Recupera classifica specifica gioco. (Richiede Auth/Authz sulla classe/gioco)
 
+### Domanda 2: Integrazione Feedback Studenti
+
+**Descrizione Integrazione Database:**
+
+Per gestire i feedback degli studenti sui videogiochi, è necessario estendere il database. Si può introdurre una nuova tabella `Feedback`. Questa tabella conterrà le seguenti colonne:
+
+- `ID_Feedback` (Chiave Primaria, auto-incrementale)
+- `ID_Studente` (Chiave Esterna riferita alla tabella `Studenti`)
+- `ID_Gioco` (Chiave Esterna riferita alla tabella `Giochi`)
+- `Punteggio` (Intero, con vincolo CHECK tra 1 e 5)
+- `Descrizione` (Stringa, massimo 160 caratteri)
+- `DataFeedback` (Data/Ora, opzionale, per tracciare quando è stato lasciato il feedback)
+
+**Struttura Pagine Web:**
+
+La funzionalità di feedback potrebbe essere integrata nelle pagine dedicate ai singoli giochi all'interno della classe virtuale dello studente.
+
+1. **Pagina Dettaglio Gioco (Lato Studente):**
+    - Dopo le informazioni sul gioco e il link per giocarci, si potrebbe aggiungere una sezione "Lascia un Feedback".
+    - Questa sezione conterrebbe un form con:
+        - Un sistema di valutazione a stelle (o radio button) per selezionare il punteggio da 1 a 5.
+        - Un'area di testo per inserire la descrizione (con un contatore di caratteri per rispettare il limite di 160).
+        - Un pulsante "Invia Feedback".
+    - Opzionalmente, si potrebbero visualizzare anche i feedback precedentemente lasciati dallo studente per quel gioco.
+2. **Pagina Visualizzazione Feedback (Lato Docente):**
+    - Il docente potrebbe avere una sezione dedicata nella sua dashboard (per classe o per gioco) dove visualizzare i feedback aggregati o individuali lasciati dagli studenti.
+    - Si potrebbero mostrare statistiche come il punteggio medio per gioco e l'elenco dei commenti.
+
+**Porzione di Codice Significativa (Esempio HTML/JavaScript per il Form Studente):**
+
+```html
+<div class="feedback-section">
+    <h4>Lascia il tuo Feedback</h4>
+    <form id="feedbackForm">
+        <input type="hidden" id="giocoId" value="[ID_DEL_GIOCO]"> <input type="hidden" id="studenteId" value="[ID_DELLO_STUDENTE]"> <div class="rating">
+            <label>Punteggio:</label>
+            <input type="radio" id="star5" name="punteggio" value="5" required><label for="star5" title="Ottimo">5 stelle</label>
+            <input type="radio" id="star4" name="punteggio" value="4"><label for="star4" title="Buono">4 stelle</label>
+            <input type="radio" id="star3" name="punteggio" value="3"><label for="star3" title="Medio">3 stelle</label>
+            <input type="radio" id="star2" name="punteggio" value="2"><label for="star2" title="Sufficiente">2 stelle</label>
+            <input type="radio" id="star1" name="punteggio" value="1"><label for="star1" title="Scarso">1 stella</label>
+        </div>
+
+        <div class="comment">
+            <label for="descrizione">Commento (max 160 caratteri):</label>
+            <textarea id="descrizione" name="descrizione" maxlength="160" rows="3"></textarea>
+            <div id="charCount">0/160</div>
+        </div>
+
+        <button type="submit">Invia Feedback</button>
+    </form>
+    <div id="feedbackMessage"></div>
+</div>
+
+<script>
+    // Semplice script per contare i caratteri
+    const descrizioneInput = document.getElementById('descrizione');
+    const charCountDisplay = document.getElementById('charCount');
+    descrizioneInput.addEventListener('input', () => {
+        const count = descrizioneInput.value.length;
+        charCountDisplay.textContent = `${count}/160`;
+    });
+
+    // Script (semplificato) per inviare il form con AJAX (richiede implementazione backend)
+    document.getElementById('feedbackForm').addEventListener('submit', function(event) {
+        event.preventDefault(); // Impedisce l'invio standard del form
+
+        const formData = {
+            studenteId: document.getElementById('studenteId').value,
+            giocoId: document.getElementById('giocoId').value,
+            punteggio: document.querySelector('input[name="punteggio"]:checked').value,
+            descrizione: document.getElementById('descrizione').value
+        };
+
+        // Qui andrebbe la logica per inviare i dati al backend (es. tramite fetch API)
+        console.log("Dati da inviare:", formData);
+        // fetch('/api/feedback', { method: 'POST', body: JSON.stringify(formData), ... })
+        // .then(...)
+        // .catch(...)
+
+        // Messaggio di conferma (simulato)
+        document.getElementById('feedbackMessage').textContent = 'Feedback inviato con successo!';
+        // Resetta il form o disabilita dopo l'invio
+        // event.target.reset();
+    });
+</script>
+```
+
+### Domanda 3: Raggruppamento in SQL (GROUP BY, Funzioni di Aggregazione, HAVING)
+
+Il concetto di "raggruppamento" in SQL, implementato principalmente tramite la clausola `GROUP BY`, permette di aggregare righe che hanno gli stessi valori in una o più colonne specificate, applicando funzioni di aggregazione a ciascun gruppo.
+
+**Clausola `GROUP BY`:**
+
+- **Scopo:** Raggruppa le righe di una tabella basandosi sui valori comuni in una o più colonne.
+- **Funzionamento:** Tutte le righe che condividono gli stessi valori nelle colonne specificate nella clausola `GROUP BY` vengono trattate come un singolo gruppo.
+- **Utilizzo:** Viene usata in combinazione con le funzioni di aggregazione per calcolare un valore riassuntivo per ogni gruppo.
+
+**Funzioni di Aggregazione:**
+
+- **Scopo:** Eseguono un calcolo su un insieme di righe (un gruppo o l'intera tabella se `GROUP BY` non è presente) e restituiscono un singolo valore riassuntivo.
+- **Esempi comuni:**
+    - `COUNT()`: Conta il numero di righe nel gruppo. `COUNT(*)` conta tutte le righe, `COUNT(colonna)` conta le righe dove `colonna` non è NULL.
+    - `SUM()`: Calcola la somma dei valori in una colonna numerica per il gruppo.
+    - `AVG()`: Calcola la media dei valori in una colonna numerica per il gruppo.
+    - `MAX()`: Trova il valore massimo in una colonna per il gruppo.
+    - `MIN()`: Trova il valore minimo in una colonna per il gruppo.
+- **Utilizzo con `GROUP BY`:** Le funzioni di aggregazione vengono applicate separatamente a ciascun gruppo creato da `GROUP BY`. Le colonne nella `SELECT` list devono essere o colonne presenti nella `GROUP BY` o risultati di funzioni di aggregazione.
+
+**Clausola `HAVING`:**
+
+- **Scopo:** Filtra i gruppi creati dalla clausola `GROUP BY` basandosi su una condizione specificata. È simile alla clausola `WHERE`, ma opera *dopo* che il raggruppamento e le aggregazioni sono state eseguite.
+- **Funzionamento:** Valuta una condizione per ogni gruppo; solo i gruppi per cui la condizione è vera vengono inclusi nel risultato finale.
+- **Utilizzo:** Permette di applicare condizioni sui risultati delle funzioni di aggregazione (es. "mostra solo i gruppi con più di 5 elementi" -> `HAVING COUNT(*) > 5`).
+
+**Esempio:**
+
+Supponiamo di avere una tabella `Punteggi` (ID_Studente, ID_Gioco, MoneteRaccolte). Vogliamo trovare il totale di monete raccolte per ogni gioco, ma solo per i giochi in cui sono state raccolte più di 1000 monete in totale.
+
+```sql
+SELECT
+    ID_Gioco,
+    SUM(MoneteRaccolte) AS TotaleMoneteGioco
+FROM
+    Punteggi
+GROUP BY
+    ID_Gioco -- Raggruppa le righe per ID_Gioco
+HAVING
+    SUM(MoneteRaccolte) > 1000; -- Filtra i gruppi mostrando solo quelli con somma > 1000
+
+```
+
+In questo esempio:
+
+1. `GROUP BY ID_Gioco` crea gruppi di righe, uno per ogni `ID_Gioco` distinto.
+2. `SUM(MoneteRaccolte)` calcola la somma delle monete per ciascun gruppo (gioco).
+3. `HAVING SUM(MoneteRaccolte) > 1000` filtra questi gruppi, restituendo solo quelli la cui somma totale di monete supera 1000.
+
+### Domanda 4: Normalizzazione Tabella "Progetti"
+
+**Verifica Normalizzazione:**
+
+Analizziamo la tabella "Progetti" fornita:
+
+| ID  | Titolo                  | Budget | Tipo | DataInizio | DataFine   | Tutor         | TelTutor  |
+| :-: | :---------------------- | -----: | :---: | :--------: | :--------: | :------------ | :-------: |
+| 1   | Pensiero computazionale | 40.000 | PON  | 20/02/2023 | NULL       | Rossi Mario   | 345678910 |
+| 2   | Robotica educativa      | 13.000 | PCTO | 10/11/2022 | 30/03/2023 | Bianchi Carlo | 333444555 |
+| 3   | Tinkering               | 25.000 | PCTO | 14/10/2022 | 20/02/2023 | Bianchi Carlo | 333444555 |
+| 4   | Realtà virtuale         | 30.000 | PCTO | 16/02/2023 | 30/05/2023 | Rossi Mario   | 345678910 |
+
+- **Prima Forma Normale (1NF):** La tabella è in 1NF perché tutti i valori sono atomici (non ci sono gruppi ripetuti o array nelle celle) e ha una chiave primaria (presumibilmente `ID`).
+- **Seconda Forma Normale (2NF):** La chiave primaria è `ID` (una singola colonna). Tutte le dipendenze funzionali da una parte della chiave primaria sono automaticamente dipendenze dalla chiave completa. Quindi, la tabella è in 2NF (la 2NF riguarda dipendenze parziali da chiavi composte, che qui non abbiamo).
+- **Terza Forma Normale (3NF):** Dobbiamo verificare le dipendenze transitive. Una dipendenza transitiva esiste quando un attributo non-chiave dipende da un altro attributo non-chiave, che a sua volta dipende dalla chiave primaria.
+    - Osserviamo che `TelTutor` dipende da `Tutor`, e `Tutor` dipende da `ID`. Cioè: `ID` -> `Tutor` -> `TelTutor`.
+    - Questo viola la 3NF. `TelTutor` è un attributo che descrive il Tutor, non direttamente il Progetto (identificato da `ID`). Ogni volta che compare "Rossi Mario", il telefono è sempre "345678910". Lo stesso per "Bianchi Carlo".
+
+**Conclusione:** La tabella "Progetti" non soddisfa la Terza Forma Normale (3NF) a causa della dipendenza transitiva `ID` -> `Tutor` -> `TelTutor`.
+
+**Schema Relazionale Equivalente in 3NF:**
+
+Per raggiungere la 3NF, dobbiamo separare l'entità "Tutor" dalla tabella "Progetti".
+
+1. **Tabella `Tutor`:** Conterrà le informazioni specifiche dei tutor.
+
+    - `ID_Tutor` (Chiave Primaria - potrebbe essere un codice univoco o usare il nome se univoco, ma un ID è preferibile)
+    - `NomeCognomeTutor`
+    - `TelefonoTutor`
+2. **Tabella `Progetti` (Modificata):** Conterrà le informazioni sui progetti, con un riferimento al tutor.
+
+    - `ID_Progetto` (Chiave Primaria - corrisponde all'originale `ID`)
+    - `Titolo`
+    - `Budget`
+    - `Tipo`
+    - `DataInizio`
+    - `DataFine`
+    - `ID_Tutor` (Chiave Esterna che referenzia `Tutor.ID_Tutor`)
+
+Motivazione:
+
+Questa decomposizione elimina la dipendenza transitiva. Nella nuova tabella Progetti, tutti gli attributi non-chiave (Titolo, Budget, Tipo, DataInizio, DataFine, ID_Tutor) dipendono direttamente e solamente dalla chiave primaria ID_Progetto. Nella tabella Tutor, gli attributi (NomeCognomeTutor, TelefonoTutor) dipendono dalla chiave primaria ID_Tutor. Si evitano così ridondanze (il numero di telefono del tutor non è ripetuto per ogni progetto che segue) e anomalie di aggiornamento (se il numero di telefono di un tutor cambia, va modificato in un solo posto).
+
+**Implementazione SQL dello Schema Ottenuto:**
+
+```mermaid
+erDiagram
+    Tutor ||--o{ Progetti : "gestisce"
+    
+    Tutor {
+        int ID_Tutor PK
+        string NomeCognomeTutor
+        string TelefonoTutor
+    }
+    
+    Progetti {
+        int ID_Progetto PK
+        string Titolo
+        decimal Budget
+        string Tipo
+        date DataInizio
+        date DataFine
+        int ID_Tutor FK
+    }
+```
+
+```sql
+-- Creazione Tabella Tutor
+CREATE TABLE Tutor (
+    ID_Tutor INT PRIMARY KEY AUTO_INCREMENT, -- O altro tipo per PK se non auto-incrementale
+    NomeCognomeTutor VARCHAR(100) NOT NULL UNIQUE, -- Assumendo che Nome+Cognome sia univoco, altrimenti rimuovere UNIQUE
+    TelefonoTutor VARCHAR(20) -- O tipo più appropriato per numeri di telefono
+);
+
+-- Inserimento dati esempio per Tutor (basato sulla tabella originale)
+INSERT INTO Tutor (NomeCognomeTutor, TelefonoTutor) VALUES
+('Rossi Mario', '345678910'),
+('Bianchi Carlo', '333444555');
+-- Nota: L'ID_Tutor sarà generato automaticamente (es. 1 per Rossi, 2 per Bianchi)
+
+-- Creazione Tabella Progetti (Normalizzata)
+CREATE TABLE Progetti (
+    ID_Progetto INT PRIMARY KEY, -- Mantiene l'ID originale
+    Titolo VARCHAR(255) NOT NULL,
+    Budget DECIMAL(10, 2), -- Tipo appropriato per valuta
+    Tipo VARCHAR(50),
+    DataInizio DATE,
+    DataFine DATE NULL, -- Permette valori NULL
+    ID_Tutor INT, -- Chiave Esterna
+    FOREIGN KEY (ID_Tutor) REFERENCES Tutor(ID_Tutor) -- Vincolo di integrità referenziale
+);
+
+-- Inserimento dati esempio per Progetti (usando gli ID_Tutor corrispondenti)
+-- Assumendo ID_Tutor 1 per Rossi Mario, ID_Tutor 2 per Bianchi Carlo
+INSERT INTO Progetti (ID_Progetto, Titolo, Budget, Tipo, DataInizio, DataFine, ID_Tutor) VALUES
+(1, 'Pensiero computazionale', 40000.00, 'PON', '2023-02-20', NULL, 1),
+(2, 'Robotica educativa', 13000.00, 'PCTO', '2022-11-10', '2023-03-30', 2),
+(3, 'Tinkering', 25000.00, 'PCTO', '2022-10-14', '2023-02-20', 2),
+(4, 'Realtà virtuale', 30000.00, 'PCTO', '2023-02-16', '2023-05-30', 1);
+
+```

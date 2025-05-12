@@ -1208,7 +1208,7 @@ Due metodi robusti e sicuri per creare l'utente admin iniziale in un ambiente di
 
 Questa sezione descrive i passaggi per integrare l'autenticazione esterna di Google in un'applicazione ASP.NET Core Minimal API che utilizza già l'autenticazione basata su cookie per gli utenti locali, ma **senza** usare il framework completo ASP.NET Core Identity (`AddDefaultIdentity`, `SignInManager`, ecc.).
 
-L'approccio descritto utilizza gli eventi del middleware di autenticazione per gestire la logica personalizzata necessaria dopo il callback di Google, e l'integrazione di Google Login richiede una configurazione coordinata su due fronti principali. Da un lato, è necessaria la registrazione dell'applicazione sulla Google Cloud Platform per ottenere le credenziali OAuth 2.0 (Client ID e Client Secret) -- che la identificano univocamente -- e per definire gli URI di reindirizzamento autorizzati, garantendo così un ritorno sicuro dell'utente all'applicazione. Dall'altro lato, occorre configurare il codice ASP.NET Core aggiungendo i servizi e middleware specifici per Google, fornendo le credenziali e definendo come l'applicazione deve interagire con il provider esterno e gestire la sua risposta. Nell'approccio adottato qui, senza il framework Identity completo, l'utilizzo dell'evento `OnTicketReceived` diventa cruciale per inserire la logica applicativa necessaria (come la ricerca o creazione dell'utente nel database locale e l'assegnazione dei ruoli corretti) nel momento giusto del flusso di autenticazione.
+L'approccio descritto utilizza gli eventi del middleware di autenticazione per gestire la logica personalizzata necessaria dopo la callback di Google. L'integrazione di Google Login richiede una configurazione coordinata su due fronti principali: da un lato, è necessaria la registrazione dell'applicazione sulla Google Cloud Platform per ottenere le credenziali OAuth 2.0 (Client ID e Client Secret) -- che la identificano univocamente -- e per definire gli URI di reindirizzamento autorizzati, garantendo così un ritorno sicuro dell'utente all'applicazione; dall'altro lato, occorre configurare il codice ASP.NET Core aggiungendo i servizi e middleware specifici per Google, fornendo le credenziali e definendo come l'applicazione deve interagire con il provider esterno e gestire la sua risposta. Nell'approccio adottato qui, senza il framework Identity completo, l'utilizzo dell'evento `OnTicketReceived` diventa cruciale per inserire la logica applicativa necessaria (come la ricerca o creazione dell'utente nel database locale e l'assegnazione dei ruoli corretti) nel momento giusto del flusso di autenticazione.
 
 #### Prerequisiti
 
@@ -1488,11 +1488,11 @@ Questo è il flusso di interazione che avviene dietro le quinte:
 
 5. **Google -> Browser:** Google reindirizza il browser all'URI specificato (`https://localhost:7269/signin-google`) aggiungendo un `code` (codice di autorizzazione monouso) e lo `state` originale come parametri query.
 
-6. **Browser -> App:** Il browser effettua la richiesta `GET` a `/signin-google?code=...&state=...`. **Idealmente**, invia anche il cookie di correlazione (`.Correlation...`) impostato al punto 2. *(Nel nostro debug, questo passaggio falliva a causa del browser/localhost).*
+6. **Browser -> App:** Il browser effettua la richiesta `GET` a `/signin-google?code=...&state=...`. **Idealmente**, invia anche il cookie di correlazione (`.Correlation...`) impostato al punto 2. *(Nel debug, questo passaggio non viene mostrato a causa del browser/localhost).*
 
 7. **App (Middleware):** Il middleware `GoogleHandler` intercetta la richiesta a `/signin-google`:
 
-    - Verifica il cookie di correlazione rispetto al parametro `state` (protezione CSRF). *(Questo era il punto del nostro errore "state missing")*.
+    - Verifica il cookie di correlazione rispetto al parametro `state` (protezione CSRF).
 
     - Se lo stato è valido, contatta Google **server-to-server**.
 
