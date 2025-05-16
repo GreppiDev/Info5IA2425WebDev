@@ -29,6 +29,7 @@
       - [Conclusione sull'autenticazione basata su Google e Microsoft](#conclusione-sullautenticazione-basata-su-google-e-microsoft)
     - [Invio di e-mail, validazione della e-mail alla registrazione, cambio del profilo](#invio-di-e-mail-validazione-della-e-mail-alla-registrazione-cambio-del-profilo)
       - [Contesto Iniziale](#contesto-iniziale)
+      - [Invio della e-mail con un account Google](#invio-della-e-mail-con-un-account-google)
       - [Obiettivi delle Modifiche](#obiettivi-delle-modifiche)
       - [Passaggio 1: Introduzione di un Servizio Email (MailKit)](#passaggio-1-introduzione-di-un-servizio-email-mailkit)
       - [Passaggio 2: Implementazione della Verifica Email](#passaggio-2-implementazione-della-verifica-email)
@@ -3403,6 +3404,10 @@ Questa guida documenta l'evoluzione incrementale di un'applicazione web basata s
 #### Contesto Iniziale
 
 L'applicazione, nella sua forma precedente, offriva agli utenti la possibilità di registrarsi e autenticarsi utilizzando credenziali locali (email e password), la cui sessione veniva mantenuta tramite cookie. Inoltre, era già stata implementata l'integrazione con provider di identità esterni come Google e Microsoft, permettendo un accesso alternativo. Tuttavia, una limitazione significativa risiedeva nel trattamento delle registrazioni locali: l'indirizzo email fornito dall'utente non veniva sottoposto ad alcun processo di verifica per confermarne la validità e l'effettivo possesso da parte dell'utente. Gli account creati tramite provider esterni, invece, beneficiavano della verifica email già effettuata da tali servizi. Un'ulteriore mancanza era l'assenza di qualsiasi funzionalità che permettesse agli utenti di recuperare l'accesso al proprio account locale qualora avessero dimenticato la password impostata.
+
+#### Invio della e-mail con un account Google
+
+Per l'invio della e-mail con una e-mail con un account Gmail occorre creare una [password per le app di Gmail](https://support.google.com/mail/answer/185833?hl=it).
 
 #### Obiettivi delle Modifiche
 
