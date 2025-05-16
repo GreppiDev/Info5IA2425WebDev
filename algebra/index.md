@@ -1,5 +1,18 @@
 # Algebra relazionale
 
+- [Algebra relazionale](#algebra-relazionale)
+  - [Operatori dell'Algebra Relazionale](#operatori-dellalgebra-relazionale)
+    - [Operatori Unari](#operatori-unari)
+    - [Operatori Binari (basati sulla teoria degli insiemi)](#operatori-binari-basati-sulla-teoria-degli-insiemi)
+    - [Operatori Binari (Specifici del Modello Relazionale)](#operatori-binari-specifici-del-modello-relazionale)
+    - [Operatore Derivato (o Ausiliario)](#operatore-derivato-o-ausiliario)
+  - [Confronto tra Algebra Relazionale e SQL](#confronto-tra-algebra-relazionale-e-sql)
+  - [Esercizi Finali](#esercizi-finali)
+    - [Soluzione degli esercizi](#soluzione-degli-esercizi)
+    - [Esercizio 1: Espressioni dell'Algebra Relazionale](#esercizio-1-espressioni-dellalgebra-relazionale)
+    - [Esercizio 2: Traduzione da SQL ad Algebra Relazionale](#esercizio-2-traduzione-da-sql-ad-algebra-relazionale)
+    - [Esercizio 3: Riflessione](#esercizio-3-riflessione)
+
 L'algebra relazionale rappresenta un linguaggio formale, di natura procedurale, utilizzato per interrogare i database relazionali. Essa fornisce un insieme di operazioni che agiscono su relazioni (tabelle) per produrre nuove relazioni. Comprendere l'algebra relazionale è fondamentale per uno studente di informatica, poiché costituisce la base teorica su cui si fonda il linguaggio SQL (Structured Query Language) e aiuta a comprendere come i sistemi di gestione di database (DBMS) elaborano e ottimizzano le interrogazioni. Dato che lo studente ha già familiarità con il modello relazionale (relazioni intese come sottoinsiemi di prodotti cartesiani di n domini) e con SQL (specificamente MariaDB), questa spiegazione si concentrerà sul collegare questi concetti.
 
 Nell'algebra relazionale, ogni operazione prende una o due relazioni come input e produce una nuova relazione come output. Questa proprietà, nota come **chiusura**, permette di annidare le operazioni, costruendo espressioni complesse per recuperare i dati desiderati.
@@ -303,7 +316,7 @@ Questi operatori derivano dalla teoria degli insiemi e richiedono che le due rel
 
         - **Sintassi**: R⋈<sub>P</sub>​S (equivale a σ<sub>P</sub>​(R×S))
 
-        - **Esempio**: Trovare gli studenti e gli esami da loro sostenuti con voto maggiore di 28. Relazioni: **Studenti** e **Esami** Studenti⋈Studenti.Matricola=Esami.IDStudente AND Esami.Voto>28​Esami (Assumendo che `Esami.IDStudente` sia la chiave esterna che referenzia `Studenti.Matricola`) Risultato (parziale, mostrando le colonne rilevanti e alcune tuple):
+        - **Esempio**: Trovare gli studenti e gli esami da loro sostenuti con voto maggiore di 28. Relazioni: **Studenti** e **Esami** Studenti⋈<sub>Studenti.Matricola=Esami.IDStudente AND Esami.Voto>28</sub>​Esami (Assumendo che `Esami.IDStudente` sia la chiave esterna che referenzia `Studenti.Matricola`) Risultato (parziale, mostrando le colonne rilevanti e alcune tuple):
   
         | Matricola | Nome  | Cognome | ... | IDStudente | IDCorso | Data       | Voto |
         |-----------|-------|---------|-----|------------|---------|------------|------|
@@ -647,9 +660,9 @@ Schemi di relazione considerati:
 
     - Infine, si proiettano gli attributi `Nome` e `Cognome`.
 
-    π<sub>Nome,Cognome</sub>​(σ<sub>NomeDipartimento='Ricerca'</sub>​(Dipartimento)⋈<sub>Dipartimento.IDDipartimento=Impiegato.IDDipartimento​Impiegato</sub>)
+    π<sub>Nome,Cognome</sub>​(σ<sub>NomeDipartimento='Ricerca'</sub>​(Dipartimento)⋈<sub>Dipartimento.IDDipartimento=Impiegato.IDDipartimento</sub>​Impiegato)
 
-    *Alternativamente, unendo prima e selezionando poi (se si rinominano gli attributi per evitare ambiguità o si usa un natural join assumendo che IDDipartimento sia l'unico attributo comune con quel nome):* πImpiegato.Nome,Impiegato.Cognome​(σNomeDipartimento=′Ricerca′​(Impiegato⋈Dipartimento))
+    *Alternativamente, unendo prima e selezionando poi (se si rinominano gli attributi per evitare ambiguità o si usa un natural join assumendo che IDDipartimento sia l'unico attributo comune con quel nome):* π<sub>Impiegato.Nome,Impiegato.Cognome</sub>​(σ<sub>NomeDipartimento='Ricerca'</sub>​(Impiegato⋈Dipartimento))
 
 2. **Gli `IDImpiegato` degli impiegati che lavorano sia al progetto `P100` che al progetto `P200`.**
 
@@ -689,7 +702,7 @@ Schemi di relazione considerati:
 
     - Si proiettano gli attributi desiderati. È buona pratica qualificare gli attributi se i nomi potrebbero essere ambigui (es. `Impiegato.Nome`).
 
-    π<sub>Impiegato.Nome,Impiegato.Cognome,Dipartimento.NomeDipartimento</sub>​(Impiegato⋈<sub>Impiegato.IDDipartimento=Dipartimento.IDDipartimento​Dipartimento</sub>)
+    π<sub>Impiegato.Nome,Impiegato.Cognome,Dipartimento.NomeDipartimento</sub>​(Impiegato⋈<sub>Impiegato.IDDipartimento=Dipartimento.IDDipartimento</sub>​Dipartimento)
 
 6. **Gli `IDImpiegato` che lavorano a** ***tutti*** **i progetti gestiti dal dipartimento 'Vendite'.** Questo richiede un'operazione di divisione. Prima, dobbiamo identificare i progetti gestiti dal dipartimento 'Vendite'.
 
@@ -697,9 +710,9 @@ Schemi di relazione considerati:
 
         1. Trovare l'`IDDipartimento` del dipartimento 'Vendite': DipVenditeID←π<sub>IDDipartimento</sub>​(σ<sub>NomeDipartimento='Vendite'</sub>​(Dipartimento))
 
-        2. Trovare gli `IDImpiegato` dei responsabili che appartengono al dipartimento 'Vendite': ResponsabiliVendite←π<sub>IDImpiegato</sub>​(Impiegato⋈<sub>Impiegato.IDDipartimento=DipVenditeID.IDDipartimento​DipVenditeID</sub>)
+        2. Trovare gli `IDImpiegato` dei responsabili che appartengono al dipartimento 'Vendite': ResponsabiliVendite←π<sub>IDImpiegato</sub>​(Impiegato⋈<sub>Impiegato.IDDipartimento=DipVenditeID.IDDipartimento</sub>​DipVenditeID)
 
-        3. Trovare gli `IDProgetto` dei progetti il cui `IDResponsabile` è in `ResponsabiliVendite`: ProgettiVendite←π<sub>IDProgetto</sub>​(Progetto⋈<sub>Progetto.IDResponsabile=ResponsabiliVendite.IDImpiegato​ResponsabiliVendite</sub>) *Alternativamente, in un unico passaggio più complesso:* ProgettiVendite←π<sub>Progetto.IDProgetto</sub>​(Progetto⋈<sub>Progetto.IDResponsabile=Impiegato.IDImpiegato</sub>​(Impiegato⋈<sub>Impiegato.IDDipartimento=Dipartimento.IDDipartimento</sub>​(σ<sub>NomeDipartimento='Vendite'</sub>​(Dipartimento))))
+        3. Trovare gli `IDProgetto` dei progetti il cui `IDResponsabile` è in `ResponsabiliVendite`: ProgettiVendite←π<sub>IDProgetto</sub>​(Progetto⋈<sub>Progetto.IDResponsabile=ResponsabiliVendite.IDImpiegato</sub>​ResponsabiliVendite) *Alternativamente, in un unico passaggio più complesso:* ProgettiVendite←π<sub>Progetto.IDProgetto</sub>​(Progetto⋈<sub>Progetto.IDResponsabile=Impiegato.IDImpiegato</sub>​(Impiegato⋈<sub>Impiegato.IDDipartimento=Dipartimento.IDDipartimento</sub>​(σ<sub>NomeDipartimento='Vendite'</sub>​(Dipartimento))))
 
     - **Passo 2: Divisione** Ora dividiamo la relazione che lega gli impiegati ai progetti a cui lavorano (`LavoraSu`, proiettata sugli attributi rilevanti) per la relazione `ProgettiVendite`. ImpiegatiProgetti←π<sub>IDImpiegato,IDProgetto</sub>​(LavoraSu) Risultato←ImpiegatiProgetti÷ProgettiVendite
 
@@ -727,9 +740,9 @@ Schemi di relazione considerati:
 
     **Algebra Relazionale:** Si usano alias per chiarezza, corrispondenti a quelli SQL. ρ<sub>I</sub>​(Impiegato) ρ<sub>L</sub>​(LavoraSu) ρ<sub>P</sub>​(Progetto)
 
-    Join1←I⋈<sub>I.IDImpiegato=L.IDImpiegato​L</sub> Join2←Join1⋈<sub>L.IDProgetto=P.IDProgetto​P</sub> SelezioneBudget←σ<sub>P.Budget<20000</sub>​(Join2) Risultato←π<sub>I.Nome,I.Cognome,P.NomeProgetto​</sub>(SelezioneBudget)
+    Join1←I⋈<sub>I.IDImpiegato=L.IDImpiegato</sub>​L Join2←Join1⋈<sub>L.IDProgetto=P.IDProgetto​</sub>P SelezioneBudget←σ<sub>P.Budget<20000</sub>​(Join2) Risultato←π<sub>I.Nome,I.Cognome,P.NomeProgetto​</sub>(SelezioneBudget)
 
-    *Forma compatta (le ridenominazioni sono implicite nell'uso di I, L, P per qualificare gli attributi):* π<sub>I.Nome,I.Cognome,P.NomeProgetto</sub>​(σ<sub>P.Budget<20000</sub>​((ρ<sub>I​</sub>(Impiegato)⋈<sub>I.IDImpiegato=L.IDImpiegato​ρL</sub>​(LavoraSu))⋈<sub>L.IDProgetto=P.IDProgetto​ρP</sub>​(Progetto)))
+    *Forma compatta (le ridenominazioni sono implicite nell'uso di I, L, P per qualificare gli attributi):* π<sub>I.Nome,I.Cognome,P.NomeProgetto</sub>​(σ<sub>P.Budget<20000</sub>​((ρ<sub>I​</sub>(Impiegato)⋈<sub>I.IDImpiegato=L.IDImpiegato</sub>​ρ<sub>L</sub>​(LavoraSu))⋈<sub>L.IDProgetto=P.IDProgetto​ρ</sub>​P(Progetto)))
 
 3. **SQL:**
 
