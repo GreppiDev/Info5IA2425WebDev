@@ -1914,7 +1914,7 @@ La funzionalità di feedback potrebbe essere integrata nelle pagine dedicate ai 
         charCountDisplay.textContent = `${count}/160`;
     });
 
-    // Script (semplificato) per inviare il form con AJAX (richiede implementazione backend)
+    // Script (semplificato) per inviare il form con Fetch API (richiede implementazione backend)
     document.getElementById('feedbackForm').addEventListener('submit', function(event) {
         event.preventDefault(); // Impedisce l'invio standard del form
 
