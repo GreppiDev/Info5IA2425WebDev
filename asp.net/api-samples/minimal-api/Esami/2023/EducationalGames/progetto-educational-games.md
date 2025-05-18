@@ -9,7 +9,6 @@
     - [Punto 5: Progetto di Massima dell'Applicazione Web](#punto-5-progetto-di-massima-dellapplicazione-web)
       - [Architettura software/hardware](#architettura-softwarehardware)
       - [Moduli Principali](#moduli-principali)
-      - [Diagrammi dei Casi d'Uso (Use Case)](#diagrammi-dei-casi-duso-use-case)
       - [Possibili stack implementativi](#possibili-stack-implementativi)
     - [Fase 6: Parte Significativa dell'Applicazione Web (Esempio)](#fase-6-parte-significativa-dellapplicazione-web-esempio)
   - [Seconda parte](#seconda-parte)
@@ -73,7 +72,184 @@ Identifichiamo prima i requisiti basandoci sulla traccia, distinguendo tra quell
 - **Relazioni M:N:** Le relazioni M:N (Studente-Classe, Classe-Gioco, Gioco-Argomento) saranno implementate con tabelle associative.
 - **Integrità Referenziale:** Verranno usati vincoli di chiave esterna per garantire la coerenza tra le tabelle collegate. Si ipotizzano politiche `RESTRICT` o `NO ACTION` per `ON DELETE` / `ON UPDATE` come default sicuro, a meno che non sia logico propagare le modifiche (es. `CASCADE` se si cancella un utente, forse si cancellano le classi che ha creato? O si impedisce la cancellazione se ha classi? Ipotizziamo `RESTRICT` per sicurezza).
 
-**1.4 Progettazione Concettuale (Modello E/R):**
+**1.4 Diagrammi dei Casi d'Uso (Use Case):**
+
+Mostriamo l'interazione degli attori (Docente, Studente) con le funzionalità principali (derivate da RF).
+
+- **Attori:**
+
+    - Docente
+    - Studente
+    - Admin
+- **Sistema:** Piattaforma Educational Games
+
+- **Casi d'Uso Principali:**
+
+    - `Registra Utente` (accessibile a tutti, ma porta a ruoli diversi)
+    - `Autentica Utente` (accessibile a tutti)
+    - **(Docente)** `Crea Classe Virtuale`
+    - **(Docente)** `Gestisci Classe` (include: visualizza codice, aggiungi/rimuovi giochi)
+    - **(Docente)** `Aggiungi Gioco a Classe` (potrebbe includere `Sfoglia Catalogo Giochi`)
+    - **(Docente)** `Visualizza Progressi Studenti` (include `Visualizza Classifica Gioco` e `Visualizza Classifica Generale`)
+    - **(Studente)** `Iscriviti a Classe` (usa codice)
+    - **(Studente)** `Visualizza Classi e Giochi`
+    - **(Studente)** `Avvia Videogioco` (l'interazione *durante* il gioco è esterna al backend, ma l'avvio parte da qui)
+    - **(Sistema -> Sistema)** `Registra Monete Raccolte` (API chiamata dal gioco per registrare il progresso delle monete raccolte)
+    - **(Studente)** `Visualizza Mie Classifiche`
+    - **(Studente/Docente)** `Sfoglia Catalogo Giochi` (potrebbe essere accessibile anche prima del login o con permessi diversi)
+    - **(Studente/Docente)** `Filtra Giochi per Argomento`
+- **Casi d'Uso Aggiuntivi (non previsti dalla traccia, ma utili al prototipo)**
+    - **(Docente/Admin)** `Crea videogioco` (crea l'oggetto che contiene i metadati e il JSON che definisce il videogioco)
+
+![Diagramma dei casi d'uso - Educational Games](educational-games-use-cases.svg)
+
+Il diagramma dei casi d'uso è stato ottenuto con il seguente codice per [PlantUML](https://www.plantuml.com/plantuml)
+
+```text
+@startuml
+' Impostazione della direzione del diagramma e dello stile
+!pragma useVerticalIf on
+allowmixing
+
+left to right direction
+skinparam actorStyle awesome
+skinparam usecase {
+    BackgroundColor LightYellow
+    BorderColor DarkGoldenRod
+    ArrowColor DarkSlateGray
+    ActorBorderColor black
+    ActorFontColor black
+    ActorBackgroundColor MintCream
+}
+skinparam rectangle {
+    BorderColor DarkSlateGray
+    BackgroundColor PaleTurquoise
+}
+skinparam note {
+    BackgroundColor LightGoldenRodYellow
+    BorderColor DarkGoldenRod
+}
+
+' Definizione degli Attori come normali attori senza relazioni ancora
+actor Visitatore
+actor "Utente Registrato" as UtenteRegistrato
+actor Docente
+actor Studente
+actor Admin
+actor "Sistema Esterno (Gioco)" as SistemaEsternoGioco
+
+' Contenitore del Sistema
+rectangle "Piattaforma Educational Games" as PEG {
+
+    ' Casi d'Uso per Visitatore
+    usecase "Registra Utente" as UC_RegistraUtente
+    usecase "Autentica Utente" as UC_AutenticaUtente
+
+    ' Casi d'uso del Docente e Admin
+    usecase "Sfoglia Catalogo Giochi" as UC_SfogliaCatalogo
+    usecase "Filtra Giochi per Argomento" as UC_FiltraGiochi
+
+    ' Casi d'uso del Docente
+    usecase "Crea Classe Virtuale" as UC_CreaClasse
+    usecase "Gestisci Classe\n(visualizza codice, assegna/rimuovi giochi)" as UC_GestisciClasse
+    usecase "Aggiungi Gioco a Classe" as UC_AggiungiGiocoClasse
+    usecase "Visualizza Progressi Studenti" as UC_VisProgressiStudenti
+    usecase "Crea Videogioco Didattico" as UC_CreaVideogiocoDocenteAdmin
+
+    ' Casi d'uso dello Studente
+    usecase "Iscriviti a Classe" as UC_IscrivitiClasse
+    usecase "Visualizza Classi e Giochi" as UC_VisClassiGiochi
+    usecase "Avvia Videogioco" as UC_AvviaVideogioco
+    usecase "Visualizza Mie Classifiche" as UC_VisMieClassifiche
+
+    ' Caso d'Uso del Sistema Esterno
+    usecase "Registra Monete Raccolte" as UC_RegistraMonete
+
+    ' Sotto-casi d'uso / componenti per classifiche (RF11, RF12, RF15)
+    usecase "Visualizza Classifica Gioco" as UC_VisClassificaGioco
+    usecase "Visualizza Classifica Generale Classe" as UC_VisClassificaGenerale
+
+    ' Caso d'Uso dell'Admin (da RF16 e aggiuntivo)
+    usecase "Visualizza Statistiche Uso Giochi" as UC_StatisticheUsoGiochi
+}
+
+' Definire la gerarchia con un pacchetto separato per chiarezza
+package "Gerarchia Attori" {
+  UtenteRegistrato <|-- Docente
+  UtenteRegistrato <|-- Studente
+  UtenteRegistrato <|-- Admin
+}
+
+' Connessioni del Visitatore (non autenticato)
+Visitatore -- UC_RegistraUtente
+Visitatore -- UC_AutenticaUtente
+
+' L'Utente Registrato base non ha casi d'uso specifici
+' ma serve come generalizzazione per altri ruoli
+
+' Connessioni del Docente - specifiche per questo ruolo
+Docente -- UC_CreaClasse
+Docente -- UC_GestisciClasse
+Docente -- UC_AggiungiGiocoClasse
+Docente -- UC_VisProgressiStudenti
+Docente -- UC_CreaVideogiocoDocenteAdmin
+
+' Connessioni dello Studente - specifiche per questo ruolo
+Studente -- UC_IscrivitiClasse
+Studente -- UC_VisClassiGiochi
+Studente -- UC_AvviaVideogioco
+Studente -- UC_VisMieClassifiche
+
+' Connessioni dell'Admin - specifiche per questo ruolo
+Admin -- UC_CreaVideogiocoDocenteAdmin
+Admin -- UC_StatisticheUsoGiochi
+
+' Connessioni del Sistema Esterno (Gioco) - posizionato a destra
+UC_RegistraMonete -- SistemaEsternoGioco
+
+' Include relazionali (NON per autenticazione)
+UC_AggiungiGiocoClasse ..> UC_SfogliaCatalogo : <<include>>
+
+UC_VisProgressiStudenti ..> UC_VisClassificaGioco : <<include>>
+UC_VisProgressiStudenti ..> UC_VisClassificaGenerale : <<include>>
+
+UC_VisMieClassifiche ..> UC_VisClassificaGioco : <<include>>
+UC_VisMieClassifiche ..> UC_VisClassificaGenerale : <<include>>
+
+' Note esplicative
+note bottom of UC_AvviaVideogioco
+  L'interazione *durante* il gioco è esterna alla piattaforma.
+  Il gioco, una volta terminato o a intervalli,
+  chiama l'API `Registra Monete Raccolte`.
+end note
+
+note right of UC_GestisciClasse
+  Include funzionalità come:
+  - Visualizzare codice iscrizione
+  - Rimuovere giochi dalla classe
+  - Modificare dettagli classe
+end note
+
+note top of UC_CreaVideogiocoDocenteAdmin
+  Accessibile da Docente e Admin
+  per creare/definire nuovi giochi.
+end note
+
+' Relazioni tra casi d'uso per flusso di autenticazione
+UC_AutenticaUtente ..> UC_RegistraUtente : <<extend>>
+note bottom of UC_AutenticaUtente
+  L'utente può scegliere di registrarsi
+  se non ha ancora un account
+end note
+
+' Posizionamento esplicito (in ordine da sx a dx)
+Visitatore -[hidden]right-> UtenteRegistrato
+UtenteRegistrato -[hidden]right-> PEG
+PEG -[hidden]right-> SistemaEsternoGioco
+@enduml
+```
+
+**1.5 Progettazione Concettuale (Modello E/R):**
 
 - Modello E/R iniziale
 
@@ -590,43 +766,6 @@ ORDER BY
   - **Simulazione della creazione dei giochi (non richiesta dalla traccia, ma utile per la creazione del prototipo**
     - Per la scrittura del prototipo dell'applicazione si può ipotizzare che la creazione del gioco sia fatta semplicemente con il caricamento di un oggetto JSON che contiene la struttura del quiz, con le domande, le possibili risposte e l'indicazione delle risposte corrette.
 
-#### Diagrammi dei Casi d'Uso (Use Case)
-
-Mostriamo l'interazione degli attori (Docente, Studente) con le funzionalità principali (derivate da RF).
-
-- **Attori:**
-
-    - Docente
-    - Studente
-    - Admin
-- **Sistema:** Piattaforma Educational Games
-
-- **Casi d'Uso Principali:**
-
-    - `Registra Utente` (accessibile a entrambi, ma porta a ruoli diversi)
-    - `Autentica Utente` (accessibile a entrambi)
-    - **(Docente)** `Crea Classe Virtuale`
-    - **(Docente)** `Gestisci Classe` (include: visualizza codice, aggiungi/rimuovi giochi)
-    - **(Docente)** `Aggiungi Gioco a Classe` (potrebbe includere `Sfoglia Catalogo Giochi`)
-    - **(Docente)** `Visualizza Progressi Studenti` (include `Visualizza Classifica Gioco` e `Visualizza Classifica Generale`)
-    - **(Studente)** `Iscriviti a Classe` (usa codice)
-    - **(Studente)** `Visualizza Classi e Giochi`
-    - **(Studente)** `Avvia Videogioco` (l'interazione *durante* il gioco è esterna al backend, ma l'avvio parte da qui)
-    - **(Sistema -> Sistema)** `Registra Monete Raccolte` (API chiamata dal gioco per registrare il progresso delle monete raccolte)
-    - **(Studente)** `Visualizza Mie Classifiche`
-    - **(Studente/Docente)** `Sfoglia Catalogo Giochi` (potrebbe essere accessibile anche prima del login o con permessi diversi)
-    - **(Studente/Docente)** `Filtra Giochi per Argomento`
-- **Casi d'Uso Aggiuntivi (non previsti dalla traccia, ma utili al prototipo)**
-    - **(Docente/Admin)** `Crea videogioco` (crea l'oggetto che contiene i metadati e il JSON che definisce il videogioco)
-
-*Diagramma (descrizione testuale):* Immagina un rettangolo (il Sistema). All'esterno, due figure stilizzate (Docente, Studente). All'interno, ovali per ogni caso d'uso.
-
-- Linee collegano `Docente` a: `Autentica Utente`, `Crea Classe Virtuale`, `Gestisci Classe`, `Aggiungi Gioco a Classe`, `Visualizza Progressi Studenti`, `Sfoglia Catalogo Giochi`, `Filtra Giochi per Argomento`.
-- Linee collegano `Studente` a: `Autentica Utente`, `Iscriviti a Classe`, `Visualizza Classi e Giochi`, `Avvia Videogioco`, `Visualizza Mie Classifiche`, `Sfoglia Catalogo Giochi`, `Filtra Giochi per Argomento`.
-- `Registra Utente` è accessibile da "Visitatore" (o da entrambi gli attori prima del login).
-- `Registra Monete Raccolte` potrebbe essere collegato a `Avvia Videogioco` o essere un caso d'uso separato attivato da un attore "Sistema Esterno (Gioco)".
-- Potrebbero esserci relazioni `<<include>>` (es. `Autentica Utente` è inclusa in quasi tutte le azioni post-login) o `<<extend>>`.
-
 #### Possibili stack implementativi
 
 Questo richiederebbe la scelta di tecnologie specifiche (es. ASP.NET Core + HTML/JS/Fetch API) e la scrittura di codice sia client che server. Ad esempio:
@@ -743,6 +882,388 @@ EducationalGames/
 **2. Visualizzazione delle classi a cui uno studente è iscritto:**
 
 In questa sezione verrà descritto come creare la pagina del sito che permette di visualizzare le classi a cui uno studente è iscritto.
+
+**Backend:**
+
+```cs
+// Models/ClasseIscrittaViewModel.cs
+
+public class ClasseIscrittaViewModel
+{
+    public int IdClasse { get; set; }
+    public string NomeClasse { get; set; } = string.Empty;
+    public string NomeMateria { get; set; } = string.Empty;
+    public string NomeCompletoDocente { get; set; } = string.Empty; // Es. "Rossi Mario"
+    // public string CodiceIscrizione { get; set; } // Generalmente non mostrato allo studente dopo l'iscrizione
+    public DateTime DataIscrizione { get; set; }
+}
+
+
+// ---  ENDPOINT  ---
+
+// using Microsoft.EntityFrameworkCore;
+// using System.Security.Claims;
+// using TuoProgetto.DbContext; 
+// using EducationalGames.Models; 
+
+// Endpoint per recuperare le classi a cui lo studente loggato è iscritto
+app.MapGet("/api/studenti/mie-classi", async (AppDbContext db, HttpContext httpContext) =>
+{
+    // 1. Recupera l'ID dello studente autenticato dal cookie
+    var studenteIdString = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+    if (string.IsNullOrEmpty(studenteIdString) || !int.TryParse(studenteIdString, out var studenteId))
+    {
+        // Questo non dovrebbe accadere se .RequireAuthorization("RequireStudenteRole") funziona correttamente,
+        // ma è un controllo di sicurezza aggiuntivo.
+        return Results.Unauthorized();
+    }
+
+    // --- VERSIONE CON LINQ to Entities (Raccomandata) ---
+    var classiIscritteLinq = await db.Iscrizioni
+        .Where(i => i.ID_Studente == studenteId)
+        .Select(i => new ClasseIscrittaViewModel
+        {
+            IdClasse = i.ClasseVirtuale.ID_Classe,
+            NomeClasse = i.ClasseVirtuale.NomeClasse,
+            NomeMateria = i.ClasseVirtuale.Materia.NomeMateria, // Navigazione attraverso le relazioni
+            NomeCompletoDocente = i.ClasseVirtuale.Docente.Cognome + " " + i.ClasseVirtuale.Docente.Nome, // Navigazione
+            DataIscrizione = i.DataIscrizione
+        })
+        .OrderBy(c => c.NomeClasse) // Ordina per nome classe
+        .ToListAsync();
+
+    if (classiIscritteLinq == null || !classiIscritteLinq.Any())
+    {
+        return Results.Ok(new List<ClasseIscrittaViewModel>()); // Restituisci lista vuota se non ci sono iscrizioni
+    }
+
+    return Results.Ok(classiIscritteLinq);
+
+})
+.RequireAuthorization(policy => policy.RequireRole("Studente")) // Solo gli studenti possono accedere
+.Produces<List<ClasseIscrittaViewModel>>(StatusCodes.Status200OK)
+.Produces(StatusCodes.Status401Unauthorized)
+.Produces(StatusCodes.Status403Forbidden);
+
+
+// --- VERSIONE ALTERNATIVA CON SQL RAW (EF Core 7.0+) ---
+
+app.MapGet("/api/studenti/mie-classi-sqlraw", async (AppDbContext db, HttpContext httpContext) =>
+{
+    var studenteIdString = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+    if (string.IsNullOrEmpty(studenteIdString) || !int.TryParse(studenteIdString, out var studenteId))
+    {
+        return Results.Unauthorized();
+    }
+
+    // SQL Raw usando l'interpolazione di stringhe per la parametrizzazione sicura
+    FormattableString sql = $@"
+        SELECT
+            CV.ID_Classe AS IdClasse,
+            CV.NomeClasse AS NomeClasse,
+            M.NomeMateria AS NomeMateria,
+            CONCAT(U_Doc.Cognome, ' ', U_Doc.Nome) AS NomeCompletoDocente,
+            I.DataIscrizione AS DataIscrizione
+        FROM
+            ISCRIZIONI AS I
+        INNER JOIN
+            CLASSI_VIRTUALI AS CV ON I.ID_Classe = CV.ID_Classe
+        INNER JOIN
+            MATERIE AS M ON CV.ID_Materia = M.ID_Materia
+        INNER JOIN
+            UTENTI AS U_Doc ON CV.ID_Docente = U_Doc.ID_Utente
+        WHERE
+            I.ID_Studente = {studenteId}  -- Parametro interpolato e sicuro
+        ORDER BY
+            CV.NomeClasse;
+    ";
+
+    try
+    {
+        var classiIscritteSqlRaw = await db.Database
+            .SqlQuery<ClasseIscrittaViewModel>(sql) // EF Core 7.0+
+            .ToListAsync();
+
+        if (classiIscritteSqlRaw == null || !classiIscritteSqlRaw.Any())
+        {
+            return Results.Ok(new List<ClasseIscrittaViewModel>());
+        }
+        return Results.Ok(classiIscritteSqlRaw);
+    }
+    catch (Exception ex)
+    {
+        // Log dell'errore (usare un logger reale in produzione)
+        Console.WriteLine($"Errore durante l'esecuzione della query SQL raw per mie-classi: {ex.Message}");
+        return Results.Problem("Si è verificato un errore durante il recupero delle tue classi.", statusCode: 500);
+    }
+})
+.RequireAuthorization(policy => policy.RequireRole("Studente"))
+.Produces<List<ClasseIscrittaViewModel>>(StatusCodes.Status200OK)
+.Produces(StatusCodes.Status401Unauthorized)
+.Produces(StatusCodes.Status403Forbidden)
+.ProducesProblem(StatusCodes.Status500InternalServerError);
+
+// ---  PROTEZIONE PER LA PAGINA HTML STATICA (in Program.cs) ---
+
+app.MapGet("/mie-classi.html", (HttpContext context) => {
+    // Il middleware di auth farà il redirect a /login.html se non loggato
+    // o a /accesso-negato.html se loggato ma non è Studente
+    return Results.File("wwwroot/mie-classi.html", "text/html");
+}).RequireAuthorization(policy => policy.RequireRole("Studente")); // Solo Studenti
+```
+
+**Frontend:**
+
+```html
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Le Mie Classi - EduGames</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link href="/css/style.css" rel="stylesheet">
+    <style>
+        .class-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .class-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .card-header-custom {
+            background-color: #007bff; /* Blu primario Bootstrap */
+            color: white;
+        }
+        .card-footer-custom {
+            background-color: #f8f9fa; /* Grigio chiaro Bootstrap */
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div id="navbar-placeholder">
+        </div>
+
+    <div class="container mt-4 mb-5">
+        <header class="mb-4">
+            <h1 class="display-5">Le Mie Classi</h1>
+            <p class="lead text-muted">Qui trovi l'elenco di tutte le classi virtuali a cui sei attualmente iscritto.</p>
+        </header>
+
+        <div id="feedback-messages" class="mb-3" style="display: none;">
+            </div>
+
+        <div id="classi-container" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            <div class="col-12 text-center" id="loading-state">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Caricamento...</span>
+                </div>
+                <p class="mt-2">Caricamento delle tue classi...</p>
+            </div>
+            </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="/js/navbar.js"></script>
+    <script src="/js/mie-classi.js"></script>
+</body>
+</html>
+```
+
+```css
+/* wwwroot/css/style.css */
+
+/* Stili globali o di utility (se necessari) */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Esempio di font di base */
+    /* background-color: #f4f7f6; */ /* Un colore di sfondo leggermente diverso dal bianco puro, se desiderato */
+}
+
+/* Stile per il placeholder della navbar se viene caricata dinamicamente
+   e si vuole evitare un "salto" del layout mentre viene effettuata la fetch. */
+#navbar-placeholder:empty {
+    min-height: 56px; /* Altezza tipica di una navbar Bootstrap */
+    background-color: #e9ecef; /* Un grigio chiaro per indicare lo spazio riservato */
+    /* Aggiungere un bordo o un'ombra se si preferisce un feedback visivo diverso */
+    /* border-bottom: 1px solid #dee2e6; */
+}
+
+/* Esempio di stili aggiuntivi per le card (oltre a quelli inline nell'HTML)
+   se si volessero centralizzare o rendere più complessi.
+   Gli stili inline nell'HTML per .class-card, .card-header-custom, .card-footer-custom
+   sono già abbastanza specifici, ma questo è un esempio di come si potrebbe fare qui.
+*/
+
+.class-card {
+    border: 1px solid #dee2e6; // Bordo standard Bootstrap
+}
+
+.class-card .card-header {
+    // Stili specifici per l'header se quelli di Bootstrap non bastano
+}
+
+
+/* Stile per i messaggi di feedback per renderli un po' più evidenti o personalizzati */
+#feedback-messages .alert {
+    /* Esempio: aggiungere un'ombra leggera */
+    /* box-shadow: 0 .125rem .25rem rgba(0,0,0,.075); */
+}
+
+/* Stile per lo stato di caricamento se si vuole personalizzare oltre lo spinner */
+#loading-state p {
+    color: #6c757d; /* Colore secondario di Bootstrap per il testo "Caricamento..." */
+}
+
+
+
+/* Esempio: Stile per i titoli delle sezioni principali */
+
+.container > header > h1.display-5 {
+    color: #343a40; // Un grigio scuro per i titoli
+}
+
+```
+
+```javascript
+// wwwroot/js/mie-classi.js
+document.addEventListener('DOMContentLoaded', async () => {
+    const classiContainer = document.getElementById('classi-container');
+    const loadingStateDiv = document.getElementById('loading-state');
+    const feedbackMessagesDiv = document.getElementById('feedback-messages');
+
+    /**
+     * Mostra un messaggio di feedback (errore o informativo) all'utente.
+     * @param {string} message Il messaggio da visualizzare.
+     * @param {string} type Tipo di messaggio ('error', 'info', 'success'). Default 'info'.
+     */
+    const showFeedbackMessage = (message, type = 'info') => {
+        feedbackMessagesDiv.innerHTML = ''; // Pulisce messaggi precedenti
+        let alertClass = 'alert-info'; // Default
+        if (type === 'error') {
+            alertClass = 'alert-danger';
+        } else if (type === 'success') {
+            alertClass = 'alert-success';
+        }
+
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert ${alertClass} alert-dismissible fade show`;
+        alertDiv.role = 'alert';
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        feedbackMessagesDiv.appendChild(alertDiv);
+        feedbackMessagesDiv.style.display = 'block';
+    };
+
+    /**
+     * Crea l'HTML per una singola card di classe.
+     * @param {object} classe Dati della classe (ViewModel dal backend).
+     * @returns {string} Stringa HTML per la card.
+     */
+    const createClasseCard = (classe) => {
+        // Formattazione data per renderla più leggibile
+        const dataIscrizioneFormattata = new Date(classe.dataIscrizione).toLocaleDateString('it-IT', {
+            year: 'numeric', month: 'long', day: 'numeric'
+        });
+
+        return `
+            <div class="col">
+                <div class="card h-100 class-card shadow-sm">
+                    <div class="card-header card-header-custom">
+                        <h5 class="card-title mb-0">${escapeHtml(classe.nomeClasse)}</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">
+                            <strong>Materia:</strong> ${escapeHtml(classe.nomeMateria)}<br>
+                            <strong>Docente:</strong> ${escapeHtml(classe.nomeCompletoDocente)}
+                        </p>
+                        <a href="/giochi-classe.html?idClasse=${classe.idClasse}" class="btn btn-outline-primary btn-sm">
+                            Visualizza Giochi
+                        </a>
+                         <a href="/classifica-generale.html?idClasse=${classe.idClasse}" class="btn btn-outline-success btn-sm ms-2">
+                            Classifica Generale
+                        </a>
+                    </div>
+                    <div class="card-footer card-footer-custom">
+                        <small class="text-muted">Iscritto il: ${dataIscrizioneFormattata}</small>
+                    </div>
+                </div>
+            </div>
+        `;
+    };
+
+    /**
+     * Carica e visualizza le classi a cui lo studente è iscritto.
+     */
+    const loadMieClassi = async () => {
+        loadingStateDiv.style.display = 'block'; // Mostra indicatore di caricamento
+        classiContainer.innerHTML = ''; // Pulisce eventuali card precedenti (tranne il loading)
+        classiContainer.appendChild(loadingStateDiv); // Ri-aggiunge il loading se era stato rimosso
+        feedbackMessagesDiv.style.display = 'none'; // Nasconde messaggi precedenti
+
+        try {
+            // Effettua la chiamata API
+            // Il cookie di autenticazione viene inviato automaticamente dal browser
+            const response = await fetch('/api/studenti/mie-classi'); // o '/api/studenti/mie-classi-sqlraw' per testare l'altra versione
+
+            if (response.ok) {
+                const classi = await response.json();
+                loadingStateDiv.style.display = 'none'; // Nasconde indicatore di caricamento
+
+                if (classi && classi.length > 0) {
+                    classi.forEach(classe => {
+                        const cardHtml = createClasseCard(classe);
+                        classiContainer.insertAdjacentHTML('beforeend', cardHtml);
+                    });
+                } else {
+                    showFeedbackMessage('Non sei attualmente iscritto a nessuna classe.', 'info');
+                    // Potresti voler lasciare un messaggio più persistente nel classiContainer
+                    classiContainer.innerHTML = '<div class="col-12"><p class="text-center text-muted">Nessuna classe trovata.</p></div>';
+                }
+            } else if (response.status === 401 || response.status === 403) {
+                // Errore di Autenticazione o Autorizzazione
+                // Il middleware backend dovrebbe già aver ridiretto alla pagina di login
+                // o accesso negato se si accede direttamente alla pagina HTML protetta.
+                // Questo errore qui potrebbe indicare una sessione scaduta o un problema.
+                showFeedbackMessage('Errore di autorizzazione. Potrebbe essere necessario effettuare nuovamente il login.', 'error');
+                loadingStateDiv.style.display = 'none';
+                classiContainer.innerHTML = '<div class="col-12"><p class="text-center text-danger">Accesso non autorizzato.</p></div>';
+                 // window.location.href = '/login.html'; // Opzionale: ridirigi al login
+            } else {
+                // Altri errori API (es. 500)
+                console.error('Errore API:', response.status, await response.text());
+                showFeedbackMessage(`Errore ${response.status} nel caricamento delle classi. Riprova più tardi.`, 'error');
+                loadingStateDiv.style.display = 'none';
+                classiContainer.innerHTML = `<div class="col-12"><p class="text-center text-danger">Impossibile caricare le classi (Errore: ${response.status}).</p></div>`;
+            }
+        } catch (error) {
+            console.error('Errore di rete o JavaScript durante il fetch delle classi:', error);
+            showFeedbackMessage('Errore di rete. Impossibile contattare il server per caricare le tue classi.', 'error');
+            loadingStateDiv.style.display = 'none';
+            classiContainer.innerHTML = '<div class="col-12"><p class="text-center text-danger">Errore di connessione.</p></div>';
+        }
+    };
+
+    /**
+     * Funzione semplice per escape dell'HTML.
+     */
+    const escapeHtml = (unsafe) => {
+        if (typeof unsafe !== 'string') return unsafe;
+        return unsafe
+             .replace(/&/g, "&amp;")
+             .replace(/</g, "&lt;")
+             .replace(/>/g, "&gt;")
+             .replace(/"/g, "&quot;")
+             .replace(/'/g, "&#039;");
+     };
+
+    // Carica le classi dello studente all'avvio della pagina
+    loadMieClassi();
+});
+```
+
 
 ## Seconda parte
 
