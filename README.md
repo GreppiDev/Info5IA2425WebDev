@@ -2,8 +2,9 @@
 
 ## Indice degli argomenti
 
-1. Introduzione a Docker
+1. Docker
    1. [Comandi di base per la gestione di container, volumi e networking](./docker/docker-docs/getting-started/index.md)
+   2. [Deployment di applicazioni ASP.NET Core con Docker e Docker Compose](./docker/docker-docs/asp-net-docker/index.md)
 
 2. SQL in MySQL e MariaDB
     1. [Elementi di base dell'SQL](./sql/sql-docs/sql-p1/index.md)
@@ -42,6 +43,8 @@
    5. [JS](./web/web-docs/js/index.md)
    6. [Web forms handling](./web/web-docs/web-forms/index.md)
    7. [JavaScript Web API](./web/web-docs/js-web-api/index.md)
+   8. [Architetture Distribuite - Database Distribuiti](./web/web-docs/distributed-systems/databases/scalability-falut-tolerance/index.md)
+   9. [Il Ruolo e i Compiti del Database Administrator (DBA)](./web/web-docs/distributed-systems/databases/db-administration/index.md)
 
 7. Frontend Development
    1. [Responsive User Interface](./web/web-docs/responsive-ui/index.md)
