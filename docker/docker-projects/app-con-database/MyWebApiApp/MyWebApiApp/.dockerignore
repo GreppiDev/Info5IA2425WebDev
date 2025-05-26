@@ -1,0 +1,45 @@
+# MyWebApiApp/.dockerignore
+
+# ===== ARTEFATTI DI BUILD .NET =====
+# Ignora le cartelle di build e output generate da .NET
+**/bin/
+**/obj/
+
+# ===== FILE DEGLI IDE =====
+# File specifici di Visual Studio
+*.user
+*.vspscc
+*.suo
+.vs/
+
+# File di Visual Studio Code (opzionale)
+.vscode/
+
+# ===== FILE DI SVILUPPO =====
+# Repository Git (non necessario nell'immagine)
+.git/
+.gitignore
+
+# File Docker (evita loop di copia)
+Dockerfile*
+.dockerignore
+docker-compose*
+compose*
+
+# ===== CONFIGURAZIONI LOCALI =====
+# File di ambiente e segreti (SICUREZZA!)
+.env
+secrets.json
+secrets.dev.yaml
+**/*.*proj.user
+
+# ===== FILE TEMPORANEI =====
+# Log e file temporanei
+*.log
+**/npm-debug.log
+
+# ===== DOCUMENTAZIONE =====
+LICENSE
+README.md
+
+

@@ -10,17 +10,28 @@
     - [2.1. Il processo di pubblicazione con `dotnet publish`](#21-il-processo-di-pubblicazione-con-dotnet-publish)
     - [2.2. Esecuzione dell'applicazione pubblicata (Kestrel)](#22-esecuzione-dellapplicazione-pubblicata-kestrel)
     - [2.3. Analisi dell'output di pubblicazione](#23-analisi-delloutput-di-pubblicazione)
-    - [2.4. Richiamo ai meccanismi di configurazione di una applicazione ASP.NET Core (già visto in precedenza)](#24-richiamo-ai-meccanismi-di-configurazione-di-una-applicazione-aspnet-core-già-visto-in-precedenza)
+    - [2.4. Richiamo ai meccanismi di configurazione di una applicazione ASP.NET Core (già analizzati in precedenza)](#24-richiamo-ai-meccanismi-di-configurazione-di-una-applicazione-aspnet-core-già-analizzati-in-precedenza)
     - [2.5. Configurazione di una applicazione ASP.NET in fase di release - `ASPNETCORE_URLS` vs `--urls` vs  `ASPNETCORE_HTTP_PORTS` vs `ASPNETCORE_HTTPS_PORTS`](#25-configurazione-di-una-applicazione-aspnet-in-fase-di-release---aspnetcore_urls-vs---urls-vs--aspnetcore_http_ports-vs-aspnetcore_https_ports)
   - [3. Containerizzazione con Docker: Le Basi](#3-containerizzazione-con-docker-le-basi)
     - [3.1. Introduzione a Docker: Immagini vs Container (richiami)](#31-introduzione-a-docker-immagini-vs-container-richiami)
     - [3.2. Scrittura di un `Dockerfile` per ASP.NET Core](#32-scrittura-di-un-dockerfile-per-aspnet-core)
       - [3.2.1. **Best Practice**: Multi-Stage Builds per ottimizzazione e sicurezza](#321-best-practice-multi-stage-builds-per-ottimizzazione-e-sicurezza)
-      - [3.2.2. Comandi essenziali: `FROM`, `WORKDIR`, `COPY`, `RUN`, `EXPOSE`, `ENTRYPOINT`, `USER`](#322-comandi-essenziali-from-workdir-copy-run-expose-entrypoint-user)
+      - [3.2.2. Comandi essenziali di un Dockerfile](#322-comandi-essenziali-di-un-dockerfile)
+        - [`FROM`](#from)
+        - [`WORKDIR`](#workdir)
+        - [`COPY`](#copy)
+        - [`RUN`](#run)
+        - [`ENV`](#env)
+        - [`EXPOSE`](#expose)
+        - [`ENTRYPOINT`](#entrypoint)
+        - [`CMD` e `ENTRYPOINT` in dettaglio](#cmd-e-entrypoint-in-dettaglio)
+        - [`USER` in dettaglio](#user-in-dettaglio)
+        - [`ARG` in dettaglio](#arg-in-dettaglio)
+        - [`ENV` in dettaglio](#env-in-dettaglio)
     - [3.3. L'importanza del file `.dockerignore`](#33-limportanza-del-file-dockerignore)
     - [3.4. Costruzione di un'immagine: `docker build` e primo test di avvio](#34-costruzione-di-unimmagine-docker-build-e-primo-test-di-avvio)
     - [3.5. Pubblicazione di un'immagine su un registro](#35-pubblicazione-di-unimmagine-su-un-registro)
-      - [3.5.1 Pubblicazione di un'immagine su DockerHub](#351-pubblicazione-di-unimmagine-su-dockerhub)
+      - [3.5.1 Pubblicazione di un'immagine su Docker Hub](#351-pubblicazione-di-unimmagine-su-docker-hub)
       - [3.5.2 Pubblicazione di un'immagine su Azure Container Registry](#352-pubblicazione-di-unimmagine-su-azure-container-registry)
     - [3.6. Cenni sulla generazione automatica di `Dockerfile` (Visual Studio e altri strumenti)](#36-cenni-sulla-generazione-automatica-di-dockerfile-visual-studio-e-altri-strumenti)
     - [3.7. Confronto tra il Dockerfile generato da Containers (VS Code Plugin) e il Dockerfile semplice a due stadi scritto manualmente](#37-confronto-tra-il-dockerfile-generato-da-containers-vs-code-plugin-e-il-dockerfile-semplice-a-due-stadi-scritto-manualmente)
@@ -150,10 +161,10 @@ Si procederà ora alla creazione di un semplice progetto ASP.NET Core utilizzand
 
     - :memo::fire:La scelta di considerare un progetto che non utilizza nativamente https per un container Docker è dovuto a due ragioni:
        1. complessità nel gestire https all'interno di un container Docker (si può fare, ma è un'inutile complicazione). In questo caso il problema principale è costituito dal non trust del browser nella macchina host del certificato https del server all'interno del container.
-       2. in applicazioni reali di backend è piuttosto comune non terminare l'https direttamente nel backend applicativo (nel caso di ASP.NET Core si tratterebbe di terminare l'https nel server Kestrel che è già incluso nell'eseguibile del backend), ma di fare in modo che la terminazione dell'https sia affidata ad un componente specifico che funge da reverse proxy e/o load balancer e che è posto davanti al server di backend.
+       2. Nelle applicazioni backend reali, è piuttosto comune non gestire direttamente la terminazione dell'HTTPS all'interno del backend applicativo (nel caso di ASP.NET Core, ciò significherebbe terminare l'HTTPS direttamente nel server Kestrel, incluso nell'eseguibile dell'applicazione). Al contrario, si preferisce spesso delegare questa responsabilità a un componente dedicato, come un reverse proxy e/o un load balancer, posto a monte del server backend.
 
        ```mermaid
-        graph TB
+      graph TB
         %% Client Layer
         C1[📱 Mobile Client]
         C2[💻 Web Browser]
@@ -161,7 +172,7 @@ Si procederà ora alla creazione di un semplice progetto ASP.NET Core utilizzand
         C4[⚙️ API Client]
         
         %% Load Balancer/Reverse Proxy
-        LB[🔄 Reverse Proxy/Load Balancer<br/>NGINX/HAProxy/YARP/Traefik<br/>HTTPS Termination]
+        LB[🔄 Reverse Proxy / Load Balancer<br/>NGINX / HAProxy / YARP / Traefik<br/>HTTPS Termination & SSL/TLS]
         
         %% ASP.NET Core Backend Instances
         subgraph "Backend Cluster"
@@ -174,7 +185,7 @@ Si procederà ora alla creazione di un semplice progetto ASP.NET Core utilizzand
         %% Database Cluster
         subgraph "Database Cluster"
             direction TB
-            DB1[(🗄️ Primary DB<br/>SQL Server/PostgreSQL/MariaDB)]
+            DB1[(🗄️ Primary DB<br/>PostgreSQL/MariaDB)]
             DB2[(🗄️ Secondary DB<br/>Read Replica)]
             DB3[(🗄️ Secondary DB<br/>Read Replica)]
             
@@ -484,7 +495,7 @@ Esaminando il contenuto della directory `publish_output`, si troveranno i seguen
 
 - **Dipendenze**:
 
-    - DLL delle librerie NuGet da cui il progetto dipende (es. `Microsoft.AspNetCore.OpenApi.dll` se si usa Swagger/OpenAPI, `MySqlConnector.dll` se aggiunto per MariaDB).
+    - DLL delle librerie NuGet da cui il progetto dipende (es. `Microsoft.AspNetCore.OpenApi.dll` se si usa Swagger/OpenAPI, `MySqlConnector.dll` se aggiunto per MariaDB, etc.).
 
 - **File di configurazione del runtime**:
 
@@ -508,7 +519,7 @@ Esaminando il contenuto della directory `publish_output`, si troveranno i seguen
 
 Si noterà l'assenza dei file di codice sorgente (`.cs`), dei file di progetto (`.csproj`), e delle cartelle `obj` e `bin` (che contengono artefatti di build intermedi). La dimensione complessiva della cartella `publish_output` è generalmente ottimizzata per il deployment, contenendo solo il minimo indispensabile per eseguire l'applicazione.
 
-### 2.4. Richiamo ai meccanismi di configurazione di una applicazione ASP.NET Core (già visto in precedenza)
+### 2.4. Richiamo ai meccanismi di configurazione di una applicazione ASP.NET Core (già analizzati in precedenza)
 
 ASP.NET Core carica i file di configurazione in questo ordine (dal meno prioritario al più prioritario):
 
@@ -526,7 +537,7 @@ Le configurazioni successive **sovrascrivono** quelle precedenti.
 
     - **Development** → carica `appsettings.Development.json`
     - **Production** → carica `appsettings.Production.json`
-    - **Staging** → carica `appsettings.Staging.json`
+    - **Staging**[^1] → carica `appsettings.Staging.json`
     - **Custom** → carica `appsettings.Custom.json`
 
 - **Esempio pratico:**
@@ -610,7 +621,7 @@ Le configurazioni successive **sovrascrivono** quelle precedenti.
 
 ### 2.5. Configurazione di una applicazione ASP.NET in fase di release - `ASPNETCORE_URLS` vs `--urls` vs  `ASPNETCORE_HTTP_PORTS` vs `ASPNETCORE_HTTPS_PORTS`
 
-Ci sono diversi modi per cambiare la porta quando si avvia l'applicazione pubblicata:
+Ci sono diversi modi per cambiare la porta su cui è in ascolto un'applicazione ASP.NET Core pubblicata all'avvio:
 
 1. Variabile d'ambiente `ASPNETCORE_URLS`
 
@@ -800,9 +811,9 @@ Per applicazioni compilate come quelle ASP.NET Core, l'utilizzo di *multi-stage 
 
 3. **Build più Pulite e Organizzate**:
 
-    - Le fasi separano logicamente le preoccupazioni di build da quelle di runtime.
+    - Le fasi separano logicamente le problematiche di build da quelle di runtime.
 
-#### 3.2.2. Comandi essenziali: `FROM`, `WORKDIR`, `COPY`, `RUN`, `EXPOSE`, `ENTRYPOINT`, `USER`
+#### 3.2.2. Comandi essenziali di un Dockerfile
 
 Si creerà ora un `Dockerfile` per l'applicazione `MyWebApiApp` utilizzando un approccio multi-stage semplificato a due stadi. Creare un file chiamato `Dockerfile` (senza estensione) nella directory root del progetto `MyWebApiApp`.
 
@@ -854,17 +865,25 @@ EXPOSE 8080
 ENTRYPOINT ["dotnet", "MyWebApiApp.dll"]
 ```
 
-**Spiegazione dei comandi Docker utilizzati**:
+**Spiegazione dei comandi Docker utilizzati e di altri comandi utili**:
+
+##### `FROM`
 
 - `FROM <image>:<tag> AS <stage_name>`: Specifica l'immagine base da cui partire. `mcr.microsoft.com/dotnet/sdk:8.0` è l'immagine ufficiale Microsoft che contiene l'.NET 8 SDK. `AS build-env` assegna un nome (`build-env`) a questa fase, che può essere referenziato successivamente (es. in `COPY --from=build-env`).
 
+##### `WORKDIR`
+
 - `WORKDIR /app`: Imposta la directory di lavoro predefinita per i comandi successivi (`COPY`, `RUN`, `ENTRYPOINT`) all'interno del container. Se la directory non esiste, viene creata.
+
+##### `COPY`
 
 - `COPY <src> <dest>`: Copia file e directory dal contesto di build di Docker (la directory sull'host dove si esegue `docker build`) nel filesystem del container.
 
     - `COPY *.csproj ./`: Copia tutti i file con estensione `.csproj` (e simili come `.vbproj`, `.fsproj`) nella directory di lavoro corrente (`/app`) del container.
 
     - `COPY . ./`: Copia tutti i file e le directory rimanenti dal contesto di build nella directory di lavoro del container.
+
+##### `RUN`
 
 - `RUN <command>`: Esegue un comando nella shell del container durante il processo di build dell'immagine. Viene creato un nuovo layer per ogni comando `RUN`.
 
@@ -874,11 +893,578 @@ ENTRYPOINT ["dotnet", "MyWebApiApp.dll"]
 
 - `COPY --from=<stage_name> <src> <dest>`: Questo è specifico dei multi-stage builds. Copia file dalla fase di build precedente (`build-env` in questo caso) nell'attuale fase. `COPY --from=build-env /app/out .` copia il contenuto della cartella `/app/out` della fase `build-env` nella directory di lavoro `/app` della fase finale.
 
+##### `ENV`
+
 - `ENV <key>=<value>`: Imposta una variabile d'ambiente all'interno dell'immagine. Questa variabile sarà disponibile quando un container viene eseguito da questa immagine. `ASPNETCORE_URLS=http://+:8080` dice a Kestrel di ascoltare sulla porta 8080 su tutte le interfacce di rete disponibili nel container. Il `+` è un modo per specificare "qualsiasi indirizzo IP" in questo contesto.
+
+##### `EXPOSE`
 
 - `EXPOSE <port>`: Informa Docker che il container ascolterà sulla porta specificata al runtime. Non pubblica la porta automaticamente; serve come documentazione e può essere usata da strumenti automatici o per la mappatura con `docker run -P` (P maiuscola). La mappatura esplicita avviene con `docker run -p <host_port>:<container_port>`.
 
+##### `ENTRYPOINT`
+
 - `ENTRYPOINT ["executable", "param1", "param2"]`: Configura il comando principale che verrà eseguito quando un container viene avviato dall'immagine. In questo caso, `dotnet MyWebApiApp.dll` avvia l'applicazione ASP.NET Core. Questo è il formato "exec form", preferito rispetto allo "shell form" (`ENTRYPOINT dotnet MyWebApiApp.dll`).
+
+**Altri comandi Docker utili:**
+
+##### `CMD` e `ENTRYPOINT` in dettaglio
+
+- **`CMD` e sua interazione con `ENTRYPOINT`**
+   - `CMD ["eseguibile", "param1", "param2"]` (oppure `CMD ["param1", "param2"]` se utilizzata in congiunzione con `ENTRYPOINT`): definisce il comando predefinito da eseguire quando un container Docker viene avviato. Questo comando viene eseguito dopo l'avvio del container e, a meno che non venga sovrascritto, è il comando che viene effettivamente eseguito.
+
+     Le istruzioni `ENTRYPOINT` e `CMD` all'interno di un Dockerfile sono entrambe utilizzate per specificare il comando da eseguire all'avvio di un container. Esse presentano, tuttavia, differenze significative riguardo all'interazione con gli argomenti forniti al comando `docker run` e al loro scopo primario.
+
+     L'istruzione **`ENTRYPOINT`** ha la funzione di definire l'eseguibile principale del container. È concepita per comandi che costituiscono l'operazione fondamentale del container e che devono essere eseguiti ad ogni avvio. Gli argomenti forniti al comando `docker run` vengono accodati come parametri all'istruzione `ENTRYPOINT` (se questa è in forma *exec*).
+
+     L'istruzione **`CMD`**, invece, serve a fornire i parametri predefiniti per l'istruzione `ENTRYPOINT` o, in assenza di un `ENTRYPOINT`, l'intero comando predefinito da eseguire. Qualora vengano specificati argomenti nel comando `docker run`:
+
+     - In assenza di `ENTRYPOINT`, l'intero contenuto di `CMD` viene sostituito dagli argomenti di `docker run`.
+     - In presenza di un `ENTRYPOINT` (nella sua forma *exec*), `CMD` definisce gli argomenti predefiniti per tale `ENTRYPOINT`. Questi argomenti predefiniti possono essere sovrascritti dagli argomenti forniti al comando `docker run`.
+
+   - Modalità di Interazione tra `ENTRYPOINT` e `CMD`
+
+     La comprensione delle modalità di interazione tra `ENTRYPOINT` e `CMD` è cruciale per un utilizzo efficace:
+
+     1. **Utilizzo esclusivo di `CMD`**: Se il Dockerfile contiene unicamente l'istruzione `CMD`, questa definisce il comando e gli argomenti predefiniti. Qualsiasi comando o argomento specificato dopo il nome dell'immagine nel comando `docker run` sostituirà integralmente il `CMD` definito nel Dockerfile.
+
+         - Dockerfile: `CMD ["/bin/bash"]`
+         - Esecuzione `docker run <immagine>`: avvia `/bin/bash`.
+         - Esecuzione `docker run <immagine> ls -l`: avvia `ls -l` (l'istruzione `CMD` originale viene ignorata).
+     2. **Utilizzo esclusivo di `ENTRYPOINT` (forma *exec*)**: Se il Dockerfile contiene unicamente `ENTRYPOINT ["eseguibile", "param1"]` (noto come forma *exec*), questo sarà il comando eseguito. Gli argomenti aggiuntivi forniti tramite `docker run` verranno accodati a quelli specificati nell'`ENTRYPOINT`.
+
+         - Dockerfile: `ENTRYPOINT ["/usr/sbin/nginx", "-g", "daemon off;"]`
+         - Esecuzione `docker run <immagine>`: avvia `/usr/sbin/nginx -g daemon off;`.
+         - Esecuzione `docker run <immagine> -c /etc/nginx/nginx.conf`: avvia `/usr/sbin/nginx -g daemon off; -c /etc/nginx/nginx.conf`.
+     3. **Combinazione di `ENTRYPOINT` e `CMD` (entrambi in forma *exec*)**: Questa configurazione rappresenta l'approccio più comune e versatile. `ENTRYPOINT` stabilisce l'eseguibile principale, mentre `CMD` fornisce gli argomenti predefiniti per tale eseguibile.
+
+         - Dockerfile:Dockerfile
+
+             ```dockerfile
+             ENTRYPOINT ["messaggio"]
+             CMD ["Ciao", "Mondo"]
+             ```
+
+         - Esecuzione `docker run <immagine>`: avvia `messaggio Ciao Mondo`.
+         - Esecuzione `docker run <immagine> Salve Universo`: avvia `messaggio Salve Universo` (gli argomenti di `CMD` vengono sovrascritti, ma l' `ENTRYPOINT` rimane invariato).
+
+   - Formati di Sintassi
+
+     Sia `ENTRYPOINT` che `CMD` supportano due formati di sintassi:
+
+     - **Forma *exec*** (raccomandata): `ENTRYPOINT ["eseguibile", "param1", "param2"]` e `CMD ["eseguibile", "param1", "param2"]` (oppure `CMD ["param1", "param2"]` se utilizzata in congiunzione con `ENTRYPOINT`). Questa sintassi, strutturata come un array JSON, esegue il comando specificato direttamente, senza l'intermediazione di una shell. Ciò significa che il processo avviato sarà il PID 1 all'interno del container (a meno che non si utilizzi un init system).
+     - **Forma *shell***: `ENTRYPOINT comando param1 param2` e `CMD comando param1 param2`. Questa sintassi esegue il comando tramite una shell (tipicamente `/bin/sh -c`). Ciò comporta l'interpretazione delle variabili d'ambiente da parte della shell e la possibilità di utilizzare costrutti specifici della shell (es. `&&`, `||`, pipe). Tuttavia, il comando effettivo sarà un figlio della shell.
+
+     :memo::fire:**Nota importante sulla forma *shell***: Qualora si utilizzi la forma *shell* per `ENTRYPOINT`, qualsiasi istruzione `CMD` o argomento fornito a `docker run` verrà ignorato. Per tale ragione, la forma *exec* di `ENTRYPOINT` è generalmente da preferirsi, soprattutto quando si intende utilizzare `CMD` per fornire argomenti predefiniti.
+
+   - Sovrascrittura delle Istruzioni
+
+     Le modalità di sovrascrittura delle istruzioni sono le seguenti:
+
+     - **`CMD`**: Può essere agevolmente sovrascritto specificando un comando e/o argomenti dopo il nome dell'immagine nel comando `docker run`.
+     - **`ENTRYPOINT`**: Non viene sovrascritto direttamente dagli argomenti forniti a `docker run`. Per modificare l'`ENTRYPOINT` definito nell'immagine, è necessario utilizzare l'opzione `--entrypoint` nel comando `docker run`.
+         - Esempio: `docker run --entrypoint /bin/sh <immagine> -c "echo ciao"`
+
+   - Linee Guida Generali per la Scelta
+
+       Si forniscono di seguito alcune linee guida generali per la scelta tra `ENTRYPOINT` e `CMD`:
+
+     - Si consiglia di utilizzare **`ENTRYPOINT`** quando l'obiettivo è creare un'immagine Docker progettata per eseguire un comando specifico, agendo in modo simile a un eseguibile autonomo. L'immagine è quindi "finalizzata" a tale comando.
+
+         - **Esempio**: Un'immagine che deve sempre avviare un server web specifico: `ENTRYPOINT ["/usr/sbin/apache2ctl", "-D", "FOREGROUND"]`
+
+     - Si consiglia di utilizzare **`CMD`** per specificare i **parametri predefiniti** per un `ENTRYPOINT` (nella sua forma *exec*), oppure per fornire un **comando predefinito completo** se non è presente un `ENTRYPOINT`. Questi valori predefiniti sono concepiti per essere quelli che l'utente dell'immagine è più propenso a sovrascrivere.
+
+         - **Esempio (con `ENTRYPOINT`)**:Dockerfile
+
+             ```dockerfile
+             FROM ubuntu
+             ENTRYPOINT ["ping"]
+             CMD ["localhost"]
+             ```
+
+             Questo container, per impostazione predefinita, eseguirà `ping localhost`. Tuttavia, l'utente può eseguire `docker run <immagine> google.com` per effettuare il ping verso `google.com`.
+         - **Esempio (solo `CMD`)**:Dockerfile
+
+             ```dockerfile
+             FROM alpine
+             CMD ["echo", "Benvenuto! Fornisci un comando per eseguirlo."]
+             ```
+
+             Eseguendo `docker run <immagine>` verrà visualizzato il messaggio. Eseguendo `docker run <immagine> ls /` verrà elencato il contenuto della directory radice.
+
+   - **La combinazione di `ENTRYPOINT` (nella forma *exec*) e `CMD` rappresenta frequentemente la strategia ottimale** per la creazione di immagini Docker flessibili e dal comportamento prevedibile. `ENTRYPOINT` stabilisce la funzionalità primaria, mentre `CMD` offre valori predefiniti facilmente personalizzabili dall'utente.
+
+   - :memo::fire:**È importante ricordare che, qualora più istruzioni `CMD` o `ENTRYPOINT` siano presenti in un Dockerfile, solo l'ultima di ciascun tipo avrà effetto sulla configurazione finale dell'immagine**.
+
+##### `USER` in dettaglio
+
+- **Istruzione `USER`**
+  L'istruzione **`USER`** in un Dockerfile è utilizzata per impostare il nome utente (o UID) e opzionalmente il gruppo utente (o GID) da utilizzare come utente predefinito per tutte le istruzioni successive (`RUN`, `CMD`, `ENTRYPOINT`) all'interno del Dockerfile, nonché per l'esecuzione del processo principale quando un container viene avviato dall'immagine.
+
+  - Scopo Principale dell'Istruzione `USER`
+
+    Lo scopo primario dell'istruzione `USER` è quello di **migliorare la sicurezza** dei container Docker. **Per impostazione predefinita, i comandi all'interno di un container vengono eseguiti con i privilegi dell'utente `root` (UID 0)**. Eseguire processi come `root` all'interno di un container può presentare rischi di sicurezza, poiché un eventuale exploit nel container potrebbe concedere privilegi elevati sull'host Docker (specialmente se altre misure di sicurezza come i namespace degli utenti non sono configurati in modo stringente).
+
+    **Utilizzando `USER`, si può specificare un utente non privilegiato per l'esecuzione delle applicazioni e dei comandi**. Questo aderisce al **principio del privilegio minimo** (Principle of Least Privilege - PoLP), secondo cui un processo dovrebbe avere solo i permessi strettamente necessari per svolgere le proprie funzioni.
+
+    Sintassi
+
+    L'istruzione `USER` accetta le seguenti forme:
+
+    1. **Solo nome utente**:
+
+        ```dockerfile
+        USER <nome_utente>
+        ```
+
+        Esempio: `USER appuser`
+
+    2. **Nome utente e gruppo**:
+
+        ```dockerfile
+        USER <nome_utente>:<nome_gruppo>
+        ```
+
+        Esempio: `USER appuser:appgroup`
+
+    3. **Solo UID**:
+
+        ```dockerfile
+        USER <uid>
+        ```
+
+        Esempio: `USER 1000`
+
+    4. **UID e GID**:
+
+        ```dockerfile
+        USER <uid>:<gid>
+        ```
+
+        Esempio: `USER 1000:1001`
+
+    :memo::fire:**È importante che l'utente e il gruppo specificati devono esistere all'interno dell'immagine**. Se l'utente o il gruppo non esistono, la build dell'immagine potrebbe non fallire immediatamente, ma l'esecuzione di comandi successivi o l'avvio del container potrebbero generare errori o comportamenti imprevisti.
+
+  - Come e Quando Utilizzare `USER`
+
+    1. **Creazione dell'Utente e del Gruppo**: Prima di utilizzare l'istruzione `USER` per passare a un utente non `root`, è necessario assicurarsi che tale utente (e, opzionalmente, il suo gruppo) esista nell'immagine. Questo viene tipicamente fatto utilizzando comandi come `groupadd` e `useradd` (standard su sistemi basati su Debian/Ubuntu) all'interno di un'istruzione `RUN`.
+
+        ```dockerfile
+        # Esempio di immagine Docker creata a partire da alpine
+
+        # Immagine base
+        FROM alpine:latest
+
+        # Argomenti per UID e GID per flessibilità
+        ARG APP_USER_UID=1000
+        ARG APP_USER_GID=1000
+
+        # Creazione del gruppo e dell'utente
+        # Si utilizza 'addgroup' e 'adduser' che sono comuni in Alpine
+        RUN addgroup -g ${APP_USER_GID} -S appgroup && \
+            adduser -u ${APP_USER_UID} -S appuser -G appgroup -h /home/appuser
+
+        # Crea la directory dell'applicazione e imposta i permessi
+        WORKDIR /app
+        COPY --chown=appuser:appgroup . /app
+
+        # Installa eventuali dipendenze (come root, se necessario, prima di cambiare utente)
+        # RUN apk add --no-cache some-dependency
+
+        # Passa all'utente non privilegiato
+        USER appuser
+
+        # Verifica l'utente corrente (opzionale, per debug durante la build)
+        RUN whoami
+
+        # Imposta il comando predefinito per il container
+        ENTRYPOINT ["./my-app-executable"]
+        CMD ["--default-arg"]
+        ```
+
+        In questo esempio:
+
+          1. Viene creata una coppia `appgroup`/`appuser` con UID/GID specifici. L'opzione `-S` per `addgroup`/`adduser` in Alpine crea un utente/gruppo di sistema senza password e senza login shell interattiva (più sicuro). `-h /home/appuser` crea una home directory.
+          2. I file dell'applicazione vengono copiati e i loro permessi vengono assegnati al nuovo utente `appuser` durante l'operazione `COPY` grazie all'opzione `--chown`.
+          3. L'istruzione `USER appuser` imposta l'utente `appuser` come utente corrente.
+          4. L'istruzione `RUN whoami` (se presente) verrebbe eseguita come `appuser`.
+          5. L'`ENTRYPOINT` e il `CMD` verranno eseguiti come `appuser` quando il container viene avviato.
+
+        ```dockerfile
+        # Esempio di immagine Docker creata a partire da Ubuntu
+
+        FROM ubuntu:latest # O una versione specifica come ubuntu:22.04
+
+        # Aggiorna i pacchetti e installa eventuali dipendenze necessarie per la creazione dell'utente o l'app
+        RUN apt-get update && apt-get install -y --no-install-recommends sudo\
+            && rm -rf /var/lib/apt/lists/*
+
+        # Crea un gruppo e un utente specifici
+        # -r crea un utente di sistema
+        # -g specifica il gruppo primario
+        # -m crea la directory home
+        # -s /usr/sbin/nologin impedisce il login shell
+        RUN groupadd -r appgroup &&\
+            useradd -r -g appgroup -m -s /usr/sbin/nologin appuser
+
+        # (altre istruzioni come la copia dei file dell'applicazione, installazione dipendenze, ecc.)
+        # Ad esempio, creare la directory dell'applicazione se non copiata direttamente con permessi
+        RUN mkdir -p /opt/app && chown appuser:appgroup /opt/app
+        WORKDIR /opt/app
+        COPY --chown=appuser:appgroup ./mia_applicazione /opt/app/mia_applicazione
+
+        # Passa all'utente non privilegiato
+        USER appuser
+
+        # Le istruzioni successive verranno eseguite come 'appuser'
+        ENTRYPOINT ["/opt/app/mia_applicazione"]
+        CMD ["--config", "/opt/app/config.json"]
+        ```
+
+    2. **Posizionamento nel Dockerfile**: L'istruzione `USER` dovrebbe essere inserita il più tardi possibile nel Dockerfile, ma prima di qualsiasi comando (`CMD`, `ENTRYPOINT`) o operazione (`RUN`) che non richieda privilegi di `root`. Tipicamente:
+
+        - Si eseguono come `root` le operazioni di installazione di pacchetti (`apt-get install`), creazione di directory di sistema, e altre configurazioni iniziali.
+        - Dopo aver preparato l'ambiente e copiato i file dell'applicazione, e aver impostato le corrette permissioni per l'utente non privilegiato, si utilizza `USER` per passare a tale utente.
+        - Le istruzioni `CMD` o `ENTRYPOINT` verranno quindi eseguite con i permessi dell'utente specificato.
+
+  - Impatto sulle Istruzioni Successive
+
+    Una volta che l'istruzione `USER` è stata specificata, tutte le istruzioni `RUN`, `CMD` e `ENTRYPOINT` che seguono nel Dockerfile saranno eseguite nel contesto di quell'utente.
+
+    - **`RUN`**: **I comandi eseguiti tramite `RUN` verranno eseguiti come l'utente specificato**. Questo è importante da considerare se questi comandi necessitano di scrivere in directory o modificare file che richiedono privilegi specifici.
+    - **`CMD` e `ENTRYPOINT`**: **Il processo principale del container, definito da `CMD` o `ENTRYPOINT` (o dalla loro combinazione), verrà avviato con l'identità dell'utente specificato**. Questo è l'aspetto più cruciale per la sicurezza in runtime del container.
+
+  - Esempio Completo con Container Ubuntu
+
+    ```dockerfile
+    # Immagine base Ubuntu
+    FROM ubuntu:22.04
+
+    # Argomenti per UID e GID per flessibilità (opzionale, ma buona pratica)
+    ARG APP_USER_UID=1001
+    ARG APP_USER_GID=1001
+    ARG APP_USER_NAME=appuser
+    ARG APP_GROUP_NAME=appgroup
+
+    # Aggiorna la lista dei pacchetti e installa dipendenze minime se necessario
+    # Esempio: installazione di 'curl' o altri tool usati da RUN o dall'app
+    RUN apt-get update &&\
+        apt-get install -y --no-install-recommends curl &&\
+        rm -rf /var/lib/apt/lists/*
+
+    # Creazione del gruppo e dell'utente
+    # -r per utente/gruppo di sistema
+    # -g assegna il gruppo primario
+    # -m crea la home directory (se non specificato -d)
+    # -d specifica la home directory
+    # -s /usr/sbin/nologin per impedire login interattivi (più sicuro)
+    RUN groupadd -r -g ${APP_USER_GID} ${APP_GROUP_NAME} &&\
+        useradd -r -u ${APP_USER_UID} -g ${APP_GROUP_NAME} -m -d /home/${APP_USER_NAME} -s /usr/sbin/nologin ${APP_USER_NAME}
+
+    # Crea la directory dell'applicazione
+    RUN mkdir -p /srv/app &&\
+        chown ${APP_USER_NAME}:${APP_GROUP_NAME} /srv/app
+
+    # Imposta la directory di lavoro
+    WORKDIR /srv/app
+
+    # Copia i file dell'applicazione e imposta i permessi
+    # Assumendo che il Dockerfile sia nella root del progetto e l'app sia in 'src/'
+    COPY --chown=${APP_USER_NAME}:${APP_GROUP_NAME} ./src/app.py /srv/app/app.py
+    COPY --chown=${APP_USER_NAME}:${APP_GROUP_NAME} ./src/requirements.txt /srv/app/requirements.txt
+
+    # Esempio: installa dipendenze Python come utente non-root in un ambiente virtuale (best practice)
+    # Prima si passa all'utente, poi si creano ambienti/installano dipendenze specifiche dell'utente
+    USER ${APP_USER_NAME}
+
+    # Esempio: installazione di dipendenze Python in ambiente virtuale come utente non-root
+    # RUN python3 -m venv venv
+    # RUN . venv/bin/activate && pip install --no-cache-dir -r requirements.txt
+    # ENTRYPOINT ["./venv/bin/python", "app.py"]
+
+    # Se non si usa un ambiente virtuale e python3 è globale (e l'utente ha permessi):
+    # RUN pip3 install --user --no-cache-dir -r requirements.txt
+    # ENTRYPOINT ["python3", "app.py"]
+
+    # Oppure, se le dipendenze sono state installate globalmente da root:
+    # ENTRYPOINT ["python3", "app.py"]
+    # Per questo esempio, assumiamo che 'app.py' sia un eseguibile e non richieda python direttamente nel comando
+    ENTRYPOINT ["./app.py"]
+    CMD ["--help"]
+
+    # Verifica l'utente corrente (opzionale, per debug durante la build)
+    # RUN whoami # Questo comando verrebbe eseguito come 'appuser'
+    ```
+
+    In questo esempio specifico per Ubuntu:
+
+    1. Viene utilizzata un'immagine base `ubuntu:22.04`.
+    2. Vengono creati un gruppo (`appgroup`) e un utente (`appuser`) di sistema utilizzando `groupadd -r` e `useradd -r`. L'opzione `-m` per `useradd` crea la directory home dell'utente (qui `/home/appuser`). `/usr/sbin/nologin` è una shell comune per utenti di servizio che non necessitano di login interattivo.
+    3. Viene creata una directory `/srv/app` per l'applicazione, e i suoi permessi vengono assegnati al nuovo utente.
+    4. I file dell'applicazione (`app.py`, `requirements.txt` da una sottodirectory `src/`) vengono copiati nella `WORKDIR` e i loro permessi sono impostati all'utente `appuser` durante l'operazione `COPY` grazie all'opzione `--chown`.
+    5. L'istruzione `USER ${APP_USER_NAME}` imposta l'utente `appuser` come utente corrente per le istruzioni successive.
+    6. L'`ENTRYPOINT` e il `CMD` (qui, per un ipotetico `app.py`) verranno eseguiti come `appuser` quando il container viene avviato. Sono mostrati anche commenti per approcci alternativi con Python e virtual environments.
+    7. Affinché un file di script Python (come `app.py`) possa essere trattato come un "eseguibile" in questo senso, devono essere soddisfatte principalmente due condizioni all'interno dell'ambiente del container (in questo caso, basato su Ubuntu):
+
+       1. **La "Shebang" Line (Riga Shebang)**:
+
+           - Il file `app.py` deve iniziare con una riga speciale chiamata "shebang". Questa riga indica al sistema operativo quale interprete utilizzare per eseguire lo script.
+           - Per uno script Python 3, la shebang line è tipicamente:Python
+
+               ```py
+               #!/usr/bin/env python3
+               ```
+
+               oppure, se si conosce il percorso esatto dell'interprete Python 3 e si preferisce usarlo direttamente:Python
+
+               ```py
+               #!/usr/bin/python3
+               ```
+
+           - Quando il sistema tenta di eseguire `./app.py`, legge questa prima riga e sa che deve invocare `/usr/bin/env python3` (che a sua volta troverà l'eseguibile `python3` nel `PATH` del sistema) oppure direttamente `/usr/bin/python3`, passando `app.py` come argomento a tale interprete.
+
+       2. **Permessi di Esecuzione**:
+
+           - Il file `app.py` deve avere i permessi di esecuzione impostati. Nei sistemi Unix-like (come Linux, su cui si basa Ubuntu), questo si ottiene solitamente con il comando `chmod`.
+           - Ad esempio, all'interno del Dockerfile o prima di aggiungere il file all'immagine, si potrebbe eseguire:Bash
+
+               ```sh
+               chmod +x app.py
+               ```
+
+               Oppure, se si copiano i file con `COPY` o `ADD`, si può tentare di preservare i permessi dal sistema host, o impostarli successivamente con `RUN chmod +x /srv/app/app.py`. L'opzione `--chown` in `COPY` gestisce solo la proprietà, non direttamente i permessi di esecuzione in modo granulare (anche se i permessi originali potrebbero essere preservati a seconda del client Docker e del sistema). È buona pratica assicurarsi che i permessi di esecuzione siano impostati nel Dockerfile dopo aver copiato il file, se necessario:Dockerfile
+
+               ```sh
+               COPY ./src/app.py /srv/app/app.py
+               RUN chmod +x /srv/app/app.py
+               ```
+
+               (Nota: nell'esempio precedente, `COPY --chown` è stato usato, ma `chmod` potrebbe comunque essere necessario se il file sorgente non ha già i permessi di esecuzione).
+
+  - Considerazioni Aggiuntive
+
+    - **Permessi sui File**: È fondamentale assicurarsi che l'utente non `root` specificato con `USER` abbia i permessi di lettura, scrittura ed esecuzione necessari per i file e le directory con cui l'applicazione deve interagire. Questo spesso implica l'uso di `chown` e `chmod` (o l'opzione `--chown` in `COPY` o `ADD`) nelle istruzioni `RUN` precedenti al cambio di utente.
+    - **Porte Privilegiate**: Gli utenti non `root` non possono associare servizi a porte privilegiate (quelle inferiori alla 1024). Se l'applicazione necessita di ascoltare su una porta come la 80 o la 443, si possono adottare strategie come:
+        - Configurare l'applicazione per ascoltare su una porta non privilegiata (es. 8080) e mappare la porta privilegiata dell'host a questa porta non privilegiata durante l'esecuzione del container (es. `docker run -p 80:8080 mia-immagine`).
+        - Utilizzare un reverse proxy (come Nginx o Apache) che gira come `root` (o con capacità `CAP_NET_BIND_SERVICE`) per legarsi alla porta privilegiata e inoltrare il traffico all'applicazione che gira come utente non privilegiato su una porta alta.
+        - Concedere la capacità `CAP_NET_BIND_SERVICE` al binario dell'eseguibile (usando `setcap` all'interno del Dockerfile, se il kernel dell'host lo supporta e la configurazione di Docker lo permette), ma questa è una soluzione più avanzata e da usare con cautela. L'installazione di `libcap2-bin` (`apt-get install libcap2-bin`) è necessaria per il comando `setcap` su Ubuntu.
+
+    In conclusione, l'istruzione `USER` è uno strumento essenziale per costruire immagini Docker sicure, limitando i privilegi con cui vengono eseguiti i processi all'interno dei container, indipendentemente dal sistema operativo base dell'immagine (come Alpine o Ubuntu).
+
+##### `ARG` in dettaglio
+
+- **Istruzione `ARG` (Argomenti di Build)**
+
+  L'istruzione **`ARG`** definisce una variabile che gli utenti possono passare al builder Docker al momento della costruzione dell'immagine, utilizzando l'opzione `--build-arg <nome_variabile>=<valore>` del comando `docker build`.
+
+  - Scopo Principale di `ARG`
+
+    - **Parametrizzare il processo di build**: Consente di passare valori che influenzano la costruzione dell'immagine, come versioni di software da installare, URL di sorgenti, flag di compilazione, o nomi di utenti/gruppi da creare.
+    - **Flessibilità**: Evita di dover modificare il Dockerfile per piccoli cambiamenti nei parametri di build.
+    - **Non persistenza**: Le variabili `ARG` sono destinate principalmente all'uso durante la build e, per impostazione predefinita, non sono disponibili come variabili d'ambiente nel container in esecuzione né persistono nei metadati dell'immagine in modo accessibile al runtime.
+
+  - Sintassi di `ARG`
+
+    1. **Senza valore predefinito**:
+
+        ```dockerfile
+        ARG nome_variabile
+        ```
+
+        Se non viene fornito un valore tramite `--build-arg`, la variabile sarà una stringa vuota.
+
+    2. **Con valore predefinito**:
+
+        ```dockerfile
+        ARG nome_variabile=valore_predefinito
+        # ad esempio
+        ARG UBUNTU_VERSION=22.04
+        ```
+
+        Il valore predefinito viene utilizzato se non sovrascritto da `--build-arg`.
+
+  - Ambito di Validità di `ARG`
+
+    - **Prima di `FROM`**: Un `ARG` dichiarato prima della prima istruzione `FROM` è "globale" e può essere utilizzato nell'istruzione `FROM` stessa (es. `ARG TAG=latest FROM ubuntu:${TAG}`). Tuttavia, per utilizzare questo `ARG` *all'interno* di uno stage di build (dopo `FROM`), deve essere ridichiarato (es. `ARG TAG`).
+    - **Dopo `FROM`**: Un `ARG` dichiarato all'interno di uno stage di build (dopo `FROM`) è disponibile solo da quel punto fino alla fine dello stage o fino alla successiva istruzione `FROM`.
+
+  - Utilizzo di `ARG`
+
+    Le variabili `ARG` sono accessibili durante la build da istruzioni come `RUN`, `COPY`, `ADD`, `USER`, `ENV`, ecc., utilizzando la sintassi `${nome_variabile}` o `$nome_variabile`.
+
+    ```dockerfile
+    ARG USER_NAME=guest
+    ARG APP_VERSION=1.0
+
+    FROM alpine
+    ARG USER_NAME # Rende USER_NAME disponibile nello stage
+    ARG APP_VERSION
+    RUN adduser -S "$USER_NAME"
+    LABEL version="${APP_VERSION}"
+    # ...
+    ```
+
+  - Considerazioni su `ARG`
+
+    - I valori di `ARG` non sono disponibili per l'applicazione in esecuzione nel container a meno che non vengano esplicitamente usati per impostare una variabile `ENV` o scritti in un file.
+    - **Sicurezza**: I valori degli `ARG` possono essere visibili nella history dell'immagine (`docker history`) se usati in comandi che modificano i layer (es., `RUN echo $MY_ARG > /file`). Non usare `ARG` per passare segreti che non dovrebbero finire nell'immagine. Per segreti necessari solo durante la build, considerare l'uso di `--secret` con Docker BuildKit.
+
+##### `ENV` in dettaglio
+
+- **Istruzione `ENV` (Variabili d'Ambiente)**
+
+  L'istruzione **`ENV`** imposta variabili d'ambiente. Queste variabili sono disponibili sia durante il processo di build (per le istruzioni successive a `ENV` nel Dockerfile) sia per l'applicazione in esecuzione all'interno del container avviato dall'immagine.
+
+  - Scopo Principale di `ENV`
+
+    - **Configurazione Runtime**: Fornisce variabili d'ambiente all'applicazione in esecuzione nel container (es. `NODE_ENV=production`, `DB_HOST=db.example.com`, `API_KEY=...`).
+    - **Configurazione Build**: Può essere utilizzata anche da comandi `RUN` durante la build (es. per impostare `PATH`, `JAVA_HOME`, o configurare tool di build).
+    - **Persistenza**: Le variabili `ENV` sono "cotte" nell'immagine e fanno parte dei suoi metadati.
+
+  - Sintassi di `ENV`
+
+    1. **Coppia chiave-valore (preferita)**:
+
+        ```dockerfile
+        ENV <chiave>=<valore>
+        # Ad esempio:
+        ENV APP_MODE=production
+        ```
+
+    2. **Sintassi alternativa per singola variabile (separata da spazio)**:
+
+        ```dockerfile
+        ENV <chiave> <valore>
+        # Ad esempio:
+        ENV APP_MODE production
+        ```
+
+    3. **Multiple variabili in una singola istruzione `ENV`**:
+
+        ```dockerfile
+        ENV <chiave1>=<valore1> <chiave2>=<valore2> ...
+        # Ad esempio:
+        ENV APP_NAME="My App" APP_PORT=8080
+        ```
+
+  - Ambito di Validità di `ENV`
+
+    - Una variabile `ENV` è disponibile da quando viene dichiarata in poi, per tutte le istruzioni successive nel Dockerfile (incluso `RUN`, `CMD`, `ENTRYPOINT`).
+    - Persiste nell'immagine e viene ereditata da tutti i container avviati da quell'immagine.
+    - Può essere sovrascritta al momento dell'avvio del container tramite l'opzione `-e` o `--env` del comando `docker run`.
+
+  - Utilizzo di `ENV`
+
+      ```dockerfile
+      FROM ubuntu:22.04
+
+      ENV APP_DIR /opt/app
+      ENV DEBIAN_FRONTEND=noninteractive # Configura l'ambiente per apt-get
+
+      WORKDIR ${APP_DIR} # Utilizza la variabile ENV
+
+      RUN apt-get update && apt-get install -y nginx\
+          && echo "Applicazione installata in ${APP_DIR}"
+
+      # La variabile APP_DIR sarà disponibile anche per l'applicazione nel container
+      CMD ["nginx", "-g", "daemon off;"]
+      ```
+
+  - Considerazioni su `ENV`
+
+    - **Sicurezza**: Poiché le variabili `ENV` sono incorporate nell'immagine e visibili (es. con `docker inspect`), non è consigliabile scrivere direttamente segreti sensibili (come password di produzione o chiavi API private) direttamente nel Dockerfile se l'immagine è distribuita pubblicamente o in ambienti non fidati. Per tali segreti, preferire meccanismi di iniezione al runtime (Docker secrets, variabili passate con `docker run -e`, file di configurazione montati come volumi).
+
+- **Interazione e Differenze Chiave: `ARG` vs `ENV`**
+
+    La distinzione fondamentale è:
+
+    - **`ARG`**: Variabile per il **processo di build**, non automaticamente disponibile al runtime.
+    - **`ENV`**: Variabile d'ambiente per il **runtime del container** (e disponibile anche durante la build dalle istruzioni successive alla sua definizione).
+
+    | **Caratteristica** | **ARG** | **ENV** |
+    | --- |  --- |  --- |
+    | **Scopo Principale** | Parametrizzare la build (`docker build`) | Configurare l'ambiente del container (`docker run`) e della build. |
+    | **Disponibilità** | Solo durante la build (non nel container finale di default) | Durante la build (dopo la sua definizione) E nel container in esecuzione. |
+    | **Persistenza** | No (a meno che usata per impostare `ENV` o scritta in un file) | Sì, incorporata nell'immagine. |
+    | **Valore Predefinito** | Sì, `ARG NOME=valore` | Sì, `ENV NOME=valore` (questo è il valore stesso, non un "default") |
+    | **Sovrascrittura** | Da `--build-arg` in `docker build` | Da `-e` o `--env` in `docker run` |
+    | **Visibilità Segreti** | Può essere visibile nella history dei layer. Sconsigliato per segreti. | Visibile nell'immagine (`docker inspect`). Sconsigliato per segreti scritti direttamente. |
+
+  - Utilizzo di `ARG` per Impostare `ENV`
+
+    Una pratica comune e potente è usare un `ARG` per impostare dinamicamente una variabile `ENV`. Questo permette di passare un valore al momento della build che diventa poi una variabile d'ambiente disponibile per l'applicazione nel container.
+
+    ```dockerfile
+    # Accetta una versione dell'API come argomento di build
+    ARG API_VERSION_BUILDTIME=v1
+
+    # Imposta una variabile d'ambiente runtime basata sull'ARG
+    ENV API_ENDPOINT_VERSION=${API_VERSION_BUILDTIME}
+
+    # L'applicazione nel container può ora leggere la variabile d'ambiente API_ENDPOINT_VERSION
+    # Il suo valore sarà 'v1' o quello passato con --build-arg API_VERSION_BUILDTIME=...
+    ```
+
+    Al momento della build:
+
+    ```sh
+    docker build --build-arg API_VERSION_BUILDTIME=v2-beta -t my-service .
+    ```
+
+    Il container avviato da my-service avrà `API_ENDPOINT_VERSION=v2-beta`.
+
+- Argomenti ed `ENV` Predefiniti
+
+  - **`ARG` Predefiniti**: Docker riconosce alcuni `ARG` predefiniti come `HTTP_PROXY`, `HTTPS_PROXY`, `FTP_PROXY`, `NO_PROXY` che, se impostati nell'ambiente del client Docker, possono essere usati automaticamente durante la build per configurare i proxy di rete. È comunque buona norma dichiararli esplicitamente nel Dockerfile se se ne fa affidamento.
+  - **`ENV` Predefiniti**: Molte immagini base (es. `ubuntu`, `node`, `python`) forniscono già delle variabili `ENV` preimpostate (come `PATH`, `LANG`, `NODE_VERSION`, ecc.) utili per l'ambiente.
+
+- Esempi Combinati
+
+  ```dockerfile
+  # Argomento per la versione di Ubuntu da usare come base (globale per FROM)
+  ARG UBUNTU_TAG=22.04
+  FROM ubuntu:${UBUNTU_TAG}
+
+  # Argomenti specifici per questo stage di build
+  ARG APP_USER=appdev
+  ARG APP_VERSION_BUILD="1.0.0-dev"
+
+  # Variabili d'ambiente
+  ENV LANG=C.UTF-8\
+      LC_ALL=C.UTF-8\
+      APP_HOME=/srv/app\
+      # Imposta una ENV basata su un ARG
+      APP_VERSION=${APP_VERSION_BUILD}
+
+  # Creazione utente basata su ARG
+  RUN groupadd -r ${APP_USER} && useradd -r -g ${APP_USER} -d ${APP_HOME} ${APP_USER}
+
+  # Impostazione della directory di lavoro usando ENV
+  WORKDIR ${APP_HOME}
+
+  # L'applicazione può usare APP_VERSION e APP_HOME al runtime
+  COPY --chown=${APP_USER}:${APP_USER} . .
+
+  USER ${APP_USER}
+
+  ENTRYPOINT ["./start-app.sh"] # start-app.sh può usare $APP_VERSION, $APP_HOME
+  ```
+
+  Al momento della build, si potrebbe eseguire:
+
+  ```sh
+  docker build --build-arg UBUNTU_TAG=20.04 --build-arg APP_USER=produser --build-arg APP_VERSION_BUILD="2.0.1" -t myapp:latest .
+  ```
+
+- Conclusioni
+
+  - Utilizzare **`ARG`** per passare parametri che personalizzano il **processo di build** dell'immagine. I suoi valori non sono intesi per essere accessibili direttamente al runtime del container.
+  - Utilizzare **`ENV`** per definire variabili d'ambiente che sono necessarie sia per le istruzioni di build successive sia, e soprattutto, per l'**applicazione in esecuzione** all'interno del container.
+  - La combinazione di `ARG` per impostare valori di `ENV` offre un meccanismo flessibile per configurare l'ambiente runtime dell'applicazione al momento della build.
+
+  La scelta e l'uso corretto di `ARG` e `ENV` contribuiscono significativamente alla creazione di immagini Docker flessibili, manutenibili e sicure.
+
+
 
 ### 3.3. L'importanza del file `.dockerignore`
 
@@ -975,7 +1561,7 @@ Questo è un esempio. Adattarlo in base alle necessità specifiche del progetto.
 
     Questo comando elencherà tutte le immagini Docker presenti sul sistema, inclusa `mywebapiapp-image:1.0`.
 
-    Prima di passare alla pubblicazione dell'immagine su DockerHub si provi ad eseguire localmente un container docker a partire dall'immagine appena creata. [I dettagli relativi al port mapping](../getting-started/index.md#docker-networking---port-mapping) sono già stati discussi in precedenza e sono anche riportati nei paragrafi successivi con maggiore dettaglio. In questa fase si vuole solo testare il container per verificare che funzioni correttamente.
+    Prima di passare alla pubblicazione dell'immagine su Docker Hub si provi ad eseguire localmente un container docker a partire dall'immagine appena creata. [I dettagli relativi al port mapping](../getting-started/index.md#docker-networking---port-mapping) sono già stati discussi in precedenza e sono anche riportati nei paragrafi successivi con maggiore dettaglio. In questa fase si vuole solo testare il container per verificare che funzioni correttamente.
 
     ```sh
     docker run --name mywebapiapp-container-run -p 8081:8080 mywebapiapp-image:1.0
@@ -1003,7 +1589,7 @@ Questo è un esempio. Adattarlo in base alle necessità specifiche del progetto.
 
 Una volta costruita un'immagine localmente, la si può pubblicare su un *registro di container*. Un registro è un repository per archiviare e distribuire immagini Docker. Docker Hub è il registro pubblico più popolare, ma esistono anche registri privati o forniti da piattaforme cloud (es. Azure Container Registry, Amazon ECR, Google Container Registry).
 
-#### 3.5.1 Pubblicazione di un'immagine su DockerHub
+#### 3.5.1 Pubblicazione di un'immagine su Docker Hub
 
 Per pubblicare su Docker Hub:
 
@@ -1039,9 +1625,9 @@ Per pubblicare su Docker Hub:
 
     Questo comando carica l'immagine sul proprio repository Docker Hub. Una volta completato, l'immagine sarà accessibile pubblicamente (o privatamente, a seconda delle impostazioni del repository su Docker Hub) e potrà essere scaricata da qualsiasi macchina con Docker usando `docker pull ilmiousernamedockerhub/mywebapiapp-image:1.0`.
 
-5. **Repository privato su DockerHub**
+5. **Repository privato su Docker Hub**
 
-   Per impostazione predefinita quando si effettua una push di una immagine Docker su DockerHub l'immagine viene inserita in un repository che ha lo stesso nome del tag che si è dato all'immagine e che è pubblica, quindi accessibile da chiunque. Per caricare un'immagine Docker in un repository privato ci sono due opzioni:
+   Per impostazione predefinita quando si effettua una push di una immagine Docker su Docker Hub l'immagine viene inserita in un repository che ha lo stesso nome del tag che si è dato all'immagine e che è pubblica, quindi accessibile da chiunque. Per caricare un'immagine Docker in un repository privato ci sono due opzioni:
 
   - **Opzione 1: Rendere privato il repository esistente**
 
@@ -1788,7 +2374,7 @@ Per pubblicare l'applicazione direttamente come immagine container, si utilizza 
 
 #### 4.1.1 Il comando `dotnet publish /t:PublishContainer` con parametri da command line
 
-In questa sezione verranno mostrati alcuni esempi di comandi `dotnet publish` con parametri di configurazione da riga di comando che permetteranno di ottenere direttamente un'immagine Docker nel proprio registro delle immagini locale, oppure direttamente in un registro remoto come DockerHub oppure Azure Container Registry (ACR).
+In questa sezione verranno mostrati alcuni esempi di comandi `dotnet publish` con parametri di configurazione da riga di comando che permetteranno di ottenere direttamente un'immagine Docker nel proprio registro delle immagini locale, oppure direttamente in un registro remoto come Docker Hub oppure Azure Container Registry (ACR).
 **Esempio di comando**:
 
 ```sh
@@ -1815,7 +2401,7 @@ Come esercizio si provi a generare una seconda immagine del progetto `MyWebApiAp
 dotnet publish -c Release --os linux --arch x64 /t:PublishContainer -p:ContainerRepository=mywebapiapp-sdkpublished -p:ContainerImageTag=1.0
 ```
 
-Ad esempio, per effettuare la push su DockerHub dell'immagine precedentemente creata si possono eseguire le istruzioni seguenti (tagging e poi push):
+Ad esempio, per effettuare la push su Docker Hub dell'immagine precedentemente creata si possono eseguire le istruzioni seguenti (tagging e poi push):
 
 ```sh
 docker tag mywebapiapp-sdkpublished:1.0 IL_PROPRIO_NOME_UTENTE_DOCKERHUB/mywebapiapp-sdkpublished:1.0
@@ -1824,7 +2410,7 @@ docker push IL_PROPRIO_NOME_UTENTE_DOCKERHUB/mywebapiapp-sdkpublished:1.0
 
 #### 4.1.2 Immagini `Chiseled` (ottimizzate) del runtime per .NET
 
-Per specificare un runtime diverso da quello di default per la creazione dell'immagine Docker è possibile utilizzare un'immagine "chiseled" che è ottimizzata per un determinato sistema operativo. Le immagini "chiseled" sono discusse nella [documentazione ufficiale Microsoft](https://learn.microsoft.com/en-us/dotnet/core/docker/container-images). A titolo di esempio, per trovare le immagini "chiseled" per .NET 9.0 si può cercare sulla pagina [dotnet di DockerHub](https://hub.docker.com/r/microsoft/dotnet) e poi cercare nei "Featured Repos" quello per ["ASP.NET Core Runtime"](https://github.com/dotnet/dotnet-docker/blob/main/README.aspnet.md). Ad esempio per creare da riga di comando una versione "chiseled" dell'immagine dell'applicazione MyWebApiWeb l'istruzione è:
+Per specificare un runtime diverso da quello di default per la creazione dell'immagine Docker è possibile utilizzare un'immagine "chiseled" che è ottimizzata per un determinato sistema operativo. Le immagini "chiseled" sono discusse nella [documentazione ufficiale Microsoft](https://learn.microsoft.com/en-us/dotnet/core/docker/container-images). A titolo di esempio, per trovare le immagini "chiseled" per .NET 9.0 si può cercare sulla pagina [dotnet di Docker Hub](https://hub.docker.com/r/microsoft/dotnet) e poi cercare nei "Featured Repos" quello per ["ASP.NET Core Runtime"](https://github.com/dotnet/dotnet-docker/blob/main/README.aspnet.md). Ad esempio per creare da riga di comando una versione "chiseled" dell'immagine dell'applicazione MyWebApiWeb l'istruzione è:
 
 ```sh
 dotnet publish -c Release --os linux --arch x64 /t:PublishContainer -p:ContainerRepository=mywebapiapp-sdkpublished-chiseled -p:ContainerBaseImage=mcr.microsoft.com/dotnet/aspnet:9.0-noble-chiseled -p:ContainerImageTag=1.0
@@ -2196,7 +2782,6 @@ Utilizzando l'immagine `mywebapiapp-image:1.0` costruita in precedenza:
 
 ```sh
 docker run --name mywebapiapp-container-run mywebapiapp-image:1.0
-
 ```
 
 - `docker run`: Comando per avviare un container.
@@ -2207,13 +2792,12 @@ docker run --name mywebapiapp-container-run mywebapiapp-image:1.0
 
 Eseguendo questo comando, l'applicazione ASP.NET Core all'interno del container si avvierà. I log dell'applicazione (output di console) verranno visualizzati direttamente nel terminale corrente. L'applicazione è in esecuzione, ma non è ancora accessibile dall'esterno del sistema Docker (dall'host o da altre macchine) perché le sue porte non sono state "pubblicate".
 
-Per fermare il container (se è in esecuzione in foreground, come in questo caso), premere Ctrl+C nel terminale. Il container verrà fermato.
+Per fermare il container (se è in esecuzione in foreground, come in questo caso), premere `Ctrl+C` nel terminale. Il container verrà fermato.
 
 Per rimuovere un container fermato (liberando il nome e le risorse):
 
 ```sh
 docker rm mywebapiapp-container-run
-
 ```
 
 Se si tenta di riutilizzare un nome di container già esistente (anche se fermato) con `docker run --name ...`, si otterrà un errore. È necessario prima rimuovere il container esistente con quel nome.
@@ -2222,7 +2806,7 @@ Se si tenta di riutilizzare un nome di container già esistente (anche se fermat
 
 Per rendere l'applicazione web accessibile dal browser sull'host o da altre macchine sulla rete, è necessario mappare una porta del sistema host a una porta del container su cui l'applicazione è in ascolto.
 
-Nel Dockerfile per MyWebApiApp, si è usato EXPOSE 8080 e ENV ASPNETCORE_URLS=http://+:8080. Questo significa che l'applicazione ASP.NET Core all'interno del container ascolta sulla porta 8080.
+Nel Dockerfile per `MyWebApiApp`, si è usato `EXPOSE 8080` e `ENV ASPNETCORE_URLS=http://+:8080`. Questo significa che l'applicazione ASP.NET Core all'interno del container ascolta sulla porta 8080.
 
 Per mappare, ad esempio, la porta `8081` dell'host alla porta `8080` del container:
 
@@ -2240,7 +2824,7 @@ Ora, aprendo un browser web e navigando a `http://localhost:8081`, si dovrebbe v
 
 Se si omette la porta host (es. -p 8080), Docker sceglierà una porta host libera casuale e la mapperà alla porta 8080 del container. Si può vedere quale porta è stata scelta con docker ps.
 
-Se si usa -P (P maiuscola), Docker pubblicherà tutte le porte esposte (EXPOSE) nel Dockerfile a porte host casuali.
+Se si usa `-P` (P maiuscola), Docker pubblicherà tutte le porte esposte (`EXPOSE`) nel Dockerfile a porte host casuali.
 
 ### 5.3. Networking in Docker
 
@@ -2254,7 +2838,7 @@ Quando Docker viene installato, crea una rete virtuale predefinita chiamata `bri
 
 - I container sulla stessa rete `bridge` di default *possono* comunicare tra loro usando questi indirizzi IP interni. Tuttavia, questi IP possono cambiare se i container vengono fermati e riavviati, rendendo questo metodo poco affidabile.
 
-- **Importante**: La rete `bridge` di default **non fornisce una risoluzione DNS automatica basata sui nomi dei container**. Questo significa che un container `app` non può semplicemente contattare un container `db` usando l'hostname `db`.
+- :memo::fire:**Importante**: La rete `bridge` di default **non fornisce una risoluzione DNS automatica basata sui nomi dei container**. Questo significa che un container `app` non può semplicemente contattare un container `db` usando l'hostname `db`.
 
 #### 5.3.2. Creazione e utilizzo di reti personalizzate (`docker network create`)
 
@@ -2276,11 +2860,11 @@ Per una comunicazione affidabile e basata su nomi tra container, è una **best p
 
     Questo comando crea una nuova rete di tipo bridge (il default) chiamata myapp-network.
 
-    Si può ispezionare la rete con docker network inspect myapp-network.
+    Si può ispezionare la rete con `docker network inspect myapp-network`.
 
 2. Avviare container su questa rete:
 
-    Quando si avvia un container con docker run, si può specificare a quale rete connetterlo usando l'opzione --network.
+    Quando si avvia un container con `docker run`, si può specificare a quale rete connetterlo usando l'opzione `--network`.
 
     ```sh
     # Esempio concettuale, non ancora per MyWebApiApp e MariaDB
@@ -2298,25 +2882,27 @@ Si eseguirà ora un'istanza di MariaDB all'interno di un container Docker. Maria
     Docker scaricherà automaticamente l'immagine se non la trova localmente quando si esegue docker run, ma è buona pratica scaricarla esplicitamente o specificare una versione.
 
     ```sh
-    docker pull mariadb:10.11 # Si consiglia di usare un tag di versione specifico anziché 'latest' per la produzione
+    docker pull mariadb:11.4 # Si consiglia di usare un tag di versione specifico anziché 'latest' per la produzione
     ```
 
-    (Sostituire `10.11` con la versione desiderata o usare `latest` per l'ultima stabile).
+    (Sostituire `11.4` con la versione desiderata o usare `latest` per l'ultima stabile). L'elenco delle versioni disponibili è riportato nella [pagina di Docker Hub di MariaDB](https://hub.docker.com/_/mariadb). Al momento in cui si scrivono queste note, la versione `11.4` corrisponde alla `lts` (Long Term Support).
 
 2. Avviare il container MariaDB:
 
     Si avvierà il container MariaDB con alcune configurazioni di base passate tramite variabili d'ambiente e lo si connetterà alla rete myapp-network.
 
     ```sh
+    # Versione del comando per la Bash
+    # Se si usa Powershell il comando è uguale, solo che il carattere per continuare il comando sulla riga successiva è ` e non \
     docker run --name mariadb-container \
         -e MARIADB_ROOT_PASSWORD=mySuperSecretPassword123 \
         -e MARIADB_DATABASE=mywebapiappdb \
         -e MARIADB_USER=mywebapiappuser \
         -e MARIADB_PASSWORD=userPassword456 \
-        -p 3307:3306 \
+        -p 3306:3306 \
         --network myapp-network \
         -d \
-        mariadb:10.11
+        mariadb:11.4
     ```
 
     Spiegazione dei parametri:
@@ -2325,7 +2911,7 @@ Si eseguirà ora un'istanza di MariaDB all'interno di un container Docker. Maria
 
     - `-e <NOME_VARIABILE>=<VALORE>`: Imposta variabili d'ambiente all'interno del container. L'immagine MariaDB ufficiale utilizza queste variabili per la configurazione iniziale:
 
-        - `MARIADB_ROOT_PASSWORD=mySuperSecretPassword123`: Imposta la password per l'utente `root` di MariaDB. **Importante**: Questa è una password segreta. Per lo sviluppo può andare bene così, ma per la produzione i segreti devono essere gestiti in modo più sicuro (vedi Sezione 6).
+        - `MARIADB_ROOT_PASSWORD=mySuperSecretPassword123`: Imposta la password per l'utente `root` di MariaDB. **Importante**: Questa è una password segreta. Per lo sviluppo può andare bene così, ma per la produzione i segreti devono essere gestiti in modo più sicuro (vedere la sezione dedicata più avanti).
 
         - `MARIADB_DATABASE=mywebapiappdb`: Crea automaticamente un database chiamato `mywebapiappdb` al primo avvio del container.
 
@@ -2333,41 +2919,66 @@ Si eseguirà ora un'istanza di MariaDB all'interno di un container Docker. Maria
 
         - `MARIADB_PASSWORD=userPassword456`: Imposta la password per l'utente `mywebapiappuser`. Questo utente avrà pieni permessi sul database `mywebapiappdb`.
 
-    - `-p 3307:3306`: Mappa la porta `3307` della macchina host alla porta `3306` del container. La porta `3306` è la porta standard su cui MariaDB/MySQL ascolta. Mappandola all'host, ci si può connettere al database da strumenti sulla macchina host (es. DBeaver, MySQL Workbench) usando `localhost:3307`.
+    - `-p 3306:3306`: Mappa la porta `3306` della macchina host alla porta `3306` del container. La porta `3306` è la porta standard su cui MariaDB/MySQL ascolta. Mappandola all'host, ci si può connettere al database da strumenti sulla macchina host (es. DBeaver, MySQL Workbench) usando `localhost:3306`.
 
     - `--network myapp-network`: Connette il container `mariadb-container` alla rete personalizzata `myapp-network` creata in precedenza.
 
     - `-d` (detached mode): Esegue il container in background (scollegato dal terminale corrente) e stampa l'ID del container. Senza `-d`, il terminale mostrerebbe i log di MariaDB e rimarrebbe bloccato.
 
-    - `mariadb:10.11`: L'immagine MariaDB da utilizzare.
+    - `mariadb:11.4`: L'immagine MariaDB da utilizzare.
 
     Dopo aver eseguito il comando, si può verificare che il container sia in esecuzione:
 
     ```sh
     docker ps
-
     ```
 
-    Dovrebbe mostrare mariadb-container tra i container attivi.
+    Dovrebbe mostrare `mariadb-container` tra i container attivi.
 
     Per visualizzare i log del container MariaDB (utili per il troubleshooting):
 
     ```sh
     docker logs mariadb-container
-
     ```
 
 ### 5.5. Collegamento di Container: Connessione App <-> Database sulla stessa rete
 
-Ora che sia l'applicazione `MyWebApiApp` che il database MariaDB possono essere eseguiti e connessi alla stessa rete personalizzata (`myapp-network`), l'applicazione `MyWebApiApp` può connettersi al database MariaDB utilizzando il nome del container del database (`mariadb-container`) come hostname nella sua stringa di connessione. Questo è possibile grazie alla risoluzione DNS fornita dalle reti Docker personalizzate.
+Ora che sia l'applicazione `MyWebApiApp` che il database MariaDB possono essere eseguiti e connessi alla stessa rete personalizzata (`myapp-network`), l'applicazione `MyWebApiApp` (quando eseguita anch'essa in un container su tale rete) può connettersi al database MariaDB utilizzando il nome del container del database (`mariadb-container`) come hostname. Questo è possibile grazie alla risoluzione DNS fornita dalle reti Docker personalizzate.
 
-1. Modificare appsettings.json (o appsettings.Development.json) in MyWebApiApp:
+Tuttavia, è fondamentale distinguere due scenari di connessione:
 
-    Aggiungere una sezione ConnectionStrings per definire la stringa di connessione al database MariaDB.
+1. L'applicazione `MyWebApiApp` è in esecuzione **direttamente sull'host** (es. durante lo sviluppo con `dotnet run`) e si connette al database MariaDB in esecuzione in un container.
+2. L'applicazione `MyWebApiApp` è in esecuzione **all'interno di un container Docker**, sulla stessa rete Docker del container del database.
 
-    Aprire MyWebApiApp/appsettings.json e modificarlo come segue:
+Questi due scenari richiedono stringhe di connessione diverse.
+
+1. **Configurare le Stringhe di Connessione per Diversi Ambienti**: Per gestire entrambi gli scenari, si utilizzeranno i file di configurazione `appsettings.json` e `appsettings.Development.json`. ASP.NET Core carica questi file in modo gerarchico: `appsettings.json` viene caricato per primo, seguito da `appsettings.{Environment}.json` (dove `{Environment}` è, ad esempio, `Development`), che può sovrascrivere le impostazioni del primo.
+
+    a. **`MyWebApiApp/appsettings.Development.json` (per esecuzione sull'host durante lo sviluppo)**: Questo file verrà utilizzato quando si esegue l'applicazione direttamente sull'host (es. con `dotnet run`, che di default imposta `ASPNETCORE_ENVIRONMENT=Development`). Conterrà la stringa di connessione per accedere al container MariaDB dall'host, utilizzando `localhost` e la porta mappata sull'host dal container MariaDB (es. `3306`).
 
     ```json
+    // MyWebApiApp/appsettings.Development.json
+    {
+      "Logging": {
+        "LogLevel": {
+          "Default": "Information",
+          "Microsoft.AspNetCore": "Warning"
+        }
+      },
+      "ConnectionStrings": {
+        "DefaultConnection": "Server=localhost;Port=3306;Database=mywebapiappdb;Uid=mywebapiappuser;Pwd=userPassword456;AllowPublicKeyRetrieval=true"
+        // NOTA: La 'Port' (qui 3306) deve corrispondere alla porta host mappata
+        // nel comando 'docker run' per il container MariaDB (es. -p 3306:3306).
+        // Le credenziali (Uid, Pwd, Database) devono corrispondere a quelle usate
+        // per avviare il container MariaDB.
+      }
+    }
+    ```
+
+    b. **`MyWebApiApp/appsettings.json` (configurazione di default, usata nel container)**: Questo file conterrà la stringa di connessione che l'applicazione utilizzerà quando è in esecuzione all'interno di un container Docker, connettendosi al servizio `mariadb-container` sulla porta interna `3306`.
+
+    ```json
+    // MyWebApiApp/appsettings.json
     {
       "Logging": {
         "LogLevel": {
@@ -2378,169 +2989,282 @@ Ora che sia l'applicazione `MyWebApiApp` che il database MariaDB possono essere 
       "AllowedHosts": "*",
       "ConnectionStrings": {
         "DefaultConnection": "Server=mariadb-container;Port=3306;Database=mywebapiappdb;Uid=mywebapiappuser;Pwd=userPassword456;AllowPublicKeyRetrieval=true"
+        // NOTA: 'Server=mariadb-container' usa il nome del servizio Docker.
+        // 'Port=3306' è la porta interna di MariaDB nel suo container.
       }
     }
     ```
 
-    **Analisi della stringa di connessione**:
+    **Analisi della stringa di connessione (comune a entrambe, cambiano Server e Porta per l'accesso)**:
 
-    - `Server=mariadb-container`: **Questo è il punto chiave**. `mariadb-container` è il nome assegnato al container del database con `docker run --name mariadb-container`. Docker risolverà questo hostname all'indirizzo IP interno del container MariaDB quando entrambi i container sono sulla stessa rete `myapp-network`.
+    - `Server`: `localhost` (da host) o `mariadb-container` (da container app).
+    - `Port`: `3306` (porta mappata sull'host, esempio) o `3306` (porta interna del container DB).
+    - `Database=mywebapiappdb`: Il nome del database.
+    - `Uid=mywebapiappuser`: L'utente per la connessione.
+    - `Pwd=userPassword456`: La password per l'utente.
+    - `AllowPublicKeyRetrieval=true`: Parametro spesso necessario per il provider EF Core per MariaDB/MySQL (`Pomelo.EntityFrameworkCore.MySql`) se SSL non è configurato in modo restrittivo.
+2. **Aggiungere i pacchetti NuGet per Entity Framework Core e il provider MariaDB/MySQL a `MyWebApiApp`**: Per utilizzare EF Core con MariaDB, è necessario il pacchetto EF Core principale, gli strumenti e un provider di database specifico. `Pomelo.EntityFrameworkCore.MySql` è un provider popolare e ben mantenuto.
 
-    - `Port=3306`: La porta su cui MariaDB ascolta *all'interno* del suo container (non la porta mappata sull'host).
+    Aprire un terminale nella directory `MyWebApiApp/` ed eseguire i seguenti comandi:
 
-    - `Database=mywebapiappdb`: Il nome del database creato tramite la variabile d'ambiente `MARIADB_DATABASE`.
-
-    - `Uid=mywebapiappuser`: L'utente creato tramite `MARIADB_USER`.
-
-    - `Pwd=userPassword456`: La password per `mywebapiappuser`, impostata tramite `MARIADB_PASSWORD`.
-
-    - `AllowPublicKeyRetrieval=true`: A volte necessario per alcune versioni di MySqlConnector/MariaDB per stabilire la connessione, specialmente se SSL non è configurato in modo restrittivo.
-
-2. Aggiungere il pacchetto NuGet per il connettore MariaDB/MySQL a MyWebApiApp:
-
-    Per permettere all'applicazione ASP.NET Core di comunicare con un database MariaDB (o MySQL), è necessario un driver ADO.NET. MySqlConnector è un connettore moderno e performante.
-
-    Aprire un terminale nella directory MyWebApiApp/ ed eseguire:
+    Bash
 
     ```sh
-    dotnet add package MySqlConnector
-
+    dotnet add package Microsoft.EntityFrameworkCore
+    dotnet add Microsoft.EntityFrameworkCore.Design
+    dotnet add package Pomelo.EntityFrameworkCore.MySql --version 9.0.0-preview.3.efcore.9.0.0
     ```
 
-    Questo aggiungerà il riferimento al pacchetto nel file `MyWebApiApp.csproj`.
+    Questo aggiungerà i riferimenti ai pacchetti nel file `MyWebApiApp.csproj`.
 
-3. Modificare Program.cs per testare la connessione al database:
+3. Definire un `Entity Model` e un `DbContext`:
 
-    Aggiornare l'endpoint /dbtest in MyWebApiApp/Program.cs per tentare effettivamente di aprire una connessione al database.
+    EF Core lavora con un modello di dati definito tramite classi C# (entities) e un contesto di database (`DbContext`).
+
+    a. Creare una classe Entity (es. `TestEntry.cs`) nella directory `Models` del progetto `MyWebApiApp`:
 
     ```cs
-    // MyWebApiApp/Program.cs
-    using MySql.Data.MySqlClient; // Aggiungere questo using per MySqlConnector
-    using System.Text;          // Aggiungere questo using per StringBuilder
+    using System.ComponentModel.DataAnnotations;
 
-    var builder = WebApplication.CreateBuilder(args);
-    var app = builder.Build();
+    namespace MyWebApiApp.Models;
+    public class TestEntry
+    {
+        public int Id { get; set; }
 
-    app.UseDefaultFiles();
-    app.UseStaticFiles();
+        [Required]
+        [StringLength(200)]
+        public string Message { get; set; }=null!;
 
-    app.MapGet("/hello", () => {
-        return Results.Ok(new { Message = "Ciao dal backend ASP.NET Core Minimal API!", Timestamp = DateTime.UtcNow });
-    });
-
-    app.MapGet("/dbtest", (IConfiguration config) => {
-        var connectionString = config.GetConnectionString("DefaultConnection");
-        var sb = new StringBuilder();
-        sb.AppendLine("Risultato Test Connessione Database MariaDB:");
-        sb.AppendLine($"Stringa di connessione: {connectionString}");
-
-        if (string.IsNullOrEmpty(connectionString))
-        {
-            sb.AppendLine("ERRORE: Stringa di connessione 'DefaultConnection' non trovata o vuota.");
-            return Results.Text(sb.ToString());
-        }
-
-        try
-        {
-            // Usa using per assicurare che la connessione sia chiusa correttamente
-            using (var connection = new MySqlConnection(connectionString))
-            {
-                sb.AppendLine($"Tentativo di connessione a: Server={connection.DataSource}, Database={connection.Database}...");
-                connection.Open(); // Apre la connessione al database
-                sb.AppendLine("SUCCESSO: Connessione al database MariaDB stabilita!");
-                sb.AppendLine($"Versione Server MariaDB: {connection.ServerVersion}");
-                connection.Close(); // Chiude la connessione
-                sb.AppendLine("Connessione chiusa correttamente.");
-            }
-        }
-        catch (MySqlException ex) // Cattura eccezioni specifiche di MySQL/MariaDB
-        {
-            sb.AppendLine($"ERRORE MySqlException: {ex.Message}");
-            sb.AppendLine($"Numero Errore: {ex.Number}");
-            sb.AppendLine("Controllare:");
-            sb.AppendLine("1. Che il container 'mariadb-container' sia in esecuzione e sulla stessa rete Docker.");
-            sb.AppendLine("2. Che il nome del server nella connection string ('mariadb-container') sia corretto.");
-            sb.AppendLine("3. Che le credenziali (utente, password, nome database) siano corrette.");
-            sb.AppendLine("4. Che la porta (3306) sia corretta per la comunicazione interna tra container.");
-            sb.AppendLine($"Stack Trace: {ex.StackTrace}");
-        }
-        catch (Exception ex) // Cattura altre eccezioni generiche
-        {
-            sb.AppendLine($"ERRORE Generico: {ex.Message}");
-            sb.AppendLine($"Stack Trace: {ex.StackTrace}");
-        }
-        return Results.Text(sb.ToString());
-    });
-
-    app.Run();
+        public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+    }
     ```
 
-4. Ricostruire l'immagine dell'applicazione MyWebApiApp:
+    b. Creare una classe `DbContext` (es. `AppDbContext.cs`) nella directory `Data` del progetto `MyWebApiApp`:
 
-    Poiché sono stati modificati appsettings.json, Program.cs e il file .csproj (aggiungendo MySqlConnector), è necessario ricostruire l'immagine Docker per MyWebApiApp.
+    ```cs
+    // MyWebApiApp/Data/AppDbContext.cs
 
-    Tornare alla directory MyWebApiApp/ (dove si trova il Dockerfile) ed eseguire:
+    using Microsoft.EntityFrameworkCore;
+    using MyWebApiApp.Models;
+
+    namespace MyWebApiApp.Data;
+    public class AppDbContext : DbContext
+    {
+        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+        {
+        }
+
+        public DbSet<TestEntry> TestEntries { get; set; }
+
+        // Opzionale: si può ulteriormente configurare il modello qui se necessario
+        // protected override void OnModelCreating(ModelBuilder modelBuilder)
+        // {
+        //     base.OnModelCreating(modelBuilder);
+        //     // Esempio: modelBuilder.Entity<TestEntry>().ToTable("CustomTestEntries");
+        // }
+    }
+    ```
+
+4. Configurare EF Core in `Program.cs` e modificare l'endpoint `/dbtest`:
+
+    - Registrare il `DbContext` nel sistema di `Dependency Injection` di ASP.NET Core e aggiornare l'endpoint `/dbtest` per utilizzare EF Core per interagire con il database.
+
+    - Per inizializzare il database si utilizzeranno le migrations in combinazione con un metodo che `DbInitializer.Initialize` che applica le migrazioni e crea il database se questo non è stato ancora creato. Nella cartella `Data` si aggiunga il file `DbInitializer.cs` con la casse definita di seguito:
+
+      ```cs
+      // MyWebApiApp/Data/DbInitializer.cs
+      using Microsoft.EntityFrameworkCore;
+      using MyWebApiApp.Models;
+
+      namespace MyWebApiApp.Data;
+
+      public static class DbInitializer
+      {
+          public static async Task Initialize(AppDbContext context)
+          {
+              // Applica le migrazioni al database
+              await context.Database.MigrateAsync();
+
+              // Aggiungi dati di esempio se la tabella è vuota
+              if (!await context.TestEntries.AnyAsync())
+              {
+                  var sampleEntry = new TestEntry
+                  {
+                      Message = $"Primo record di esempio - {DateTime.UtcNow}"
+                  };
+
+                  context.TestEntries.Add(sampleEntry);
+                  await context.SaveChangesAsync();
+              }
+          }
+      }
+      ```
+
+    - Dopo aver creato il modello dei dati e il `DBContext` e aver verificato che il container del database di MariaDB è in esecuzione, si dovrà eseguire, nella shell posizionata sulla cartella del progetto (dove si trova il file `.csproj`), il seguente comando:
+
+      ```sh
+      dotnet ef migrations add InitialCreate
+      ```
+
+    - Il file `Program.cs` dovrà essere aggiornato come segue:
+
+      ```cs
+      // MyWebApiApp/Program.cs
+      using Microsoft.EntityFrameworkCore;
+      using MyWebApiApp.Data;
+      using MyWebApiApp.Models;
+      using System.Text;
+
+      var builder = WebApplication.CreateBuilder(args);
+
+      // 1. Leggi la stringa di connessione da appsettings.json
+      var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+      // 2. Aggiungi AppDbContext ai servizi, configurandolo per usare MariaDB/MySQL
+      builder.Services.AddDbContext<AppDbContext>(options =>
+          options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
+      );
+
+      var app = builder.Build();
+
+      // Inizializza il database utilizzando le migrazioni
+      using (var scope = app.Services.CreateScope())
+      {
+          var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+          await DbInitializer.Initialize(context);
+      }
+
+      app.UseDefaultFiles();
+      app.UseStaticFiles();
+
+      app.MapGet("/hello", () =>
+      {
+          return Results.Ok(new { Message = "Ciao dal backend ASP.NET Core Minimal API!", Timestamp = DateTime.UtcNow });
+      });
+
+      app.MapGet("/dbtest", async (AppDbContext dbContext, IConfiguration config) =>
+      {
+          var currentConnectionString = config.GetConnectionString("DefaultConnection");
+          var sb = new StringBuilder();
+          sb.AppendLine("Risultato Test Connessione Database MariaDB con Entity Framework Core:");
+          sb.AppendLine($"Stringa di connessione usata: {currentConnectionString}");
+
+          if (string.IsNullOrEmpty(currentConnectionString))
+          {
+              sb.AppendLine("ERRORE: Stringa di connessione 'DefaultConnection' non trovata o vuota.");
+              return Results.Text(sb.ToString());
+          }
+
+          try
+          {
+              // Testa la connessione al database (il database è già stato inizializzato al startup)
+              sb.AppendLine("Testando la connessione al database...");
+
+              // Tenta di inserire un nuovo record
+              var newEntry = new TestEntry { Message = $"Test EF Core - {DateTime.UtcNow}" };
+              dbContext.TestEntries.Add(newEntry);
+              await dbContext.SaveChangesAsync();
+              sb.AppendLine($"SUCCESSO: Record inserito con ID: {newEntry.Id}");
+
+              // Tenta di leggere il record appena inserito (o l'ultimo)
+              var retrievedEntry = await dbContext.TestEntries
+                                          .OrderByDescending(e => e.Timestamp)
+                                          .FirstOrDefaultAsync();
+
+              if (retrievedEntry != null)
+              {
+                  sb.AppendLine($"SUCCESSO: Record letto: ID={retrievedEntry.Id}, Messaggio='{retrievedEntry.Message}', Timestamp='{retrievedEntry.Timestamp}'");
+              }
+              else
+              {
+                  sb.AppendLine("ATTENZIONE: Nessun record trovato dopo l'inserimento.");
+              }
+
+              // Tenta una query LINQ per contare i record
+              int count = await dbContext.TestEntries.CountAsync();
+              sb.AppendLine($"SUCCESSO: Ci sono {count} voci nella tabella 'TestEntries'.");
+
+          }
+          catch (Exception ex) // Cattura eccezioni generiche (MySqlException è inclusa)
+          {
+              sb.AppendLine($"ERRORE durante l'interazione con il database: {ex.GetType().Name} - {ex.Message}");
+              sb.AppendLine("Stack Trace Parziale:");
+              sb.AppendLine(ex.StackTrace?.Substring(0, Math.Min(ex.StackTrace.Length, 500)) + "..."); // Mostra solo una parte per brevità
+              sb.AppendLine("\nControllare:");
+              sb.AppendLine("1. Che il container 'mariadb-container' sia in esecuzione e sulla stessa rete Docker.");
+              sb.AppendLine("2. Che il nome del server ('mariadb-container') e le credenziali nella connection string siano corretti.");
+              sb.AppendLine("3. Che il database specificato esista e l'utente abbia i permessi.");
+              sb.AppendLine("4. Che il provider Pomelo.EntityFrameworkCore.MySql sia configurato correttamente.");
+          }
+          return Results.Text(sb.ToString());
+      });
+
+      app.Run();
+      ```
+
+5. **Ricostruire l'immagine dell'applicazione `MyWebApiApp`**: Dopo aver modificato `appsettings.json`, `appsettings.Development.json`, `Program.cs`, `.csproj` e aggiunto i file C# per EF Core, è necessario ricostruire l'immagine Docker. Nella directory `MyWebApiApp/`:
 
     ```sh
     docker build -t mywebapiapp-image:1.1 .
-
     ```
 
-    (Si è incrementato il tag a `1.1` per indicare una nuova versione, ma si potrebbe anche sovrascrivere `1.0`).
-
-5. Avviare il container dell'applicazione sulla stessa rete del database:
-
-    Assicurarsi che il container mariadb-container sia in esecuzione e connesso alla rete myapp-network. Se era stato fermato, riavviarlo:
+6. **Avviare il container MariaDB (se non già in esecuzione) con mappatura delle porte**: Per poter testare dall'host, è cruciale mappare la porta del container MariaDB a una porta dell'host.
 
     ```sh
-    # Se mariadb-container è fermo:
-    # docker start mariadb-container
-    # Se non esiste o si vuole ricrearlo con le impostazioni corrette (assicurarsi che sia sulla rete myapp-network):
-    # docker rm mariadb-container # (se esiste e fermo)
-    # docker run --name mariadb-container -e ... --network myapp-network -d mariadb:10.11 (comando completo da sopra)
-
+    docker run --name mariadb-container \
+        -e MARIADB_ROOT_PASSWORD=mysecretpassword \
+        -e MARIADB_DATABASE=mywebapiappdb \
+        -e MARIADB_USER=mywebapiappuser \
+        -e MARIADB_PASSWORD=userPassword456 \
+        -p 3306:3306 \
+        --network myapp-network \
+        -d \
+        mariadb:11.4 # Usare le proprie credenziali e versione
     ```
 
-    Fermare e rimuovere qualsiasi istanza precedente del container `mywebapiapp-container-run` (se ancora esistente):
+    **Nota**: `-p 3306:3306` mappa la porta 3306 interna del container MariaDB alla porta `3306` dell'host. Questo è il motivo per cui `appsettings.Development.json` usa `Port=3306`.
 
-    ```sh
-    docker stop mywebapiapp-container-run
-    docker rm mywebapiapp-container-run
+7. **Testare la connessione**:
 
-    ```
+    a. **Test dall'host (Applicazione `MyWebApiApp` in esecuzione sull'host, Database in container)**:
+     * Assicurarsi che il container `mariadb-container` sia in esecuzione con la porta mappata come sopra.
+     * Nella directory del progetto `MyWebApiApp` sull'host, eseguire: `bash dotnet run` L'applicazione ASP.NET Core partirà sull'host (es. su `http://localhost:5XXX`). `ASPNETCORE_ENVIRONMENT` sarà `Development`, quindi verrà usata la stringa di connessione da `appsettings.Development.json` (`Server=localhost;Port=3306;...`).
+     * Aprire un browser e navigare all'URL dell'applicazione host seguito da `/dbtest` (es. `http://localhost:5239/dbtest`, controllare la porta esatta dall'output di `dotnet run`).
+     * Si dovrebbe vedere un messaggio di successo che indica l'interazione con il database tramite EF Core.
 
-    Ora, avviare il nuovo container dell'applicazione `MyWebApiApp` (usando l'immagine aggiornata `mywebapiapp-image:1.1`) e connetterlo alla rete `myapp-network`:
+    b. **Test da container (Applicazione `MyWebApiApp` in container, Database in container)**:
+    * Assicurarsi che il container `mariadb-container` sia in esecuzione sulla rete `myapp-network`.
+    * Fermare e rimuovere qualsiasi istanza precedente del container dell'applicazione:
 
-    ```sh
-    docker run --name mywebapiapp-container-run\
-        -p 8081:8080\
-        --network myapp-network\
-        -d\
-        mywebapiapp-image:1.1
+        ```sh
+       docker stop mywebapiapp-container-run 
+       docker rm mywebapiapp-container-run
+        ```
 
-    ```
+    * Avviare il container dell'applicazione `MyWebApiApp` (usando l'immagine `mywebapiapp-image:1.1`) sulla stessa rete, mappando una porta host per l'accesso (es. `8081` sull'host alla `8080` interna del container):
 
-    - `--network myapp-network`: Questo è cruciale. Connette il container `mywebapiapp-container-run` alla stessa rete `myapp-network` su cui è in esecuzione `mariadb-container`.
+      ```sh
+      docker run --name mywebapiapp-container-run \
+      -p 8081:8080 \
+      --network myapp-network \
+      -d \
+      mywebapiapp-image:1.1 
+      ```
 
-    - `-d`: Esegue in detached mode.
+     All'interno di questo container, `ASPNETCORE_ENVIRONMENT` potrebbe non essere `Development` (a meno che non sia impostato esplicitamente nel `Dockerfile` o con `-e`). Se è, ad esempio, `Production` (o non impostato, il che potrebbe portare a default diversi), e se `appsettings.Development.json` non è copiato nell'immagine, verrà usata la stringa di connessione da `appsettings.json` (`Server=mariadb-container;Port=3306;...`).
 
-6. Testare la connessione:
+    * Aprire un browser e navigare all'URL `http://localhost:8081/dbtest`.
+    * Anche qui, si dovrebbe vedere un messaggio di successo.
 
-    Aprire un browser e navigare all'URL http://localhost:8081/dbtest.
+    **Troubleshooting**: In caso di errore in uno dei due scenari, controllare attentamente:
 
-    Se tutto è configurato correttamente, si dovrebbe vedere un messaggio di successo che indica che la connessione al database MariaDB è stata stabilita, insieme alla versione del server MariaDB.
+    - I log del container dell'applicazione: `docker logs mywebapiapp-container-run`
+    - I log del container del database: `docker logs mariadb-container`
+    - La stringa di connessione attiva (stampata dall'endpoint `/dbtest`).
+    - Le mappature delle porte e la configurazione della rete Docker.
+    - Le credenziali e i nomi del database/server.
 
-    In caso di errore, controllare attentamente il messaggio di errore fornito dall'endpoint e i log di entrambi i container:
-
-    ```sh
-    docker logs mywebapiapp-container-run
-    docker logs mariadb-container
-
-    ```
-
-    Gli errori comuni includono: nome del container errato nella stringa di connessione, credenziali errate, container non sulla stessa rete, o il database MariaDB non completamente avviato o inizializzato quando l'app tenta di connettersi.
-
-Questo approccio con comandi `docker run` separati e gestione manuale delle reti funziona, ma diventa rapidamente complesso e soggetto a errori man mano che il numero di servizi (container) nell'applicazione aumenta. Docker Compose, introdotto nella Sezione 7, semplifica drasticamente la gestione di applicazioni multi-container.
+Questo approccio con configurazioni separate per lo sviluppo sull'host e l'esecuzione containerizzata offre flessibilità. Docker Compose (Sezione 7) aiuterà a gestire le variabili d'ambiente e la configurazione dei servizi in modo più strutturato, specialmente per l'ambiente containerizzato.
 
 ## 6. Gestione Avanzata della Configurazione e dei Segreti 🔒
 
@@ -4183,3 +4907,5 @@ Mentre Docker Compose è eccellente per lo sviluppo, il test e anche per deploym
 La scelta della piattaforma di deployment in produzione dipende da molti fattori: la complessità e i requisiti di scalabilità dell'applicazione, le competenze del team, il budget, l'ecosistema cloud preferito, e i requisiti di conformità e sicurezza.
 
 Indipendentemente dalla scelta, le immagini Docker costruite (sia con Dockerfile che con dotnet publish /t:PublishContainer) rimangono l'artefatto di deployment fondamentale, garantendo portabilità e consistenza.
+
+[^1]: Lo "staging" di un'applicazione software, o di un sito web, si riferisce alla creazione di un ambiente di test, che è una replica (o una versione di prova) dell'ambiente di produzione, per permettere agli sviluppatori di testare modifiche e aggiornamenti senza influenzare l'ambiente live. In pratica, lo staging è un "sandbox" sicuro dove sperimentare senza rischi per i utenti finali.
