@@ -1,0 +1,75 @@
+# MyProjectRoot/docker-compose.yml
+services:
+  # Servizio per l'applicazione ASP.NET Core
+  webapp:
+    build:
+      context: ./MyWebApiApp    # Percorso della directory contenente il Dockerfile di MyWebApiApp
+      dockerfile: Dockerfile # Nome del Dockerfile da usare (default)
+      args:
+          # Passa il valore da .env (o il default 8080) come argomento di build
+          # al Dockerfile, dove verrà usato da APP_INTERNAL_PORT_ARG.
+          APP_INTERNAL_PORT_ARG: ${WEBAPP_CONTAINER_INTERNAL_PORT:-8080}
+    image: mywebapp-compose-final:latest # Nome opzionale per l'immagine costruita localmente
+    container_name: mywebapiapp_service_compose # Nome specifico per il container
+    ports:
+      # Mappa la porta host (da .env, default 8080) alla porta interna del container (da .env, default 8080)
+      - "${WEBAPP_HOST_PORT:-8080}:${WEBAPP_CONTAINER_INTERNAL_PORT:-8080}"
+    environment:
+      # Imposta l'ambiente ASP.NET Core (da .env, default Development)
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT_VALUE:-Development}
+      # Costruisce la stringa di connessione usando variabili da .env
+      # Il server 'db' è il nome del servizio MariaDB definito sotto.
+      ConnectionStrings__DefaultConnection: "Server=db;Port=3306;Database=${MARIADB_DATABASE_NAME};User=${MARIADB_USER_NAME};Password=${MARIADB_USER_PASSWORD_SECRET};AllowPublicKeyRetrieval=true"
+      # Per .NET Watcher, se si usano bind mount per lo sviluppo:
+      # DOTNET_USE_POLLING_FILE_WATCHER: "true"
+      # ASPNETCORE_URLS: http://+:${WEBAPP_CONTAINER_INTERNAL_PORT:-8080} # Già gestito da ENV nel Dockerfile
+    volumes:
+      # Esempio di bind mount per sviluppo (hot reload dei file statici wwwroot):
+      # Attenzione: se si monta l'intera /app, assicurarsi che l'entrypoint gestisca la build se necessario.
+      # Per ora, il Dockerfile produce un'immagine di release, quindi i bind mount del codice sono meno critici
+      # a meno che non si voglia 'dotnet watch run' come entrypoint.
+      - ./MyWebApiApp/wwwroot:/app/wwwroot # Permette di aggiornare i file statici senza rebuild dell'immagine
+    depends_on:
+      db: # Assicura che il servizio 'db' sia avviato e "healthy" prima di 'webapp'
+        condition: service_healthy
+    restart: unless-stopped # Riavvia il container a meno che non sia stato fermato esplicitamente
+    networks:
+      - app_network_compose # Connette il servizio a questa rete definita sotto
+
+  # Servizio per il database MariaDB
+  db:
+    image: mariadb:11.4 # Usare una versione specifica è una buona pratica
+    container_name: mariadb_service_compose # Nome specifico per il container
+    environment:
+      # Le password e i nomi sono presi dal file .env
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD_SECRET}
+      MARIADB_DATABASE: ${MARIADB_DATABASE_NAME}
+      MARIADB_USER: ${MARIADB_USER_NAME}
+      MARIADB_PASSWORD: ${MARIADB_USER_PASSWORD_SECRET}
+    volumes:
+      # Volume nominato per la persistenza dei dati di MariaDB.
+      # 'db_data_compose' è il nome del volume, '/var/lib/mysql' è il percorso dati in MariaDB.
+      - db_data_compose:/var/lib/mysql
+    ports:
+      # Mappa la porta host (da .env, default 3306) alla porta interna del container (3306)
+      # Utile per connettersi al DB da strumenti sull'host (es. DBeaver, MySQL Workbench).
+      - "${MARIADB_HOST_PORT:-3306}:3306"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 60s # Tempo di attesa iniziale prima del primo controllo di salute
+    restart: unless-stopped # Riavvia il container a meno che non sia stato fermato esplicitamente
+    networks:
+      - app_network_compose # Connette il servizio a questa rete definita sotto
+
+# Definizione dei volumi nominati
+volumes:
+  db_data_compose: # Il nome del volume usato dal servizio 'db'
+    driver: local  # Usa il driver 'local' (default), gestito da Docker sull'host
+
+# Definizione delle reti personalizzate
+networks:
+  app_network_compose: # Il nome della rete usata dai servizi
+    driver: bridge     # Usa il driver 'bridge' (default per reti personalizzate locali)

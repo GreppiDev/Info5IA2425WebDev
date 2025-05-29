@@ -37,6 +37,7 @@
     - [3.7. Confronto tra il Dockerfile generato da Containers (VS Code Plugin) e il Dockerfile semplice a due stadi scritto manualmente](#37-confronto-tra-il-dockerfile-generato-da-containers-vs-code-plugin-e-il-dockerfile-semplice-a-due-stadi-scritto-manualmente)
       - [Dockerfile completo (e complesso) - Analisi comando per comando](#dockerfile-completo-e-complesso---analisi-comando-per-comando)
       - [Confronto Dockerfile semplice (2 stadi) vs Dockerfile complesso (4 stadi)](#confronto-dockerfile-semplice-2-stadi-vs-dockerfile-complesso-4-stadi)
+      - [Analisi dettagliata del Dockerfile complesso](#analisi-dettagliata-del-dockerfile-complesso)
   - [4. Creazione Rapida di Immagini con .NET SDK (\>= .NET 7)](#4-creazione-rapida-di-immagini-con-net-sdk--net-7)
     - [4.1. Il comando `dotnet publish /t:PublishContainer`](#41-il-comando-dotnet-publish-tpublishcontainer)
       - [4.1.1 Il comando `dotnet publish /t:PublishContainer` con parametri da command line](#411-il-comando-dotnet-publish-tpublishcontainer-con-parametri-da-command-line)
@@ -58,7 +59,9 @@
     - [6.1. La sfida delle variabili d'ambiente multiple (vs. User Secrets in sviluppo)](#61-la-sfida-delle-variabili-dambiente-multiple-vs-user-secrets-in-sviluppo)
     - [6.2. Utilizzo di file `.env` con Docker Compose](#62-utilizzo-di-file-env-con-docker-compose)
       - [6.2.1. Sostituzione di variabili nel `docker-compose.yml` (`${NOME_VARIABILE}`)](#621-sostituzione-di-variabili-nel-docker-composeyml-nome_variabile)
-      - [6.2.2. **Best Practice**: Esclusione dei file `.env` da Git (uso di `.gitignore` e file `.env.example`)](#622-best-practice-esclusione-dei-file-env-da-git-uso-di-gitignore-e-file-envexample)
+      - [6.2.2 Ordine di priorità seguito da Docker Compose nella risoluzione di una variabile nel  `docker-compose.yml`](#622-ordine-di-priorità-seguito-da-docker-compose-nella-risoluzione-di-una-variabile-nel--docker-composeyml)
+      - [6.2.3 Sostituzione di variabili con valori di default e gestione di errori per variabili non definite nel `docker-compose.yml`](#623-sostituzione-di-variabili-con-valori-di-default-e-gestione-di-errori-per-variabili-non-definite-nel-docker-composeyml)
+      - [6.2.4. **Best Practice**: Esclusione dei file `.env` da Git (uso di `.gitignore` e file `.env.example`)](#624-best-practice-esclusione-dei-file-env-da-git-uso-di-gitignore-e-file-envexample)
     - [6.3. La direttiva `env_file` in Docker Compose per caricare variabili da file esterni](#63-la-direttiva-env_file-in-docker-compose-per-caricare-variabili-da-file-esterni)
     - [6.4. **Criticità**: Perché evitare segreti hardcoded nel `docker-compose.yml`](#64-criticità-perché-evitare-segreti-hardcoded-nel-docker-composeyml)
     - [6.5. Panoramica delle soluzioni per la produzione](#65-panoramica-delle-soluzioni-per-la-produzione)
@@ -1464,8 +1467,6 @@ ENTRYPOINT ["dotnet", "MyWebApiApp.dll"]
 
   La scelta e l'uso corretto di `ARG` e `ENV` contribuiscono significativamente alla creazione di immagini Docker flessibili, manutenibili e sicure.
 
-
-
 ### 3.3. L'importanza del file `.dockerignore`
 
 Similmente al file `.gitignore` usato da Git, un file `.dockerignore` permette di specificare quali file e directory presenti nel *contesto di build* (la directory da cui si esegue `docker build`) devono essere ignorati e non inviati al demone Docker durante il processo di build dell'immagine.
@@ -1533,7 +1534,9 @@ Questo è un esempio. Adattarlo in base alle necessità specifiche del progetto.
 
 ### 3.4. Costruzione di un'immagine: `docker build` e primo test di avvio
 
-**Una volta che si dispone di un `Dockerfile` e di un file `.dockerignore`, si può costruire l'immagine Docker**.
+**Una volta che si dispone di un `Dockerfile` e di un file `.dockerignore`, si può costruire l'immagine Docker**. 
+
+Un esempio completo di progetto con il codice mostrato in questa sezione è riportato nella cartella [app-base-no-database](../../docker-projects/app-base-no-database/MyWebApiApp/)
 
 1. Aprire un terminale nella directory che contiene il `Dockerfile` (in questo caso, `MyWebApiApp/`).
 
@@ -1583,7 +1586,7 @@ Questo è un esempio. Adattarlo in base alle necessità specifiche del progetto.
         Content root path: /app
     ```
 
-    Per chiudere l'applicazione basta digitare Ctrl+C nella console da cui si è avviata.
+    Per chiudere l'applicazione basta digitare `Ctrl+C` nella console da cui è stata avviata.
 
 ### 3.5. Pubblicazione di un'immagine su un registro
 
@@ -2057,74 +2060,74 @@ Questi `Dockerfile` generati automaticamente sono un buon punto di partenza e sp
 - **Esempio di `.dockerignore` per ASP.NET Core Minimal API generato automaticamente in VS Code**
   
   ```dockerignore
-    # MyWebApiApp/.dockerignore
+  # MyWebApiApp/.dockerignore
 
-    # ===== FILE SPECIFICI JAVA/ECLIPSE =====
-    # File di configurazione Eclipse per progetti Java
-    **/.classpath
-    **/.project
-    **/.settings
+  # ===== FILE SPECIFICI JAVA/ECLIPSE =====
+  # File di configurazione Eclipse per progetti Java
+  **/.classpath
+  **/.project
+  **/.settings
 
-    # ===== FILE DOCKER =====
-    # Evita di copiare i file Docker nell'immagine (previene loop di build)
-    **/.dockerignore
-    **/Dockerfile*
-    **/docker-compose*
-    **/compose*
+  # ===== FILE DOCKER =====
+  # Evita di copiare i file Docker nell'immagine (previene loop di build)
+  **/.dockerignore
+  **/Dockerfile*
+  **/docker-compose*
+  **/compose*
 
-    # ===== CONFIGURAZIONI AMBIENTE E SVILUPPO =====
-    # File di ambiente locale (contengono spesso credenziali sensibili)
-    **/.env
+  # ===== CONFIGURAZIONI AMBIENTE E SVILUPPO =====
+  # File di ambiente locale (contengono spesso credenziali sensibili)
+  **/.env
 
-    # Repository Git (non necessario nell'immagine finale)
-    **/.git
-    **/.gitignore
+  # Repository Git (non necessario nell'immagine finale)
+  **/.git
+  **/.gitignore
 
-    # ===== FILE SPECIFICI IDE/EDITOR =====
-    # File di configurazione Visual Studio
-    **/.vs
-    **/*.user
+  # ===== FILE SPECIFICI IDE/EDITOR =====
+  # File di configurazione Visual Studio
+  **/.vs
+  **/*.user
 
-    # File di configurazione Visual Studio Code
-    **/.vscode
+  # File di configurazione Visual Studio Code
+  **/.vscode
 
-    # File di configurazione strumenti di sviluppo
-    **/.toolstarget
+  # File di configurazione strumenti di sviluppo
+  **/.toolstarget
 
-    # ===== ARTEFATTI DI BUILD .NET =====
-    # Cartelle di output della compilazione .NET
-    **/bin
-    **/obj
+  # ===== ARTEFATTI DI BUILD .NET =====
+  # Cartelle di output della compilazione .NET
+  **/bin
+  **/obj
 
-    # File di progetto utente specifici (impostazioni locali IDE)
-    **/*.*proj.user
+  # File di progetto utente specifici (impostazioni locali IDE)
+  **/*.*proj.user
 
-    # ===== FILE DATABASE E MODELLI =====
-    # File di modello database (Database Model)
-    **/*.dbmdl
+  # ===== FILE DATABASE E MODELLI =====
+  # File di modello database (Database Model)
+  **/*.dbmdl
 
-    # File JFM (potrebbero essere file temporanei specifici)
-    **/*.jfm
+  # File JFM (potrebbero essere file temporanei specifici)
+  **/*.jfm
 
-    # ===== NODE.JS (per progetti full-stack) =====
-    # Dipendenze Node.js (da reinstallare con npm install)
-    **/node_modules
+  # ===== NODE.JS (per progetti full-stack) =====
+  # Dipendenze Node.js (da reinstallare con npm install)
+  **/node_modules
 
-    # File di debug NPM
-    **/npm-debug.log
+  # File di debug NPM
+  **/npm-debug.log
 
-    # ===== KUBERNETES/HELM =====
-    # Chart Helm per Kubernetes (solitamente gestiti separatamente)
-    **/charts
+  # ===== KUBERNETES/HELM =====
+  # Chart Helm per Kubernetes (solitamente gestiti separatamente)
+  **/charts
 
-    # File di configurazione Kubernetes per sviluppo
-    **/secrets.dev.yaml
-    **/values.dev.yaml
+  # File di configurazione Kubernetes per sviluppo
+  **/secrets.dev.yaml
+  **/values.dev.yaml
 
-    # ===== DOCUMENTAZIONE =====
-    # File di documentazione del progetto (non necessari nell'immagine runtime)
-    LICENSE
-    README.md
+  # ===== DOCUMENTAZIONE =====
+  # File di documentazione del progetto (non necessari nell'immagine runtime)
+  LICENSE
+  README.md
   ```
 
 ### 3.7. Confronto tra il Dockerfile generato da Containers (VS Code Plugin) e il Dockerfile semplice a due stadi scritto manualmente
@@ -2352,6 +2355,94 @@ FROM base AS final                                    # Final
 4. **Efficienza**: Multi-platform support
 5. **Modularità**: Stage ben separati
 6. **Produzione**: Ottimizzazioni avanzate
+
+#### Analisi dettagliata del Dockerfile complesso
+
+Nel `Dockerfile` complesso, ci sono due passaggi che sembrano simili:
+
+1. **Nello STAGE 2 (`build`):**
+
+    ```Dockerfile
+    RUN dotnet build "MyWebApiApp.csproj" -c $configuration -o /app/build
+    ```
+
+    Questo comando compila il progetto. Il risultato della compilazione (le DLL, le dipendenze, ecc.) viene messo nella directory `/app/build` all'interno di quello stage.
+
+2. **Nello STAGE 3 (`publish`):**
+
+    ```Dockerfile
+    FROM build AS publish
+    # ...
+    RUN dotnet publish "MyWebApiApp.csproj" -c $configuration -o /app/publish /p:UseAppHost=false
+    ```
+
+    Questo stage inizia dall'output dello stage `build` precedente. Il comando `dotnet publish` fa due cose principali:
+
+    - **Prima compila il progetto** (se non è già stato compilato o se rileva modifiche che invalidano una build precedente).
+    - **Poi prepara l'output per il deployment**, copiando solo i file necessari per l'esecuzione dell'applicazione (escludendo file sorgente, file di progetto intermedi, ecc.) nella directory specificata (qui `/app/publish`). Include anche ottimizzazioni e può creare un pacchetto specifico per il runtime. L'opzione `/p:UseAppHost=false` indica di non generare un eseguibile specifico per la piattaforma (es. `.exe` su Windows), ma di affidarsi a `dotnet NomeApp.dll` per l'esecuzione.
+
+3. **Il `dotnet build` nello STAGE 2 è ridondante in questo specifico Dockerfile?**
+
+    **Nella maggior parte dei casi, per questo specifico flusso, sì, il comando `RUN dotnet build ...` nello STAGE 2 è largamente ridondante.**
+
+    **Ecco perché:**
+
+    - Il comando `dotnet publish` nello STAGE 3 (che parte dallo STAGE 2, quindi ha accesso al codice sorgente in `/src`) **eseguirà comunque una compilazione** come suo primo passo. Se i file sorgente non sono cambiati dalla potenziale (ma non direttamente utilizzata da `publish` in questo modo) compilazione precedente, il compilatore .NET potrebbe essere abbastanza intelligente da riutilizzare alcuni artefatti cachati, ma il punto è che `publish` *garantisce* che il codice sia compilato prima di preparare l'output di pubblicazione.
+    - L'output del comando `dotnet build` nello STAGE 2 (la cartella `/app/build`) non viene esplicitamente referenziato o utilizzato dal comando `dotnet publish` nello STAGE 3 in un modo che eviti la fase di compilazione intrinseca di `publish`. Il `dotnet publish` opera sui file di progetto in `/src` per creare la sua cartella di output `/app/publish`.
+
+4. Quando è utile avere uno stage `build` separato?
+
+    Un stage `build` separato prima di `publish` è tipicamente utile e non ridondante nei seguenti scenari:
+
+    1. **Esecuzione di Test:** Un pattern molto comune è:
+
+        - **STAGE `build`**: Compila l'applicazione.
+        - **STAGE `test`**: `FROM build`. Esegue `dotnet test` utilizzando gli artefatti di compilazione dello stage `build`.
+        - **STAGE `publish`**: `FROM build` (o dallo stage `test` se si vuole assicurare che la pubblicazione avvenga solo dopo test passati, anche se di solito si riparte da `build` per mantenere pulito lo stage di `publish`). Pubblica l'applicazione. In questo caso, lo stage `build` serve a creare gli artefatti necessari per i test, e poi lo stage `publish` (ri)utilizza questi artefatti (o li ricompila/ripubblica in modo pulito).
+    2. **Creazione di Pacchetti NuGet o Altri Artefatti Intermedi:** Se dopo la compilazione si dovessero creare pacchetti NuGet (`dotnet pack`) o altri artefatti che non fanno parte dell'output di `publish` finale ma sono necessari per altri scopi.
+
+    3. **Caching di Layer Complessi:** Se la compilazione avesse passaggi molto lunghi e distinti (es. code generation, compilazioni separate di più progetti in una solution complessa) che beneficerebbero di un caching a layer separato, ma anche qui `dotnet publish` ha le sue strategie di caching.
+
+5. Come potrebbe essere reso più conciso il Dockerfile?
+
+    Se l'unico scopo dello STAGE 2 è preparare per lo STAGE 3, e non ci sono test o altri passaggi intermedi che usano l'output di `/app/build`, si potrebbe semplificare. Ad esempio, si potrebbe unire la logica o lasciare che `publish` faccia tutto il lavoro in uno stage "SDK" dedicato:
+
+    ```Dockerfile
+    # ===== STAGE 1: BASE =====
+    FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
+    ARG APP_INTERNAL_PORT_ARG=8080
+    WORKDIR /app
+    ENV ASPNETCORE_URLS=http://+:${APP_INTERNAL_PORT_ARG}
+    EXPOSE ${APP_INTERNAL_PORT_ARG}
+    USER app
+
+    # ===== STAGE 2: SDK_OPERATIONS (per restore, build e publish) =====
+    FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:9.0 AS sdk_operations
+    ARG configuration=Release
+    WORKDIR /src
+
+    # Copia il file .csproj e ripristina
+    COPY ["MyWebApiApp.csproj", "./"]
+    RUN dotnet restore "MyWebApiApp.csproj"
+
+    # Copia tutto il resto e pubblica
+    COPY . .
+    # WORKDIR "/src/." # Solitamente non necessario se si è già in /src
+    RUN dotnet publish "MyWebApiApp.csproj" -c $configuration -o /app/publish /p:UseAppHost=false
+
+    # ===== STAGE 3: FINAL =====
+    FROM base AS final
+    WORKDIR /app
+    COPY --from=sdk_operations /app/publish .
+    ENTRYPOINT ["dotnet", "MyWebApiApp.dll"]
+    ```
+
+    In questa versione semplificata:
+
+    - Lo stage `sdk_operations` gestisce `restore` e `publish`. Il `publish` si occuperà implicitamente della compilazione.
+    - Lo stage `final` copia l'output direttamente da `/app/publish` dello stage `sdk_operations`.
+
+    **In conclusione:** Nel `Dockerfile` complesso, l'istruzione `RUN dotnet build "MyWebApiApp.csproj" -c $configuration -o /app/build` nello STAGE 2 è tecnicamente ridondante perché il successivo comando `dotnet publish` nello STAGE 3 eseguirà comunque una compilazione del codice sorgente presente in `/src` per produrre l'output in `/app/publish`. La rimozione di quel `dotnet build` esplicito non cambierebbe il risultato finale dell'immagine, ma potrebbe rendere il `Dockerfile` leggermente più veloce da eseguire (evitando una potenziale doppia compilazione o analisi) e più conciso.
 
 ## 4. Creazione Rapida di Immagini con .NET SDK (>= .NET 7)
 
@@ -2943,7 +3034,9 @@ Si eseguirà ora un'istanza di MariaDB all'interno di un container Docker. Maria
 
 ### 5.5. Collegamento di Container: Connessione App <-> Database sulla stessa rete
 
-Ora che sia l'applicazione `MyWebApiApp` che il database MariaDB possono essere eseguiti e connessi alla stessa rete personalizzata (`myapp-network`), l'applicazione `MyWebApiApp` (quando eseguita anch'essa in un container su tale rete) può connettersi al database MariaDB utilizzando il nome del container del database (`mariadb-container`) come hostname. Questo è possibile grazie alla risoluzione DNS fornita dalle reti Docker personalizzate.
+Ora che sia l'applicazione `MyWebApiApp` che il database MariaDB possono essere eseguiti e connessi alla stessa rete personalizzata (`myapp-network`), l'applicazione `MyWebApiApp` (quando eseguita anch'essa in un container su tale rete) può connettersi al database MariaDB utilizzando il nome del container del database (`mariadb-container`) come hostname. Questo è possibile grazie alla risoluzione DNS fornita dalle reti Docker personalizzate. 
+
+Un esempio completo del codice mostrato in questa sezione è nella cartella [app-con-database](../../docker-projects/app-con-database/MyWebApiApp/).
 
 Tuttavia, è fondamentale distinguere due scenari di connessione:
 
@@ -2952,7 +3045,7 @@ Tuttavia, è fondamentale distinguere due scenari di connessione:
 
 Questi due scenari richiedono stringhe di connessione diverse.
 
-1. **Configurare le Stringhe di Connessione per Diversi Ambienti**: Per gestire entrambi gli scenari, si utilizzeranno i file di configurazione `appsettings.json` e `appsettings.Development.json`. ASP.NET Core carica questi file in modo gerarchico: `appsettings.json` viene caricato per primo, seguito da `appsettings.{Environment}.json` (dove `{Environment}` è, ad esempio, `Development`), che può sovrascrivere le impostazioni del primo.
+1. **Configurare le stringhe di connessione per diversi ambienti**: Per gestire entrambi gli scenari, si utilizzeranno i file di configurazione `appsettings.json` e `appsettings.Development.json`. ASP.NET Core carica questi file in modo gerarchico: `appsettings.json` viene caricato per primo, seguito da `appsettings.{Environment}.json` (dove `{Environment}` è, ad esempio, `Development`), che può sovrascrivere le impostazioni del primo.
 
     a. **`MyWebApiApp/appsettings.Development.json` (per esecuzione sull'host durante lo sviluppo)**: Questo file verrà utilizzato quando si esegue l'applicazione direttamente sull'host (es. con `dotnet run`, che di default imposta `ASPNETCORE_ENVIRONMENT=Development`). Conterrà la stringa di connessione per accedere al container MariaDB dall'host, utilizzando `localhost` e la porta mappata sull'host dal container MariaDB (es. `3306`).
 
@@ -3189,7 +3282,7 @@ Questi due scenari richiedono stringhe di connessione diverse.
           {
               sb.AppendLine($"ERRORE durante l'interazione con il database: {ex.GetType().Name} - {ex.Message}");
               sb.AppendLine("Stack Trace Parziale:");
-              sb.AppendLine(ex.StackTrace?.Substring(0, Math.Min(ex.StackTrace.Length, 500)) + "..."); // Mostra solo una parte per brevità
+              sb.AppendLine(ex.StackTrace?[..Math.Min(ex.StackTrace.Length, 500)] + "..."); // Mostra solo una parte per brevità
               sb.AppendLine("\nControllare:");
               sb.AppendLine("1. Che il container 'mariadb-container' sia in esecuzione e sulla stessa rete Docker.");
               sb.AppendLine("2. Che il nome del server ('mariadb-container') e le credenziali nella connection string siano corretti.");
@@ -3200,6 +3293,7 @@ Questi due scenari richiedono stringhe di connessione diverse.
       });
 
       app.Run();
+
       ```
 
 5. **Ricostruire l'immagine dell'applicazione `MyWebApiApp`**: Dopo aver modificato `appsettings.json`, `appsettings.Development.json`, `Program.cs`, `.csproj` e aggiunto i file C# per EF Core, è necessario ricostruire l'immagine Docker. Nella directory `MyWebApiApp/`:
@@ -3248,7 +3342,7 @@ Questi due scenari richiedono stringhe di connessione diverse.
       -p 8081:8080 \
       --network myapp-network \
       -d \
-      mywebapiapp-image:1.1 
+      mywebapiapp-image:1.1
       ```
 
      All'interno di questo container, `ASPNETCORE_ENVIRONMENT` potrebbe non essere `Development` (a meno che non sia impostato esplicitamente nel `Dockerfile` o con `-e`). Se è, ad esempio, `Production` (o non impostato, il che potrebbe portare a default diversi), e se `appsettings.Development.json` non è copiato nell'immagine, verrà usata la stringa di connessione da `appsettings.json` (`Server=mariadb-container;Port=3306;...`).
@@ -3294,7 +3388,7 @@ Un file `.env` (che sta per "environment") è un semplice file di testo che defi
 
 Esempio di file .env:
 
-Creare un file chiamato .env nella directory principale del progetto (la stessa directory dove si troverà il file docker-compose.yml).
+Creare un file chiamato .env nella directory principale del progetto (la stessa directory dove si troverà il file `docker-compose.yml`).
 
 ```env
 # MyProjectRoot/.env
@@ -3309,7 +3403,6 @@ MARIADB_PASSWORD_VAL=appUserPassFromEnvFile!
 WEBAPP_CONTAINER_PORT_VAL=8080
 WEBAPP_HOST_PORT_MAPPING_VAL=8088
 ASPNETCORE_ENVIRONMENT_NAME=Development
-
 ```
 
 #### 6.2.1. Sostituzione di variabili nel `docker-compose.yml` (`${NOME_VARIABILE}`)
@@ -3320,10 +3413,9 @@ Quando si esegue `docker-compose up`, Docker Compose cerca automaticamente un fi
 
 ```yml
 # Esempio parziale di docker-compose.yml
-version: '3.8'
 services:
   db:
-    image: mariadb:10.11
+    image: mariadb:11.4
     environment:
       MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD_VAL} # Sostituito da .env
       MARIADB_DATABASE: ${MARIADB_DATABASE_VAL}         # Sostituito da .env
@@ -3345,19 +3437,188 @@ services:
 
 ```
 
-In questo esempio, quando docker-compose up viene eseguito, ${MARIADB_ROOT_PASSWORD_VAL} nel docker-compose.yml sarà sostituito con myRootSecretFromEnvFile! (il valore dal file .env), e così via per le altre variabili.
+In questo esempio, quando `docker-compose up` viene eseguito, `${MARIADB_ROOT_PASSWORD_VAL}` nel `docker-compose.yml` sarà sostituito con `myRootSecretFromEnvFile!` (il valore dal file `.env`), e così via per le altre variabili.
 
-Si può anche fornire un valore di default se la variabile non è definita nel file .env o nell'ambiente della shell, usando la sintassi ${VARIABILE:-default} o ${VARIABILE:?messaggio_errore_se_mancante}.
+Si può anche fornire un valore di default se la variabile non è definita nel file .env o nell'ambiente della shell, usando la sintassi `${VARIABILE:-default}` o `${VARIABILE:?messaggio_errore_se_mancante}`.
 
-#### 6.2.2. **Best Practice**: Esclusione dei file `.env` da Git (uso di `.gitignore` e file `.env.example`)
+#### 6.2.2 Ordine di priorità seguito da Docker Compose nella risoluzione di una variabile nel  `docker-compose.yml`
+
+Docker Compose, quando incontra una variabile come `${NOME_VARIABILE}` nel file `docker-compose.yml` (o in un file `.env` usato per sostituzione diretta), cerca un valore per quella variabile seguendo questo specifico ordine di priorità. **La prima fonte in cui trova un valore definito per la variabile "vince", e le fonti successive non vengono più considerate per quella specifica variabile.**
+
+Ecco l'ordine di priorità, dal più alto (ha la precedenza) al più basso:
+
+1. **Variabili d'ambiente della Shell / Ambiente di Esecuzione:**
+
+    - Sono le variabili impostate direttamente nell'ambiente della shell da cui si eseguono i comandi `docker-compose` (es. `export MIA_VARIABILE=valore_shell` sulla shell di Linux/macOS o `set MIA_VARIABILE=valore_shell` sulla CMD di Windows prima di eseguire `docker-compose up`).
+    - **Queste hanno la priorità più alta.** Se una variabile è definita qui, il suo valore sovrascriverà qualsiasi valore definito per la stessa variabile in un file `.env` o altrove per quanto riguarda la sostituzione nel `docker-compose.yml`.
+    - Questo è utile per sovrascrivere configurazioni al volo o per sistemi di CI/CD dove le variabili sono iniettate nell'ambiente di build/deploy.
+2. **Argomenti passati con `docker-compose run -e ...` (per un singolo servizio/comando `run`):**
+
+    - Quando si usa `docker-compose run nome_servizio ...` e si specificano le variabili d'ambiente con `-e MIA_VARIABILE=valore_run`, queste hanno alta priorità per *quella specifica esecuzione* del servizio tramite `docker-compose run`. Questo è più specifico per `docker-compose run` piuttosto che per `docker-compose up`.
+3. **Variabili definite nel file `.env` (nella directory del progetto):**
+
+    - Docker Compose cerca automaticamente un file chiamato `.env` nella directory radice del progetto (la stessa directory del file `docker-compose.yml` o la directory specificata con l'opzione `--project-directory`).
+    - Le variabili definite in questo file vengono caricate e sono disponibili per la sostituzione nel file `docker-compose.yml` (es. `ports: ["${HOST_PORT}:80"]`).
+    - **Questa è la seconda fonte più importante per la sostituzione delle variabili nel `docker-compose.yml` dopo le variabili della shell.**
+4. **Valori specificati nella direttiva `environment` all'interno di un servizio nel `docker-compose.yml`:**
+
+    - Si possono definire variabili d'ambiente direttamente nella sezione `environment` di un servizio:
+
+        ```yaml
+        services:
+          mio_servizio:
+            image: ...
+            environment:
+              MIA_VARIABILE_DI_SERVIZIO: "valore_fisso_nel_compose"
+              ALTRA_VARIABILE: ${VARIABILE_DA_ENV_O_SHELL:-default_value}
+        ```
+
+    - Se il valore è una stringa fissa (come `"valore_fisso_nel_compose"`), quello è il valore.
+    - Se il valore usa una sostituzione (come `${VARIABILE_DA_ENV_O_SHELL}`), allora per *quella* sostituzione specifica si applica di nuovo la priorità shell > `.env`.
+5. **Valori specificati nella direttiva `env_file` all'interno di un servizio nel `docker-compose.yml`:**
+
+    - Questa direttiva carica variabili da uno o più file esterni direttamente nell'ambiente del container di quel servizio.
+
+        ```yaml
+        services:
+          mio_servizio:
+            image: ...
+            env_file:
+              - ./common.env
+              - ./mio_servizio_specifico.env
+        ```
+
+    - Le variabili definite qui vengono caricate nell'ambiente del container. Se più file sono specificati in `env_file` e definiscono la stessa variabile, l'ultimo file nell'elenco ha la precedenza.
+    - Le variabili caricate da `env_file` possono essere sovrascritte da quelle definite nella direttiva `environment` dello stesso servizio, e da quelle passate tramite `docker-compose run -e`.
+6. **Variabili definite nel `Dockerfile` tramite l'istruzione `ENV`:**
+
+    - Queste variabili sono "impostate" all'interno dell'immagine Docker durante il processo di `docker build`.
+    - Hanno la priorità più bassa e possono essere sovrascritte da quasi tutti i metodi sopra elencati (tranne per le variabili usate durante la build stessa se non sono `ARG` passati dinamicamente).
+
+**Riepilogo dell'Ordine di Priorità per la Sostituzione nel `docker-compose.yml` (quando si usa `${...}`):**
+
+Quando Docker Compose elabora il file `docker-compose.yml` e incontra `${NOME_VARIABILE}`:
+
+1. **Priorità Massima**: Variabile d'ambiente della **Shell** di esecuzione.
+2. **Priorità Media**: Variabile definita nel file **`.env`** nella directory del progetto.
+3. **Priorità Minima (per la sostituzione)**: Se la variabile non si trova né nella shell né nel file `.env`, e si usa una sintassi di default come `${NOME_VARIABILE:-valore_default}`, allora verrà usato `valore_default`. Se si usa `${NOME_VARIABILE:?messaggio_errore}`, verrà generato un errore. Se non si usa né default né gestione errore e la variabile non viene trovata, solitamente viene sostituita con una stringa vuota (il che può portare a errori di sintassi o comportamenti imprevisti a seconda di dove viene usata).
+
+**Ordine di Priorità per le Variabili d'Ambiente *all'interno del Container* in Esecuzione:**
+
+Quando un container è *effettivamente in esecuzione*, l'ordine in cui le variabili d'ambiente vengono impostate e potenzialmente sovrascritte è un po' più articolato, ma generalmente:
+
+1. Variabili passate con `docker-compose run -e ...` (per quella specifica esecuzione).
+2. Variabili definite nella sezione `environment` del servizio nel `docker-compose.yml`.
+3. Variabili caricate dalla sezione `env_file` del servizio nel `docker-compose.yml`.
+4. Variabili definite con `ENV` nel `Dockerfile` (quelle "impostate" nell'immagine).
+
+È importante distinguere tra la **sostituzione di variabili nel file `docker-compose.yml` stesso** (che si basa principalmente su shell e file `.env`) e le **variabili d'ambiente finali disponibili per il processo in esecuzione all'interno del container**.
+
+#### 6.2.3 Sostituzione di variabili con valori di default e gestione di errori per variabili non definite nel `docker-compose.yml`
+
+Quando si scrive il file `docker-compose.yml`, si possono usare delle variabili (ad esempio, `${NOME_VARIABILE}`) che Docker Compose cercherà di sostituire con valori presi da diverse fonti, in un certo ordine di priorità:
+
+1. Variabili definite direttamente nella shell da cui esegui `docker-compose`.
+2. Variabili definite in un file `.env` presente nella stessa directory del `docker-compose.yml` (o nella directory del progetto specificata).
+
+A volte, però, una variabile potrebbe non essere definita né nella shell né nel file `.env`. In questi casi, è possibile specificare cosa Docker Compose dovrebbe fare, invece di lasciare semplicemente un valore vuoto o causare un errore implicito.
+
+Docker Compose mette a disposizione due sintassi per indicare cosa dovrebbe fare Docker Compose se una variabile non è definita oppure è vuota:
+
+1. Sintassi `${VARIABILE:-default}` (Valore di Default se Non Definita o Vuota)
+
+   - **Significato**: Utilizza il valore di `VARIABILE` se è definita e non è vuota. Se `VARIABILE` non è definita OPPURE è definita ma il suo valore è una stringa vuota, allora utilizza `default` come valore.
+
+   - **Componenti**:
+
+       - `${...}`: Delimitatori per la sostituzione di variabile.
+       - `VARIABILE`: Il nome della variabile d'ambiente che Docker Compose cercherà.
+       - `:-`: L'operatore che indica "usa il seguente valore di default se la variabile è non definita o vuota".
+       - `default`: Il valore letterale che verrà usato se la condizione è soddisfatta. Può essere una stringa, un numero, ecc.
+   - **Esempio in `docker-compose.yml`**: Supponiamo che tu abbia nel tuo `docker-compose.yml`:
+
+       ```yaml
+       services:
+         webapp:
+           image: mia-app-immagine
+           ports:
+             - "${HOST_PORT:-8080}:80" # Mappa la porta 80 del container
+                                        # alla porta HOST_PORT dell'host,
+                                        # o alla 8080 se HOST_PORT non è definita o è vuota.
+           environment:
+             LOG_LEVEL: ${APP_LOG_LEVEL:-INFO} # Imposta LOG_LEVEL a APP_LOG_LEVEL,
+                                               # o a "INFO" se non definita o vuota.
+       ```
+
+   - **Comportamento**:
+
+       - Se nel file `.env` (o nella shell) si ha `HOST_PORT=8888` e `APP_LOG_LEVEL=DEBUG`, il risultato sarà:
+           - `ports: ["8888:80"]`
+           - `LOG_LEVEL: DEBUG`
+       - Se `HOST_PORT` non è definito (o è `HOST_PORT=`) e `APP_LOG_LEVEL` non è definito (o è `APP_LOG_LEVEL=`), il risultato sarà:
+           - `ports: ["8080:80"]`
+           - `LOG_LEVEL: INFO`
+   - **Nota sulla distinzione `:-` vs `-`**:
+
+       - `${VARIABILE:-default}`: Usa `default` se `VARIABILE` è non definita **o vuota**.
+       - `${VARIABILE-default}` (senza i due punti): Usa `default` solo se `VARIABILE` è **non definita**. Se `VARIABILE` è definita come stringa vuota (es. `MIA_VAR=`), allora verrà usata la stringa vuota. La forma con `:-` è spesso più utile per i valori di default.
+
+2. Sintassi `${VARIABILE:?messaggio_errore_se_mancante}` (Errore se Non Definita o Vuota)
+
+   - **Significato**: Utilizza il valore di `VARIABILE` se è definita e non è vuota. Se `VARIABILE` non è definita OPPURE è definita ma il suo valore è una stringa vuota, allora Docker Compose mostrerà un messaggio di errore (il `messaggio_errore_se_mancante` che hai specificato) e interromperà l'elaborazione del file `docker-compose.yml` (l'avvio dei servizi fallirà).
+
+   - **Componenti**:
+
+       - `${...}`: Delimitatori.
+       - `VARIABILE`: Il nome della variabile.
+       - `:?`: L'operatore che indica "fallisci con il seguente messaggio se la variabile è non definita o vuota".
+       - `messaggio_errore_se_mancante`: Il messaggio di errore personalizzato che verrà visualizzato.
+   - **Esempio in `docker-compose.yml`**:
+
+       ```yaml
+       services:
+         database:
+           image: postgres:15
+           environment:
+             POSTGRES_USER: ${DB_USER:?La variabile DB_USER e' obbligatoria per il database.}
+             POSTGRES_PASSWORD: ${DB_PASSWORD:?La variabile DB_PASSWORD e' obbligatoria e non puo' essere vuota.}
+             POSTGRES_DB: ${DB_NAME:-default_app_db} # Qui usiamo un default per il nome del DB
+
+       ```
+
+   - **Comportamento**:
+
+       - Se nel tuo file `.env` (o nella shell) hai `DB_USER=mio_utente_db` e `DB_PASSWORD=password_segreta123`, allora queste variabili verranno usate.
+       - Se `DB_USER` non è definito (o è `DB_USER=`), quando esegui `docker-compose up`, vedrai un errore simile a: `ERROR: Missing mandatory value for "environment" option in service "database": DB_USER: La variabile DB_USER e' obbligatoria per il database.` E i servizi non partiranno.
+       - Lo stesso accadrebbe per `DB_PASSWORD` se fosse mancante o vuota.
+   - **Nota sulla distinzione `:?` vs `?`**:
+
+       - `${VARIABILE:?messaggio}`: Fallisce se `VARIABILE` è non definita **o vuota**.
+       - `${VARIABILE?messaggio}` (senza i due punti): Fallisce solo se `VARIABILE` è **non definita**. Se `VARIABILE` è definita come stringa vuota, allora verrà usata la stringa vuota e non ci sarà errore. La forma con `:?` è generalmente più sicura per le variabili obbligatorie che non devono essere vuote.
+
+- Perché questi due notazioni sono utili?
+
+- **Valori di Default (`:-`):**
+
+    - **Semplicità per lo sviluppo**: Puoi omettere variabili comuni dal tuo `.env` locale se i default sono accettabili per lo sviluppo, rendendo il file `.env` più snello.
+    - **Robustezza**: L'applicazione può partire anche se una configurazione opzionale non è esplicitamente fornita, usando un comportamento predefinito sensato.
+    - **Documentazione implicita**: Mostra quali valori sono considerati "standard" o "di fallback".
+- **Errore per Variabili Obbligatorie (`:?`):**
+
+    - **Sicurezza e Correttezza**: Impedisce l'avvio dell'applicazione con configurazioni critiche mancanti (es. password del database, API key essenziali). Un errore esplicito è meglio di un'applicazione che parte ma non funziona correttamente o in modo insicuro.
+    - **Chiarezza per l'utente/sviluppatore**: Il messaggio di errore personalizzato guida l'utente a fornire le variabili necessarie.
+
+Queste sintassi rendono i file `docker-compose.yml` più flessibili, robusti e auto-documentanti, specialmente quando si lavora in team o si gestiscono configurazioni per diversi ambienti.
+
+#### 6.2.4. **Best Practice**: Esclusione dei file `.env` da Git (uso di `.gitignore` e file `.env.example`)
 
 È **assolutamente cruciale non committare mai file `.env` che contengono segreti reali** (password, API key, ecc.) nel proprio repository Git. Questi file sono specifici dell'ambiente e contengono dati sensibili.
 
 La pratica corretta è:
 
-1. Aggiungere .env al file .gitignore:
+1. Aggiungere `.env` al file `.gitignore`:
 
-    Creare o modificare il file .gitignore nella root del progetto (la stessa directory di docker-compose.yml e .env) e aggiungere la riga:
+    Creare o modificare il file `.gitignore` nella root del progetto (la stessa directory di docker-compose.yml e .env) e aggiungere la riga:
 
     ```gitignore
     # MyProjectRoot/.gitignore
@@ -3369,7 +3630,7 @@ La pratica corretta è:
 
     Questo impedisce a Git di tracciare e committare il file `.env`.
 
-2. Creare un file .env.example (o env.template):
+2. Creare un file `.env.example` (o `env.template`):
 
     Creare un file di esempio, chiamato tipicamente .env.example, che mostri la struttura e i nomi di tutte le variabili d'ambiente necessarie per eseguire l'applicazione, ma con valori fittizi, segnaposto o vuoti. Questo file .env.example DEVE essere committato nel repository Git.
 
@@ -3389,7 +3650,6 @@ La pratica corretta è:
     WEBAPP_CONTAINER_PORT_VAL=8080
     WEBAPP_HOST_PORT_MAPPING_VAL=8080 # Porta sull'host per accedere all'app
     ASPNETCORE_ENVIRONMENT_NAME=Development # Development, Staging, o Production
-
     ```
 
     Quando un altro sviluppatore (o una pipeline di CI/CD) clona il repository, dovrà copiare `.env.example` in `.env` e compilare quest'ultimo con i valori appropriati per il proprio ambiente.
@@ -3400,7 +3660,7 @@ Oltre alla sostituzione di variabili da un file `.env` di default, Docker Compos
 
 Le variabili caricate tramite `env_file` vengono aggiunte all'ambiente del container del servizio, proprio come se fossero state definite sotto la chiave `environment`.
 
-Esempio di docker-compose.yml con env_file:
+Esempio di `docker-compose.yml` con `env_file`:
 
 Supponiamo di avere due file di ambiente separati:
 
@@ -3420,7 +3680,6 @@ MyProjectRoot/webapp.env:
 # MyProjectRoot/webapp.env
 ASPNETCORE_ENVIRONMENT=Staging
 Logging__LogLevel__Default=Warning # Esempio di override per ASP.NET Core
-
 ```
 
 Il `docker-compose.yml` potrebbe essere:
@@ -3428,7 +3687,7 @@ Il `docker-compose.yml` potrebbe essere:
 ```yml
 services:
   db:
-    image: mariadb:10.11
+    image: mariadb:11.4
     env_file:
       - ./db.env # Carica variabili da db.env per il servizio db
     # Le variabili da db.env (es. MARIADB_DATABASE) sono ora disponibili
@@ -3443,10 +3702,9 @@ services:
       # in webapp.env o in un .env globale.
       # Esempio: ConnectionStrings__DefaultConnection generata da variabili in webapp.env o .env globale
       SomeOtherSetting: "valore fisso"
-
 ```
 
-**Ordine di precedenza delle variabili d'ambiente in Docker Compose**:
+**Ordine di precedenza delle variabili d'ambiente in Docker Compose (dal più prioritario al meno prioritario)**:
 
 1. Variabili impostate nella shell da cui si esegue `docker-compose`.
 
@@ -3460,7 +3718,7 @@ services:
 
 6. Variabili definite nel `Dockerfile` (es. `ENV`).
 
-Anche i file specificati in `env_file` (se contengono segreti) non dovrebbero essere committati in Git e dovrebbero avere i loro corrispondenti file `.example`.
+:memo::fire:**Anche i file specificati in `env_file` (se contengono segreti) non dovrebbero essere committati in Git e dovrebbero avere i loro corrispondenti file `.example`.**
 
 L'uso combinato di un file `.env` principale per valori comuni e sostituzioni, e `env_file` per configurazioni specifiche di un servizio (specialmente se numerose), può offrire una buona organizzazione.
 
@@ -3474,7 +3732,7 @@ L'uso combinato di un file `.env` principale per valori comuni e sostituzioni, e
 # docker-compose.yml - NON FARE QUESTO!
 services:
   db:
-    image: mariadb:10.11
+    image: mariadb:11.4
     environment:
       MARIADB_ROOT_PASSWORD: "password123SuperSegreta" # <--- SEGRETO HARDCODED!
       MARIADB_DATABASE: "testdb"
@@ -3537,7 +3795,7 @@ Per ambienti di staging e produzione, i file `.env` locali non sono la soluzione
         ```yml
         services:
           mydb:
-            image: mariadb:10.11
+            image: mariadb:11.4
             environment:
               # MariaDB può leggere la password da un file
               MARIADB_ROOT_PASSWORD_FILE: /run/secrets/db_password
@@ -3585,110 +3843,109 @@ Le principali piattaforme cloud offrono servizi dedicati e altamente sicuri per 
 
 ASP.NET Core ha un sistema di configurazione potente e flessibile che può attingere dati da una varietà di fonti in modo gerarchico. Le fonti di configurazione vengono caricate in un ordine specifico, e i valori provenienti da fonti caricate successivamente sovrascrivono quelli di fonti precedenti se le chiavi sono le stesse.
 
-L'ordine di caricamento predefinito tipico per un'applicazione web ASP.NET Core è:
+1. **L'ordine di caricamento predefinito tipico per un'applicazione web ASP.NET Core è**:
 
-1. File `appsettings.json`.
+   1. File `appsettings.json`.
 
-2. File `appsettings.{Environment}.json` (es. `appsettings.Development.json`, `appsettings.Production.json`). Il valore di `{Environment}` è determinato dalla variabile d'ambiente `ASPNETCORE_ENVIRONMENT`.
+   2. File `appsettings.{Environment}.json` (es. `appsettings.Development.json`, `appsettings.Production.json`). Il valore di `{Environment}` è determinato dalla variabile d'ambiente `ASPNETCORE_ENVIRONMENT`.
 
-3. User Secrets (attivo principalmente in ambiente di Sviluppo).
+   3. User Secrets (attivo principalmente in ambiente di Sviluppo).
 
-4. **Variabili d'ambiente**.
+   4. **Variabili d'ambiente**.
 
-5. Argomenti da riga di comando.
+   5. Argomenti da riga di comando.
 
-**Questo significa che le variabili d'ambiente sovrascrivono i valori definiti nei file `appsettings.json`**. Questo è il meccanismo chiave che rende la configurazione tramite variabili d'ambiente così efficace con Docker.
+   **Questo significa che le variabili d'ambiente sovrascrivono i valori definiti nei file `appsettings.json`**. Questo è il meccanismo chiave che rende la configurazione tramite variabili d'ambiente così efficace con Docker.
 
-Esempio di override:
+   Esempio di override:
 
-Se in appsettings.json si ha:
+   Se in `appsettings.json` si ha:
 
-```json
-{
-  "MyApplication": {
-    "FeatureX": {
-      "IsEnabled": false,
-      "ApiKey": "placeholder_api_key_from_json"
+   ```json
+   {
+    "MyApplication": {
+      "FeatureX": {
+        "IsEnabled": false,
+        "ApiKey": "placeholder_api_key_from_json"
+      }
+    },
+    "ConnectionStrings": {
+      "DefaultConnection": "Server=localhost;Database=devdb_json;..."
     }
-  },
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=localhost;Database=devdb_json;..."
-  }
-}
+   }
 
-```
+   ```
 
-E nel container (o nell'ambiente host da cui Docker Compose legge il file `.env`) si impostano le seguenti variabili d'ambiente:
+   E nel container (o nell'ambiente host da cui Docker Compose legge il file `.env`) si impostano le seguenti variabili d'ambiente:
 
-- `ASPNETCORE_ENVIRONMENT=Production`
+   - `ASPNETCORE_ENVIRONMENT=Production`
 
-- `MyApplication__FeatureX__IsEnabled=true` (notare il doppio underscore `__` per rappresentare la gerarchia JSON)
+   - `MyApplication__FeatureX__IsEnabled=true` (notare il doppio underscore `__` per rappresentare la gerarchia JSON)
 
-- `MyApplication__FeatureX__ApiKey=REAL_API_KEY_FROM_ENV`
+   - `MyApplication__FeatureX__ApiKey=REAL_API_KEY_FROM_ENV`
 
-- `ConnectionStrings__DefaultConnection="Server=db-container-prod;Database=proddb_env;..."`
+   - `ConnectionStrings__DefaultConnection="Server=db-container-prod;Database=proddb_env;..."`
 
-L'applicazione ASP.NET Core:
+   L'applicazione ASP.NET Core:
 
-- Caricherà `appsettings.json` e poi `appsettings.Production.json` (se esiste).
+   - Caricherà `appsettings.json` e poi `appsettings.Production.json` (se esiste).
 
-- Sovrascriverà `MyApplication:FeatureX:IsEnabled` con `true`.
+   - Sovrascriverà `MyApplication:FeatureX:IsEnabled` con `true`.
 
-- Sovrascriverà `MyApplication:FeatureX:ApiKey` con `REAL_API_KEY_FROM_ENV`.
+   - Sovrascriverà `MyApplication:FeatureX:ApiKey` con `REAL_API_KEY_FROM_ENV`.
 
-- Sovrascriverà `ConnectionStrings:DefaultConnection` con la stringa di connessione fornita dalla variabile d'ambiente.
+   - Sovrascriverà `ConnectionStrings:DefaultConnection` con la stringa di connessione fornita dalla variabile d'ambiente.
 
-Leggere segreti da file (come per Docker Secrets o file montati):
+2. **Leggere segreti da file (come per Docker Secrets o file montati)**:
 
-Se un segreto è fornito come file (es. /run/secrets/db_password da Docker Secrets), l'applicazione deve leggere quel file. ASP.NET Core può essere configurato per aggiungere provider di configurazione basati su file.
+    Se un segreto è fornito come file (es. /run/secrets/db_password da Docker Secrets), l'applicazione deve leggere quel file. ASP.NET Core può essere configurato per aggiungere provider di configurazione basati su file.
 
-```cs
-// Esempio in Program.cs per leggere un segreto da un file
-// (questo è un esempio base, integrazioni più robuste sono possibili)
+    ```cs
+    // Esempio in Program.cs per leggere un segreto da un file
+    // (questo è un esempio base, integrazioni più robuste sono possibili)
 
-var dbPasswordPath = "/run/secrets/db_password"; // Percorso standard per Docker Secrets
-if (File.Exists(dbPasswordPath))
-{
-    string passwordFromFile = File.ReadAllText(dbPasswordPath).Trim();
-    // Aggiungere questo valore alla configurazione, magari in modo specifico
-    // per costruire la stringa di connessione.
-    // Esempio: builder.Configuration.AddInMemoryCollection(new Dictionary<string, string> {
-    //    {"Secrets:DbPassword", passwordFromFile}
-    // });
-    // Oppure, si può modificare una stringa di connessione esistente:
-    // var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
-    // if (connStr != null) {
-    //    builder.Configuration["ConnectionStrings:DefaultConnection"] = connStr.Replace("PLACEHOLDER_PASSWORD", passwordFromFile);
-    // }
-}
-
-```
-
-Molte immagini (come MariaDB) supportano la lettura di password da file tramite variabili d'ambiente come `MARIADB_ROOT_PASSWORD_FILE=/run/secrets/db_password`. Per l'applicazione ASP.NET Core, se si usa un ORM come Entity Framework Core, si può costruire la stringa di connessione dinamicamente al momento della configurazione del DbContext, leggendo il segreto dal file.
-
-Integrazione con Cloud Secret Managers:
-
-Per servizi come Azure Key Vault, AWS Secrets Manager, ecc., si utilizzano i pacchetti NuGet specifici forniti dal cloud provider. Questi pacchetti permettono di aggiungere il gestore di segreti come un provider di configurazione ASP.NET Core.
-
-Esempio per Azure Key Vault (richiede il pacchetto Azure.Extensions.AspNetCore.Configuration.Secrets e Azure.Identity):
-
-```cs
-// In Program.cs (semplificato)
-if (builder.Environment.IsProduction()) // O basato su una configurazione specifica
-{
-    var keyVaultEndpoint = builder.Configuration["AzureKeyVaultEndpoint"]; // URL del Key Vault
-    if (!string.IsNullOrEmpty(keyVaultEndpoint))
+    var dbPasswordPath = "/run/secrets/db_password"; // Percorso standard per Docker Secrets
+    if (File.Exists(dbPasswordPath))
     {
-        // Usa DefaultAzureCredential per autenticazione (es. Managed Identity)
-        builder.Configuration.AddAzureKeyVault(new Uri(keyVaultEndpoint), new DefaultAzureCredential());
+        string passwordFromFile = File.ReadAllText(dbPasswordPath).Trim();
+        // Aggiungere questo valore alla configurazione, magari in modo specifico
+        // per costruire la stringa di connessione.
+        // Esempio: builder.Configuration.AddInMemoryCollection(new Dictionary<string, string> {
+        //    {"Secrets:DbPassword", passwordFromFile}
+        // });
+        // Oppure, si può modificare una stringa di connessione esistente:
+        // var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
+        // if (connStr != null) {
+        //    builder.Configuration["ConnectionStrings:DefaultConnection"] = connStr.Replace("PLACEHOLDER_PASSWORD", passwordFromFile);
+        // }
     }
-}
+    ```
 
-```
+    Molte immagini (come MariaDB) supportano la lettura di password da file tramite variabili d'ambiente come `MARIADB_ROOT_PASSWORD_FILE=/run/secrets/db_password`. Per l'applicazione ASP.NET Core, se si usa un ORM come Entity Framework Core, si può costruire la stringa di connessione dinamicamente al momento della configurazione del DbContext, leggendo il segreto dal file.
 
-Questo caricherà i segreti da Azure Key Vault e li renderà disponibili attraverso l'interfaccia `IConfiguration` standard di ASP.NET Core, sovrascrivendo valori da fonti precedenti se le chiavi corrispondono.
+3. **Integrazione con Cloud Secret Managers**:
 
-La strategia di gestione della configurazione e dei segreti deve essere pianificata attentamente, privilegiando la sicurezza e la flessibilità per i diversi ambienti di deployment.
+    Per servizi come Azure Key Vault, AWS Secrets Manager, ecc., si utilizzano i pacchetti NuGet specifici forniti dal cloud provider. Questi pacchetti permettono di aggiungere il gestore di segreti come un provider di configurazione ASP.NET Core.
+
+    Esempio per Azure Key Vault (richiede il pacchetto Azure.Extensions.AspNetCore.Configuration.Secrets e Azure.Identity):
+
+    ```cs
+    // In Program.cs (semplificato)
+    if (builder.Environment.IsProduction()) // O basato su una configurazione specifica
+    {
+        var keyVaultEndpoint = builder.Configuration["AzureKeyVaultEndpoint"]; // URL del Key Vault
+        if (!string.IsNullOrEmpty(keyVaultEndpoint))
+        {
+            // Usa DefaultAzureCredential per autenticazione (es. Managed Identity)
+            builder.Configuration.AddAzureKeyVault(new Uri(keyVaultEndpoint), new DefaultAzureCredential());
+        }
+    }
+
+    ```
+
+    Questo caricherà i segreti da Azure Key Vault e li renderà disponibili attraverso l'interfaccia `IConfiguration` standard di ASP.NET Core, sovrascrivendo valori da fonti precedenti se le chiavi corrispondono.
+
+    La strategia di gestione della configurazione e dei segreti deve essere pianificata attentamente, privilegiando la sicurezza e la flessibilità per i diversi ambienti di deployment.
 
 ## 7. Orchestrazione con Docker Compose
 
@@ -3761,7 +4018,7 @@ volumes:        # (Opzionale, ma essenziale per la persistenza dei dati stateful
 
 ```
 
-- **`version`**: Indica la versione dello schema del file Docker Compose. Diverse versioni supportano diverse funzionalità e sintassi. È importante consultare la documentazione di Docker per la compatibilità.
+- **`version`**: Indica la versione dello schema del file Docker Compose. Diverse versioni supportano diverse funzionalità e sintassi. È importante consultare la documentazione di Docker per la compatibilità. Nelle ultime versioni di Docker Compose il parametro `version` è stato deprecato e per tale motivo non è stato riportato negli esempi di queste note.
 
 - **`services`**: È il cuore del file. Ogni chiave di primo livello sotto `services` (es. `webapp`, `db`) definisce un servizio. Il nome del servizio è significativo: viene usato da Docker Compose per creare i container (spesso con un prefisso basato sul nome della directory del progetto) e, crucialmente, come **hostname** per la comunicazione tra i servizi all'interno della rete creata da Compose.
 
@@ -3777,7 +4034,7 @@ All'interno della sezione `services`, ogni servizio (es. `webapp`, `db`) viene c
 
     Specifica l'immagine Docker da utilizzare per creare il container del servizio. Docker cercherà prima l'immagine localmente; se non la trova, la scaricherà dal registro configurato (di default, Docker Hub).
 
-    Esempio: image: mariadb:10.11
+    Esempio: image: mariadb:11.4
 
 - build: <percorso_contesto_build> o build: { context: <path>, dockerfile: <nome_Dockerfile_alternativo>, args: { ... }, ... }:
 
@@ -3889,7 +4146,7 @@ Esistono due tipi principali di montaggi di volumi con Docker Compose:
         ```yml
         services:
           db:
-            image: mariadb:10.11
+            image: mariadb:11.4
             volumes:
               # Mappa il named volume 'mariadb_data' alla directory dati di MariaDB nel container
               - mariadb_data:/var/lib/mysql
@@ -3934,7 +4191,7 @@ Esistono due tipi principali di montaggi di volumi con Docker Compose:
 
         ```
 
-        **Attenzione con i Bind Mounts per il codice sorgente**: Se il `Dockerfile` copia il codice sorgente e lo compila (come nel nostro esempio multi-stage), un bind mount della directory sorgente sull'host nella directory `/app` del container (dove risiedono i file pubblicati) potrebbe sovrascrivere gli artefatti di build con il codice sorgente non compilato, a meno che l'entrypoint non sia configurato per compilare/eseguire da sorgente (es. con `dotnet watch run`). Per la produzione, si preferisce sempre avere gli artefatti di build cotti nell'immagine e non usare bind mounts per il codice.
+        **Attenzione con i Bind Mounts per il codice sorgente**: Se il `Dockerfile` copia il codice sorgente e lo compila (come nel nostro esempio multi-stage), un bind mount della directory sorgente sull'host nella directory `/app` del container (dove risiedono i file pubblicati) potrebbe sovrascrivere gli artefatti di build con il codice sorgente non compilato, a meno che l'entrypoint non sia configurato per compilare/eseguire da sorgente (es. con `dotnet watch run`). Per la produzione, si preferisce sempre avere gli artefatti di build fissati nell'immagine e non usare bind mounts per il codice.
 
 **Scelta tra Named Volumes e Bind Mounts**:
 
@@ -3975,7 +4232,7 @@ services:
       - my-app-network # Connette esplicitamente a questa rete
 
   db: # Nome del servizio: 'db'
-    image: mariadb:10.11
+    image: mariadb:11.4
     environment:
       MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD_SECRET}
       MARIADB_DATABASE: ${MARIADB_DATABASE_NAME}
@@ -3997,7 +4254,6 @@ volumes:
 networks:
   my-app-network: # Definizione della rete personalizzata
     driver: bridge
-
 ```
 
 - Il servizio `webapp` può connettersi al servizio `db` usando l'hostname `db` nella sua stringa di connessione (`Server=db`).
@@ -4014,7 +4270,9 @@ Si applicheranno ora tutti i concetti visti per creare un setup completo con Doc
 
 Struttura delle directory del progetto (suggerita):
 
-Assicurarsi che il progetto sia strutturato come segue. Se il Dockerfile e .dockerignore sono stati creati dentro MyWebApiApp/, andrà bene. Il docker-compose.yml e i file .env andranno nella directory che contiene MyWebApiApp/. Chiameremo questa directory MyProjectRoot/.
+Assicurarsi che il progetto sia strutturato come segue. Se il `Dockerfile` e `.dockerignore` sono stati creati dentro MyWebApiApp, andrà comunque bene, tuttavia è meglio seguire l'approccio mostrato di seguito. Il `docker-compose.yml` e i file `.env` andranno nella directory che contiene `MyWebApiApp`. Chiameremo questa directory `MyProjectRoot`.
+
+Un esempio completo del codice mostrato in questa sezione è nella cartella [app-con-docker-compose](../../docker-projects/app-con-docker-compose/MyWebApiApp/)
 
 ```text
 MyProjectRoot/
@@ -4030,9 +4288,8 @@ MyProjectRoot/
 │   └── Dockerfile            # Dockerfile per MyWebApiApp (creato nella Sezione 3.2.2)
 ├── .dockerignore             # Globale per il contesto di build di Docker Compose (opzionale, ma utile se si hanno altri file/cartelle nella root)
 ├── docker-compose.yml        # File di Docker Compose (da creare)
-├── .env                      # Variabili d'ambiente (NON COMMETTERE SE CONTIENE SEGRETI REALI) (da creare)
+├── .env                      # Variabili d'ambiente (NON COMMITTARE SE CONTIENE SEGRETI REALI) (da creare)
 └── .env.example              # Esempio di file .env (DA COMMITTERE) (da creare)
-
 ```
 
 1. MyWebApiApp/Dockerfile:
@@ -4040,20 +4297,76 @@ MyProjectRoot/
     Si utilizzerà il Dockerfile multi-stage creato nella Sezione 3.2.2. Assicurarsi che sia presente in MyWebApiApp/Dockerfile.
 
     ```dockerfile
-    # MyWebApiApp/Dockerfile (come da Sezione 3.2.2)
-    FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build-env
-    WORKDIR /app
-    COPY *.csproj ./
-    RUN dotnet restore
-    COPY . ./
-    RUN dotnet publish -c Release -o out
-    FROM mcr.microsoft.com/dotnet/aspnet:8.0
-    WORKDIR /app
-    COPY --from=build-env /app/out .
-    ENV ASPNETCORE_URLS=http://+:8080
-    EXPOSE 8080
-    ENTRYPOINT ["dotnet", "MyWebApiApp.dll"]
+    # ===== STAGE 1: BASE =====
+    # Immagine di runtime ASP.NET Core 9.0 per la fase finale
+    # Questa sarà l'immagine base per l'esecuzione dell'applicazione
+    FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
 
+    # Imposta la directory di lavoro dove verrà eseguita l'app
+    WORKDIR /app
+
+    # Espone la porta 8080 per il traffico HTTP
+    # Questa è solo documentazione - non pubblica effettivamente la porta
+    EXPOSE 8080
+
+    # Configura ASP.NET Core per ascoltare su tutte le interfacce sulla porta 8080
+    ENV ASPNETCORE_URLS=http://+:8080
+
+    # Passa all'utente 'app' per motivi di sicurezza (non root)
+    USER app
+
+    # ===== STAGE 2: BUILD =====
+    # Immagine SDK .NET 9.0 per la compilazione, supporta multi-platform
+    FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+
+    # Parametro per specificare la configurazione di build (default: Release)
+    ARG configuration=Release
+
+    # Directory di lavoro per i file sorgente
+    WORKDIR /src
+
+    # Copia solo il file .csproj per sfruttare il layer caching di Docker
+    # Se le dipendenze non cambiano, Docker riutilizza i layer esistenti
+    COPY ["MyWebApiApp.csproj", "./"]
+
+    # Ripristina le dipendenze NuGet del progetto
+    RUN dotnet restore "MyWebApiApp.csproj"
+
+    # Copia tutti i file del progetto
+    COPY . .
+
+    # Torna nella directory sorgente
+    WORKDIR "/src/."
+
+    # Compila il progetto nella configurazione specificata
+    # Output nella cartella /app/build
+    RUN dotnet build "MyWebApiApp.csproj" -c $configuration -o /app/build
+
+    # ===== STAGE 3: PUBLISH =====
+    # Usa l'immagine di build precedente come base
+    FROM build AS publish
+
+    # Stesso parametro di configurazione
+    ARG configuration=Release
+
+    # Pubblica l'applicazione ottimizzata per il deployment
+    # UseAppHost=false evita di creare un eseguibile nativo
+    RUN dotnet publish "MyWebApiApp.csproj" -c $configuration -o /app/publish /p:UseAppHost=false
+
+    # ===== STAGE 4: FINAL =====
+    # Ritorna all'immagine base di runtime (più leggera, senza SDK)
+    FROM base AS final
+
+    # Directory di lavoro per l'applicazione finale
+    WORKDIR /app
+
+    # Copia i file pubblicati dalla stage 'publish' nell'immagine finale
+    # Questo mantiene l'immagine finale piccola (solo runtime + app)
+    COPY --from=publish /app/publish .
+
+    # Comando di avvio dell'applicazione
+    # Esegue 'dotnet MyWebApiApp.dll' quando il container si avvia
+    ENTRYPOINT ["dotnet", "MyWebApiApp.dll"]
     ```
 
 2. .dockerignore (nella root MyProjectRoot/):
@@ -4067,17 +4380,16 @@ MyProjectRoot/
     .idea/
     *.md # Esempio, se non si vogliono file Markdown nel contesto
     .env # Cruciale se il contesto di build fosse la root e si volesse evitare di copiarlo
-
     ```
 
     Per ora, l'importante è che `MyWebApiApp/.dockerignore` esista e sia configurato per escludere `bin/` e `obj/` dal contesto di build di `MyWebApiApp`.
 
 3. MyWebApiApp/appsettings.json:
 
-    Assicurarsi che la stringa di connessione sia presente ma possa essere vuota o un placeholder, poiché verrà sovrascritta dalle variabili d'ambiente fornite da Docker Compose.
+    Assicurarsi che la stringa di connessione sia presente ma possa essere vuota o un placeholder, poiché verrà sovrascritta dalle variabili d'ambiente fornite da Docker Compose. Anche in questo caso verranno predisposte due versioni di `appsettings.json` per gestire sia il caso di `ASPNETCORE_ENVIRONMENT=Production` che il caso di `ASPNETCORE_ENVIRONMENT=Development`
 
     ```json
-    // MyWebApiApp/appsettings.json
+    // MyWebApiApp/appsettings.json per Production
     {
       "Logging": {
         "LogLevel": {
@@ -4090,10 +4402,24 @@ MyProjectRoot/
         "DefaultConnection": "" // Sarà sovrascritta dalle variabili d'ambiente
       }
     }
-
     ```
 
-    Il `Program.cs` (come modificato nella Sezione 5.5 per includere `MySqlConnector` e il test di connessione) leggerà `config.GetConnectionString("DefaultConnection")`.
+    ```json
+    // MyWebApiApp/appsettings.Development.json per Development
+    {
+      "Logging": {
+        "LogLevel": {
+          "Default": "Information",
+          "Microsoft.AspNetCore": "Warning"
+        }
+      },
+      "ConnectionStrings": {
+        "DefaultConnection": "Server=localhost;Port=3306;Database=mywebapiappdb;Uid=mywebapiappuser;Pwd=userPassword456;AllowPublicKeyRetrieval=true"
+      }
+    }
+    ```
+
+    Il `Program.cs` leggerà `config.GetConnectionString("DefaultConnection")`.
 
 4. MyProjectRoot/.env.example:
 
@@ -4128,7 +4454,7 @@ MyProjectRoot/
 
     # === Configurazione Database Host Port (Opzionale) ===
     # Porta sull'HOST a cui mappare la porta del container MariaDB (per accesso da strumenti esterni).
-    MARIADB_HOST_PORT=3307
+    MARIADB_HOST_PORT=3306
 
     ```
 
@@ -4198,7 +4524,7 @@ services:
 
   # Servizio per il database MariaDB
   db:
-    image: mariadb:10.11 # Usare una versione specifica è una buona pratica
+    image: mariadb:11.4 # Usare una versione specifica è una buona pratica
     container_name: mariadb_service_compose # Nome specifico per il container
     environment:
       # Le password e i nomi sono presi dal file .env
@@ -4250,7 +4576,7 @@ networks:
 
 - `services.webapp.depends_on.db.condition: service_healthy`: Questa è una dipendenza robusta. Il servizio `webapp` attenderà finché il servizio `db` non solo è avviato, ma ha anche superato il suo `healthcheck`, indicando che è pronto ad accettare connessioni.
 
-- `services.db.image: mariadb:10.11`: Specifica una versione fissa di MariaDB per build più consistenti.
+- `services.db.image: mariadb:11.4`: Specifica una versione fissa di MariaDB per build più consistenti.
 
 - `services.db.environment`: Popolato interamente dalle variabili nel file `.env`.
 
@@ -4270,7 +4596,6 @@ Tutti i seguenti comandi devono essere eseguiti dal terminale, nella directory `
 
     ```sh
     docker-compose up
-
     ```
 
     Questo comando avvia i servizi in foreground, mostrando i log aggregati di tutti i container nel terminale. La prima volta che viene eseguito (o se sono state fatte modifiche al Dockerfile o al contesto di build di webapp), Docker Compose costruirà l'immagine webapp. Scaricherà l'immagine mariadb se non presente localmente.
@@ -4279,7 +4604,6 @@ Tutti i seguenti comandi devono essere eseguiti dal terminale, nella directory `
 
     ```sh
     docker-compose up -d
-
     ```
 
 - Fermare e rimuovere i container, le reti e i volumi (opzionale per i volumi):
@@ -4288,14 +4612,12 @@ Tutti i seguenti comandi devono essere eseguiti dal terminale, nella directory `
 
     ```sh
     docker-compose down
-
     ```
 
     Per rimuovere anche i **volumi nominati** definiti nella sezione `volumes` del `docker-compose.yml` (come `db_data_compose`):
 
     ```sh
     docker-compose down -v
-
     ```
 
     **ATTENZIONE**: `docker-compose down -v` **cancella permanentemente i dati** memorizzati nel volume `db_data_compose` (quindi il contenuto del database MariaDB). Usare con cautela.
@@ -4306,14 +4628,12 @@ Tutti i seguenti comandi devono essere eseguiti dal terminale, nella directory `
 
     ```sh
     docker-compose logs
-
     ```
 
     Per seguire i log in tempo reale (come `tail -f`):
 
     ```sh
     docker-compose logs -f
-
     ```
 
     Per visualizzare i log di un servizio specifico (es. `webapp` o `db`):
@@ -4322,14 +4642,12 @@ Tutti i seguenti comandi devono essere eseguiti dal terminale, nella directory `
     docker-compose logs -f webapp
     # In un altro terminale:
     # docker-compose logs -f db
-
     ```
 
 - **Elencare i container in esecuzione gestiti da Compose per il progetto corrente**:
 
     ```sh
     docker-compose ps
-
     ```
 
     Mostra lo stato dei container (es. `Up`, `Exit 0`, `Up (healthy)`), le porte mappate, ecc.
@@ -4438,11 +4756,11 @@ Tutti i seguenti comandi devono essere eseguiti dal terminale, nella directory `
 
 3. Accedere all'applicazione web:
 
-    Aprire un browser e navigare all'URL http://localhost:${WEBAPP_HOST_PORT} (es. http://localhost:8088 se si usa il valore 8088 dal file .env di esempio). Si dovrebbe vedere la pagina index.html.
+    Aprire un browser e navigare all'URL `http://localhost:${WEBAPP_HOST_PORT}` (es. http://localhost:8088 se si usa il valore 8088 dal file .env di esempio). Si dovrebbe vedere la pagina index.html.
 
 4. Testare la connessione al database:
 
-    Navigare all'endpoint http://localhost:${WEBAPP_HOST_PORT}/dbtest. Si dovrebbe vedere il messaggio di successo della connessione a MariaDB, che include la versione del server.
+    Navigare all'endpoint `http://localhost:${WEBAPP_HOST_PORT}/dbtest`. Si dovrebbe vedere il messaggio di successo della connessione a MariaDB, che include la versione del server.
 
 5. Testare la persistenza dei dati:
 
@@ -4456,88 +4774,81 @@ Tutti i seguenti comandi devono essere eseguiti dal terminale, nella directory `
 
     // ... (codice esistente per builder, app, UseDefaultFiles, UseStaticFiles, /hello, /dbtest) ...
 
-    // Endpoint per creare una tabella (se non esiste) e inserire una voce
-    app.MapPost("/entries", async (IConfiguration config) => {
-        string connectionString = config.GetConnectionString("DefaultConnection");
+    // Endpoint per creare una nuova voce in TestEntries
+    app.MapPost("/entries", async (AppDbContext dbContext, IHostEnvironment env) =>
+    {
         var response = new StringBuilder();
-        response.AppendLine("Risultato Creazione Voce:");
+        response.AppendLine($"Risultato Creazione Voce (Ambiente: {env.EnvironmentName}):");
         try
         {
-            using (var connection = new MySqlConnection(connectionString))
+            // Crea una nuova istanza dell'entità TestEntry
+            var newEntry = new TestEntry
             {
-                await connection.OpenAsync();
-                // Crea la tabella se non esiste
-                using (var commandCreateTable = connection.CreateCommand())
-                {
-                    commandCreateTable.CommandText = @"
-                        CREATE TABLE IF NOT EXISTS TestEntries (
-                            Id INT AUTO_INCREMENT PRIMARY KEY,
-                            Message VARCHAR(255) NOT NULL,
-                            CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                        );";
-                    await commandCreateTable.ExecuteNonQueryAsync();
-                    response.AppendLine("Tabella 'TestEntries' verificata/creata.");
-                }
+                Message = $"Voce creata via API ({env.EnvironmentName}) alle {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss UTC}"
+                // Timestamp è già impostato su DateTime.UtcNow di default nel modello TestEntry
+            };
 
-                // Inserisci una nuova voce
-                using (var commandInsert = connection.CreateCommand())
-                {
-                    string messageContent = $"Voce creata via API alle {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss UTC}";
-                    commandInsert.CommandText = "INSERT INTO TestEntries (Message) VALUES (@message);";
-                    commandInsert.Parameters.AddWithValue("@message", messageContent);
-                    int rowsAffected = await commandInsert.ExecuteNonQueryAsync();
-                    response.AppendLine($"{rowsAffected} riga(e) inserita(e) con messaggio: '{messageContent}'.");
-                }
-                await connection.CloseAsync();
+            // Aggiungi la nuova entità al DbContext
+            dbContext.TestEntries.Add(newEntry);
+
+            // Salva le modifiche nel database
+            await dbContext.SaveChangesAsync();
+
+            response.AppendLine($"SUCCESSO: Record 'TestEntry' inserito con ID: {newEntry.Id}.");
+            response.AppendLine($"Messaggio: '{newEntry.Message}'");
+            response.AppendLine($"Timestamp: {newEntry.Timestamp:yyyy-MM-dd HH:mm:ss UTC}");
+        }
+        catch (DbUpdateException ex) // Cattura eccezioni specifiche di EF Core durante il salvataggio
+        {
+            response.AppendLine($"ERRORE DbUpdateException: Non è stato possibile salvare la voce nel database.");
+            response.AppendLine($"Messaggio: {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                response.AppendLine($"Inner Exception: {ex.InnerException.Message}");
             }
         }
-        catch (Exception ex)
+        catch (Exception ex) // Cattura altre eccezioni generiche
         {
-            response.AppendLine($"ERRORE: {ex.Message}");
+            response.AppendLine($"ERRORE Generico: {ex.GetType().Name} - {ex.Message}");
         }
         return Results.Text(response.ToString());
     });
 
-    // Endpoint per leggere tutte le voci dalla tabella
-    app.MapGet("/entries", async (IConfiguration config) => {
-        string connectionString = config.GetConnectionString("DefaultConnection");
-        var entries = new StringBuilder();
-        entries.AppendLine("Voci nel database 'TestEntries':\n");
+    // Endpoint per leggere tutte le voci da TestEntries (o le più recenti)
+    app.MapGet("/entries", async (AppDbContext dbContext, IHostEnvironment env) =>
+    {
+        var entriesOutput = new StringBuilder();
+        entriesOutput.AppendLine($"Voci nel database 'TestEntries' (Ambiente: {env.EnvironmentName}):\n");
         try
         {
-            using (var connection = new MySqlConnection(connectionString))
+            // Recupera le ultime 20 voci, ordinate dalla più recente
+            var entries = await dbContext.TestEntries
+                                        .OrderByDescending(e => e.Timestamp) // Ordina per timestamp decrescente
+                                        .Take(20)                            // Prendi al massimo le ultime 20
+                                        .ToListAsync();                     // Esegui la query e materializza i risultati
+
+            if (!entries.Any()) // .Any() è più efficiente di .Count() > 0 se devi solo controllare l'esistenza
             {
-                await connection.OpenAsync();
-                using (var command = connection.CreateCommand())
+                entriesOutput.Append("Nessuna voce trovata nella tabella 'TestEntries'.\n");
+                entriesOutput.Append("Suggerimento: Puoi creare una nuova voce facendo una richiesta POST a /entries.\n");
+            }
+            else
+            {
+                foreach (var entry in entries)
                 {
-                    command.CommandText = "SELECT Id, Message, CreatedAt FROM TestEntries ORDER BY CreatedAt DESC LIMIT 20;";
-                    using (var reader = await command.ExecuteReaderAsync())
-                    {
-                        if (!reader.HasRows)
-                        {
-                            entries.Append("Nessuna voce trovata.\n");
-                        }
-                        while (await reader.ReadAsync())
-                        {
-                            entries.Append($"ID: {reader.GetInt32(0)}, Messaggio: \"{reader.GetString(1)}\", CreatoIl: {reader.GetDateTime(2):yyyy-MM-dd HH:mm:ss}\n");
-                        }
-                    }
+                    entriesOutput.Append($"ID: {entry.Id}, Messaggio: \"{entry.Message}\", CreatoIl: {entry.Timestamp:yyyy-MM-dd HH:mm:ss UTC}\n");
                 }
-                await connection.CloseAsync();
             }
         }
-        catch (Exception ex)
+        catch (Exception ex) // Cattura eccezioni generiche (es. se il database non è raggiungibile)
         {
-            entries.Append($"ERRORE: {ex.Message}\n");
-            if (ex.Message.ToLower().Contains("testentries' doesn't exist")) {
-                 entries.Append("Suggerimento: La tabella potrebbe non esistere. Prova a fare una richiesta POST a /entries per crearla e inserire la prima voce.\n");
-            }
+            entriesOutput.Append($"ERRORE durante la lettura delle voci: {ex.GetType().Name} - {ex.Message}\n");
+            entriesOutput.Append("Verificare che il database sia accessibile e che le migrazioni siano state applicate correttamente.\n");
         }
-        return Results.Text(entries.ToString());
+        return Results.Text(entriesOutput.ToString());
     });
 
     app.Run();
-
     ```
 
     Passaggi per il test di persistenza:
@@ -4638,13 +4949,13 @@ La configurazione di un'applicazione tipicamente varia significativamente tra i 
 
     - **Obiettivo**: Massima sicurezza, stabilità, prestazioni e monitoraggio.
 
-Docker Compose Override Files:
+- **Docker Compose Override Files**:
 
-Docker Compose supporta l'uso di file di override, tipicamente docker-compose.override.yml. Questo file, se presente nella stessa directory del docker-compose.yml, viene automaticamente unito alla configurazione principale.
+Docker Compose supporta l'uso di file di override, tipicamente `docker-compose.override.yml`. Questo file, se presente nella stessa directory del `docker-compose.yml`, viene automaticamente unito alla configurazione principale.
 
-È una pratica comune usare docker-compose.yml per la configurazione di base, comune a tutti gli ambienti, e docker-compose.override.yml per personalizzazioni specifiche dell'ambiente di sviluppo locale (es. montaggio di volumi per il codice sorgente per hot-reload, esposizione di porte diverse, abilitazione di strumenti di debug).
+È una pratica comune usare `docker-compose.yml` per la configurazione di base, comune a tutti gli ambienti, e `docker-compose.override.yml` per personalizzazioni specifiche dell'ambiente di sviluppo locale (es. montaggio di volumi per il codice sorgente per hot-reload, esposizione di porte diverse, abilitazione di strumenti di debug).
 
-Il file docker-compose.override.yml non dovrebbe essere committato se contiene configurazioni specifiche della macchina o segreti locali (anche se i segreti dovrebbero comunque essere in .env). Spesso, si committa un docker-compose.override.yml.example.
+**Il file `docker-compose.override.yml` non dovrebbe essere committato se contiene configurazioni specifiche della macchina o segreti locali (anche se i segreti dovrebbero comunque essere in .env). Spesso, si committa un `docker-compose.override.yml.example`.**
 
 Esempio di `docker-compose.override.yml` (per sviluppo locale):
 
@@ -4668,7 +4979,6 @@ services:
   db:
     ports:
       - "3308:3306" # Porta diversa per il db sull'host per evitare conflitti
-
 ```
 
 Questo permette di mantenere il `docker-compose.yml` pulito e focalizzato sulla definizione dei servizi, mentre le personalizzazioni di sviluppo sono isolate.

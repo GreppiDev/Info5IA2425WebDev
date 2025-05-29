@@ -3,16 +3,17 @@
 # Questa sarà l'immagine base per l'esecuzione dell'applicazione
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
 
+# Definisci un argomento di build per la porta, con un valore di default
+ARG APP_INTERNAL_PORT_ARG=8080
+
 # Imposta la directory di lavoro dove verrà eseguita l'app
 WORKDIR /app
 
+# Configura ASP.NET Core per ascoltare su tutte le interfacce sulla porta 8080
+ENV ASPNETCORE_URLS=http://+:${APP_INTERNAL_PORT_ARG}
 # Espone la porta 8080 per il traffico HTTP
 # Questa è solo documentazione - non pubblica effettivamente la porta
-EXPOSE 8080
-
-# Configura ASP.NET Core per ascoltare su tutte le interfacce sulla porta 8080
-ENV ASPNETCORE_URLS=http://+:8080
-
+EXPOSE ${APP_INTERNAL_PORT_ARG}
 # Passa all'utente 'app' per motivi di sicurezza (non root)
 USER app
 

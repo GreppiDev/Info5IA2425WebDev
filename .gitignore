@@ -359,7 +359,6 @@ MigrationBackup/
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
 
-# Fody - auto-generated XML schema
-FodyWeavers.xsd
-/BulkyBookWeb/Properties/ServiceDependencies/MyBulky - Web Deploy/profile.arm.json
-/BulkyBookWeb/.config/dotnet-tools.json
+# Ignora i file di ambiente locali specifici
+.env
+*.env.local
