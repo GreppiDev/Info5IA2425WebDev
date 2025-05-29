@@ -12,11 +12,11 @@
     - [C. Frontend (HTML/CSS/JS per Login e Ricerca)](#c-frontend-htmlcssjs-per-login-e-ricerca)
   - [Svolgimento della seconda parte](#svolgimento-della-seconda-parte)
     - [Quesito I: disdetta prenotazione di un'attività e gestione del credito](#quesito-i-disdetta-prenotazione-di-unattività-e-gestione-del-credito)
-      - [Quesito II: pagina dinamica che consenta all’utente di ottenere l’elenco delle palestre con mappa](#quesito-ii-pagina-dinamica-che-consenta-allutente-di-ottenere-lelenco-delle-palestre-con-mappa)
-        - [Alternativa 1: Elenco Testuale delle Palestre](#alternativa-1-elenco-testuale-delle-palestre)
-        - [Alternativa 2: Mappa Geografica delle Palestre](#alternativa-2-mappa-geografica-delle-palestre)
-      - [Quesito III: le differenze, anche attraverso esempi, tra i predicati ANY, ALL ed EXISTS del linguaggio SQL](#quesito-iii-le-differenze-anche-attraverso-esempi-tra-i-predicati-any-all-ed-exists-del-linguaggio-sql)
-      - [Quesito IV: Normalizzazione della Tabella Fornita](#quesito-iv-normalizzazione-della-tabella-fornita)
+    - [Quesito II: pagina dinamica che consenta all’utente di ottenere l’elenco delle palestre con mappa](#quesito-ii-pagina-dinamica-che-consenta-allutente-di-ottenere-lelenco-delle-palestre-con-mappa)
+      - [Alternativa 1: Elenco Testuale delle Palestre](#alternativa-1-elenco-testuale-delle-palestre)
+      - [Alternativa 2: Mappa Geografica delle Palestre](#alternativa-2-mappa-geografica-delle-palestre)
+    - [Quesito III: le differenze, anche attraverso esempi, tra i predicati ANY, ALL ed EXISTS del linguaggio SQL](#quesito-iii-le-differenze-anche-attraverso-esempi-tra-i-predicati-any-all-ed-exists-del-linguaggio-sql)
+    - [Quesito IV: Normalizzazione della Tabella Fornita](#quesito-iv-normalizzazione-della-tabella-fornita)
 
 ## Traccia della prova
 
@@ -2969,7 +2969,7 @@ L'endpoint backend `/api/prenotazioni` (mostrato nella PRIMA PARTE, sezione 6.B)
     });
     ```
 
-#### Quesito II: pagina dinamica che consenta all’utente di ottenere l’elenco delle palestre con mappa
+### Quesito II: pagina dinamica che consenta all’utente di ottenere l’elenco delle palestre con mappa
 
 **Obiettivo:** Realizzare una pagina dinamica che permetta all'utente di inserire il nome di una città e ottenere:
 
@@ -3003,7 +3003,7 @@ app.MapGet("/api/palestre", async ([FromQuery] string? citta, SportOvunqueDbCont
 
 ```
 
-##### Alternativa 1: Elenco Testuale delle Palestre
+#### Alternativa 1: Elenco Testuale delle Palestre
 
 Questa soluzione presenta un semplice form per inserire la città e visualizza i risultati come un elenco.
 
@@ -3125,7 +3125,7 @@ Questa soluzione presenta un semplice form per inserire la città e visualizza i
         });
     ```
 
-##### Alternativa 2: Mappa Geografica delle Palestre
+#### Alternativa 2: Mappa Geografica delle Palestre
 
 Questa soluzione utilizza Leaflet.js per visualizzare le palestre su una mappa interattiva.
 
@@ -3347,7 +3347,7 @@ Questa soluzione utilizza Leaflet.js per visualizzare le palestre su una mappa i
     });
     ```
 
-#### Quesito III: le differenze, anche attraverso esempi, tra i predicati ANY, ALL ed EXISTS del linguaggio SQL
+### Quesito III: le differenze, anche attraverso esempi, tra i predicati ANY, ALL ed EXISTS del linguaggio SQL
 
 I predicati `ANY`, `ALL` ed `EXISTS` in SQL sono utilizzati nelle clausole `WHERE` o `HAVING` per confrontare un valore con un insieme di valori restituiti da una subquery o per verificare l'esistenza di righe che soddisfano una certa condizione. Vediamoli nel dettaglio con esempi.
 
@@ -3467,7 +3467,7 @@ I predicati `ANY`, `ALL` ed `EXISTS` in SQL sono utilizzati nelle clausole `WHER
 | `ANY` | Confronta un valore con *almeno un* valore della subquery. | Il confronto (es. `=`, `>`, `<`) è vero per almeno un valore restituito dalla subquery. | Una singola colonna | `= ANY` è come `IN`. Se la subquery è vuota, il risultato è FALSO. |
 | `ALL` | Confronta un valore con *tutti* i valori della subquery. | Il confronto è vero per tutti i valori restituiti dalla subquery O la subquery è vuota. | Una singola colonna | `<> ALL` è come `NOT IN`. Se la subquery è vuota, il risultato è VERO. |
 
-#### Quesito IV: Normalizzazione della Tabella Fornita
+### Quesito IV: Normalizzazione della Tabella Fornita
 
 Analizziamo la tabella fornita per verificarne le proprietà di normalizzazione e proporre uno schema equivalente che rispetti la Terza Forma Normale (3NF).
 

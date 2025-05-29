@@ -71,8 +71,9 @@
     4. [Normalizzazione](./rasd/normalizzazione/index.md)
 
 12. [Cenni ai protocolli OAuth2.0 e OpenID Connect](./web/web-docs/oauth-oidc/index.md)
+13. [Cenni al GDPR e Implicazioni per la Gestione di Siti Web](./web/web-docs/gdpr/index.md)
 
-13. Verso l'Esame di Stato
+14. Verso l'Esame di Stato
     1. [Traccia di informatica del 2017 - sessione ordinaria](./esame/tracce-svolte/2017/ordinaria/index.md)
     2. [Traccia di Informatica del 2023 - sessione ordinaria](./esame/tracce-svolte/2023/ordinaria/index.md)
     3. [Traccia di Informatica del 2023 - sessione suppletiva](./esame/tracce-svolte/2023/suppletiva/index.md)

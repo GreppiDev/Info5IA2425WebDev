@@ -14,11 +14,11 @@
     - [C. Frontend (HTML, CSS, JavaScript per Login, Ricerca Sessioni e Prenotazione)](#c-frontend-html-css-javascript-per-login-ricerca-sessioni-e-prenotazione)
   - [Svolgimento della seconda parte](#svolgimento-della-seconda-parte)
     - [Quesito I: disdetta prenotazione di un'attività e gestione del credito](#quesito-i-disdetta-prenotazione-di-unattività-e-gestione-del-credito)
-      - [Quesito II: pagina dinamica che consenta all’utente di ottenere l’elenco delle palestre con mappa](#quesito-ii-pagina-dinamica-che-consenta-allutente-di-ottenere-lelenco-delle-palestre-con-mappa)
-        - [Alternativa 1: Elenco Testuale delle Sedi Palestre](#alternativa-1-elenco-testuale-delle-sedi-palestre)
-        - [Alternativa 2: Mappa Geografica delle Sedi Palestre](#alternativa-2-mappa-geografica-delle-sedi-palestre)
-      - [Quesito III: le differenze, anche attraverso esempi, tra i predicati ANY, ALL ed EXISTS del linguaggio SQL](#quesito-iii-le-differenze-anche-attraverso-esempi-tra-i-predicati-any-all-ed-exists-del-linguaggio-sql)
-      - [Quesito IV: Normalizzazione della Tabella Fornita](#quesito-iv-normalizzazione-della-tabella-fornita)
+    - [Quesito II: pagina dinamica che consenta all’utente di ottenere l’elenco delle palestre con mappa](#quesito-ii-pagina-dinamica-che-consenta-allutente-di-ottenere-lelenco-delle-palestre-con-mappa)
+      - [Alternativa 1: Elenco Testuale delle Sedi Palestre](#alternativa-1-elenco-testuale-delle-sedi-palestre)
+      - [Alternativa 2: Mappa Geografica delle Sedi Palestre](#alternativa-2-mappa-geografica-delle-sedi-palestre)
+    - [Quesito III: le differenze, anche attraverso esempi, tra i predicati ANY, ALL ed EXISTS del linguaggio SQL](#quesito-iii-le-differenze-anche-attraverso-esempi-tra-i-predicati-any-all-ed-exists-del-linguaggio-sql)
+    - [Quesito IV: Normalizzazione della Tabella Fornita](#quesito-iv-normalizzazione-della-tabella-fornita)
 
 ## Traccia della prova
 
@@ -2764,7 +2764,7 @@ Il file `wwwroot/js/ricerca.js` (presentato nella Parte 1, Sezione 6.C, già agg
     });
     ```
 
-#### Quesito II: pagina dinamica che consenta all’utente di ottenere l’elenco delle palestre con mappa
+### Quesito II: pagina dinamica che consenta all’utente di ottenere l’elenco delle palestre con mappa
 
 L'obiettivo è realizzare una pagina dinamica (accessibile a tutti gli utenti, anche non registrati) che permetta di inserire il nome di una città (o parte del nome di un brand/sede) e ottenere:
 
@@ -2818,7 +2818,7 @@ publicApiGroup.MapGet("/sedi-palestre/ricerca", async (
 });
 ```
 
-##### Alternativa 1: Elenco Testuale delle Sedi Palestre
+#### Alternativa 1: Elenco Testuale delle Sedi Palestre
 
 1. **Pagina HTML (`wwwroot/trova_sedi_elenco.html`)**
 
@@ -2934,7 +2934,7 @@ publicApiGroup.MapGet("/sedi-palestre/ricerca", async (
     });
     ```
 
-##### Alternativa 2: Mappa Geografica delle Sedi Palestre
+#### Alternativa 2: Mappa Geografica delle Sedi Palestre
 
 1. **Pagina HTML (`wwwroot/trova_sedi_mappa.html`)**
 
@@ -3102,7 +3102,7 @@ publicApiGroup.MapGet("/sedi-palestre/ricerca", async (
     });
     ```
 
-#### Quesito III: le differenze, anche attraverso esempi, tra i predicati ANY, ALL ed EXISTS del linguaggio SQL
+### Quesito III: le differenze, anche attraverso esempi, tra i predicati ANY, ALL ed EXISTS del linguaggio SQL
 
 I predicati `ANY`, `ALL` ed `EXISTS` sono utilizzati nel linguaggio SQL all'interno delle clausole `WHERE` o `HAVING` per effettuare confronti o verifiche basate sui risultati di una subquery. Comprendere le loro differenze è fondamentale per scrivere query complesse ed efficienti.
 
@@ -3214,7 +3214,7 @@ I predicati `ANY`, `ALL` ed `EXISTS` sono utilizzati nel linguaggio SQL all'inte
 
 È fondamentale considerare il comportamento con i valori `NULL` restituiti dalle subquery, poiché possono portare a risultati `UNKNOWN` che influenzano la logica della clausola `WHERE`. Generalmente, è buona pratica escludere o gestire i `NULL` esplicitamente nelle subquery usate con `ANY` e `ALL` se il confronto non è un operatore `IS NULL` o `IS NOT NULL`.
 
-#### Quesito IV: Normalizzazione della Tabella Fornita
+### Quesito IV: Normalizzazione della Tabella Fornita
 
 Viene fornita la seguente tabella che rappresenta informazioni sugli atleti, le loro società sportive e i loro allenatori:
 
@@ -3333,7 +3333,7 @@ Per trasformare la tabella in 3NF, dobbiamo eliminare le dipendenze transitive c
         | 3            | Raffaele       | 3475641830    |
         | 4            | Giulio         | 3465921344    |
         | 5            | Maria          | 3468712533    |
-      
+
       - DF in `Allenatori`: `IDAllenatore` $\rightarrow$ `NomeAllenatore`, `TelAllenatore`. Questa tabella è in 3NF (e BCNF).
 
 3. **`Atleti`**

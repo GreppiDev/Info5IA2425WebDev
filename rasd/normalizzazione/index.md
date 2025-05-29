@@ -15,6 +15,12 @@
     - [Seconda Forma Normale (2NF)](#seconda-forma-normale-2nf)
     - [Terza Forma Normale (3NF)](#terza-forma-normale-3nf)
     - [Forma Normale di Boyce-Codd (BCNF)](#forma-normale-di-boyce-codd-bcnf)
+    - [Guida alla Comprensione della Forma Normale di Boyce-Codd (BCNF)](#guida-alla-comprensione-della-forma-normale-di-boyce-codd-bcnf)
+      - [Un esempio da analizzare](#un-esempio-da-analizzare)
+      - [Verifica della Terza Forma Normale (3NF)](#verifica-della-terza-forma-normale-3nf)
+      - [L'Analisi per la BCNF: Dove sorge il problema?](#lanalisi-per-la-bcnf-dove-sorge-il-problema)
+      - [Trasformazione in BCNF: La Decomposizione](#trasformazione-in-bcnf-la-decomposizione)
+      - [Risultato Finale: Tabelle in BCNF](#risultato-finale-tabelle-in-bcnf)
     - [Riepilogo sulle forme normali](#riepilogo-sulle-forme-normali)
     - [Esercizi Proposti](#esercizi-proposti)
     - [Conclusione](#conclusione)
@@ -188,6 +194,12 @@ Prima di procedere con le forme normali, è fondamentale definire i tipi di chia
 
 * **Prerequisito:** La relazione deve essere in 2NF.
 * **Definizione:** Una relazione è in 3NF se è in 2NF e *nessun attributo non-chiave è transitivamente dipendente dalla chiave primaria*. Una dipendenza transitiva si verifica quando X → Y e Y → Z, dove X è la chiave primaria, e Y non è una chiave candidata (Y è un attributo non-chiave), e Z è un attributo non-chiave. In sostanza, **un attributo non-chiave non deve dipendere da un altro attributo non-chiave.**
+* In maniera alternativa si può dire che (**Regola della 3NF:**):
+
+    **Una relazione è in 3NF se, per ogni dipendenza funzionale X → Y**:
+
+    1. **X è una superchiave, OPPURE**
+    2. **Y è un attributo primo (cioè fa parte di ALMENO UNA chiave candidata)**.
 * **Scopo:** Eliminare le dipendenze transitive tra attributi non-chiave.
 * **Esempio (Non in 3NF):**
     Tabella `IMPIEGATI_DIPARTIMENTO` (supponiamo sia già in 2NF)
@@ -238,92 +250,172 @@ Prima di procedere con le forme normali, è fondamentale definire i tipi di chia
 ### Forma Normale di Boyce-Codd (BCNF)
 
 * **Prerequisito:** La relazione deve essere in 3NF.
-* **Definizione:** Una relazione è in BCNF se *per ogni dipendenza funzionale non banale X → Y, X è una superchiave*. Una superchiave è un insieme di attributi che identifica univocamente una tupla (include tutte le chiavi candidate e anche insiemi che le contengono). In termini più semplici, ogni determinante di una dipendenza funzionale deve essere una chiave candidata (o contenerne una).
+* **Definizione:** **Una relazione è in BCNF se *per ogni dipendenza funzionale non banale X → Y, X è una superchiave***. Una superchiave è un insieme di attributi che identifica univocamente una tupla (include tutte le chiavi candidate e anche insiemi che le contengono). In termini più semplici, ogni determinante di una dipendenza funzionale deve essere una chiave candidata (o contenerne una).
 * **Scopo:** Risolvere alcune rare anomalie non gestite dalla 3NF, specialmente in presenza di chiavi candidate multiple e sovrapposte. La BCNF è una forma normale più stringente della 3NF.
 * **Differenza chiave dalla 3NF:** La 3NF permetteva dipendenze X → Y dove Y è un attributo chiave (parte di una chiave candidata) anche se X non è una superchiave. La BCNF non lo permette.
-* **Esempio (Non in BCNF, ma in 3NF):**
-    Si consideri una situazione in cui studenti possono seguire diversi corsi, ogni corso è tenuto da un solo professore, ma un professore può tenere più corsi. Uno studente può essere seguito da un tutor specifico per ogni corso che segue.
+* **Si può dire che**:
+  * **Regola della BCNF:** **Una relazione è in BCNF se, per ogni dipendenza funzionale non banale X → Y**:
 
-    Tabella `ISCRIZIONI_TUTOR`
+    1. **X deve essere una superchiave. (Non c'è la seconda opzione della 3NF)**.
 
-    | Matricola | CodiceCorso | Professore | Tutor |
-    | :-------- | :---------- | :--------- | :---- |
-    | S100      | C01         | Prof. Rossi| T01   |
-    | S100      | C02         | Prof. Neri | T02   |
-    | S200      | C01         | Prof. Rossi| T01   |
-    | S200      | C03         | Prof. Verdi| T03   |
-    | S300      | C02         | Prof. Neri | T02   |
+### Guida alla Comprensione della Forma Normale di Boyce-Codd (BCNF)
 
-    *Ipotesi sulle dipendenze funzionali:*
-    * `(Matricola, CodiceCorso) → Professore` (Ogni studente in un corso ha un solo professore per quel corso - implicito dall'assunzione che un corso ha un solo prof)
-    * `(Matricola, CodiceCorso) → Tutor` (Ogni studente in un corso ha un solo tutor per quel corso)
-    * `CodiceCorso → Professore` (Ogni corso è tenuto da un solo professore)
-    * `(Matricola, Professore) → ???` (Non determina univocamente il corso, se un prof insegna più corsi)
-    * `(Matricola, Tutor) → ???` (Non necessariamente determina il corso)
-    * `Tutor → CodiceCorso` (Assumiamo, per l'esempio, che un tutor segua studenti solo per *un* corso specifico)
-    * `Tutor → Professore` (Deriva da `Tutor → CodiceCorso` e `CodiceCorso → Professore`)
+Nel mondo della progettazione di database, l'obiettivo è organizzare i dati in modo efficiente, evitando ridondanze e potenziali problemi (anomalie) quando i dati vengono inseriti, modificati o cancellati. Le forme normali forniscono una serie di regole per raggiungere questo obiettivo. La Forma Normale di Boyce-Codd (BCNF) è una forma normale particolarmente stringente.
 
-    *Chiavi Candidate:*
-    * `(Matricola, CodiceCorso)` è una chiave candidata (e primaria).
-    * `(Matricola, Tutor)` è un'altra chiave candidata (dato che `Tutor → CodiceCorso`, conoscendo Matricola e Tutor, si conosce anche CodiceCorso, identificando la tupla).
+**Definizione di BCNF:** Una relazione (o tabella) si dice in BCNF se, per ogni dipendenza funzionale non banale (del tipo X → Y, dove Y non è un sottoinsieme di X) presente nella relazione, X è una **superchiave**. Una superchiave è un insieme di attributi che identifica univocamente ogni riga della tabella.
 
-    *Analisi per 3NF:*
-    La tabella è in 1NF (atomica).
-    La tabella è in 2NF (non ci sono dipendenze parziali: `Professore` e `Tutor` dipendono entrambi da `(Matricola, CodiceCorso)`).
-    La tabella è in 3NF? Analizziamo le dipendenze transitive sugli attributi non-chiave rispetto alla PK `(Matricola, CodiceCorso)`. Non ci sono attributi non-chiave che dipendono da altri attributi non-chiave. *Però*, c'è la dipendenza `Tutor → CodiceCorso`. `Tutor` non è una superchiave, ma `CodiceCorso` è parte della chiave primaria `(Matricola, CodiceCorso)`. La 3NF lo permette.
+**In termini più semplici: ogni volta che un insieme di attributi X determina un altro attributo Y, quell'insieme X deve essere in grado, da solo, di identificare univocamente un'intera riga della tabella.**
 
-    *Analisi per BCNF:*
-    Consideriamo la dipendenza `Tutor → CodiceCorso`. Il determinante è `Tutor`. `Tutor` da solo non è una superchiave (non identifica univocamente una riga).
-    *Violazione BCNF:* Esiste una dipendenza funzionale (`Tutor → CodiceCorso`) il cui determinante (`Tutor`) non è una superchiave. Questo può portare ad anomalie di aggiornamento (se il corso seguito da un tutor cambia, bisogna aggiornare più righe potenzialmente).
+#### Un esempio da analizzare
 
-* **Trasformazione in BCNF:** Si decompone la tabella basandosi sulla dipendenza che viola la BCNF.
+Si consideri la seguente tabella, chiamata `ISCRIZIONI_TUTOR`, che tiene traccia degli studenti, dei corsi che seguono, dei professori che tengono i corsi e dei tutor assegnati agli studenti per specifici corsi.
 
-    Tabella `STUDENTE_TUTOR` (in BCNF)
+| Matricola | CodiceCorso | Professore | Tutor |
+| :-- |  :-- |  :-- |  :-- |
+| S100 | C01 | Prof. Rossi | T01 |
+| S100 | C02 | Prof. Neri | T02 |
+| S200 | C01 | Prof. Rossi | T01 |
+| S200 | C03 | Prof. Verdi | T03 |
+| S300 | C02 | Prof. Neri | T02 |
 
-    | Matricola | Tutor |
-    | :-------- | :---- |
-    | S100      | T01   |
-    | S100      | T02   |
-    | S200      | T01   |
-    | S200      | T03   |
-    | S300      | T02   |
+Esporta in Fogli
 
-    *Chiave Primaria: `(Matricola, Tutor)`* (Questa ora è l'unica chiave candidata qui)
+**Ipotesi sulle Dipendenze Funzionali (DF):** Queste sono le "regole di business" che i dati devono rispettare:
 
-    Tabella `TUTOR_CORSO` (in BCNF)
+1. `(Matricola, CodiceCorso) → Professore`: Uno studente specifico in un corso specifico ha un solo professore per quel corso.
+2. `(Matricola, CodiceCorso) → Tutor`: Uno studente specifico in un corso specifico ha un solo tutor per quel corso.
+3. `CodiceCorso → Professore`: Ogni corso è tenuto da un solo professore.
+4. **`Tutor → CodiceCorso`**: Questa è un'ipotesi cruciale per l'esempio. Significa che ogni tutor è specializzato e segue studenti *esclusivamente per un determinato corso*. Se si conosce il tutor, si conosce il corso.
+5. `Tutor → Professore`: Questa è una conseguenza delle DF 3 e 4 (se un tutor determina un corso, e un corso determina un professore, allora il tutor determina il professore).
 
-    | Tutor | CodiceCorso | Professore |
-    | :---- | :---------- | :--------- |
-    | T01   | C01         | Prof. Rossi|
-    | T02   | C02         | Prof. Neri |
-    | T03   | C03         | Prof. Verdi|
+**Identificazione delle Chiavi Candidate:** Una chiave candidata è un insieme minimo di attributi che identifica univocamente una riga.
 
-    *Chiave Primaria: `Tutor`*
-    *Dipendenze: `Tutor → CodiceCorso`, `Tutor → Professore` (via `CodiceCorso`)*
-    *Chiave Esterna (implicita): `CodiceCorso` potrebbe referenziare una tabella `CORSI(CodiceCorso, Professore)` se volessimo separare anche quella dipendenza per BCNF.* Se `CodiceCorso → Professore` è l'unica dipendenza, la tabella `CORSI` sarebbe:
-    Tabella `CORSI` (in BCNF)
+- **CK1: `(Matricola, CodiceCorso)`**: Questa coppia determina univocamente `Professore` (per DF1) e `Tutor` (per DF2), e quindi l'intera riga.
+- **CK2: `(Matricola, Tutor)`**: Poiché `Tutor → CodiceCorso` (DF4), conoscendo `Matricola` e `Tutor`, si può derivare `CodiceCorso`. Avendo `Matricola` e `CodiceCorso`, si possono determinare tutti gli altri attributi (come per CK1). Quindi, `(Matricola, Tutor)` è anch'essa una chiave candidata.
 
-    | CodiceCorso | Professore |
-    | :---------- | :--------- |
-    | C01         | Prof. Rossi|
-    | C02         | Prof. Neri |
-    | C03         | Prof. Verdi|
+#### Verifica della Terza Forma Normale (3NF)
 
-    *Chiave Primaria: `CodiceCorso`*
+Prima di passare alla BCNF, è utile notare che questa tabella è in 3NF. La 3NF permette una dipendenza X → Y dove X non è una superchiave, a patto che Y sia un "attributo primo" (cioè, parte di almeno una chiave candidata). Nell'esempio, si analizza la dipendenza `Tutor → CodiceCorso`.
 
-    E `TUTOR_CORSO` diventerebbe:
-    Tabella `TUTOR_CORSO_INFO` (in BCNF)
+- `Tutor` non è una superchiave (es. T01 appare per S100 e S200).
+- Tuttavia, `CodiceCorso` è parte della chiave candidata CK1 `(Matricola, CodiceCorso)`. Dato che `CodiceCorso` è un attributo primo, la 3NF "tollera" questa dipendenza.
 
-    | Tutor | CodiceCorso |
-    | :---- | :---------- |
-    | T01   | C01         |
-    | T02   | C02         |
-    | T03   | C03         |
+#### L'Analisi per la BCNF: Dove sorge il problema?
 
-    *Chiave Primaria: `Tutor`*
-    *Chiave Esterna: `CodiceCorso` referenzia `CORSI(CodiceCorso)`*
+La BCNF è più esigente: **ogni determinante X in una dipendenza X → Y deve essere una superchiave.**
 
-    La decomposizione BCNF garantisce che ogni determinante sia una superchiave, eliminando le anomalie residue.
+Si riesaminino le dipendenze:
+
+1. `(Matricola, CodiceCorso) → Professore`: Il determinante `(Matricola, CodiceCorso)` è CK1, quindi è una superchiave. **Conforme a BCNF.**
+2. `(Matricola, CodiceCorso) → Tutor`: Il determinante `(Matricola, CodiceCorso)` è CK1 (superchiave). **Conforme a BCNF.**
+3. `CodiceCorso → Professore`:
+    - Il determinante è `CodiceCorso`.
+    - `CodiceCorso` da solo **non è una superchiave** (es. C01 appare in più righe, associato a S100 e S200). Non identifica univocamente una riga in `ISCRIZIONI_TUTOR`.
+    - **Violazione BCNF!**
+4. `Tutor → CodiceCorso`:
+    - Il determinante è `Tutor`.
+    - `Tutor` da solo **non è una superchiave** (es. T01 appare in più righe).
+    - **Violazione BCNF!** (Questa è la violazione su cui l'esempio originale si concentra per la decomposizione).
+
+**Perché queste violazioni sono un problema? (Anomalie)** Prendiamo la dipendenza `Tutor → CodiceCorso` che viola la BCNF.
+
+- **Ridondanza dei dati:** L'informazione che "T01 segue il corso C01" è ripetuta per ogni studente seguito da T01 nel corso C01.
+- **Anomalia di aggiornamento:** Se il Tutor T01 dovesse cambiare corso (ad es., passare da C01 a un ipotetico C05), bisognerebbe aggiornare `CodiceCorso` (e di conseguenza `Professore`) in *tutte* le righe dove appare T01. Dimenticare un aggiornamento porterebbe a dati incoerenti.
+- **Anomalia di inserimento:** Non è possibile inserire l'informazione che un nuovo Tutor T04 è assegnato al corso C04 (tenuto da Prof. Gialli) finché non c'è almeno uno studente (`Matricola`) che segue quel corso con quel tutor.
+- **Anomalia di cancellazione:** Se S200, l'unico studente seguito da T03 per il corso C03, venisse cancellato, si perderebbe l'informazione che il Tutor T03 è associato al CodiceCorso C03.
+
+#### Trasformazione in BCNF: La Decomposizione
+
+Per raggiungere la BCNF, si scompone la tabella originale basandosi sulle dipendenze che causano la violazione. L'obiettivo è creare tabelle più piccole in cui ogni determinante sia una superchiave.
+
+**Passo 1: Decomposizione basata su `Tutor → CodiceCorso` (e la sua conseguenza `Tutor → Professore`)**
+
+Si isola la dipendenza `Tutor → CodiceCorso` (e `Tutor → Professore`) in una nuova tabella.
+
+- **Nuova Tabella 1: `TUTOR_DETTAGLI`** (nome ipotetico per questa fase)
+    - Contiene: `Tutor, CodiceCorso, Professore`
+    - Chiave Primaria: `Tutor` (poiché `Tutor` determina gli altri due attributi in questa nuova tabella).
+    - Dati:
+  
+    | Tutor | CodiceCorso | Professore  |
+    | :---- | :---------- | :---------- |
+    | T01   | C01         | Prof. Rossi |
+    | T02   | C02         | Prof. Neri  |
+    | T03   | C03         | Prof. Verdi |
+
+La tabella originale viene privata degli attributi ora in `TUTOR_DETTAGLI` (eccetto `Tutor`, che serve per il collegamento).
+
+- **Nuova Tabella 2: `STUDENTE_TUTOR`**
+    - Contiene: `Matricola, Tutor`
+    - Chiave Primaria: `(Matricola, Tutor)`
+    - Dati:
+  
+        | Matricola | Tutor |
+        | :-------- | :---- |
+        | S100      | T01   |
+        | S100      | T02   |
+        | S200      | T01   |
+        | S200      | T03   |
+        | S300      | T02   |
+  
+  Questa tabella `STUDENTE_TUTOR` è ora in BCNF, poiché l'unica dipendenza significativa è quella della chiave primaria che determina gli attributi stessi.
+
+**Passo 2: Analisi della tabella `TUTOR_DETTAGLI` per BCNF**
+
+Si esamini `TUTOR_DETTAGLI(Tutor, CodiceCorso, Professore)` con Chiave Primaria `(Tutor)`. Al suo interno, si nota la dipendenza `CodiceCorso → Professore`.
+
+- Il determinante è `CodiceCorso`.
+- `CodiceCorso` **non è una superchiave** di `TUTOR_DETTAGLI` (la chiave è `Tutor`).
+- Quindi, anche `TUTOR_DETTAGLI` viola la BCNF. Si procede a un'ulteriore decomposizione.
+
+**Passo 2a: Decomposizione di `TUTOR_DETTAGLI` basata su `CodiceCorso → Professore`**
+
+- **Nuova Tabella 3: `CORSI`**
+
+    - Contiene: `CodiceCorso, Professore`
+    - Chiave Primaria: `CodiceCorso`
+    - Dati:
+
+        | CodiceCorso | Professore  |
+        | :---------- | :---------- |
+        | C01         | Prof. Rossi |
+        | C02         | Prof. Neri  |
+        | C03         | Prof. Verdi |
+  
+  Questa tabella è in BCNF (il determinante `CodiceCorso` è la sua chiave).
+- **Nuova Tabella 4: `TUTOR_CORSO`** (prende il posto di `TUTOR_DETTAGLI` per la parte rimanente)
+
+    - Contiene: `Tutor, CodiceCorso`
+    - Chiave Primaria: `Tutor` (mantenendo la DF originale `Tutor → CodiceCorso`)
+    - Chiave Esterna: `CodiceCorso` referenzia `CORSI(CodiceCorso)`
+    - Dati:
+  
+        | Tutor | CodiceCorso |
+        | :---- | :---------- |
+        | T01   | C01         |
+        | T02   | C02         |
+        | T03   | C03         |
+  
+  Questa tabella è in BCNF (il determinante `Tutor` è la sua chiave).
+
+#### Risultato Finale: Tabelle in BCNF
+
+Dopo la decomposizione, si ottiene il seguente schema di database, con tutte le tabelle in BCNF:
+
+1. **`STUDENTE_TUTOR`**
+    - `(Matricola, Tutor)` (Chiave Primaria)
+2. **`TUTOR_CORSO`** (chiamata `TUTOR_CORSO_INFO` nell'esempio originale)
+    - `(Tutor, CodiceCorso)` (Chiave Primaria: `Tutor`; `CodiceCorso` è chiave esterna verso `CORSI`)
+3. **`CORSI`**
+    - `(CodiceCorso, Professore)` (Chiave Primaria: `CodiceCorso`)
+
+**Vantaggi della Decomposizione in BCNF:**
+
+- **Eliminazione della ridondanza:** Ogni "fatto" è memorizzato una sola volta (es. l'associazione tra T01 e C01 è solo in `TUTOR_CORSO`).
+- **Semplificazione degli aggiornamenti:** Per cambiare il corso di un tutor, si modifica una sola riga in `TUTOR_CORSO`.
+- **Maggiore integrità dei dati:** Le anomalie di inserimento e cancellazione sono state risolte. È possibile aggiungere un nuovo corso o un nuovo tutor senza dover avere già uno studente associato, e cancellare uno studente non comporta la perdita di informazioni su tutor o corsi.
+
+In conclusione, il processo di normalizzazione fino alla BCNF porta a un database meglio strutturato, più robusto e più facile da mantenere, assicurando che ogni informazione sia determinata logicamente dalla chiave appropriata.
 
 ### Riepilogo sulle forme normali
 

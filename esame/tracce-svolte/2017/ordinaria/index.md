@@ -1,5 +1,24 @@
 # Sessione ordinaria 2017 - seconda prova scritta - Indirizzo ITIA - INFORMATICA E TELECOMUNICAZIONI ARTICOLAZIONE "INFORMATICA" - Disciplina: INFORMATICA
 
+- [Sessione ordinaria 2017 - seconda prova scritta - Indirizzo ITIA - INFORMATICA E TELECOMUNICAZIONI ARTICOLAZIONE "INFORMATICA" - Disciplina: INFORMATICA](#sessione-ordinaria-2017---seconda-prova-scritta---indirizzo-itia---informatica-e-telecomunicazioni-articolazione-informatica---disciplina-informatica)
+  - [Traccia della prova](#traccia-della-prova)
+  - [Svolgimento della prima parte](#svolgimento-della-prima-parte)
+    - [Prima Parte](#prima-parte)
+      - [1. Analisi della Realtà di Riferimento e Schema Concettuale (E/R)](#1-analisi-della-realtà-di-riferimento-e-schema-concettuale-er)
+      - [2. Schema Logico Relazionale](#2-schema-logico-relazionale)
+        - [Script completo per la creazione del database (non richiesto dalla traccia)](#script-completo-per-la-creazione-del-database-non-richiesto-dalla-traccia)
+      - [3. Interrogazioni SQL (MariaDB)](#3-interrogazioni-sql-mariadb)
+      - [4. Progetto di Massima dell'Applicazione Web](#4-progetto-di-massima-dellapplicazione-web)
+        - [Discussione Architettura e Deployment](#discussione-architettura-e-deployment)
+    - [Seconda Parte](#seconda-parte)
+      - [Quesito I: Gestione Automatica Posti Disponibili](#quesito-i-gestione-automatica-posti-disponibili)
+      - [Quesito II: Relazione Tecnica sulla Piattaforma Car Pooling](#quesito-ii-relazione-tecnica-sulla-piattaforma-car-pooling)
+      - [Struttura della Relazione Tecnica](#struttura-della-relazione-tecnica)
+        - [Esempio Significativo di Contenuto (Estratto dal Capitolo 3.2)](#esempio-significativo-di-contenuto-estratto-dal-capitolo-32)
+        - [Utilizzo di Diagrammi UML](#utilizzo-di-diagrammi-uml)
+      - [Quesito III: Schema Relazionale Film/Attore/Recita](#quesito-iii-schema-relazionale-filmattorerecita)
+      - [Quesito IV: Applicazione Web Responsive per Eventi Culturali](#quesito-iv-applicazione-web-responsive-per-eventi-culturali)
+
 ## Traccia della prova
 
 [La traccia della prova](https://www.istruzione.it/esame_di_stato/201617/Istituti%20tecnici/Ordinaria/I044_ORD17.pdf) è disponibile sul sito del Ministero dell'Istruzione e del Merito.
@@ -500,6 +519,134 @@ Normalizzazione:
 
 Lo schema proposto è ragionevolmente normalizzato (3NF). Le dipendenze funzionali sembrano rispettare le chiavi primarie. Ad esempio, in Viaggi, tutti gli attributi dipendono da IdViaggio. Non ci sono evidenti dipendenze transitive problematiche. La possibile denormalizzazione delle città è stata considerata ma scartata per semplicità. L'uso di ENUM per gli stati è una scelta implementativa valida in MariaDB/MySQL.
 
+##### Script completo per la creazione del database (non richiesto dalla traccia)
+
+```sql
+-- PASSO 1: Creazione del Database (Schema)
+CREATE DATABASE IF NOT EXISTS carpooling_db;
+   -- CHARACTER SET utf8mb4 -- è il default
+   -- COLLATE utf8mb4_unicode_ci; -- è il default
+
+-- PASSO 2: Selezione del Database per le operazioni successive
+USE carpooling_db;
+
+-- PASSO 3: Creazione delle Tabelle 
+
+-- Tabella Utenti
+CREATE TABLE Utenti (
+    IdUtente INT AUTO_INCREMENT PRIMARY KEY,
+    Email VARCHAR(255) NOT NULL UNIQUE,
+    Telefono VARCHAR(20) NOT NULL UNIQUE,
+    Nome VARCHAR(100) NOT NULL,
+    Cognome VARCHAR(100) NOT NULL,
+    INDEX idx_utenti_cognome_nome (Cognome, Nome)
+) ENGINE=InnoDB;
+
+-- Tabella Autisti
+CREATE TABLE Autisti (
+    IdAutista INT PRIMARY KEY,
+    NumPatente VARCHAR(50) NOT NULL UNIQUE,
+    ScadenzaPatente DATE NOT NULL,
+    PathFotografia VARCHAR(512),
+    CONSTRAINT fk_autisti_utenti FOREIGN KEY (IdAutista) REFERENCES Utenti(IdUtente) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+-- Tabella Passeggeri
+CREATE TABLE Passeggeri (
+    IdPasseggero INT PRIMARY KEY,
+    DocumentoIdentita VARCHAR(100) NOT NULL UNIQUE,
+    CONSTRAINT fk_passeggeri_utenti FOREIGN KEY (IdPasseggero) REFERENCES Utenti(IdUtente) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+-- Tabella Automobili
+CREATE TABLE Automobili (
+    IdAuto INT AUTO_INCREMENT PRIMARY KEY,
+    Targa VARCHAR(10) NOT NULL UNIQUE,
+    Marca VARCHAR(50) NOT NULL,
+    Modello VARCHAR(50) NOT NULL,
+    Colore VARCHAR(30),
+    AnnoImm INT,
+    IdAutista INT NOT NULL,
+    CONSTRAINT fk_automobili_autisti FOREIGN KEY (IdAutista) REFERENCES Autisti(IdAutista) ON DELETE RESTRICT ON UPDATE CASCADE,
+    INDEX idx_automobili_autista (IdAutista)
+) ENGINE=InnoDB;
+
+-- Tabella Viaggi
+CREATE TABLE Viaggi (
+    IdViaggio INT AUTO_INCREMENT PRIMARY KEY,
+    CittaPartenza VARCHAR(100) NOT NULL,
+    CittaDestinazione VARCHAR(100) NOT NULL,
+    DataOraPartenza DATETIME NOT NULL,
+    ContributoEconomico DECIMAL(6, 2) NOT NULL,
+    TempoStimatoMinuti INT,
+    DescrizioneAggiuntiva TEXT,
+    StatoViaggio ENUM('Aperto', 'Chiuso') NOT NULL DEFAULT 'Aperto',
+    PostiDisponibiliIniziali INT NOT NULL DEFAULT 1,
+    IdAutista INT NOT NULL,
+    IdAuto INT NOT NULL,
+    CONSTRAINT fk_viaggi_autisti FOREIGN KEY (IdAutista) REFERENCES Autisti(IdAutista) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_viaggi_automobili FOREIGN KEY (IdAuto) REFERENCES Automobili(IdAuto) ON DELETE RESTRICT ON UPDATE CASCADE,
+    INDEX idx_viaggi_partenza_dest_data (CittaPartenza, CittaDestinazione, DataOraPartenza),
+    INDEX idx_viaggi_autista (IdAutista),
+    INDEX idx_viaggi_auto (IdAuto)
+) ENGINE=InnoDB;
+
+-- Tabella Prenotazioni
+CREATE TABLE Prenotazioni (
+    IdPrenotazione INT AUTO_INCREMENT PRIMARY KEY,
+    DataOraPrenotazione DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    StatoPrenotazione ENUM('Richiesta', 'Accettata', 'Rifiutata', 'Completata') NOT NULL DEFAULT 'Richiesta',
+    IdPasseggero INT NOT NULL,
+    IdViaggio INT NOT NULL,
+    CONSTRAINT fk_prenotazioni_passeggeri FOREIGN KEY (IdPasseggero) REFERENCES Passeggeri(IdPasseggero) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_prenotazioni_viaggi FOREIGN KEY (IdViaggio) REFERENCES Viaggi(IdViaggio) ON DELETE CASCADE ON UPDATE CASCADE,
+    UNIQUE INDEX uk_prenotazioni_passeggero_viaggio (IdPasseggero, IdViaggio),
+    INDEX idx_prenotazioni_viaggio (IdViaggio),
+    INDEX idx_prenotazioni_stato (StatoPrenotazione)
+) ENGINE=InnoDB;
+
+-- Tabella FeedbackAutisti
+CREATE TABLE FeedbackAutisti (
+    IdFeedbackA INT AUTO_INCREMENT PRIMARY KEY,
+    VotoNumerico INT NOT NULL,
+    GiudizioDiscorsivo TEXT,
+    DataOraFeedback DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    IdPrenotazione INT NOT NULL UNIQUE,
+    CONSTRAINT fk_feedback_autisti_prenotazioni FOREIGN KEY (IdPrenotazione) REFERENCES Prenotazioni(IdPrenotazione) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT chk_voto_autista CHECK (VotoNumerico BETWEEN 1 AND 5)
+) ENGINE=InnoDB;
+
+-- Tabella FeedbackPasseggeri
+CREATE TABLE FeedbackPasseggeri (
+    IdFeedbackP INT AUTO_INCREMENT PRIMARY KEY,
+    VotoNumerico INT NOT NULL,
+    GiudizioDiscorsivo TEXT,
+    DataOraFeedback DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    IdPrenotazione INT NOT NULL UNIQUE,
+    CONSTRAINT fk_feedback_passeggeri_prenotazioni FOREIGN KEY (IdPrenotazione) REFERENCES Prenotazioni(IdPrenotazione) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT chk_voto_passeggero CHECK (VotoNumerico BETWEEN 1 AND 5)
+) ENGINE=InnoDB;
+
+
+-- PASSO 4: Creazione dell'Utente per l'Applicazione Web
+-- IMPORTANTE: Sostituisci 'SUA_PASSWORD_SICURA_QUI' con una password robusta e casuale!
+CREATE USER IF NOT EXISTS 'carpooling_app_user'@'localhost'
+    IDENTIFIED BY 'SUA_PASSWORD_SICURA_QUI';
+
+-- PASSO 5: Concessione dei Privilegi all'Utente sul Database specifico
+-- Concede solo i permessi necessari per le operazioni CRUD (Create, Read, Update, Delete)
+GRANT SELECT, INSERT, UPDATE, DELETE ON carpooling_db.* TO 'carpooling_app_user'@'localhost';
+
+-- Nota: Se l'applicazione gestisce le migrazioni dello schema (es. con EF Core migrations),
+-- potrebbe aver bisogno anche di privilegi ALTER, CREATE, DROP, INDEX, REFERENCES.
+-- È più sicuro eseguire le migrazioni con un utente diverso con privilegi più alti
+-- o concedere temporaneamente questi privilegi all'utente dell'app durante il deployment.
+-- Per il funzionamento base CRUD, i permessi sopra sono sufficienti.
+
+-- PASSO 6: Applicare le modifiche ai privilegi
+FLUSH PRIVILEGES;
+```
+
 #### 3\. Interrogazioni SQL (MariaDB)
 
 a) Elencare i viaggi disponibili per tratta e data:
@@ -924,6 +1071,22 @@ sequenceDiagram
         // alle proprietà del DTO con lo stesso nome (case-insensitive).
         ```
 
+##### Discussione Architettura e Deployment
+
+- **Architettura Implementativa:** L'approccio ASP.NET Core Minimal API unificata con frontend statico è semplice ed efficace per questo tipo di applicazione. EF Core facilita l'accesso ai dati. L'autenticazione cookie è standard e adatta.
+- **Deployment (Semplificato):**
+    - **Opzione 1: Azure App Service + Azure Database for MariaDB:**
+        - **App:** L'applicazione ASP.NET Core viene pubblicata su un Azure App Service (piano Linux o Windows). Il codice viene installato tramite Git, zip deploy, o container.
+        - **Database:** Si utilizza il servizio PaaS Azure Database for MariaDB. La connection string nell'app ASP.NET Core punterà a questo database gestito.
+        - **Vantaggi:** Gestione semplificata dell'infrastruttura (scalabilità, patch, backup gestiti da Azure per entrambi i servizi).
+        - **Costi:** Basati sul consumo dei servizi (tier scelti).
+    - **Opzione 2: Container (Azure Container Instances / Azure Kubernetes Service / App Service for Containers):**
+        - **App Container:** Si crea un'immagine Docker per l'app ASP.NET Core. L'immagine viene inviata su un registro (es. Azure Container Registry). Il container viene eseguito su ACI (semplice), AKS (orchestrato), o App Service (Web App for Containers).
+        - **Database Container:** Si può creare un container Docker per MariaDB (meno consigliato per produzione per via della gestione della persistenza e backup) oppure usare Azure Database for MariaDB (come Opzione 1).
+        - **Vantaggi:** Portabilità, consistenza tra ambienti (sviluppo, test, produzione). AKS offre scalabilità avanzata e resilienza.
+        - **Complessità:** Leggermente maggiore rispetto all'App Service standard, specialmente con AKS. Gestire la persistenza del database in container richiede attenzione (volumi persistenti).
+    - **Configurazione:** Le connection string e altre configurazioni sensibili vanno gestite tramite le impostazioni dell'applicazione nel servizio di hosting (es. Application Settings in App Service, Secrets in Kubernetes) e non hardcoded nel codice.
+
 ### Seconda Parte
 
 #### Quesito I: Gestione Automatica Posti Disponibili
@@ -1240,148 +1403,577 @@ Affinché questo codice funzioni, la pagina HTML che mostra i dettagli del viagg
 
 In questo modo, il JavaScript popolerà dinamicamente il `div#info-posti` con le informazioni corrette sulla disponibilità e il pulsante di prenotazione, basandosi sui dati ricevuti dall'API.
 
-### Discussione Architettura e Deployment
+#### Quesito II: Relazione Tecnica sulla Piattaforma Car Pooling
 
-- **Architettura Implementativa:** L'approccio ASP.NET Core Minimal API unificata con frontend statico è semplice ed efficace per questo tipo di applicazione. EF Core facilita l'accesso ai dati. L'autenticazione cookie è standard e adatta.
-- **Deployment (Semplificato):**
-    - **Opzione 1: Azure App Service + Azure Database for MariaDB:**
-        - **App:** L'applicazione ASP.NET Core viene pubblicata su un Azure App Service (piano Linux o Windows). Il codice viene installato tramite Git, zip deploy, o container.
-        - **Database:** Si utilizza il servizio PaaS Azure Database for MariaDB. La connection string nell'app ASP.NET Core punterà a questo database gestito.
-        - **Vantaggi:** Gestione semplificata dell'infrastruttura (scalabilità, patch, backup gestiti da Azure per entrambi i servizi).
-        - **Costi:** Basati sul consumo dei servizi (tier scelti).
-    - **Opzione 2: Container (Azure Container Instances / Azure Kubernetes Service / App Service for Containers):**
-        - **App Container:** Si crea un'immagine Docker per l'app ASP.NET Core. L'immagine viene inviata su un registro (es. Azure Container Registry). Il container viene eseguito su ACI (semplice), AKS (orchestrato), o App Service (Web App for Containers).
-        - **Database Container:** Si può creare un container Docker per MariaDB (meno consigliato per produzione per via della gestione della persistenza e backup) oppure usare Azure Database for MariaDB (come Opzione 1).
-        - **Vantaggi:** Portabilità, consistenza tra ambienti (sviluppo, test, produzione). AKS offre scalabilità avanzata e resilienza.
-        - **Complessità:** Leggermente maggiore rispetto all'App Service standard, specialmente con AKS. Gestire la persistenza del database in container richiede attenzione (volumi persistenti).
-    - **Configurazione:** Le connection string e altre configurazioni sensibili vanno gestite tramite le impostazioni dell'applicazione nel servizio di hosting (es. Application Settings in App Service, Secrets in Kubernetes) e non hardcoded nel codice.
+Il candidato immagini di voler documentare al committente l'operatività della piattaforma proposta. A tal fine, imposti una relazione tecnica che presenti le principali caratteristiche dell'applicazione Web in termini di organizzazione e funzionalità. In particolare, imposti la struttura di tale relazione, motivando le scelte e scrivendo un esempio significativo dei relativi contenuti.
 
-Questo svolgimento copre la prima parte della traccia e il primo quesito della seconda parte, includendo analisi, progettazione DB, SQL, architettura applicativa, esempi di codice e ipotesi di deployment.
+#### Struttura della Relazione Tecnica
 
-### Script completo per la creazione del database (non richiesto dalla traccia)
+Una relazione tecnica efficace per il committente dovrebbe essere chiara, concisa e focalizzata sui benefici e sul funzionamento generale della piattaforma, evitando tecnicismi eccessivi se non richiesti.
 
-```sql
--- PASSO 1: Creazione del Database (Schema)
-CREATE DATABASE IF NOT EXISTS carpooling_db;
-   -- CHARACTER SET utf8mb4 -- è il default
-   -- COLLATE utf8mb4_unicode_ci; -- è il default
+**Motivazione della Struttura:** La struttura proposta mira a guidare il committente attraverso una comprensione progressiva della piattaforma: dall'introduzione degli obiettivi fino ai dettagli funzionali e alle prospettive future, mantenendo un linguaggio accessibile.
 
--- PASSO 2: Selezione del Database per le operazioni successive
-USE carpooling_db;
+1. **Introduzione e Obiettivi della Piattaforma (Capitolo 1)**
 
--- PASSO 3: Creazione delle Tabelle 
+    - Scopo della relazione.
+    - Breve descrizione del progetto "Piattaforma Car Pooling".
+    - Obiettivi di business che la piattaforma intende raggiungere (es. mobilità flessibile, riduzione costi per i viaggiatori, ottimizzazione risorse).
+    - Target di utenti (utenti-autisti, utenti-passeggeri).
+2. **Architettura Generale della Piattaforma (Capitolo 2)**
 
--- Tabella Utenti
-CREATE TABLE Utenti (
-    IdUtente INT AUTO_INCREMENT PRIMARY KEY,
-    Email VARCHAR(255) NOT NULL UNIQUE,
-    Telefono VARCHAR(20) NOT NULL UNIQUE,
-    Nome VARCHAR(100) NOT NULL,
-    Cognome VARCHAR(100) NOT NULL,
-    INDEX idx_utenti_cognome_nome (Cognome, Nome)
-) ENGINE=InnoDB;
+    - Descrizione dell'architettura scelta (applicazione Web).
+    - Componenti principali (Frontend, Backend, Database) e loro interazione a livello macroscopico.
+    - Tecnologie chiave utilizzate (in modo comprensibile, es. "database relazionale per la gestione sicura dei dati", "tecnologie web moderne per un'interfaccia utente intuitiva").
+    - Cenni sulla sicurezza dei dati e della piattaforma.
+3. **Funzionalità Principali per gli Utenti (Capitolo 3)**
 
--- Tabella Autisti
-CREATE TABLE Autisti (
-    IdAutista INT PRIMARY KEY,
-    NumPatente VARCHAR(50) NOT NULL UNIQUE,
-    ScadenzaPatente DATE NOT NULL,
-    PathFotografia VARCHAR(512),
-    CONSTRAINT fk_autisti_utenti FOREIGN KEY (IdAutista) REFERENCES Utenti(IdUtente) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB;
+    - Suddiviso per tipologia di utente (Autista, Passeggero).
+    - **3.1 Funzionalità per l'Utente Autista:**
+        - Registrazione e gestione profilo autista (dati personali, patente, automobile).
+        - Inserimento e gestione dei viaggi offerti (itinerario, date, costi, posti).
+        - Gestione delle prenotazioni ricevute (accettazione/rifiuto).
+        - Gestione della chiusura delle prenotazioni per un viaggio.
+        - Inserimento feedback sui passeggeri.
+    - **3.2 Funzionalità per l'Utente Passeggero:**
+        - Registrazione e gestione profilo passeggero (dati personali, documento).
+        - Ricerca e visualizzazione dei viaggi disponibili (filtri per città, data).
+        - Visualizzazione dettagli viaggio e autista (inclusi feedback).
+        - Processo di prenotazione di un viaggio.
+        - Ricezione notifiche (accettazione/rifiuto).
+        - Inserimento feedback sugli autisti.
+    - **3.3 Funzionalità Comuni:**
+        - Sistema di login/logout.
+        - Visualizzazione e gestione dei feedback (medi e singoli giudizi).
+4. **Flussi Operativi Principali (Capitolo 4)**
 
--- Tabella Passeggeri
-CREATE TABLE Passeggeri (
-    IdPasseggero INT PRIMARY KEY,
-    DocumentoIdentita VARCHAR(100) NOT NULL UNIQUE,
-    CONSTRAINT fk_passeggeri_utenti FOREIGN KEY (IdPasseggero) REFERENCES Utenti(IdUtente) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB;
+    - Descrizione passo-passo dei principali scenari d'uso (es. "Dalla ricerca alla prenotazione di un viaggio per un passeggero", "Dall'offerta di un viaggio alla gestione delle prenotazioni per un autista").
+    - Utilizzo di diagrammi di flusso semplici o screenshot esemplificativi (mockup).
+5. **Aspetti Tecnici Rilevanti (Capitolo 5 - Opzionale, se il committente ha background tecnico)**
 
--- Tabella Automobili
-CREATE TABLE Automobili (
-    IdAuto INT AUTO_INCREMENT PRIMARY KEY,
-    Targa VARCHAR(10) NOT NULL UNIQUE,
-    Marca VARCHAR(50) NOT NULL,
-    Modello VARCHAR(50) NOT NULL,
-    Colore VARCHAR(30),
-    AnnoImm INT,
-    IdAutista INT NOT NULL,
-    CONSTRAINT fk_automobili_autisti FOREIGN KEY (IdAutista) REFERENCES Autisti(IdAutista) ON DELETE RESTRICT ON UPDATE CASCADE,
-    INDEX idx_automobili_autista (IdAutista)
-) ENGINE=InnoDB;
+    - Dettagli sulla gestione del database.
+    - Infrastruttura di hosting e deployment ipotizzata.
+    - Scalabilità e manutenzione.
+6. **Conclusioni e Sviluppi Futuri (Capitolo 6)**
 
--- Tabella Viaggi
-CREATE TABLE Viaggi (
-    IdViaggio INT AUTO_INCREMENT PRIMARY KEY,
-    CittaPartenza VARCHAR(100) NOT NULL,
-    CittaDestinazione VARCHAR(100) NOT NULL,
-    DataOraPartenza DATETIME NOT NULL,
-    ContributoEconomico DECIMAL(6, 2) NOT NULL,
-    TempoStimatoMinuti INT,
-    DescrizioneAggiuntiva TEXT,
-    StatoViaggio ENUM('Aperto', 'Chiuso') NOT NULL DEFAULT 'Aperto',
-    PostiDisponibiliIniziali INT NOT NULL DEFAULT 1,
-    IdAutista INT NOT NULL,
-    IdAuto INT NOT NULL,
-    CONSTRAINT fk_viaggi_autisti FOREIGN KEY (IdAutista) REFERENCES Autisti(IdAutista) ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT fk_viaggi_automobili FOREIGN KEY (IdAuto) REFERENCES Automobili(IdAuto) ON DELETE RESTRICT ON UPDATE CASCADE,
-    INDEX idx_viaggi_partenza_dest_data (CittaPartenza, CittaDestinazione, DataOraPartenza),
-    INDEX idx_viaggi_autista (IdAutista),
-    INDEX idx_viaggi_auto (IdAuto)
-) ENGINE=InnoDB;
+    - Riepilogo dei benefici della piattaforma.
+    - Possibili evoluzioni e funzionalità aggiuntive future (es. pagamenti integrati, sistema di messaggistica interna, app mobile nativa).
 
--- Tabella Prenotazioni
-CREATE TABLE Prenotazioni (
-    IdPrenotazione INT AUTO_INCREMENT PRIMARY KEY,
-    DataOraPrenotazione DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    StatoPrenotazione ENUM('Richiesta', 'Accettata', 'Rifiutata', 'Completata') NOT NULL DEFAULT 'Richiesta',
-    IdPasseggero INT NOT NULL,
-    IdViaggio INT NOT NULL,
-    CONSTRAINT fk_prenotazioni_passeggeri FOREIGN KEY (IdPasseggero) REFERENCES Passeggeri(IdPasseggero) ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT fk_prenotazioni_viaggi FOREIGN KEY (IdViaggio) REFERENCES Viaggi(IdViaggio) ON DELETE CASCADE ON UPDATE CASCADE,
-    UNIQUE INDEX uk_prenotazioni_passeggero_viaggio (IdPasseggero, IdViaggio),
-    INDEX idx_prenotazioni_viaggio (IdViaggio),
-    INDEX idx_prenotazioni_stato (StatoPrenotazione)
-) ENGINE=InnoDB;
+##### Esempio Significativo di Contenuto (Estratto dal Capitolo 3.2)
 
--- Tabella FeedbackAutisti
-CREATE TABLE FeedbackAutisti (
-    IdFeedbackA INT AUTO_INCREMENT PRIMARY KEY,
-    VotoNumerico INT NOT NULL,
-    GiudizioDiscorsivo TEXT,
-    DataOraFeedback DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    IdPrenotazione INT NOT NULL UNIQUE,
-    CONSTRAINT fk_feedback_autisti_prenotazioni FOREIGN KEY (IdPrenotazione) REFERENCES Prenotazioni(IdPrenotazione) ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT chk_voto_autista CHECK (VotoNumerico BETWEEN 1 AND 5)
-) ENGINE=InnoDB;
+**3.2 Funzionalità per l'Utente Passeggero:**
 
--- Tabella FeedbackPasseggeri
-CREATE TABLE FeedbackPasseggeri (
-    IdFeedbackP INT AUTO_INCREMENT PRIMARY KEY,
-    VotoNumerico INT NOT NULL,
-    GiudizioDiscorsivo TEXT,
-    DataOraFeedback DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    IdPrenotazione INT NOT NULL UNIQUE,
-    CONSTRAINT fk_feedback_passeggeri_prenotazioni FOREIGN KEY (IdPrenotazione) REFERENCES Prenotazioni(IdPrenotazione) ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT chk_voto_passeggero CHECK (VotoNumerico BETWEEN 1 AND 5)
-) ENGINE=InnoDB;
+L'utente che desidera usufruire di un passaggio (denominato "Passeggero") ha a disposizione una serie di funzionalità intuitive per trovare e prenotare il viaggio più adatto alle proprie esigenze.
+
+**3.2.1 Registrazione e Gestione del Profilo Passeggero** Prima di poter prenotare un viaggio, il passeggero deve creare un account personale. La procedura di registrazione è rapida e richiede l'inserimento di informazioni anagrafiche essenziali (cognome, nome), un documento di identità valido (per garantire la sicurezza e l'affidabilità della community), un recapito telefonico e un indirizzo email. Quest'ultimo sarà utilizzato per le comunicazioni relative alle prenotazioni. Una volta registrato, il passeggero potrà accedere al proprio profilo per visualizzare e, se necessario, modificare i propri dati.
+
+**3.2.2 Ricerca e Visualizzazione dei Viaggi** La piattaforma offre un potente ma semplice strumento di ricerca. Il passeggero può indicare:
+
+- **Città di partenza**
+- **Città di destinazione**
+- **Data desiderata per il viaggio**
+
+Il sistema presenterà quindi un elenco chiaro e ordinato di tutti i viaggi disponibili che soddisfano i criteri inseriti e per i quali le prenotazioni sono ancora aperte. Per ciascun viaggio, il passeggero potrà visualizzare immediatamente:
+
+- L'orario di partenza.
+- Il contributo economico richiesto dall'autista.
+- Informazioni sull'autista, come il nome e il voto medio ricevuto dagli altri passeggeri.
+- Dettagli aggiuntivi forniti dall'autista, quali eventuali soste intermedie, la possibilità di trasportare bagagli o animali, e una stima dei tempi di percorrenza.
+
+**3.2.3 Processo di Prenotazione di un Viaggio** Una volta individuato il viaggio di suo interesse, il passeggero può procedere con la prenotazione. Prima di confermare, ha la possibilità di esaminare in dettaglio il profilo dell'autista, inclusi i singoli giudizi lasciati dai precedenti passeggeri. Questa trasparenza aiuta a costruire fiducia all'interno della community. Selezionato il viaggio, il passeggero invia la richiesta di prenotazione. La piattaforma inoltrerà automaticamente tale richiesta all'autista via email. *(...omissis: altre funzionalità del passeggero come Ricezione Notifiche e Inserimento Feedback...)*
+
+##### Utilizzo di Diagrammi UML
+
+Diversi diagrammi UML possono essere molto utili per arricchire la relazione tecnica  e renderla più chiara per il committente, specialmente per illustrare aspetti strutturali e comportamentali della piattaforma.
+
+Ecco alcuni esempi di diagrammi UML che potrebbero essere impiegati, con relativo codice PlantUML per generarli:
+
+1. **Diagramma dei Casi d'Uso (Use Case Diagram)**
+
+    **Scopo nella Relazione:** Illustra le principali funzionalità offerte dalla piattaforma e come i diversi tipi di utenti (attori) interagiscono con esse. Fornisce una visione d'insieme di "chi fa cosa". Ideale per il capitolo sulle "Funzionalità Principali".
+
+    **Esempio PlantUML:**
+
+    ```plantuml
+    @startuml
+    left to right direction
+
+    actor Passeggero
+    actor Autista
+    actor "Utente Generico" as Utente
+
+    rectangle "Piattaforma Car Pooling" {
+    Passeggero -- (Cerca Viaggio)
+    Passeggero -- (Prenota Viaggio)
+    Passeggero -- (Lascia Feedback ad Autista)
+    Passeggero -- (Visualizza Stato Prenotazioni)
+
+    Autista -- (Offre Viaggio)
+    Autista -- (Gestisce Prenotazioni Ricevute)
+    Autista -- (Lascia Feedback a Passeggero)
+    Autista -- (Gestisce Viaggi Offerti)
+
+    (Cerca Viaggio) .> (Visualizza Dettagli Viaggio) : include
+    (Visualizza Dettagli Viaggio) .> (Visualizza Feedback Autista) : include
+
+    Utente --|> Passeggero : <<generalization>>
+    Utente --|> Autista : <<generalization>>
+    Utente -- (Registrazione)
+    Utente -- (Login)
+    (Cerca Viaggio) .. Utente : (può essere non loggato)
+    }
+
+    @enduml
+
+    ```
+
+2. **Diagramma dei Componenti (Component Diagram)**
+
+    **Scopo nella Relazione:** Mostra l'architettura software di alto livello, identificando i principali componenti del sistema e le loro interdipendenze. Utile per il capitolo sull'"Architettura Generale della Piattaforma".
+
+    **Esempio PlantUML:**
+
+    ```plantuml
+    @startuml
+    !theme vibrant
+
+    package "Browser Utente" {
+        [Frontend WebApp] <<UI>>
+    }
+
+    package "Server Applicativo" {
+        [API Service (Backend)] <<Application>>
+        [Servizio Notifiche] <<Service>>
+    }
+
+    database "Database Server" {
+        [Database CarPooling] <<DB>>
+    }
+
+    cloud "Servizi Esterni" {
+        [Sistema Email Esterno] <<External>>
+    }
+
+    ' Connessioni principali
+    [Frontend WebApp] --> [API Service (Backend)] : HTTPS/JSON
+    [API Service (Backend)] --> [Database CarPooling] : ADO.NET/SQL
+    [API Service (Backend)] --> [Servizio Notifiche] : Chiamata Interna
+
+    ' Connessione verso servizi esterni
+    [Servizio Notifiche] ..> [Sistema Email Esterno] : SMTP
+
+    ' Note esplicative
+    note right of [API Service (Backend)]
+    Gestisce la logica di business
+    e le API REST
+    end note
+
+    note bottom of [Servizio Notifiche]
+    Invia notifiche email
+    agli utenti registrati
+    end note
+
+    @enduml
+
+    ```
+
+3. **Diagramma di Attività (Activity Diagram)**
+
+    **Scopo nella Relazione:** Descrive il flusso di lavoro di un processo o di una funzionalità complessa, mostrando la sequenza delle attività, i punti di decisione e i possibili percorsi. Ottimo per il capitolo sui "Flussi Operativi Principali". Riprendiamo l'esempio della "Registrazione Utente".
+
+    **Esempio PlantUML:**
+
+    ```plantuml
+    @startuml
+    title Flusso di Registrazione Utente
+
+    |Utente|
+    start
+    :Accede a pagina registrazione;
+    |Sistema|
+    :Mostra form dati comuni;
+    |Utente|
+    :Inserisce dati comuni;
+    :Sceglie ruolo (Autista/Passeggero);
+    if (Ruolo è Autista?) then (Si)
+    |Sistema|
+    :Richiede dati Autista;
+    |Utente|
+    :Inserisce dati Autista;
+    else (No, è Passeggero)
+    |Sistema|
+    :Richiede dati Passeggero;
+    |Utente|
+    :Inserisce dati Passeggero;
+    endif
+    |Sistema|
+    :Valida tutti i dati;
+    if (Dati validi?) then (Si)
+    :Crea Account Utente;
+    :Salva dati ruolo specifico;
+    :Invia Email di Conferma;
+    :Mostra messaggio di successo;
+    |Utente|
+    :Visualizza successo;
+    stop
+    else (No)
+    :Mostra messaggio di errore;
+    |Utente|
+    :Visualizza errore;
+    stop
+    endif
+
+    @enduml
+
+    ```
+
+4. **Diagramma di Sequenza (Sequence Diagram) - Semplificato**
+
+    **Scopo nella Relazione:** Illustra le interazioni tra oggetti o attori in una sequenza temporale per uno specifico scenario o caso d'uso. Può essere utile per mostrare come i componenti collaborano (Capitolo 4 o per dettagliare interazioni chiave). Esempio: "Passeggero prenota un viaggio".
+
+    **Esempio PlantUML:**
 
 
--- PASSO 4: Creazione dell'Utente per l'Applicazione Web
--- IMPORTANTE: Sostituisci 'SUA_PASSWORD_SICURA_QUI' con una password robusta e casuale!
-CREATE USER IF NOT EXISTS 'carpooling_app_user'@'localhost'
-    IDENTIFIED BY 'SUA_PASSWORD_SICURA_QUI';
+    ```plantuml
+    @startuml
+    title Sequenza: Passeggero Prenota Viaggio
 
--- PASSO 5: Concessione dei Privilegi all'Utente sul Database specifico
--- Concede solo i permessi necessari per le operazioni CRUD (Create, Read, Update, Delete)
-GRANT SELECT, INSERT, UPDATE, DELETE ON carpooling_db.* TO 'carpooling_app_user'@'localhost';
+    actor Passeggero
+    participant "Frontend WebApp" as FE
+    participant "API Service (Backend)" as BE
+    database Database as DB
+    participant "Servizio Notifiche" as SN
 
--- Nota: Se l'applicazione gestisce le migrazioni dello schema (es. con EF Core migrations),
--- potrebbe aver bisogno anche di privilegi ALTER, CREATE, DROP, INDEX, REFERENCES.
--- È più sicuro eseguire le migrazioni con un utente diverso con privilegi più alti
--- o concedere temporaneamente questi privilegi all'utente dell'app durante il deployment.
--- Per il funzionamento base CRUD, i permessi sopra sono sufficienti.
+    Passeggero -> FE : Seleziona Viaggio e Clicca "Prenota"
+    activate FE
+    FE -> BE : POST /api/prenotazioni (idViaggio, infoPasseggero)
+    activate BE
+    BE -> DB : Verifica disponibilità viaggio e precondizioni
+    activate DB
+    DB --> BE : Risultato verifica
+    deactivate DB
 
--- PASSO 6: Applicare le modifiche ai privilegi
-FLUSH PRIVILEGES;
-```
+    alt Precondizioni OK
+        BE -> DB : INSERT nuova Prenotazione (stato: Richiesta)
+        activate DB
+        DB --> BE : Conferma inserimento
+        deactivate DB
+        BE -> SN : Richiedi invio notifica ad Autista
+        activate SN
+        SN --> BE : (Conferma accettazione richiesta)
+        deactivate SN
+        BE --> FE : {success: true, message: "Richiesta inviata"}
+    else Precondizioni NON OK
+        BE --> FE : {success: false, error: "Impossibile prenotare"}
+    end
+    FE --> Passeggero : Mostra messaggio
+    deactivate BE
+    deactivate FE
+
+    @enduml
+
+    ```
+
+L'uso di questi diagrammi UML, anche in forma semplificata, può migliorare notevolmente la qualità della relazione tecnica, facilitando la comprensione da parte del committente degli aspetti funzionali e architetturali della piattaforma car pooling. È importante che siano chiari, ben etichettati e accompagnati da una breve spiegazione nel testo della relazione.
+
+#### Quesito III: Schema Relazionale Film/Attore/Recita
+
+Dato il seguente schema relazionale: `film (id, titolo, durata, anno_produzione, genere);` `attore (id, nome, cognome, data_nascita, fotografia);` `recita (id_film, id_attore, ruolo);`
+
+Il candidato:
+
+- Determini la modalità di gestione del campo 'fotografia' che prevede la memorizzazione di una immagine dell'attore in un formato grafico (es. JPG).
+- Formalizzi in linguaggio SQL lo schema fisico corrispondente allo schema relazionale, sapendo che:
+    - Il campo 'genere' ammette solo i seguenti valori: fantasy, giallo, commedia, horror, drammatico, fantascienza, azione.
+    - Per la relazione 'recita', i campi 'id\_film' e 'id\_attore' referenziano rispettivamente la chiave primaria delle relazioni 'film' e 'attore'.
+- Discuta l'uso degli indici nel modello fisico di una base di dati e suggerisca con motivato giudizio indici appropriati per questo schema relazionale, definendoli in linguaggio SQL.
+
+1. Gestione del Campo 'fotografia'
+
+    Per la gestione del campo `fotografia` dell'entità `attore`, che deve memorizzare un'immagine in formato grafico (es. JPG), si possono considerare principalmente due approcci:
+
+    - **Memorizzazione dell'Immagine come BLOB (Binary Large Object) nel Database:**
+        - **Pro:** L'immagine è direttamente integrata con gli altri dati dell'attore, semplificando i backup e la consistenza dei dati. Non ci sono dipendenze da file system esterni.
+        - **Contro:** Può appesantire significativamente il database, potenzialmente degradando le performance per query che non necessitano dell'immagine. La gestione (lettura/scrittura) dei BLOB può essere meno efficiente rispetto all'accesso a file. Le dimensioni dei BLOB sono spesso limitate o richiedono configurazioni specifiche.
+    - **Memorizzazione del Percorso (Path) all'Immagine nel Database:**
+        - **Pro:** Il database rimane leggero e performante. Le immagini sono file standard sul file system del server o su un servizio di storage dedicato (es. CDN, S3), ottimizzati per la distribuzione di contenuti statici. È più flessibile per la gestione delle immagini (ridimensionamento, caching).
+        - **Contro:** Richiede la gestione della consistenza tra il percorso nel database e l'effettiva presenza del file nel file system/storage. I backup devono considerare sia il database sia lo storage delle immagini.
+        - **Scelta Consigliata:** Per applicazioni web e la maggior parte degli scenari, **la memorizzazione del percorso è generalmente l'approccio preferito** per la sua scalabilità e le migliori performance nella distribuzione dei contenuti. Il campo `fotografia` nella tabella `attore` conterrebbe quindi una stringa VARCHAR con il percorso relativo o assoluto all'immagine (es. `/immagini/attori/nome_file.jpg` o un URL completo se su CDN).
+
+1. Schema Fisico SQL (MariaDB/MySQL)
+
+    ```sql
+    -- Tabella film
+    CREATE TABLE film (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        titolo VARCHAR(255) NOT NULL,
+        durata INT, -- Durata in minuti
+        anno_produzione YEAR, -- Anno a 4 cifre
+        genere ENUM('fantasy', 'giallo', 'commedia', 'horror', 'drammatico', 'fantascienza', 'azione') NOT NULL, -- Vincolo sui valori [cite: 34]
+        INDEX idx_titolo (titolo),
+        INDEX idx_genere (genere),
+        INDEX idx_anno_produzione (anno_produzione)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+    -- Tabella attore
+    CREATE TABLE attore (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        nome VARCHAR(100) NOT NULL,
+        cognome VARCHAR(100) NOT NULL,
+        data_nascita DATE,
+        fotografia VARCHAR(512), -- Percorso al file dell'immagine (es. JPG)
+        INDEX idx_cognome_nome (cognome, nome)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+    -- Tabella di associazione recita
+    CREATE TABLE recita (
+        id_film INT NOT NULL,
+        id_attore INT NOT NULL,
+        ruolo VARCHAR(100),
+        PRIMARY KEY (id_film, id_attore), -- Chiave primaria composta
+        CONSTRAINT fk_recita_film FOREIGN KEY (id_film) REFERENCES film(id) ON DELETE CASCADE ON UPDATE CASCADE, -- Vincolo di integrità referenziale [cite: 35]
+        CONSTRAINT fk_recita_attore FOREIGN KEY (id_attore) REFERENCES attore(id) ON DELETE CASCADE ON UPDATE CASCADE, -- Vincolo di integrità referenziale [cite: 35]
+        INDEX idx_ruolo (ruolo) -- Indice sul ruolo se si cerca spesso per ruolo
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ```
+
+    **Spiegazioni aggiuntive:**
+
+    - `ENGINE=InnoDB`: Necessario per il supporto delle chiavi esterne e delle transazioni.
+    - `DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`: Per il supporto di un'ampia gamma di caratteri.
+    - `ENUM` per `genere`: Implementa direttamente il vincolo sui valori ammessi.
+    - `FOREIGN KEY ... ON DELETE CASCADE ON UPDATE CASCADE`: Assicura che se un film o un attore viene eliminato, anche le relative partecipazioni in `recita` vengano eliminate. Se l'ID di un film o attore cambiasse (raro con AUTO\_INCREMENT), verrebbe aggiornato anche in `recita`.
+
+2. Uso degli Indici
+
+    **Discussione:** Gli indici sono strutture dati speciali associate a tabelle (o viste in alcuni DBMS) che permettono di velocizzare significativamente le operazioni di ricerca (SELECT con clausole WHERE, JOIN) e ordinamento. Funzionano in modo simile all'indice analitico di un libro: invece di scorrere tutte le pagine (righe della tabella), il DBMS può consultare l'indice per trovare rapidamente la "pagina" (posizione fisica o logica della riga) desiderata.
+
+    **Vantaggi:**
+
+    - **Velocità:** Drastica riduzione dei tempi di esecuzione delle query che filtrano o ordinano per colonne indicizzate.
+    - **Efficienza nei JOIN:** I join tra tabelle su colonne indicizzate (tipicamente chiavi primarie ed esterne) sono molto più veloci.
+    - **Applicazione di Vincoli:** Gli indici `UNIQUE` garantiscono l'unicità dei valori in una colonna. Le chiavi primarie sono automaticamente indicizzate.
+
+    **Svantaggi:**
+
+    - **Spazio su Disco:** Gli indici occupano spazio aggiuntivo.
+    - **Overhead in Scrittura:** Le operazioni di INSERT, UPDATE, DELETE diventano leggermente più lente perché il DBMS deve aggiornare anche gli indici associati, oltre ai dati della tabella.
+
+    È quindi cruciale bilanciare il numero e il tipo di indici: crearli sulle colonne frequentemente usate nelle condizioni di ricerca e join, ma evitare di indicizzare indiscriminatamente ogni colonna.
+
+    **Indici Suggeriti per lo Schema (con definizione SQL, già inclusi nello script sopra):**
+
+    1. **Chiavi Primarie:**
+
+        - `film(id)`: Automaticamente indicizzata. Essenziale per i join.
+        - `attore(id)`: Automaticamente indicizzata. Essenziale per i join.
+        - `recita(id_film, id_attore)`: Chiave primaria composta, automaticamente indicizzata. Ottima per join e per verificare se un attore ha recitato in un film.
+    2. **Chiavi Esterne:**
+
+        - `recita(id_film)`: Benché parte della PK, un indice separato su `id_film` (se non coperto ottimamente dalla PK composta per tutte le query) potrebbe essere utile se si cercano spesso tutti gli attori di un film. MariaDB/MySQL crea automaticamente indici per le FK se non esistono già indici compatibili.
+        - `recita(id_attore)`: Similmente, un indice separato su `id_attore` potrebbe essere utile se si cercano spesso tutti i film di un attore. Un indice su `(id_attore, id_film)` sulla tabella `recita` sarebbe molto utile per questo.
+    3. **Colonne Frequentemente Usate nelle Ricerche (Clausola `WHERE`):**
+
+        - `film(titolo)`: `INDEX idx_titolo (titolo)`
+            - Motivazione: La ricerca di film per titolo è un'operazione molto comune.
+        - `film(genere)`: `INDEX idx_genere (genere)`
+            - Motivazione: Permette di filtrare rapidamente i film per genere. Essendo un ENUM con bassa cardinalità, l'efficacia può variare ma è generalmente utile.
+        - `film(anno_produzione)`: `INDEX idx_anno_produzione (anno_produzione)`
+            - Motivazione: Per ricerche di film usciti in un certo anno o intervallo di anni.
+        - `attore(cognome, nome)`: `INDEX idx_cognome_nome (cognome, nome)`
+            - Motivazione: Ricerca di attori per cognome e nome. Un indice composto è efficiente.
+        - `recita(ruolo)`: `INDEX idx_ruolo (ruolo)`
+            - Motivazione: Se si effettuano ricerche per trovare film/attori basati su un ruolo specifico (es. tutti gli attori che hanno interpretato "Batman").
+
+    **Definizione SQL degli indici (come già inserita negli script `CREATE TABLE`):** Gli indici sono stati definiti direttamente nelle istruzioni `CREATE TABLE` sopra con la sintassi `INDEX nome_indice (colonna1, ...)` o tramite la definizione di `PRIMARY KEY` e `FOREIGN KEY` (che spesso implicano la creazione di indici).
+
+#### Quesito IV: Applicazione Web Responsive per Eventi Culturali
+
+Il candidato esponga i punti critici da affrontare relativamente alle differenti proprietà di visualizzazione delle varie tipologie di dispositivi e alla rispettiva fruizione dei contenuti. Illustri possibili misure risolutive, con esempi relativi all'applicazione in questione.
+
+Un'applicazione Web per la prenotazione on-line di eventi culturali deve essere facilmente fruibile sia da computer desktop che da dispositivi mobili (tablet, smartphone) per raggiungere il pubblico più ampio possibile. Questo introduce diverse sfide legate alla responsività e all'esperienza utente (UX).
+
+**Punti Critici da Affrontare:**
+
+1. **Dimensioni e Risoluzione dello Schermo Diverse:**
+
+    - **Criticità:** Layout fissi progettati per desktop risultano illeggibili o difficili da navigare su schermi piccoli (testo troppo piccolo, elementi sovrapposti, necessità di zoom e scroll orizzontale). Immagini pesanti possono rallentare il caricamento su mobile.
+    - **Misure Risolutive:**
+        - **Responsive Web Design (RWD):** Utilizzo di griglie fluide (fluid grids), immagini flessibili e CSS media queries per adattare dinamicamente il layout al variare della larghezza dello schermo.
+        - **Approccio Mobile-First:** Progettare inizialmente per l'esperienza mobile (con i vincoli più stringenti) e poi arricchire progressivamente il layout per schermi più grandi (progressive enhancement).
+        - **Immagini Ottimizzate:** Utilizzo di immagini responsive (es. tag `<picture>` o attributi `srcset` e `sizes` per `<img>`) per servire versioni di immagini di dimensioni e risoluzioni appropriate al dispositivo. Compressione delle immagini (es. WebP).
+    - **Esempio (App Eventi):** Su desktop, l'elenco degli eventi potrebbe essere visualizzato in una griglia a più colonne con dettagli visibili. Su smartphone, lo stesso elenco diventerebbe a colonna singola, con informazioni più concise per ciascun evento e dettagli accessibili tramite tap. Le immagini promozionali degli eventi verrebbero ridimensionate o tagliate in modo intelligente.
+2. **Modalità di Interazione Diverse (Mouse vs. Touch):**
+
+    - **Criticità:** Elementi interattivi troppo piccoli o vicini sono difficili da toccare con le dita. Funzionalità basate su hover (mouse-over) non funzionano su dispositivi touch.
+    - **Misure Risolutive:**
+        - **Target Tattili Adeguati:** Pulsanti, link e altri controlli devono avere dimensioni sufficienti (min. 44x44px CSS secondo le linee guida Apple/Google) e spaziatura adeguata per evitare tocchi accidentali.
+        - **Alternative all'Hover:** Le informazioni o funzionalità rivelate tramite hover su desktop devono avere un meccanismo alternativo su mobile (es. visibili di default in forma concisa, o accessibili tramite un tap/click esplicito).
+        - **Gesture Support:** Considerare l'uso di gesture comuni su mobile (swipe per caroselli, pinch-to-zoom per mappe/immagini se appropriato).
+    - **Esempio (App Eventi):** Il calendario per la selezione delle date dell'evento dovrebbe avere giorni sufficientemente grandi per essere toccati. Se su desktop un tooltip appare al passaggio del mouse su un'icona, su mobile un tap sull'icona potrebbe aprire una piccola modale con la stessa informazione.
+3. **Fruizione dei Contenuti e Navigazione:**
+
+    - **Criticità:** Strutture di navigazione complesse (menu con molti livelli) sono difficili da implementare e usare su mobile. Grandi quantità di testo o tabelle complesse possono essere problematiche.
+    - **Misure Risolutive:**
+        - **Navigazione Semplificata su Mobile:** Utilizzo di pattern di navigazione mobile-friendly come il menu "hamburger" (off-canvas), navigazione a tab in fondo allo schermo, o una struttura gerarchica più piatta.
+        - **Prioritizzazione dei Contenuti:** Mostrare le informazioni più importanti e le azioni principali in primo piano su mobile, nascondendo o rendendo accessibili tramite interazione contenuti secondari.
+        - **Contenuti Adattivi:** Suddividere testi lunghi in sezioni più brevi con accordion o tab. Riformattare tabelle complesse per la visualizzazione verticale o permettere lo scroll orizzontale solo per la tabella.
+    - **Esempio (App Eventi):** La pagina di dettaglio di un evento, che su desktop potrebbe mostrare tutte le informazioni (descrizione, mappa, recensioni, opzioni biglietto) in un'unica vista, su mobile potrebbe usare sezioni collassabili (accordion) o tab per "Descrizione", "Come Arrivare", "Acquista Biglietti". Il menu principale del sito potrebbe trasformarsi in un'icona "hamburger".
+4. **Performance e Connettività:**
+
+    - **Criticità:** Utenti mobili potrebbero avere connessioni più lente o instabili. Pagine pesanti (molti asset, JS non ottimizzato) portano a tempi di caricamento lunghi e frustrazione.
+    - **Misure Risolutive:**
+        - **Ottimizzazione delle Risorse:** Minificazione di CSS, JavaScript, HTML. Compressione (Gzip/Brotli). Lazy loading per immagini e video non immediatamente visibili.
+        - **Caching:** Sfruttare il caching del browser e, se possibile, Service Workers per PWA (Progressive Web App) per migliorare i tempi di caricamento successivi e consentire funzionalità offline di base.
+        - **Riduzione delle Richieste HTTP:** Combinare file CSS/JS ove possibile.
+    - **Esempio (App Eventi):** Le immagini della galleria di un evento o le locandine degli eventi in un elenco potrebbero essere caricate solo quando diventano visibili nello viewport (lazy loading). Il codice JavaScript essenziale per il rendering iniziale viene caricato per primo, mentre script meno critici vengono differiti.
+5. **Leggibilità del Testo:**
+
+    - **Criticità:** Caratteri troppo piccoli o contrasto insufficiente rendono difficile la lettura, specialmente su schermi piccoli o all'aperto.
+    - **Misure Risolutive:**
+        - **Font Scalabili:** Utilizzare unità relative (em, rem, %) per le dimensioni dei caratteri, permettendo una facile scalabilità con le media queries.
+        - **Contrasto Adeguato:** Assicurare un buon rapporto di contrasto tra testo e sfondo (seguire le linee guida WCAG).
+        - **Interlinea e Lunghezza Riga:** Ottimizzare l'interlinea e la lunghezza delle righe di testo per una migliore leggibilità su ogni dispositivo.
+    - **Esempio (App Eventi):** La dimensione del carattere base per la descrizione dell'evento potrebbe essere di 16px su mobile e leggermente maggiore o uguale su desktop, con un'interlinea di almeno 1.5. Il colore del testo per i dettagli del biglietto (prezzo, settore) deve avere un forte contrasto con lo sfondo.
+
+Affrontando proattivamente questi punti critici attraverso un design responsivo e user-centered, è possibile creare un'applicazione per la prenotazione di eventi culturali che offra un'esperienza utente ottimale su qualsiasi dispositivo.
+
+**Possibili misure risolutive:**
+
+Per "illustrare possibili misure risolutive, con esempi relativi all'applicazione in questione" (App Web per prenotazione eventi culturali), possiamo dettagliare come segue:
+
+1. **Responsive Web Design (RWD) tramite CSS Media Queries:**
+
+    - **Concetto:** Le Media Queries CSS sono il fondamento del RWD. Permettono di applicare stili CSS diversi in base alle caratteristiche del dispositivo, principalmente la larghezza della finestra del browser (viewport).
+    - **Implementazione:** Si definiscono dei "breakpoint" (punti di interruzione) a larghezze specifiche. Ad esempio:CSS
+
+        ```css
+        /* Stili di base (mobile-first) */
+        .lista-eventi {
+            display: flex;
+            flex-direction: column; /* Eventi in colonna su mobile */
+        }
+        .evento-card {
+            margin-bottom: 1em;
+            border: 1px solid #ccc;
+        }
+        .evento-immagine {
+            width: 100%; /* Immagine a piena larghezza del contenitore card */
+            height: auto;
+        }
+
+        /* Tablet (es. > 768px) */
+        @media (min-width: 768px) {
+            .lista-eventi {
+                flex-direction: row; /* Eventi affiancati */
+                flex-wrap: wrap; /* Vanno a capo se non c'è spazio */
+                justify-content: space-around;
+            }
+            .evento-card {
+                width: 48%; /* Circa due card per riga */
+            }
+        }
+
+        /* Desktop (es. > 1024px) */
+        @media (min-width: 1024px) {
+            .evento-card {
+                width: 30%; /* Circa tre card per riga */
+            }
+            /* Mostra dettagli aggiuntivi dell'evento, nascosti su mobile */
+            .dettagli-desktop-evento {
+                display: block;
+            }
+        }
+        ```
+
+    - **Esempio (App Eventi):**
+        - **Elenco Eventi:** Su mobile, ogni evento (`.evento-card`) occupa l'intera larghezza e sono impilati verticalmente. Su tablet, due eventi per riga. Su desktop, tre o più eventi per riga.
+        - **Dettaglio Evento:** La locandina dell'evento (`.evento-immagine`) si adatta alla larghezza del suo contenitore. Elementi come una mappa dettagliata potrebbero essere visibili solo su schermi più grandi o presentati in modo diverso (es. un link su mobile, una mappa embeddata su desktop).
+2. **Utilizzo di Framework CSS Responsivi (es. Bootstrap, Tailwind CSS):**
+
+    - **Concetto:** Questi framework forniscono un insieme di classi CSS predefinite e componenti JavaScript per costruire rapidamente interfacce responsive. Il più noto per questo approccio è il sistema a griglia (Grid System) di Bootstrap.
+    - **Implementazione (Bootstrap come esempio):** Bootstrap utilizza un sistema a griglia a 12 colonne. Si definisce come gli elementi devono occupare queste colonne a diverse dimensioni di schermo (xs, sm, md, lg, xl).HTML
+
+        ```cs
+        <div class="container">
+            <div class="row">
+                <div class="col-12 col-md-6 col-lg-4 mb-3"> <div class="card">
+                        <img src="locandina_evento1.jpg" class="card-img-top" alt="Evento 1">
+                        <div class="card-body">
+                            <h5 class="card-title">Titolo Evento 1</h5>
+                            <p class="card-text">Breve descrizione...</p>
+                            <a href="#" class="btn btn-primary">Dettagli e Biglietti</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-lg-4 mb-3">
+                    </div>
+                </div>
+        </div>
+        ```
+
+    - **Esempio (App Eventi):** Oltre alla griglia per l'elenco eventi, Bootstrap offre componenti responsivi pronti all'uso come:
+        - **Navbar:** La barra di navigazione principale collassa automaticamente in un menu "hamburger" su schermi piccoli.
+        - **Modali:** Per visualizzare dettagli o form di prenotazione in finestre popup che si adattano allo schermo.
+        - **Caroselli:** Per gallerie di immagini degli eventi.
+3. **Layout CSS Moderni (Flexbox e CSS Grid):**
+
+    - **Concetto:** Sono moduli CSS nativi per la creazione di layout complessi e flessibili, spesso usati anche internamente dai framework o in combinazione con essi.
+        - **Flexbox:** Ideale per layout monodimensionali (righe o colonne).
+        - **CSS Grid:** Ottimale per layout bidimensionali (righe e colonne contemporaneamente).
+    - **Implementazione:**CSS
+
+        ```css
+        /* Esempio con Flexbox per il footer di un evento */
+        .footer-evento {
+            display: flex;
+            justify-content: space-between; /* Spazia i figli */
+            align-items: center;
+        }
+        .footer-evento .data { /*...*/ }
+        .footer-evento .prezzo { /*...*/ }
+        .footer-evento .bottone-acquista { /*...*/ }
+
+        /* Su mobile, potrebbero andare in colonna */
+        @media (max-width: 600px) {
+            .footer-evento {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        ```
+
+    - **Esempio (App Eventi):**
+        - Flexbox può essere usato per allineare elementi all'interno di una "card" di un evento (es. titolo, data, breve descrizione, bottone).
+        - CSS Grid può definire il layout principale della pagina di dettaglio dell'evento, con aree per l'immagine principale, la descrizione, la mappa, e la sezione biglietti, riorganizzandole dinamicamente con le media query.
+4. **Immagini Responsive:**
+
+    - **Concetto:** Servire immagini di dimensioni e risoluzioni diverse in base al dispositivo per ottimizzare i tempi di caricamento e la qualità visiva.
+    - **Implementazione:**
+        - **Attributo `srcset` per `<img>`:** Fornisce al browser un elenco di immagini e le loro larghezze, lasciando che scelga la più adatta.HTML
+
+            ```html
+            <img src="evento-small.jpg"
+                 srcset="evento-small.jpg 500w, evento-medium.jpg 1000w, evento-large.jpg 1500w"
+                 sizes="(max-width: 600px) 90vw, (max-width: 1200px) 50vw, 33vw"
+                 alt="Locandina evento">
+
+            ```
+
+        - **Elemento `<picture>`:** Offre un controllo ancora maggiore, permettendo di specificare sorgenti diverse per breakpoint diversi o per formati immagine differenti (es. WebP con fallback JPG).HTML
+
+            ```html
+            <picture>
+               <source media="(min-width: 900px)" srcset="evento-desktop.webp" type="image/webp">
+               <source media="(min-width: 600px)" srcset="evento-tablet.webp" type="image/webp">
+               <source srcset="evento-mobile.webp" type="image/webp">
+               <source media="(min-width: 900px)" srcset="evento-desktop.jpg">
+               <source media="(min-width: 600px)" srcset="evento-tablet.jpg">
+               <img src="evento-mobile.jpg" alt="Locandina evento">
+            </picture>
+
+            ```
+
+    - **Esempio (App Eventi):** Le locandine degli eventi e le immagini nelle gallerie utilizzeranno queste tecniche per garantire che un utente su smartphone non scarichi inutilmente un'immagine ad altissima risoluzione pensata per un display 4K.
+
+Adottando queste misure risolutive implementative, l'applicazione per la prenotazione di eventi culturali può offrire un'esperienza utente fluida e ottimizzata su un'ampia gamma di dispositivi.

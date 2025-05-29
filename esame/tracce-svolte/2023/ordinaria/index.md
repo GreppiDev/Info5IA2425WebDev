@@ -12,12 +12,12 @@
 
 ## Svolgimento della traccia
 
-L'analisi della prima parte della prova fino alla definizione del database e alla scrittura di una porzione significativa di codice è riportata nell'esempio [Educational Games](../../../asp.net/api-samples/minimal-api/Esami/2023/EducationalGames/progetto-educational-games.md) relativa agli esempi sviluppati con le Minimal API ASP.NET
+L'analisi della prima parte della prova fino alla definizione del database e alla scrittura di una porzione significativa di codice è riportata nell'esempio [Educational Games](../../../../asp.net/api-samples/minimal-api/Esami/2023/EducationalGames/progetto-educational-games.md) relativa agli esempi sviluppati con le Minimal API ASP.NET
 
 ## Sviluppo del progetto (prototipo)
 
-Lo sviluppo del progetto con l'utilizzo delle tecnologie studiate al corso (in particolare ASP.NET Minimal API per il backend e HTML, CSS, JS per il frontend) è riportato nella sezione [Indicazioni per lo sviluppo del progetto](../../../asp.net/api-samples/minimal-api/Esami/2023/EducationalGames/indicazioni-sviluppo-progetto.md).
+Lo sviluppo del progetto con l'utilizzo delle tecnologie studiate al corso (in particolare ASP.NET Minimal API per il backend e HTML, CSS, JS per il frontend) è riportato nella sezione [Indicazioni per lo sviluppo del progetto](../../../../asp.net/api-samples/minimal-api/Esami/2023/EducationalGames/indicazioni-sviluppo-progetto.md).
 
 ### Progetto dimostrativo (prototipo funzionante)
 
-Il prototipo del progetto è disponibile in [questa sezione](../../../asp.net/api-samples/minimal-api/Esami/2023/EducationalGames/).
+Il prototipo del progetto è disponibile in [questa sezione](../../../../asp.net/api-samples/minimal-api/Esami/2023/EducationalGames/).
