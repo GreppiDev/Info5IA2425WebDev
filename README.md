@@ -72,8 +72,13 @@
 
 12. [Cenni ai protocolli OAuth2.0 e OpenID Connect](./web/web-docs/oauth-oidc/index.md)
 13. [Cenni al GDPR e Implicazioni per la Gestione di Siti Web](./web/web-docs/gdpr/index.md)
+14. Esercitazioni finali e cumulative sull'SQL
+    1. [Gestione Biblioteca Universitaria](./sql/sql-docs/sql-cumulative-exercize-1/index.md)
+    2. [Gestione E-commerce](./sql/sql-docs/sql-cumulative-exercize-2/index.md)
+    3. [Gestione Campionato Sportivo](./sql/sql-docs/sql-cumulative-exercize-3/index.md)
+    4. [Considerazioni generali sulla ridondanza e sulle tecniche SQL utilizzate negli esercizi proposti](./sql/sql-docs/sql-cumulative-exercizes-overview/index.md)
 
-14. Verso l'Esame di Stato
+15. Verso l'Esame di Stato
     1. [Traccia di informatica del 2017 - sessione ordinaria](./esame/tracce-svolte/2017/ordinaria/index.md)
     2. [Traccia di Informatica del 2023 - sessione ordinaria](./esame/tracce-svolte/2023/ordinaria/index.md)
     3. [Traccia di Informatica del 2023 - sessione suppletiva](./esame/tracce-svolte/2023/suppletiva/index.md)

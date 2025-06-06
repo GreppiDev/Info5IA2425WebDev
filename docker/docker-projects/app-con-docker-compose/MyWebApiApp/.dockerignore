@@ -66,5 +66,6 @@
 # File di documentazione del progetto (non necessari nell'immagine runtime)
 LICENSE
 README.md
-
+.env # Cruciale se il contesto di build fosse la root e si volesse evitare di copiarlo
+.env.local
 
