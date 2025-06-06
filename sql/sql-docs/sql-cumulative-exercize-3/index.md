@@ -44,9 +44,9 @@ Il seguente diagramma mostra il modello ER del campionato sportivo con tutte le 
 erDiagram
     STAGIONI {
         int IDStagione PK
-        string Descrizione
         year AnnoInizio
-        year AnnoFine
+        year AnnoFine "AnnoFine >= AnnoInizio"
+        string Descrizione "UNIQUE"
     }
     
     SQUADRE {
@@ -68,9 +68,9 @@ erDiagram
     
     SQUADRE_PER_STAGIONE {
         int IDSquadraStagione PK
-        int IDStagione FK
-        int IDSquadra FK
-        int IDAllenatore FK
+        int IDStagione
+        int IDSquadra
+        int IDAllenatore
     }
     
     GIOCATORI {
@@ -79,18 +79,18 @@ erDiagram
         string Cognome
         date DataNascita
         string Nazionalita
-        string Ruolo
-        int NumeroMaglia
-        int IDSquadraAttuale FK
+        string Ruolo "ENUM('Portiere', 'Difensore', 'Centrocampista', 'Attaccante')"
+        int NumeroMaglia "1-99, può essere NULL"
+        int IDSquadraAttuale
         boolean Attivo
     }
     
     PARTITE {
         int IDPartita PK
-        int IDStagione FK
+        int IDStagione
         datetime DataOraPartita
-        int IDSquadraCasa FK
-        int IDSquadraOspite FK
+        int IDSquadraCasa
+        int IDSquadraOspite
         string StadioPartita
         text NotePartita
         boolean Disputata
@@ -98,10 +98,10 @@ erDiagram
     
     MARCATORI_PARTITA {
         int IDMarcatorePartita PK
-        int IDPartita FK
-        int IDGiocatore FK
+        int IDPartita
+        int IDGiocatore
         int MinutoGol
-        string TipoGol
+        string TipoGol "ENUM('Azione', 'Rigore', 'Autogol', 'Punizione')"
     }
     
     %% Relazioni
@@ -115,28 +115,6 @@ erDiagram
     PARTITE ||--o{ MARCATORI_PARTITA : "gol segnati"
     GIOCATORI ||--o{ MARCATORI_PARTITA : "segna"
     
-    %% Note sui vincoli principali
-    GIOCATORI {
-        string Ruolo "ENUM('Portiere', 'Difensore', 'Centrocampista', 'Attaccante')"
-        int NumeroMaglia "1-99, può essere NULL"
-    }
-    
-    MARCATORI_PARTITA {
-        string TipoGol "ENUM('Azione', 'Rigore', 'Autogol', 'Punizione')"
-    }
-    
-    STAGIONI {
-        year AnnoFine "AnnoFine >= AnnoInizio"
-        string Descrizione "UNIQUE"
-    }
-    
-    SQUADRE_PER_STAGIONE {
-        string UniqueConstraint "UNIQUE(IDStagione, IDSquadra)"
-    }
-    
-    PARTITE {
-        string Vincolo "IDSquadraCasa != IDSquadraOspite (tramite trigger)"
-    }
 ```
 
 **Legenda delle relazioni:**
@@ -165,6 +143,7 @@ erDiagram
 - Il marcatore deve appartenere a una delle due squadre che giocano la partita
 - Una squadra può partecipare solo una volta per stagione
 - Il numero di maglia deve essere unico per squadra (se specificato)
+- La coppia (IDStagione, IDSquadra) è UNIQUE
 
 ## Schema Logico del Database
 

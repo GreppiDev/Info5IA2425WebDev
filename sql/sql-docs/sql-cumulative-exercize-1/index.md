@@ -63,7 +63,7 @@ erDiagram
     COPIE_LIBRO {
         int IDCopia PK
         string ISBN
-        string StatoCopia
+        string StatoCopia "ENUM('Disponibile', 'In Prestito', 'In Manutenzione', 'Smarrito')"
         date DataAcquisto
         string Ubicazione
         boolean Attiva
@@ -81,7 +81,7 @@ erDiagram
         string Nome
         string Cognome
         string Email
-        string TipoUtente
+        string TipoUtente "ENUM('Studente', 'Docente')"
         date DataRegistrazione
     }
     
@@ -91,7 +91,7 @@ erDiagram
         int UtenteID
         date DataPrestito
         date DataRestituzionePrevista
-        date DataRestituzioneEffettiva
+        date DataRestituzioneEffettiva "NULL se non ancora restituito"
     }
     
     %% Relazioni
@@ -100,18 +100,7 @@ erDiagram
     AUTORI ||--o{ LIBRI_AUTORI : "scrive"
     COPIE_LIBRO ||--o{ PRESTITI : "viene prestata"
     UTENTI ||--o{ PRESTITI : "effettua"
-      %% Note sui vincoli principali
-    COPIE_LIBRO {
-        string StatoCopia "ENUM('Disponibile', 'In Prestito', 'In Manutenzione', 'Smarrito')"
-    }
-    
-    UTENTI {
-        string TipoUtente "ENUM('Studente', 'Docente')"
-    }
-    
-    PRESTITI {
-        date DataRestituzioneEffettiva "NULL se non ancora restituito"
-    }
+      
 ```
 
 **Legenda delle relazioni:**
@@ -217,7 +206,7 @@ La soluzione a tutti i quesiti posti nelle sezioni seguenti è presentata nello 
 
 1. **Creazione dello Schema Fisico**:
 
-    - Creare un database MariaDB chiamato `BibliotecaUniversitariaDB` (o utilizzare lo stesso aggiornandolo).
+    - Creare un database MariaDB chiamato `BibliotecaUniversitariaDB`.
 
     - Implementare le tabelle definite nel nuovo schema logico, specificando tipi di dato appropriati, chiavi primarie, chiavi esterne, vincoli di integrità (NOT NULL, UNIQUE, CHECK, ENUM, DEFAULT) e relazioni.
 

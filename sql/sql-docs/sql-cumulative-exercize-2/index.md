@@ -67,7 +67,7 @@ erDiagram
         int IDOrdine PK
         int IDCliente
         datetime DataOrdine
-        string StatoOrdine
+        string StatoOrdine "ENUM('In Attesa di Pagamento', 'Pagamento Fallito', 'In Lavorazione', 'Spedito', 'Consegnato', 'Annullato')"
         string IndirizzoSpedizioneOrdine
         string CittaSpedizioneOrdine
         string CAPSpedizioneOrdine
@@ -87,9 +87,9 @@ erDiagram
         int IDOrdine
         decimal ImportoPagato
         datetime DataOraPagamento
-        string MetodoPagamento
+        string StatoPagamento "ENUM('In Attesa', 'Completato', 'Fallito', 'Rimborsato', 'Annullato')"
+        string MetodoPagamento "ENUM('CartaCredito', 'PayPal', 'Stripe', 'Bonifico')"
         string IDTransazioneGateway
-        string StatoPagamento
         json DettagliRispostaGateway
     }
     
@@ -100,15 +100,6 @@ erDiagram
     PRODOTTI ||--o{ DETTAGLI_ORDINE : "ordinato in"
     ORDINI ||--o{ PAGAMENTI : "pagato con"
     
-    %% Note sui vincoli principali
-    ORDINI {
-        string StatoOrdine "ENUM('In Attesa di Pagamento', 'Pagamento Fallito', 'In Lavorazione', 'Spedito', 'Consegnato', 'Annullato')"
-    }
-    
-    PAGAMENTI {
-        string StatoPagamento "ENUM('In Attesa', 'Completato', 'Fallito', 'Rimborsato', 'Annullato')"
-        string MetodoPagamento "ENUM('CartaCredito', 'PayPal', 'Stripe', 'Bonifico')"
-    }
 ```
 
 **Legenda delle relazioni:**
