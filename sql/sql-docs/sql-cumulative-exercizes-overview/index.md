@@ -14,7 +14,6 @@
   - [5. Sintesi e Guida alla Scelta Progettuale](#5-sintesi-e-guida-alla-scelta-progettuale)
     - [Tendenze e Consigli per lo Sviluppatore Moderno](#tendenze-e-consigli-per-lo-sviluppatore-moderno)
 
-
 ## Introduzione
 
 L'analisi comparativa dei tre esercizi --- **Gestione Biblioteca**, **Gestione E-commerce** e **Gestione Campionato Sportivo** --- è uno strumento potente per comprendere le diverse filosofie di progettazione di un database. Sebbene tutti e tre i modelli siano funzionali, adottano approcci radicalmente diversi per risolvere un problema comune: il bilanciamento tra **prestazioni**, **integrità dei dati** e **complessità di manutenzione**.
