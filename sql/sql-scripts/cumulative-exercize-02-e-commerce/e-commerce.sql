@@ -176,7 +176,6 @@ DELIMITER ;
 
 -- ############################################
 -- # 2. Popolamento del Database (DML)        #
--- # MODIFICATO per evitare "mutating table"  #
 -- ############################################
 
 -- Clienti, Categorie, Prodotti (come prima)
@@ -247,7 +246,7 @@ INSERT INTO Ordini (IDCliente, IndirizzoSpedizioneOrdine, CittaSpedizioneOrdine,
 SELECT IDCliente, IndirizzoSpedizione, CittaSpedizione, CAPSpedizione FROM Clienti WHERE Email = 'anna.gialli@example.com';
 SET @IDOrdine8 = LAST_INSERT_ID();
 
--- Inserimento DettagliOrdine (MODIFICATO per evitare "mutating table")
+-- Inserimento DettagliOrdine
 -- Dettaglio Ordine 1
 SET @IDProdSmartphone = (SELECT IDProdotto FROM Prodotti WHERE NomeProdotto = 'Smartphone XYZ');
 SET @PrezzoSmartphone = (SELECT PrezzoUnitario FROM Prodotti WHERE IDProdotto = @IDProdSmartphone);
@@ -302,7 +301,7 @@ INSERT INTO DettagliOrdine (IDOrdine, IDProdotto, Quantita, PrezzoUnitarioAlMome
 VALUES (@IDOrdine8, @IDProdFelpa, 1, @PrezzoFelpa);
 
 
--- Inserimento Pagamenti (DettagliRispostaGateway ora come stringa JSON valida)
+-- Inserimento Pagamenti (DettagliRispostaGateway come stringa JSON valida)
 -- Pagamento per Ordine 1 (Completato)
 SET @TotaleOrdine1 = (SELECT TotaleOrdine FROM Ordini WHERE IDOrdine = @IDOrdine1);
 INSERT INTO Pagamenti (IDOrdine, ImportoPagato, MetodoPagamento, IDTransazioneGateway, StatoPagamento, DettagliRispostaGateway)
@@ -351,7 +350,7 @@ UPDATE Pagamenti SET StatoPagamento = 'Rimborsato', DataOraPagamento = NOW() - I
 
 
 -- ############################################
--- # 3. Interrogazioni SQL (Rivedute)         #
+-- # 3. Interrogazioni SQL                    #
 -- ############################################
 
 -- ## Query di Base ##
@@ -471,7 +470,7 @@ ORDER BY Giorno DESC;
 SELECT * FROM VistaRiepilogoIncassiGiornalieri;
 
 -- ############################################
--- # 6. Stored Procedure/Function (Rivedute)  #
+-- # 6. Stored Procedure/Function             #
 -- ############################################
 DELIMITER //
 
@@ -533,19 +532,25 @@ BEGIN
 END;
 //
 
--- 2. NUOVA Stored Procedure `RegistraEsitoPagamentoGateway` (p_DettagliRisposta ora aspetta una stringa JSON)
+-- 2. Stored Procedure `RegistraEsitoPagamentoGateway` (p_DettagliRisposta si aspetta una stringa JSON)
 CREATE PROCEDURE RegistraEsitoPagamentoGateway(
     IN p_IDOrdine INT,
     IN p_IDTransazioneGateway VARCHAR(100),
     IN p_EsitoGateway ENUM('Completato', 'Fallito'),
     IN p_ImportoConfermatoGateway DECIMAL(10,2),
-    IN p_DettagliRispostaJSON VARCHAR(1000) -- Accetta una stringa che DOVREBBE essere JSON. La colonna è JSON.
+    IN p_DettagliRispostaJSON VARCHAR(1000) -- Accetta una stringa che DOVREBBE essere JSON.
 )
 BEGIN
     DECLARE v_pagamentoEsiste INT;
     DECLARE v_ordineEsiste INT;
     DECLARE v_errorMessage VARCHAR(255);
-    -- DECLARE v_jsonValido BOOLEAN DEFAULT TRUE; -- Non strettamente necessario se MariaDB valida all'UPDATE
+    DECLARE v_jsonValido BOOLEAN DEFAULT TRUE; -- Non strettamente necessario se MariaDB valida all'UPDATE
+    
+    SET v_jsonValido = JSON_VALID(p_DettagliRispostaJSON);
+    IF NOT v_jsonValido AND p_DettagliRispostaJSON IS NOT NULL THEN
+        SET v_ErrorMessage = 'Errore: DettagliRispostaGateway non è un JSON valido.';
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = v_ErrorMessage;
+    END IF;
 
     SELECT COUNT(*) INTO v_ordineEsiste FROM Ordini WHERE IDOrdine = p_IDOrdine;
     IF v_ordineEsiste = 0 THEN

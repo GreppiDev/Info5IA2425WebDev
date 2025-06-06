@@ -74,12 +74,11 @@ CREATE TABLE IF NOT EXISTS Prestiti (
 
 -- ####################################################################################
 -- # DEFINIZIONE DEI TRIGGER (ANTECEDENTE AL POPOLAMENTO DEI PRESTITI)                #
--- # NOTA PER GLI STUDENTI:                                                         #
--- # I trigger vengono definiti qui, prima di popolare la tabella Prestiti.          #
+-- # I trigger vengono definiti qui, prima di popolare la tabella Prestiti.           #
 -- # Questo assicura che la logica di aggiornamento automatico dello StatoCopia       #
--- # sia attiva DURANTE l'inserimento dei dati di esempio dei prestiti.             #
--- # Il trigger DopoNuovoPrestito è stato modificato per gestire correttamente       #
--- # anche i prestiti inseriti come già restituiti.                                 #
+-- # sia attiva DURANTE l'inserimento dei dati di esempio dei prestiti.               #
+-- # Il trigger DopoNuovoPrestito è stato modificato per gestire correttamente        #
+-- # anche i prestiti inseriti come già restituiti.                                   #
 -- ####################################################################################
 
 DELIMITER //
@@ -420,7 +419,7 @@ SELECT * FROM VistaPrestitiInRitardo;
 
 
 -- ############################################
--- # 6. Stored Procedure/Function (Rivedute)  #
+-- # 6. Stored Procedure/Function             #
 -- ############################################
 
 DELIMITER //
@@ -483,16 +482,16 @@ END;
 -- Restituisce l'ID del prestito e l'ID della copia prestata tramite parametri OUT.
 
 -- Test della Stored Procedure:
--- SET @out_id_prestito = NULL; SET @out_id_copia = NULL;
--- CALL RegistraPrestitoLibro('9788806173673', (SELECT IDUtente FROM Utenti WHERE Matricola = 'S1004'), @out_id_prestito, @out_id_copia);
--- SELECT @out_id_prestito AS IDNuovoPrestito, @out_id_copia AS IDCopiaImpegnata;
--- SELECT * FROM CopieLibro WHERE IDCopia = @out_id_copia; -- Per verificare lo stato
+SET @out_id_prestito = NULL; SET @out_id_copia = NULL;
+CALL RegistraPrestitoLibro('9788806173673', (SELECT IDUtente FROM Utenti WHERE Matricola = 'S1004'), @out_id_prestito, @out_id_copia);
+SELECT @out_id_prestito AS IDNuovoPrestito, @out_id_copia AS IDCopiaImpegnata;
+SELECT * FROM CopieLibro WHERE IDCopia = @out_id_copia; -- Per verificare lo stato
 
--- SET @out_id_prestito_err = NULL; SET @out_id_copia_err = NULL;
+SET @out_id_prestito_err = NULL; SET @out_id_copia_err = NULL;
 -- Tentativo di prestare un libro con solo copie non disponibili (es. 'Il Barone Rampante' ISBN '9788804391302' se D-402 è già in prestito e D-401 è 'Smarrito')
 -- Se D-402 fosse disponibile:
--- CALL RegistraPrestitoLibro('9788804391302', (SELECT IDUtente FROM Utenti WHERE Matricola = 'S1001'), @out_id_prestito_err, @out_id_copia_err);
--- SELECT @out_id_prestito_err, @out_id_copia_err;
+CALL RegistraPrestitoLibro('9788804391302', (SELECT IDUtente FROM Utenti WHERE Matricola = 'S1001'), @out_id_prestito_err, @out_id_copia_err);
+SELECT @out_id_prestito_err, @out_id_copia_err;
 
 -- 2. Funzione `ContaCopieDisponibiliLibro`
 CREATE FUNCTION ContaCopieDisponibiliLibro(

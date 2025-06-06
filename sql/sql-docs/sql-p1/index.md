@@ -35,6 +35,10 @@
     - [JSON](#json)
     - [Altre caratteristiche dei dati](#altre-caratteristiche-dei-dati)
     - [Vincoli di integrità di colonna](#vincoli-di-integrità-di-colonna)
+    - [Guida Pratica: Quando Usare `CHECK` e Quando Usare `TRIGGER` in MariaDB](#guida-pratica-quando-usare-check-e-quando-usare-trigger-in-mariadb)
+    - [1. Scenari Ideali per l'Utilizzo del Vincolo `CHECK`](#1-scenari-ideali-per-lutilizzo-del-vincolo-check)
+    - [2. Scenari in cui è Necessario Utilizzare un `TRIGGER`](#2-scenari-in-cui-è-necessario-utilizzare-un-trigger)
+    - [Strategia Operativa Consigliata](#strategia-operativa-consigliata)
     - [Modalità operativa di MariaDB](#modalità-operativa-di-mariadb)
     - [Modalità operative di MySQL](#modalità-operative-di-mysql)
 
@@ -431,6 +435,78 @@ In MySQL un DECIMAL può avere fino a 65 cifre significative complessive e fino 
     constraint constraint_name 
     check(expression)
     ```
+
+### Guida Pratica: Quando Usare `CHECK` e Quando Usare `TRIGGER` in MariaDB
+
+Nella progettazione di database relazionali, l'integrità dei dati è un concetto fondamentale. MariaDB, come altri RDBMS, offre diversi strumenti per garantirla. Due di questi strumenti, talvolta confusi, sono i vincoli `CHECK` e i `TRIGGER`.
+
+La regola generale di progettazione prevede di **preferire un vincolo `CHECK` a un `TRIGGER`** quando possibile. Il vincolo `CHECK` è una soluzione dichiarativa, ovvero descrive *cosa* deve essere vero, lasciando al database l'onere dell'implementazione. Un approccio dichiarativo è, di norma, più pulito, leggibile e performante.
+
+Un `TRIGGER`, al contrario, è una soluzione procedurale. Si tratta di un blocco di codice SQL che viene eseguito automaticamente dal database in risposta a un determinato evento su una tabella specifica (come un `INSERT`, `UPDATE` o `DELETE`). Il trigger definisce *come* eseguire un controllo o un'azione. Questo potente strumento offre una grande flessibilità, ma la sua complessità è maggiore. I trigger saranno oggetto di studio approfondito in parti successive del corso.
+
+A causa di limitazioni storiche nell'implementazione di MariaDB e MySQL, è necessario comprendere quando l'uso di `CHECK` è affidabile e quando invece è indispensabile ricorrere a un `TRIGGER`. Questa guida fornisce un'analisi pratica di tali scenari.
+
+### 1. Scenari Ideali per l'Utilizzo del Vincolo `CHECK`
+
+L'utilizzo di un vincolo `CHECK` è la soluzione corretta e raccomandata nei seguenti casi:
+
+- **Validazione su singola colonna con valori statici**: Questo è lo scenario d'uso primario e più sicuro. Il vincolo verifica che il valore di una colonna rispetti una condizione predefinita.
+
+    ```sql
+    -- Esempio: Il prezzo deve essere positivo
+    ALTER TABLE Prodotti ADD CONSTRAINT CHK_PrezzoPositivo CHECK (PrezzoUnitario > 0);
+
+    -- Esempio: Il ruolo deve essere uno di quelli specificati (anche se ENUM è meglio)
+    ALTER TABLE Giocatori ADD CONSTRAINT CHK_RuoloValido CHECK (Ruolo IN ('Portiere', 'Difensore', 'Centrocampista', 'Attaccante'));
+
+    ```
+
+- **Confronto tra due colonne nella stessa riga**: I vincoli `CHECK` possono confrontare i valori di più colonne all'interno della stessa riga che viene inserita o aggiornata. Questo è particolarmente utile per garantire la coerenza logica tra dati correlati.
+
+    ```sql
+    -- Esempio: La data di restituzione deve essere successiva a quella del prestito
+    ALTER TABLE Prestiti ADD CONSTRAINT CHK_CoerenzaDate CHECK (DataRestituzioneEffettiva IS NULL OR DataRestituzioneEffettiva >= DataPrestito);
+
+    ```
+
+### 2. Scenari in cui è Necessario Utilizzare un `TRIGGER`
+
+Esistono situazioni in cui le limitazioni dell'implementazione di `CHECK` in MariaDB richiedono l'uso di un `TRIGGER` per garantire l'integrità dei dati. È opportuno ricorrere a un `TRIGGER` nei seguenti casi:
+
+- **Riferimenti a funzioni non deterministiche**: Un vincolo `CHECK` non può contenere funzioni il cui output può variare a ogni esecuzione, anche con gli stessi parametri di input. Funzioni come `NOW()`, `CURDATE()`, `UUID()`, `RAND()` rientrano in questa categoria.
+
+    ```sql
+    -- QUESTO NON FUNZIONA
+    ALTER TABLE Ordini ADD CONSTRAINT CHK_DataOrdine CHECK (DataOrdine <= CURDATE());
+
+    ```
+
+- **Riferimenti a subquery o altre tabelle**: La logica di un vincolo `CHECK` non può basarsi su dati esterni alla riga corrente. Non è possibile, quindi, eseguire una subquery (`SELECT`) per validare un valore.
+
+    ```sql
+    -- QUESTO NON FUNZIONA
+    ALTER TABLE Partite ADD CONSTRAINT CHK_SquadraInStagione
+    CHECK (IDSquadraCasa IN (SELECT IDSquadra FROM SquadrePerStagione WHERE IDStagione = NEW.IDStagione)); -- NEW non è accessibile qui
+
+    ```
+
+- **Casi di confronto tra colonne non affidabili**: Sebbene il confronto tra colonne sia generalmente supportato, esistono casi limite (come il controllo di disuguaglianza `IDSquadraCasa <> IDSquadraOspite`) che in alcune versioni o configurazioni di MariaDB/MySQL possono non funzionare come previsto o generare errori. Data questa inaffidabilità, per un vincolo così critico per l'integrità del modello, la soluzione più robusta e universalmente compatibile è l'implementazione tramite `TRIGGER`.
+
+### Strategia Operativa Consigliata
+
+Per determinare l'approccio corretto senza dover memorizzare ogni caso specifico, si può adottare un flusso di lavoro metodico in tre fasi:
+
+1. **Tentativo Dichiarativo con `CHECK`**: Il primo passo consiste sempre nel tentare di implementare la logica di validazione tramite un vincolo `CHECK`, utilizzando la sintassi standard `ALTER TABLE ... ADD CONSTRAINT ... CHECK (...)`. Questo rappresenta l'approccio ingegneristicamente più corretto.
+
+2. **Test di Verifica Rigoroso**: Dopo aver definito il vincolo, è fondamentale testarne il comportamento.
+
+    - Se il database **restituisce un errore** durante la creazione del vincolo, è evidente che la sintassi o la logica non sono supportate.
+
+    - Se il database **accetta il vincolo**, è necessario un test funzionale: si devono eseguire istruzioni `INSERT` o `UPDATE` che violano deliberatamente il vincolo. Se il database impedisce l'operazione sollevando un errore, il vincolo `CHECK` è attivo e funzionante. Se, al contrario, i dati errati vengono inseriti senza errori, significa che il database ha accettato la sintassi ma sta ignorando la logica del vincolo (un comportamento noto in versioni datate di MySQL).
+
+3. **Implementazione Procedurale con `TRIGGER`**: Solo se la verifica al punto 2 fallisce, si deve procedere con l'implementazione della medesima logica attraverso un `TRIGGER` di tipo `BEFORE INSERT` e `BEFORE UPDATE`. Questo garantisce che il controllo venga eseguito in modo affidabile.
+
+Questo approccio metodico assicura l'utilizzo della soluzione migliore e più efficiente disponibile, ricorrendo all'implementazione procedurale tramite trigger solo quando le limitazioni del sistema lo rendono indispensabile.
 
 ### Modalità operativa di MariaDB
 

@@ -506,7 +506,7 @@ DELIMITER ;
 
 
 -- #######################################################
--- # 7. Esempi di Utilizzo di Viste e Procedure (NUOVO)   #
+-- # 7. Esempi di Utilizzo di Viste e Procedure          #
 -- #######################################################
 
 -- Esempio 1: Visualizzare il calendario completo, inclusi i risultati calcolati per le partite disputate
