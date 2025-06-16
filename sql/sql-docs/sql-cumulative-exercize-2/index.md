@@ -221,7 +221,7 @@ La soluzione a tutti i quesiti posti nelle sezioni seguenti è presentata nello 
 
 1. **Creazione dello Schema Fisico**:
 
-    - Creare un database MariaDB chiamato `EcommerceDB` (o aggiornare il precedente).
+    - Creare un database MariaDB chiamato `EcommerceDB`.
 
     - Implementare le tabelle definite nel nuovo schema logico.
 

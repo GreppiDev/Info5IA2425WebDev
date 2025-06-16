@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="it">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Classifiche - Educational Games</title>
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        .table th {
+            white-space: nowrap;
+        }
+
+        #form-container {
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="navbar-container">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+            <div class="container-fluid"><span class="navbar-brand">Caricamento...</span></div>
+        </nav>
+    </div>
+
+    <main>
+        <div class="container mt-4">
+            <h1 id="pageTitle" class="mb-4">Classifiche</h1>
+
+            <!-- Form per selezione classe e gioco -->
+            <div id="form-container" class="card shadow-sm mb-4">
+                <div class="card-header">
+                    Seleziona Classe e Gioco
+                </div>
+                <div class="card-body">
+                    <form id="selectClassificaForm">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="selectClasse" class="form-label">Classe</label>
+                                <select id="selectClasse" class="form-select" aria-label="Seleziona classe" disabled>
+                                    <option selected value="">Caricamento classi...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="selectGioco" class="form-label">Gioco</label>
+                                <select id="selectGioco" class="form-select" aria-label="Seleziona gioco" disabled>
+                                    <option selected value="">-- Prima seleziona una classe --</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="formLoading" class="text-center py-3 d-none">
+                        <div class="spinner-border spinner-border-sm text-secondary" role="status">
+                            <span class="visually-hidden">Caricamento dati...</span>
+                        </div>
+                    </div>
+                    <div id="formError" class="alert alert-warning mt-3 d-none" role="alert"></div>
+                </div>
+            </div>
+
+            <!-- Area visualizzazione classifica -->
+            <div id="loading" class="text-center py-5 d-none">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Caricamento classifica...</span>
+                </div>
+            </div>
+
+            <div id="error" class="alert alert-danger d-none" role="alert"></div>
+
+            <div id="leaderboardContent" class="card shadow-sm d-none">
+                <div class="card-header">
+                    <h2 id="leaderboardSubtitle" class="h5 mb-0">Dettaglio Classifica</h2>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">Studente</th>
+                                    <th scope="col" class="text-end">Monete</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leaderboardTableBody">
+                                <!-- Righe classifica verranno inserite qui -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <p id="noLeaderboardData" class="text-center text-muted mt-3 d-none">
+                        Nessun dato disponibile per questa classifica al momento.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+    <script src="/js/template-loader.js"></script>
+    <script src="/js/navbar.js"></script>
+    <script>
+        // Riferimenti UI Form
+        const formContainer = document.getElementById('form-container');
+        const selectClasse = document.getElementById('selectClasse');
+        const selectGioco = document.getElementById('selectGioco');
+        const formLoading = document.getElementById('formLoading');
+        const formError = document.getElementById('formError');
+
+        // Riferimenti UI Classifica
+        const loadingDiv = document.getElementById('loading');
+        const errorDiv = document.getElementById('error');
+        const leaderboardContentDiv = document.getElementById('leaderboardContent');
+        const leaderboardTableBody = document.getElementById('leaderboardTableBody');
+        const noLeaderboardDataP = document.getElementById('noLeaderboardData');
+        const pageTitleH1 = document.getElementById('pageTitle');
+        const leaderboardSubtitleH2 = document.getElementById('leaderboardSubtitle');
+
+        let userRole = null; // 'Docente' o 'Studente'
+        let availableClasses = []; // Cache delle classi caricate [{id, nome, giochi}]
+
+        // Funzione helper escape HTML
+        function escapeHtml(unsafe) {
+            if (typeof unsafe !== 'string') return unsafe;
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Funzione per mostrare errori nel form
+        function showFormError(message) {
+            console.error("Errore form:", message);
+            if (formError) {
+                formError.textContent = message;
+                formError.classList.remove('d-none');
+            }
+            if (formLoading) formLoading.classList.add('d-none');
+            selectClasse.disabled = true;
+            selectGioco.disabled = true;
+        }
+
+        // Funzione per mostrare errori nella sezione classifica
+        function showLeaderboardError(message) {
+            console.error("Errore classifica:", message);
+            if (errorDiv) {
+                errorDiv.textContent = message;
+                errorDiv.classList.remove('d-none');
+            }
+            if (loadingDiv) loadingDiv.classList.add('d-none');
+            if (leaderboardContentDiv) leaderboardContentDiv.classList.add('d-none');
+        }
+
+        // Funzione per caricare le classi in base al ruolo
+        async function loadClassesForUser() {
+            if (!userRole) {
+                showFormError("Ruolo utente non determinato.");
+                return;
+            }
+
+            const apiUrl = userRole === 'Docente' ? '/api/classi/mie' : '/api/iscrizioni/mie';
+            // Determina i nomi corretti dei campi DTO in base all'endpoint
+            const idField = userRole === 'Docente' ? 'id' : 'idClasse';
+            const nameField = userRole === 'Docente' ? 'nome' : 'nomeClasse';
+            const gamesField = userRole === 'Studente' ? 'giochiDisponibili' : null; // Solo Studente ha giochi qui
+
+            if (formLoading) formLoading.classList.remove('d-none');
+            if (formError) formError.classList.add('d-none');
+            selectClasse.disabled = true;
+            selectGioco.disabled = true;
+
+            try {
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    let errorMsg = `Errore nel caricamento delle classi (Status: ${response.status})`;
+                    if (response.status === 401) errorMsg = "Non sei autenticato.";
+                    if (response.status === 403) errorMsg = `Non hai i permessi (${userRole}) per vedere le classi.`;
+                    throw new Error(errorMsg);
+                }
+                const classesData = await response.json();
+
+                availableClasses = []; // Resetta cache
+                selectClasse.innerHTML = '<option selected value="">-- Seleziona una classe --</option>';
+
+                if (classesData && classesData.length > 0) {
+                    for (const classe of classesData) {
+                        const classeInfo = {
+                            id: classe[idField],
+                            nome: classe[nameField],
+                            // Inizializza giochi come array vuoto; verrà popolato dopo se Docente
+                            // o direttamente qui se Studente
+                            giochi: (userRole === 'Studente' && classe[gamesField]) ? classe[gamesField] : []
+                        };
+
+                        availableClasses.push(classeInfo);
+
+                        const option = document.createElement('option');
+                        option.value = classeInfo.id;
+                        option.textContent = escapeHtml(classeInfo.nome);
+                        selectClasse.appendChild(option);
+                    }
+                    selectClasse.disabled = false;
+                } else {
+                    selectClasse.innerHTML = '<option selected value="">-- Nessuna classe trovata --</option>';
+                }
+
+            } catch (error) {
+                showFormError(error.message || "Errore imprevisto durante il caricamento delle classi.");
+            } finally {
+                if (formLoading) formLoading.classList.add('d-none');
+            }
+        }
+
+        // Funzione per popolare il dropdown dei giochi
+        async function populateGiocoDropdown(selectedClasseId) {
+            selectGioco.innerHTML = '<option selected value="">-- Caricamento giochi... --</option>';
+            selectGioco.disabled = true;
+            leaderboardContentDiv.classList.add('d-none'); // Nasconde vecchia classifica
+
+            const selectedClassData = availableClasses.find(c => c.id == selectedClasseId);
+
+            if (!selectedClassData) {
+                selectGioco.innerHTML = '<option selected value="">-- Errore classe non trovata --</option>';
+                return;
+            }
+
+            try {
+                // Se Docente E i giochi non sono ancora stati caricati per questa classe
+                if (userRole === 'Docente' && selectedClassData.giochi.length === 0) {
+                    if (formLoading) formLoading.classList.remove('d-none'); // Mostra loading form
+                    console.log(`Docente: Caricamento giochi per classe ${selectedClasseId}...`);
+                    // Usa l'endpoint GET /api/classi/{idClasse} che restituisce ClasseDetailDto
+                    const detailResponse = await fetch(`/api/classi/${selectedClasseId}`);
+                    if (!detailResponse.ok) {
+                        throw new Error(`Errore ${detailResponse.status} caricamento giochi per classe ${selectedClasseId}`);
+                    }
+                    const classeDetail = await detailResponse.json();
+                    // Il DTO ClasseDetailDto viene serializzato in JSON con camelCase
+                    selectedClassData.giochi = classeDetail.giochiAssociati || []; // <-- Usa camelCase
+                    console.log(`Giochi caricati per classe ${selectedClasseId}:`, selectedClassData.giochi);
+                    if (formLoading) formLoading.classList.add('d-none');
+                }
+
+                // Popola dropdown
+                selectGioco.innerHTML = '<option selected value="">-- Classifica Generale --</option>'; // Opzione default per classifica generale
+                if (selectedClassData.giochi && selectedClassData.giochi.length > 0) {
+                    // Ordina i giochi per titolo prima di aggiungerli
+                    selectedClassData.giochi.sort((a, b) => a.titolo.localeCompare(b.titolo)).forEach(gioco => {
+                        const option = document.createElement('option');
+                        option.value = gioco.id;
+                        option.textContent = escapeHtml(gioco.titolo);
+                        selectGioco.appendChild(option);
+                    });
+                }
+                selectGioco.disabled = false;
+
+                // Carica subito la classifica generale per la classe selezionata
+                await loadClassifica(selectedClasseId, null);
+
+            } catch (error) {
+                console.error("Errore popolamento giochi:", error);
+                selectGioco.innerHTML = `<option selected value="">-- Errore caricamento giochi --</option>`;
+                showLeaderboardError("Impossibile caricare i giochi per la classe selezionata: " + error.message);
+                if (formLoading) formLoading.classList.add('d-none');
+            }
+        }
+
+
+        // Funzione principale per caricare la classifica
+        async function loadClassifica(idClasse, idGioco) {
+            if (!idClasse) {
+                // Non fare nulla se non c'è una classe selezionata
+                leaderboardContentDiv.classList.add('d-none');
+                errorDiv.classList.add('d-none');
+                loadingDiv.classList.add('d-none');
+                return;
+            }
+
+            if (loadingDiv) loadingDiv.classList.remove('d-none');
+            if (errorDiv) errorDiv.classList.add('d-none');
+            if (leaderboardContentDiv) leaderboardContentDiv.classList.add('d-none');
+            if (leaderboardTableBody) leaderboardTableBody.innerHTML = '';
+            if (noLeaderboardDataP) noLeaderboardDataP.classList.add('d-none');
+
+            let apiUrl = `/api/classifiche/classe/${idClasse}`;
+            let subtitleText = `Classifica Generale`;
+            let nomeClasse = availableClasses.find(c => c.id == idClasse)?.nome || `ID: ${idClasse}`;
+            let nomeGioco = null;
+
+            if (idGioco) {
+                apiUrl += `/gioco/${idGioco}`;
+                // Trova il gioco nella cache per ottenere il nome
+                const gioco = availableClasses.find(c => c.id == idClasse)?.giochi.find(g => g.id == idGioco);
+                nomeGioco = gioco?.titolo || `ID: ${idGioco}`;
+                subtitleText = `Classifica Gioco: ${escapeHtml(nomeGioco)}`;
+            }
+
+            if (pageTitleH1) pageTitleH1.textContent = `Classifica - Classe: ${escapeHtml(nomeClasse)}`;
+            if (leaderboardSubtitleH2) leaderboardSubtitleH2.textContent = subtitleText;
+
+            try {
+                const responseClassifica = await fetch(apiUrl);
+
+                if (!responseClassifica.ok) {
+                    let errorMsg = `Errore nel caricamento della classifica (Status: ${responseClassifica.status})`;
+                    try {
+                        const errData = await responseClassifica.json();
+                        errorMsg = errData.title || errData.detail || errData.message || errorMsg;
+                    } catch { /* Ignora errore parsing JSON */ }
+                    if (responseClassifica.status === 401) errorMsg = "Non sei autenticato. Effettua il login.";
+                    if (responseClassifica.status === 403) errorMsg = "Non hai i permessi per visualizzare questa classifica.";
+                    throw new Error(errorMsg);
+                }
+
+                const classifica = await responseClassifica.json();
+
+                // Popola la tabella
+                if (leaderboardTableBody) leaderboardTableBody.innerHTML = ''; // Pulisce prima
+                if (classifica && classifica.length > 0) {
+                    if (noLeaderboardDataP) noLeaderboardDataP.classList.add('d-none');
+                    classifica.forEach((entry, index) => {
+                        const row = leaderboardTableBody.insertRow();
+                        // L'endpoint restituisce ClassificaEntryDto { StudenteId, NomeStudente, Monete }
+                        row.innerHTML = `
+                            <th scope="row">${index + 1}</th>
+                            <td>${escapeHtml(entry.nomeStudente)}</td>
+                            <td class="text-end">${entry.monete}</td>
+                        `;
+                    });
+                    // Mostra il contenuto della classifica
+                    if (leaderboardContentDiv) leaderboardContentDiv.classList.remove('d-none');
+                } else {
+                    // Mostra messaggio "nessun dato"
+                    if (noLeaderboardDataP) noLeaderboardDataP.classList.remove('d-none');
+                    // Mostra comunque il contenitore per far vedere il messaggio "nessun dato"
+                    if (leaderboardContentDiv) leaderboardContentDiv.classList.remove('d-none');
+                }
+
+            } catch (error) {
+                console.error("Errore durante il caricamento della classifica:", error);
+                showLeaderboardError(error.message || "Si è verificato un errore imprevisto durante il caricamento della classifica.");
+            } finally {
+                // Nasconde l'indicatore di caricamento
+                if (loadingDiv) loadingDiv.classList.add('d-none');
+            }
+        }
+
+        // --- Event Listeners ---
+        selectClasse.addEventListener('change', async (event) => {
+            const selectedClasseId = event.target.value;
+            if (selectedClasseId) {
+                await populateGiocoDropdown(selectedClasseId);
+                // La classifica generale viene caricata automaticamente da populateGiocoDropdown
+            } else {
+                selectGioco.innerHTML = '<option selected value="">-- Prima seleziona una classe --</option>';
+                selectGioco.disabled = true;
+                leaderboardContentDiv.classList.add('d-none'); // Nasconde classifica
+                loadingDiv.classList.add('d-none');
+                errorDiv.classList.add('d-none');
+            }
+        });
+
+        selectGioco.addEventListener('change', async (event) => {
+            const selectedClasseId = selectClasse.value;
+            const selectedGiocoId = event.target.value; // Può essere "" per generale
+            if (selectedClasseId) {
+                await loadClassifica(selectedClasseId, selectedGiocoId || null); // Passa null se ""
+            }
+        });
+
+
+        // --- Inizializzazione Pagina ---
+        document.addEventListener('DOMContentLoaded', async function () {
+            console.log("Classifica Form page: Initializing templates...");
+            try {
+                await TemplateLoader.initializeCommonTemplates();
+
+                let userData = null;
+                try {
+                    const response = await fetch('/api/account/my-roles');
+                    if (response.ok) {
+                        userData = await response.json();
+                        // Determina il ruolo primario (Docente ha priorità se entrambi veri?)
+                        if (userData.isDocente) userRole = 'Docente';
+                        else if (userData.isStudente) userRole = 'Studente';
+                        else userRole = null; // Admin o altro ruolo non gestito qui
+                        console.log("Ruolo utente determinato:", userRole);
+                    } else if (response.status === 401) {
+                        throw new Error("Non autenticato. Effettua il login per vedere le classifiche.");
+                    } else {
+                        throw new Error("Errore nel controllo autenticazione.");
+                    }
+                } catch (authError) {
+                    showFormError(authError.message); // Mostra errore nel form
+                    showLeaderboardError(authError.message); // Mostra errore anche sotto
+                    if (typeof updateNavbar === 'function') updateNavbar(null);
+                    return; // Interrompe
+                }
+
+                if (typeof updateNavbar === 'function') updateNavbar(userData);
+
+                if (userRole) {
+                    await loadClassesForUser(); // Carica le classi nel dropdown
+                } else {
+                    const msg = "Ruolo utente non supportato (necessario Docente o Studente).";
+                    showFormError(msg);
+                    showLeaderboardError(msg);
+                }
+
+            } catch (error) {
+                console.error("Errore durante l'inizializzazione della pagina:", error);
+                const initErrorMsg = "Errore grave durante l'inizializzazione della pagina.";
+                showFormError(initErrorMsg);
+                showLeaderboardError(initErrorMsg);
+                if (typeof updateNavbar === 'function') updateNavbar(null);
+            }
+        });
+
+    </script>
+
+</body>
+
+</html>

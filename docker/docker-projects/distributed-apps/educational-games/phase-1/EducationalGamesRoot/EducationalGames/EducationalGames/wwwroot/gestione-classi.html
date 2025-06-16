@@ -1,0 +1,786 @@
+<!doctype html>
+<html lang="it">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Gestione Classi - Educational Games</title>
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        .table th {
+            white-space: nowrap;
+        }
+
+        .codice-iscrizione {
+            font-family: monospace;
+            background-color: #e9ecef;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            border: 1px dashed #ced4da;
+        }
+
+        .codice-iscrizione:hover {
+            background-color: #ced4da;
+        }
+
+        .codice-iscrizione .bi-clipboard {
+            margin-left: 5px;
+            color: #6c757d;
+        }
+
+        .copied-feedback {
+            font-size: 0.8em;
+            color: green;
+            display: inline-block;
+            margin-left: 5px;
+        }
+
+        .game-list-item {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .game-list-item:last-child {
+            border-bottom: none;
+        }
+
+        .available-game-item {
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        .available-game-item:hover {
+            background-color: #f0f0f0;
+        }
+
+        .modal-body-scrollable {
+            max-height: 65vh;
+            overflow-y: auto;
+        }
+
+        .available-games-list-container {
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            padding: 1rem;
+        }
+
+        /* Stile aggiuntivo per allineare meglio checkbox e label multiriga */
+        .available-game-item .form-check-input {
+            margin-top: 0.3rem;
+            /* Allinea verticalmente la checkbox con la prima riga del testo */
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="navbar-container">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+            <div class="container-fluid"><span class="navbar-brand">Caricamento...</span></div>
+        </nav>
+    </div>
+
+    <main>
+        <div class="container mt-4">
+            <h1 class="mb-4">Gestione Classi</h1>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">Crea Nuova Classe</h2>
+                </div>
+                <div class="card-body">
+                    <form id="creaClasseForm">
+                        <div id="creaClasseMessage" class="d-none" role="alert"></div>
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-5">
+                                <label for="nomeClasse" class="form-label">Nome Classe</label>
+                                <input type="text" class="form-control" id="nomeClasse" required maxlength="50">
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            <div class="col-md-5">
+                                <label for="materiaClasse" class="form-label">Materia</label>
+                                <select class="form-select" id="materiaClasse" required>
+                                    <option value="" selected disabled>Caricamento materie...</option>
+                                </select>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            <div class="col-md-2 d-grid">
+                                <button type="submit" class="btn btn-success">Crea Classe</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">Le Tue Classi</h2>
+                </div>
+                <div class="card-body">
+                    <div id="loading-classi" class="text-center py-3">
+                        <div class="spinner-border spinner-border-sm text-secondary" role="status"> <span
+                                class="visually-hidden">Caricamento...</span> </div>
+                    </div>
+                    <div id="error-classi" class="alert alert-warning d-none"></div>
+                    <div id="no-classi" class="alert alert-light d-none">Non hai ancora creato nessuna classe.</div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover align-middle" id="tabellaClassi">
+                            <thead>
+                                <tr>
+                                    <th>Nome Classe</th>
+                                    <th>Materia</th>
+                                    <th>Codice Iscrizione</th>
+                                    <th class="text-center">N. Iscritti</th>
+                                    <th class="text-end">Azioni</th>
+                                </tr>
+                            </thead>
+                            <tbody id="listaClassiBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-container"></div>
+
+    <!-- MODAL GESTIONE GIOCHI -->
+    <div class="modal fade" id="manageGamesModal" tabindex="-1" aria-labelledby="manageGamesModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="manageGamesModalLabel">Gestisci Giochi per: <span
+                            id="modalClassName" class="fw-bold"></span></h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body modal-body-scrollable">
+                    <div id="modalLoading" class="text-center">
+                        <div class="spinner-border text-primary"></div>
+                    </div>
+                    <div id="modalError" class="alert alert-danger d-none"></div>
+
+                    <div id="associatedGamesSection" class="mb-4 d-none">
+                        <h5>Giochi Attualmente Associati (<span id="associatedGamesCount">0</span>)</h5>
+                        <ul class="list-group list-group-flush" id="associatedGamesList">
+                        </ul>
+                        <p id="noAssociatedGames" class="text-muted d-none small mt-2">Nessun gioco associato.</p>
+                    </div>
+
+                    <hr>
+
+                    <div id="addGamesSection" class="d-none">
+                        <h5>Aggiungi Giochi dalla Libreria</h5>
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label for="modalFilterArgomento" class="form-label form-label-sm">Filtra per
+                                    Argomento</label>
+                                <select class="form-select form-select-sm" id="modalFilterArgomento">
+                                    <option value="" selected>Tutti</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="modalSearchTitolo" class="form-label form-label-sm">Cerca per Titolo</label>
+                                <input type="search" class="form-control form-control-sm" id="modalSearchTitolo"
+                                    placeholder="Titolo gioco...">
+                            </div>
+                        </div>
+                        <div id="availableGamesLoading" class="text-center d-none">
+                            <div class="spinner-border spinner-border-sm"></div>
+                        </div>
+                        <div id="availableGamesError" class="alert alert-warning d-none"></div>
+                        <div id="availableGamesListContainer" class="available-games-list-container">
+                            <div id="availableGamesList"></div>
+                            <p id="noAvailableGames" class="text-center text-muted small p-2 d-none">Nessun altro gioco
+                                disponibile.</p>
+                        </div>
+                        <button id="addSelectedGamesBtn" class="btn btn-success btn-sm mt-3" disabled> <i
+                                class="bi bi-plus-circle"></i> Aggiungi Selezionati </button>
+                        <span id="addGamesMessage" class="ms-2 small text-muted"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="leaderboardModal" tabindex="-1" aria-labelledby="leaderboardModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="leaderboardModalLabel">Classifica</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="leaderboardLoading" class="text-center">
+                        <div class="spinner-border spinner-border-sm"></div> Caricamento...
+                    </div>
+                    <div id="leaderboardError" class="alert alert-danger d-none"></div>
+                    <div id="leaderboardContent" class="d-none">
+                        <h6 id="leaderboardSubtitle" class="mb-3"></h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">#</th>
+                                        <th scope="col">Studente</th>
+                                        <th scope="col" class="text-end">Monete</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="leaderboardTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                        <p id="noLeaderboardData" class="text-center text-muted d-none">Nessun dato disponibile per
+                            questa
+                            classifica.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+    <script src="/js/template-loader.js"></script>
+    <script src="/js/navbar.js"></script>
+    <script>
+        // Riferimenti UI principali
+        const creaClasseForm = document.getElementById('creaClasseForm');
+        const nomeClasseInput = document.getElementById('nomeClasse');
+        const materiaClasseSelect = document.getElementById('materiaClasse');
+        const creaClasseMessageDiv = document.getElementById('creaClasseMessage');
+        const listaClassiBody = document.getElementById('listaClassiBody');
+        const loadingClassiDiv = document.getElementById('loading-classi');
+        const errorClassiDiv = document.getElementById('error-classi');
+        const noClassiDiv = document.getElementById('no-classi');
+        const leaderboardModalElement = document.getElementById('leaderboardModal');
+        // Riferimenti Modal Classifica
+        const leaderboardModal = leaderboardModalElement ? new bootstrap.Modal(leaderboardModalElement) : null;
+        const leaderboardModalLabel = document.getElementById('leaderboardModalLabel');
+        const leaderboardSubtitle = document.getElementById('leaderboardSubtitle');
+        const leaderboardLoading = document.getElementById('leaderboardLoading');
+        const leaderboardError = document.getElementById('leaderboardError');
+        const leaderboardContent = document.getElementById('leaderboardContent');
+        const leaderboardTableBody = document.getElementById('leaderboardTableBody');
+        const noLeaderboardData = document.getElementById('noLeaderboardData');
+
+        // Riferimenti Modal Gestione Giochi
+        const manageGamesModalElement = document.getElementById('manageGamesModal');
+        const manageGamesModal = manageGamesModalElement ? new bootstrap.Modal(manageGamesModalElement) : null;
+        const modalClassNameSpan = document.getElementById('modalClassName');
+        const modalLoadingDiv = document.getElementById('modalLoading');
+        const modalErrorDiv = document.getElementById('modalError');
+        const associatedGamesSection = document.getElementById('associatedGamesSection');
+        const associatedGamesList = document.getElementById('associatedGamesList');
+        const associatedGamesCountSpan = document.getElementById('associatedGamesCount');
+        const noAssociatedGamesP = document.getElementById('noAssociatedGames');
+        const addGamesSection = document.getElementById('addGamesSection');
+        const modalFilterArgomentoSelect = document.getElementById('modalFilterArgomento');
+        const modalSearchTitoloInput = document.getElementById('modalSearchTitolo');
+        const availableGamesLoadingDiv = document.getElementById('availableGamesLoading');
+        const availableGamesErrorDiv = document.getElementById('availableGamesError');
+        const availableGamesListDiv = document.getElementById('availableGamesList');
+        const noAvailableGamesP = document.getElementById('noAvailableGames');
+        const addSelectedGamesBtn = document.getElementById('addSelectedGamesBtn');
+        const addGamesMessageSpan = document.getElementById('addGamesMessage');
+
+        let currentClasseId = null; // ID classe selezionata nel modal
+        let allAvailableGames = []; // Cache giochi disponibili per aggiunta
+        let associatedGameIds = new Set(); // Set degli ID dei giochi già associati
+
+        // Funzione per mostrare messaggi form creazione
+        function showCreaMessage(message, isError = true) {
+            if (!creaClasseMessageDiv) return;
+            creaClasseMessageDiv.textContent = message;
+            creaClasseMessageDiv.className = isError ? 'alert alert-danger mt-3' : 'alert alert-success mt-3';
+            creaClasseMessageDiv.classList.remove('d-none');
+            setTimeout(() => { creaClasseMessageDiv.classList.add('d-none'); }, 3500);
+        }
+
+        // Funzione helper escape HTML
+        function escapeHtml(unsafe) {
+            if (typeof unsafe !== 'string') return unsafe;
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Funzione per copiare codice negli appunti e mostrare feedback
+        function copyToClipboard(element, text) {
+            if (!navigator.clipboard) { alert("Copia negli appunti non supportata."); return; }
+            navigator.clipboard.writeText(text).then(() => {
+                const feedback = element.nextElementSibling;
+                if (feedback) { feedback.classList.remove('d-none'); setTimeout(() => { feedback.classList.add('d-none'); }, 1500); }
+            }).catch(err => { console.error('Errore copia codice: ', err); alert('Errore copia.'); });
+        }
+
+        // Funzione per popolare il dropdown delle materie
+        async function loadMaterie() {
+            if (!materiaClasseSelect) return;
+            try {
+                const response = await fetch('/api/materie');
+                if (!response.ok) throw new Error(`Errore API materie: ${response.status}`);
+                const materie = await response.json();
+                materiaClasseSelect.innerHTML = '<option value="" selected disabled>Seleziona una materia...</option>';
+                materie.forEach(m => {
+                    const option = document.createElement('option');
+                    option.value = m.id;
+                    option.textContent = m.nome;
+                    materiaClasseSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Errore caricamento materie:", error);
+                materiaClasseSelect.innerHTML = '<option value="" selected disabled>Errore caricamento</option>';
+                materiaClasseSelect.disabled = true;
+            }
+        }
+
+        // Funzione per caricare e visualizzare le classi del docente
+        async function loadMieClassi() {
+            if (loadingClassiDiv) loadingClassiDiv.classList.remove('d-none');
+            if (errorClassiDiv) errorClassiDiv.classList.add('d-none');
+            if (noClassiDiv) noClassiDiv.classList.add('d-none');
+            if (listaClassiBody) listaClassiBody.innerHTML = '';
+
+            try {
+                const response = await fetch('/api/classi/mie');
+                if (!response.ok) throw new Error(`Errore API: ${response.status}`);
+                const classi = await response.json();
+                if (listaClassiBody) listaClassiBody.innerHTML = ''; // Pulisce prima
+
+                if (classi && classi.length > 0) {
+                    classi.forEach(classe => {
+                        const row = listaClassiBody.insertRow();
+                        row.innerHTML = `
+                            <td>${escapeHtml(classe.nome)}</td>
+                            <td>${escapeHtml(classe.materiaNome)}</td>
+                            <td><span class="codice-iscrizione" title="Copia" onclick="copyToClipboard(this, '${escapeHtml(classe.codiceIscrizione)}')">${escapeHtml(classe.codiceIscrizione)} <i class="bi bi-clipboard"></i></span><span class="copied-feedback d-none">Copiato!</span></td>
+                            <td class="text-center">${classe.numeroIscritti}</td>
+                            <td class="text-end">
+                                <button class="btn btn-sm btn-info" onclick="openManageGamesModal(${classe.id}, '${escapeHtml(classe.nome)}')" title="Gestisci Giochi"><i class="bi bi-controller"></i></button>
+                                <button class="btn btn-sm btn-warning" onclick="viewLeaderboard(${classe.id}, null, '${escapeHtml(classe.nome)}')" title="Classifica Generale Classe"><i class="bi bi-trophy-fill"></i></button> <button class="btn btn-sm btn-outline-secondary" onclick="viewStudents(${classe.id})" title="Visualizza Iscritti"><i class="bi bi-people-fill"></i></button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteClass(${classe.id}, '${escapeHtml(classe.nome)}')" title="Elimina Classe"><i class="bi bi-trash"></i></button>
+                            </td>
+                        `;
+                    });
+                } else { if (noClassiDiv) noClassiDiv.classList.remove('d-none'); }
+            } catch (error) {
+                console.error("Errore caricamento classi:", error);
+                if (errorClassiDiv) {
+                    errorClassiDiv.textContent = `Errore nel caricamento delle classi: ${error.message}`;
+                    errorClassiDiv.classList.remove('d-none');
+                }
+            } finally {
+                if (loadingClassiDiv) loadingClassiDiv.classList.add('d-none');
+            }
+        }
+
+        // FUNZIONE: Apre Modal Classifica ---
+        async function viewLeaderboard(classeId, giocoId = null, nomeElemento) {
+            if (!leaderboardModal) return;
+            // Resetta stato modal classifica
+            if (leaderboardLoading) leaderboardLoading.classList.remove('d-none');
+            if (leaderboardError) leaderboardError.classList.add('d-none');
+            if (leaderboardContent) leaderboardContent.classList.add('d-none');
+            if (leaderboardTableBody) leaderboardTableBody.innerHTML = '';
+            if (noLeaderboardData) noLeaderboardData.classList.add('d-none');
+
+            // Imposta titolo modal
+            let modalTitle = `Classifica Generale - Classe: ${escapeHtml(nomeElemento)}`;
+            let apiUrl = `/api/classifiche/classe/${classeId}`;
+            let subtitle = `Classifica generale basata sulla somma delle monete di tutti i giochi.`;
+
+            if (giocoId) { // Se è specificato un gioco
+                // Dovremmo recuperare il titolo del gioco per un titolo migliore
+                // Per ora usiamo l'ID
+                modalTitle = `Classifica Gioco (ID: ${giocoId}) - Classe: ${escapeHtml(nomeElemento)}`;
+                apiUrl = `/api/classifiche/classe/${classeId}/gioco/${giocoId}`;
+                subtitle = `Classifica basata sulle monete ottenute nel gioco selezionato.`;
+            }
+            if (leaderboardModalLabel) leaderboardModalLabel.textContent = modalTitle;
+            if (leaderboardSubtitle) leaderboardSubtitle.textContent = subtitle;
+
+            leaderboardModal.show(); // Mostra il modal
+
+            try {
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    let errorMsg = `Errore ${response.status}`;
+                    try { const err = await response.json(); errorMsg = err.title || err.detail || errorMsg; } catch { }
+                    throw new Error(errorMsg);
+                }
+                const classifica = await response.json();
+
+                if (classifica && classifica.length > 0) {
+                    classifica.forEach((entry, index) => {
+                        const row = leaderboardTableBody.insertRow();
+                        row.innerHTML = `
+                             <th scope="row">${index + 1}</th>
+                             <td>${escapeHtml(entry.nomeStudente)}</td>
+                             <td class="text-end">${entry.monete}</td>
+                         `;
+                    });
+                } else {
+                    if (noLeaderboardData) noLeaderboardData.classList.remove('d-none');
+                }
+                if (leaderboardContent) leaderboardContent.classList.remove('d-none'); // Mostra contenuto tabella
+
+            } catch (error) {
+                console.error("Errore caricamento classifica:", error);
+                if (leaderboardError) { leaderboardError.textContent = `Errore: ${error.message}`; leaderboardError.classList.remove('d-none'); }
+            } finally {
+                if (leaderboardLoading) leaderboardLoading.classList.add('d-none');
+            }
+        }
+
+        // --- FUNZIONI PER MODAL GESTIONE GIOCHI ---
+
+        // Apre il modal e carica i dati
+        async function openManageGamesModal(classeId, classeNome) {
+            currentClasseId = classeId;
+            if (modalClassNameSpan) modalClassNameSpan.textContent = escapeHtml(classeNome);
+            if (modalLoadingDiv) modalLoadingDiv.classList.remove('d-none');
+            if (modalErrorDiv) modalErrorDiv.classList.add('d-none');
+            if (associatedGamesSection) associatedGamesSection.classList.add('d-none');
+            if (addGamesSection) addGamesSection.classList.add('d-none');
+            if (associatedGamesList) associatedGamesList.innerHTML = '';
+            if (noAssociatedGamesP) noAssociatedGamesP.classList.add('d-none');
+            if (availableGamesListDiv) availableGamesListDiv.innerHTML = '';
+            if (availableGamesErrorDiv) availableGamesErrorDiv.classList.add('d-none');
+            if (noAvailableGamesP) noAvailableGamesP.classList.add('d-none');
+            if (addSelectedGamesBtn) addSelectedGamesBtn.disabled = true;
+            if (modalFilterArgomentoSelect) modalFilterArgomentoSelect.value = '';
+            if (modalSearchTitoloInput) modalSearchTitoloInput.value = '';
+            if (addGamesMessageSpan) addGamesMessageSpan.textContent = '';
+
+            if (!manageGamesModal) { console.error("Modal non inizializzato"); return; }
+            manageGamesModal.show();
+
+            try {
+                const response = await fetch(`/api/classi/${classeId}`);
+                if (!response.ok) throw new Error(`Errore API dettaglio classe: ${response.status}`);
+                const classeDetail = await response.json();
+
+                populateAssociatedGames(classeDetail.giochiAssociati || []);
+
+                if (modalFilterArgomentoSelect && modalFilterArgomentoSelect.options.length <= 1) {
+                    await loadArgomentiForModal();
+                }
+                await populateAvailableGames(); // Carica/Filtra disponibili
+
+                if (associatedGamesSection) associatedGamesSection.classList.remove('d-none');
+                if (addGamesSection) addGamesSection.classList.remove('d-none');
+
+            } catch (error) {
+                console.error("Errore caricamento dati modal:", error);
+                if (modalErrorDiv) { modalErrorDiv.textContent = `Errore: ${error.message}`; modalErrorDiv.classList.remove('d-none'); }
+            } finally {
+                if (modalLoadingDiv) modalLoadingDiv.classList.add('d-none');
+            }
+        }
+
+        // Popola lista giochi associati
+        function populateAssociatedGames(giochi) {
+            if (!associatedGamesList || !noAssociatedGamesP || !associatedGamesCountSpan) return;
+            associatedGamesList.innerHTML = '';
+            associatedGameIds.clear();
+            associatedGamesCountSpan.textContent = giochi.length;
+
+            if (giochi && giochi.length > 0) {
+                noAssociatedGamesP.classList.add('d-none');
+                giochi.forEach(gioco => {
+                    associatedGameIds.add(gioco.id);
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item d-flex justify-content-between align-items-center game-list-item';
+                    li.innerHTML = `
+                        <span>${escapeHtml(gioco.titolo)} <small class="text-muted">(ID: ${gioco.id})</small></span>
+                        <button class="btn btn-sm btn-outline-danger" onclick="removeGame(${currentClasseId}, ${gioco.id}, this)">
+                            <i class="bi bi-trash"></i> Rimuovi
+                        </button>
+                    `;
+                    associatedGamesList.appendChild(li);
+                });
+            } else {
+                noAssociatedGamesP.classList.remove('d-none');
+            }
+        }
+
+        // Rimuove un gioco dalla classe
+        async function removeGame(classeId, giocoId, buttonElement) {
+            if (!confirm(`Rimuovere il gioco (ID: ${giocoId}) da questa classe?`)) return;
+            buttonElement.disabled = true; buttonElement.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+            try {
+                const response = await fetch(`/api/classi/${classeId}/giochi/${giocoId}`, { method: 'DELETE' });
+                if (response.ok) { // 204 No Content
+                    await reloadAssociatedGames(classeId);
+                    await populateAvailableGames(); // Ricarica disponibili per aggiornare filtro
+                } else {
+                    let errorMsg = `Errore ${response.status}`;
+                    try { const errData = await response.json(); errorMsg = errData.title || errData.detail || errorMsg; } catch { }
+                    throw new Error(errorMsg);
+                }
+            } catch (error) {
+                console.error("Errore rimozione gioco:", error);
+                alert(`Errore durante la rimozione: ${error.message}`);
+                if (buttonElement && document.body.contains(buttonElement)) {
+                    buttonElement.disabled = false;
+                    buttonElement.innerHTML = '<i class="bi bi-trash"></i> Rimuovi';
+                }
+            }
+        }
+
+        // Ricarica solo i giochi associati
+        async function reloadAssociatedGames(classeId) {
+            if (associatedGamesSection) associatedGamesSection.classList.add('d-none');
+            try {
+                const response = await fetch(`/api/classi/${classeId}`);
+                if (!response.ok) throw new Error(`Errore API: ${response.status}`);
+                const classeDetail = await response.json();
+                populateAssociatedGames(classeDetail.giochiAssociati || []);
+                if (associatedGamesSection) associatedGamesSection.classList.remove('d-none');
+            } catch (error) {
+                console.error("Errore ricaricamento giochi associati:", error);
+                if (modalErrorDiv) { modalErrorDiv.textContent = `Errore ricaricamento giochi associati: ${error.message}`; modalErrorDiv.classList.remove('d-none'); }
+            }
+        }
+
+        // Carica argomenti per filtro modal
+        async function loadArgomentiForModal() {
+            if (!modalFilterArgomentoSelect) return;
+            try {
+                const response = await fetch('/api/argomenti');
+                if (!response.ok) throw new Error('Errore API argomenti');
+                const argomenti = await response.json();
+                modalFilterArgomentoSelect.length = 1; // Pulisce opzioni tranne "Tutti"
+                argomenti.forEach(arg => {
+                    const option = document.createElement('option');
+                    option.value = arg.id; option.textContent = arg.nome;
+                    modalFilterArgomentoSelect.appendChild(option);
+                });
+            } catch (error) { console.error("Errore caricamento argomenti per modal:", error); }
+        }
+
+        // Funzione per creare l'HTML di un gioco disponibile
+        function createAvailableGameItem(gioco) {
+            const div = document.createElement('div');
+            // Aggiunto mx-1 per un piccolo margine orizzontale
+            div.className = 'form-check available-game-item p-2 d-flex align-items-start mx-2';
+            const argomentiNomi = gioco.argomenti.map(a => a.nome).join(', ') || 'N/A';
+            const inputId = `gameCheck_${gioco.id}`;
+            div.innerHTML = `
+                <input class="form-check-input available-game-checkbox me-2" type="checkbox" value="${gioco.id}" id="${inputId}">
+                <label class="form-check-label flex-grow-1" for="${inputId}">
+                  <strong>${escapeHtml(gioco.titolo)}</strong><br><small class="text-muted">(Arg: ${escapeHtml(argomentiNomi)})</small>
+                </label>
+            `;
+            return div;
+        }
+
+        // Popola lista giochi disponibili nel modal (con filtri)
+        async function populateAvailableGames() {
+            if (!availableGamesListDiv || !availableGamesLoadingDiv || !availableGamesErrorDiv || !noAvailableGamesP || !addSelectedGamesBtn) return;
+            availableGamesLoadingDiv.classList.remove('d-none'); availableGamesErrorDiv.classList.add('d-none');
+            availableGamesListDiv.innerHTML = ''; noAvailableGamesP.classList.add('d-none'); addSelectedGamesBtn.disabled = true;
+            try {
+                if (allAvailableGames.length === 0) {
+                    const response = await fetch('/api/giochi');
+                    if (!response.ok) throw new Error(`Errore API giochi: ${response.status}`);
+                    allAvailableGames = await response.json();
+                }
+                const argomentoId = modalFilterArgomentoSelect.value;
+                const searchTerm = modalSearchTitoloInput.value.toLowerCase().trim();
+                const giochiFiltrati = allAvailableGames.filter(gioco => {
+                    const matchArgomento = !argomentoId || gioco.argomenti.some(a => a.id == argomentoId);
+                    const matchTitolo = !searchTerm || gioco.titolo.toLowerCase().includes(searchTerm);
+                    const isAlreadyAssociated = associatedGameIds.has(gioco.id);
+                    return matchArgomento && matchTitolo && !isAlreadyAssociated;
+                });
+                if (giochiFiltrati.length > 0) {
+                    giochiFiltrati.forEach(gioco => {
+                        const gameItemDiv = createAvailableGameItem(gioco); // Usa la funzione helper
+                        availableGamesListDiv.appendChild(gameItemDiv);
+                    });
+                    availableGamesListDiv.querySelectorAll('.available-game-checkbox').forEach(cb => cb.addEventListener('change', checkAddButtonState));
+                    checkAddButtonState();
+                } else { noAvailableGamesP.classList.remove('d-none'); addSelectedGamesBtn.disabled = true; }
+            } catch (error) {
+                console.error("Errore caricamento giochi disponibili:", error);
+                if (availableGamesErrorDiv) { availableGamesErrorDiv.textContent = `Errore: ${error.message}`; availableGamesErrorDiv.classList.remove('d-none'); }
+            } finally { if (availableGamesLoadingDiv) availableGamesLoadingDiv.classList.add('d-none'); }
+        }
+
+        // Controlla se abilitare bottone Aggiungi
+        function checkAddButtonState() {
+            if (!availableGamesListDiv || !addSelectedGamesBtn) return;
+            const selectedCheckboxes = availableGamesListDiv.querySelectorAll('.available-game-checkbox:checked');
+            addSelectedGamesBtn.disabled = selectedCheckboxes.length === 0;
+        }
+
+        // Aggiunge i giochi selezionati alla classe
+        async function addSelectedGames() {
+            if (!addSelectedGamesBtn || !availableGamesListDiv || !currentClasseId) return;
+            const selectedCheckboxes = availableGamesListDiv.querySelectorAll('.available-game-checkbox:checked');
+            if (selectedCheckboxes.length === 0) return;
+            addSelectedGamesBtn.disabled = true; addSelectedGamesBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Aggiungo...';
+            if (addGamesMessageSpan) addGamesMessageSpan.textContent = '';
+            const promises = [];
+            selectedCheckboxes.forEach(checkbox => {
+                const giocoId = parseInt(checkbox.value);
+                promises.push(fetch(`/api/classi/${currentClasseId}/giochi`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ giocoId }) }).then(res => ({ ok: res.ok, status: res.status, giocoId })));
+            });
+            try {
+                const results = await Promise.allSettled(promises);
+                let successCount = 0, errorCount = 0, errorMessages = [];
+                results.forEach((result, index) => {
+                    const giocoId = selectedCheckboxes[index].value;
+                    if (result.status === 'fulfilled' && result.value.ok) { successCount++; }
+                    else { errorCount++; errorMessages.push(`Gioco ID ${giocoId}: Errore ${result.reason || result.value?.status}`); console.error(`Errore aggiunta gioco ${giocoId}:`, result.reason || result.value); }
+                });
+                if (addGamesMessageSpan) {
+                    if (errorCount > 0) { addGamesMessageSpan.textContent = `Aggiunti ${successCount} giochi. ${errorCount} errori.`; addGamesMessageSpan.className = 'ms-2 small text-danger'; }
+                    else { addGamesMessageSpan.textContent = `Aggiunti ${successCount} giochi!`; addGamesMessageSpan.className = 'ms-2 small text-success'; }
+                    setTimeout(() => { addGamesMessageSpan.textContent = ''; }, 4000);
+                }
+                await reloadAssociatedGames(currentClasseId); // Ricarica associati
+                await populateAvailableGames(); // Ricarica disponibili
+            } catch (error) { console.error("Errore durante aggiunta giochi:", error); if (addGamesMessageSpan) { addGamesMessageSpan.textContent = "Errore imprevisto."; addGamesMessageSpan.className = 'ms-2 small text-danger'; } }
+            finally { addSelectedGamesBtn.innerHTML = '<i class="bi bi-plus-circle"></i> Aggiungi Selezionati'; checkAddButtonState(); }
+        }
+
+        // Funzioni placeholder per azioni future
+        function viewStudents(classeId) { alert(`TODO: Visualizza Studenti per classe ID: ${classeId}`); }
+        function deleteClass(classeId, nomeClasse) {
+            if (confirm(`Sei sicuro di voler eliminare la classe "${nomeClasse}" (ID: ${classeId})? Verranno rimosse anche le iscrizioni e i progressi associati.`)) {
+                alert(`TODO: Implementare chiamata API DELETE /api/classi/${classeId}`);
+                // Qui andrebbe la fetch DELETE e poi il reload della tabella con loadMieClassi()
+            }
+        }
+
+        // --- Inizializzazione Pagina ---
+        document.addEventListener('DOMContentLoaded', async function () {
+            console.log("Gestione Classi page: Initializing templates...");
+            try {
+                await TemplateLoader.initializeCommonTemplates();
+                await new Promise(resolve => setTimeout(resolve, 0)); // Delay
+                let userData = null;
+                try { const response = await fetch('/api/account/my-roles'); if (response.ok) userData = await response.json(); else throw new Error('Not logged in'); }
+                catch { throw new Error('Auth check failed'); } // Rilancia per catch esterno
+
+                updateNavbar(userData);
+                const gestioneLink = document.querySelector('#nav-docente-gestione .dropdown-item[href="/gestione-classi.html"]');
+                if (gestioneLink) gestioneLink.classList.add('active');
+                const gestioneToggle = document.getElementById('nav-docente-gestione');
+                if (gestioneToggle) gestioneToggle.querySelector('.nav-link').classList.add('active');
+
+                if (userData?.isDocente || userData?.isAdmin) {
+                    await loadMaterie();
+                    await loadMieClassi();
+                    // Aggiungi listener ai filtri del modal e al pulsante Aggiungi
+                    if (modalFilterArgomentoSelect) modalFilterArgomentoSelect.addEventListener('change', () => populateAvailableGames());
+                    if (modalSearchTitoloInput) modalSearchTitoloInput.addEventListener('input', () => populateAvailableGames());
+                    if (addSelectedGamesBtn) addSelectedGamesBtn.addEventListener('click', addSelectedGames);
+                } else {
+                    // Mostra errore autorizzazione
+                    if (errorClassiDiv) { errorClassiDiv.textContent = "Non sei autorizzato ad accedere a questa sezione."; errorClassiDiv.classList.remove('d-none'); }
+                    if (loadingClassiDiv) loadingClassiDiv.classList.add('d-none');
+                    if (creaClasseForm) creaClasseForm.closest('.card').classList.add('d-none');
+                    if (document.getElementById('tabellaClassi')) document.getElementById('tabellaClassi').closest('.card').classList.add('d-none');
+                }
+            } catch (error) {
+                console.error('Error during page initialization:', error);
+                if (typeof updateNavbar === 'function') updateNavbar(null);
+                if (errorClassiDiv) { errorClassiDiv.textContent = 'Errore durante l\'inizializzazione o accesso non autorizzato.'; errorClassiDiv.classList.remove('d-none'); }
+                if (loadingClassiDiv) loadingClassiDiv.classList.add('d-none');
+                if (creaClasseForm) creaClasseForm.closest('.card').classList.add('d-none');
+                if (document.getElementById('tabellaClassi')) document.getElementById('tabellaClassi').closest('.card').classList.add('d-none');
+            }
+        });
+
+        // --- Gestione Form Creazione Classe ---
+        if (creaClasseForm) {
+            creaClasseForm.addEventListener('submit', async function (event) {
+                event.preventDefault();
+                creaClasseMessageDiv.classList.add('d-none');
+                // Rimuovi classi errore precedenti
+                nomeClasseInput.classList.remove('is-invalid');
+                materiaClasseSelect.classList.remove('is-invalid');
+                const nomeFeedback = nomeClasseInput.nextElementSibling?.classList.contains('invalid-feedback') ? nomeClasseInput.nextElementSibling : null;
+                const materiaFeedback = materiaClasseSelect.nextElementSibling?.classList.contains('invalid-feedback') ? materiaClasseSelect.nextElementSibling : null;
+                if (nomeFeedback) nomeFeedback.textContent = '';
+                if (materiaFeedback) materiaFeedback.textContent = '';
+
+
+                const submitBtn = creaClasseForm.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+                const originalText = submitBtn.textContent;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Creazione...';
+
+                const nomeClasse = nomeClasseInput.value;
+                const materiaId = materiaClasseSelect.value;
+
+                if (!nomeClasse || !materiaId) { showCreaMessage('Nome classe e materia sono obbligatori.', true); submitBtn.disabled = false; submitBtn.textContent = originalText; return; }
+
+                const data = { nomeClasse, materiaId: parseInt(materiaId) };
+
+                try {
+                    const response = await fetch('/api/classi', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+
+                    if (response.ok || response.status === 201) {
+                        showCreaMessage('Classe creata con successo!', false);
+                        creaClasseForm.reset();
+                        await loadMieClassi(); // Ricarica l'elenco
+                    } else {
+                        let errorMsg = 'Errore durante la creazione.';
+                        let validationErrors = null;
+                        try {
+                            const errorData = await response.json();
+                            if (errorData.errors) { // Controlla se è ValidationProblemDetails
+                                validationErrors = errorData.errors;
+                                errorMsg = errorData.title || "Errore di validazione.";
+                            } else { errorMsg = errorData.title || errorData.detail || errorData.message || `Errore ${response.status}`; }
+                        } catch { }
+
+                        if (validationErrors) { // Mostra errori specifici
+                            if (validationErrors.NomeClasse && nomeFeedback) { nomeClasseInput.classList.add('is-invalid'); nomeFeedback.textContent = validationErrors.NomeClasse[0]; }
+                            if (validationErrors.MateriaId && materiaFeedback) { materiaClasseSelect.classList.add('is-invalid'); materiaFeedback.textContent = validationErrors.MateriaId[0]; }
+                        }
+                        throw new Error(errorMsg); // Lancia per il catch generico
+                    }
+                } catch (error) {
+                    console.error("Errore creazione classe:", error);
+                    showCreaMessage(error.message || 'Errore imprevisto.', true);
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                }
+            });
+        }
+    </script>
+
+</body>
+
+</html>

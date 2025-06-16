@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="it">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Errore di Login/Verifica - Educational Games</title>
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        /* Stili specifici per questa pagina */
+        .card {
+            max-width: 500px;
+            /* Larghezza massima per la card */
+            width: 100%;
+            margin: 1rem auto;
+            /* Margine sopra/sotto e auto laterale */
+        }
+
+        .icon-error {
+            width: 4rem;
+            height: 4rem;
+            margin-left: auto;
+            margin-right: auto;
+            margin-bottom: 1rem;
+            color: var(--bs-danger);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="navbar-container">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+            <div class="container-fluid"><span class="navbar-brand">Caricamento...</span></div>
+        </nav>
+    </div>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="card shadow-sm">
+                <div class="card-body p-5 text-center">
+                    <svg class="icon-error" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                        stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.008v.008H12v-.008Z" />
+                    </svg>
+
+                    <h1 class="h3 card-title fw-bold mb-2">Operazione Fallita</h1>
+                    <p class="card-text text-muted mb-4">
+                        Si è verificato un problema durante il tentativo di accesso o verifica.
+                    </p>
+                    <div id="error-reason" class="alert alert-danger text-sm mb-4 d-none" role="alert">
+                    </div>
+                    <p class="card-text text-muted mb-4">
+                        Per favore, prova di nuovo o contatta l'assistenza se il problema persiste.
+                    </p>
+                    <a href="/login-page.html" class="btn btn-primary fw-semibold me-2">
+                        Vai al Login
+                    </a>
+                    <a href="/" class="btn btn-secondary fw-semibold">
+                        Torna alla Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+    <script src="/js/template-loader.js"></script>
+    <script src="/js/navbar.js"></script>
+    <script>
+        // Funzione per mostrare messaggio errore specifico
+        function displayErrorMessage() {
+            const params = new URLSearchParams(window.location.search);
+            const reason = params.get('reason');
+            const errorDiv = document.getElementById('error-reason');
+            if (reason && errorDiv) {
+                let message = 'Dettaglio errore non riconosciuto: ' + reason; // Fallback
+
+                // Mappa i codici di errore usati nel backend a messaggi user-friendly
+                switch (reason) {
+                    // Errori da HandleTicketReceived (Google/Microsoft)
+                    case 'internal_error_principal': message = 'Errore interno recuperando informazioni utente.'; break;
+                    case 'google_missing_claims': message = 'Informazioni necessarie (ID o email) mancanti da Google.'; break;
+                    case 'microsoft_missing_claims': message = 'Informazioni necessarie (ID o email) mancanti da Microsoft.'; break;
+                    case 'db_search_error': message = 'Errore database durante verifica utente.'; break;
+                    case 'user_creation_error': message = 'Impossibile creare account utente locale.'; break;
+                    case 'internal_error_user': message = 'Errore tecnico interno (utente).'; break;
+                    case 'signin_error': message = 'Errore tecnico durante accesso finale.'; break;
+                    // Errori da HandleAccessDenied (Google/Microsoft)
+                    case 'access_denied_google': message = 'Hai negato all\'applicazione l\'accesso alle informazioni richieste dal tuo account Google.'; break;
+                    case 'access_denied_microsoft': message = 'Hai negato all\'applicazione l\'accesso alle informazioni richieste dal tuo account Microsoft.'; break;
+                    // Errori da /verify-email o /reset-password
+                    case 'invalid_token': message = 'Il link utilizzato non è valido o è già stato usato.'; break;
+                    case 'expired_token': message = 'Il link utilizzato è scaduto. Per favore, richiedine uno nuovo.'; break;
+                    case 'verification_save_error': message = 'Si è verificato un errore durante il salvataggio della verifica. Riprova.'; break;
+                    // Gestione errori da HandleRemoteFailure (possono essere più vari)
+                    default:
+                        try {
+                            const decodedReason = decodeURIComponent(reason);
+                            message = `Si è verificato un errore durante la comunicazione con il provider esterno. Dettaglio: ${decodedReason.substring(0, 100)}${decodedReason.length > 100 ? '...' : ''}`;
+                            if (decodedReason.includes('Correlation failed')) { message = 'Problema di sicurezza durante autenticazione. Riprova.'; }
+                            // Aggiungi qui altri controlli su messaggi specifici se necessario
+                            if (decodedReason.startsWith('AADSTS')) { message = 'Errore durante l\'autenticazione con Microsoft. Riprova o contatta l\'amministratore.'; }
+                        } catch (e) { message = `Si è verificato un errore esterno non specificato (Codice: ${reason})`; }
+                        // Fallback per codici errore sconosciuti o troppo generici
+                        if (reason.startsWith('unknown_') || message.length > 150) {
+                            message = 'Si è verificato un errore durante la comunicazione con il provider esterno. Riprova più tardi.';
+                        }
+                        break;
+                }
+                errorDiv.textContent = message;
+                errorDiv.classList.remove('d-none');
+            } else if (errorDiv) {
+                // Mostra un messaggio generico se non c'è 'reason'
+                errorDiv.textContent = 'Si è verificato un errore sconosciuto.';
+                errorDiv.classList.remove('d-none');
+            }
+        }
+
+        // Esegui all'avvio
+        document.addEventListener('DOMContentLoaded', async function () { // Reso ASYNC
+            console.log("Login Failed page: Initializing templates...");
+            try {
+                // --- ATTENDI IL CARICAMENTO DEI TEMPLATE ---
+                await TemplateLoader.initializeCommonTemplates();
+                console.log("Login Failed page: Templates loaded. Adding short delay...");
+
+                // --- AGGIUNTO DELAY per permettere al DOM di aggiornarsi ---
+                await new Promise(resolve => setTimeout(resolve, 0));
+                console.log("Login Failed page: Delay finished. Checking auth status...");
+                // --- FINE DELAY ---
+
+                // --- ORA ESEGUI LA FETCH PER LO STATO UTENTE ---
+                let userData = null; // Assume not logged in initially
+                try {
+                    const response = await fetch('/api/account/my-roles');
+                    console.log("Login Failed page: fetch /my-roles status:", response.status);
+                    if (response.ok) {
+                        userData = await response.json();
+                        console.log("Login Failed page: User data received:", userData);
+                    } else {
+                        console.warn("Login Failed page: /my-roles request failed or user not authenticated.");
+                    }
+                } catch (fetchError) {
+                    console.error("Login Failed page: Error fetching user status:", fetchError);
+                    // Keep userData as null
+                }
+
+                // --- ORA AGGIORNA NAVBAR ---
+                console.log("Login Failed page: Calling updateNavbar with data:", userData);
+                if (typeof updateNavbar === 'function') {
+                    updateNavbar(userData); // Chiama la funzione da navbar.js
+                    console.log("Login Failed page: updateNavbar called successfully.");
+                } else {
+                    console.error("Login Failed page: updateNavbar function is not defined!");
+                }
+
+                // --- Mostra il messaggio di errore specifico per questa pagina ---
+                displayErrorMessage();
+
+            } catch (error) {
+                console.error('Error during page initialization:', error);
+                // Prova comunque ad aggiornare la navbar assumendo utente non loggato
+                console.log("Login Failed page: Updating navbar with null due to initialization error.");
+                if (typeof updateNavbar === 'function') {
+                    updateNavbar(null); // Passa null esplicitamente
+                } else {
+                    console.error("Login Failed page: updateNavbar function is not defined on error path!");
+                }
+                // Mostra comunque l'errore se possibile
+                displayErrorMessage();
+            }
+        });
+        // La funzione postLogout() è definita in navbar.js ed è usata dalla navbar caricata
+    </script>
+
+</body>
+
+</html>

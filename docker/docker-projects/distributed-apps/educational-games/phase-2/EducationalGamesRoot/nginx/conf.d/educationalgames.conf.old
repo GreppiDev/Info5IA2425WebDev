@@ -1,0 +1,58 @@
+# Definisce l'upstream per le istanze della webapp
+upstream educationalgames_backend {
+    # Qui si sceglie la strategia di bilanciamento. Decommentare quella desiderata.
+
+    # 1. IP Hash (Affinità di Sessione basata su IP)
+    # Garantisce che le richieste da uno stesso client vadano sempre alla stessa istanza.
+    # Utile per applicazioni stateful o per migliorare le performance della cache locale.
+    #ip_hash;
+
+    # 2. Least Connections
+    # Invia le richieste all'istanza con il minor numero di connessioni attive.
+    # Ottimo per distribuire il carico in modo efficiente.
+    least_conn;
+
+    # 3. Round Robin (Default)
+    # Se non si specifica alcuna direttiva, Nginx usa il Round Robin,
+    # inviando le richieste alle istanze in sequenza.
+
+    server webapp:8080; # Nginx si connette al servizio 'webapp' sulla porta 8080
+}
+
+# Server HTTP: reindirizza tutto a HTTPS
+server {
+    listen 80;
+    listen [::]:80;
+    server_name localhost; # Adatto per certificati di sviluppo `localhost`
+
+    location / {
+        # Modifica qui per includere la porta HTTPS corretta
+        return 301 https://localhost:8443$request_uri;
+    }
+}
+
+# Server HTTPS (con certificati di sviluppo)
+server {
+    # listen 443 ssl http2; # Vecchia direttiva
+    # listen [::]:443 ssl http2; # Vecchia direttiva
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on; # Nuova direttiva per abilitare HTTP/2
+    server_name localhost; # Adatto per certificati di sviluppo `localhost`
+
+    # Percorsi dei certificati di sviluppo ASP.NET Core montati
+    ssl_certificate /etc/nginx/ssl/dev-certs/localhost.crt;
+    ssl_certificate_key /etc/nginx/ssl/dev-certs/localhost.key;
+
+    location / {
+         proxy_pass http://educationalgames_backend;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $http_host; 
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}

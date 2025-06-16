@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="it">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Le Mie Classi - Educational Games</title>
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        .classe-card {
+            margin-bottom: 1.5rem;
+        }
+
+        .gioco-card {
+            height: 100%;
+        }
+
+        .gioco-card img {
+            height: 300px;
+            object-fit: cover;
+            background-color: #e9ecef;
+        }
+
+        .gioco-card .card-body {
+            padding: 0.75rem;
+        }
+
+        /* Riduci padding per card più piccole */
+        .gioco-card .card-title {
+            font-size: 0.9rem;
+        }
+
+        /* Riduci dimensione titolo gioco */
+        .gioco-card .card-text {
+            font-size: 0.8rem;
+        }
+
+        /* Riduci dimensione descrizione */
+        .gioco-card .btn {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.5rem;
+        }
+
+        /* Riduci dimensione bottone */
+    </style>
+</head>
+
+<body>
+
+    <div id="navbar-container">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+            <div class="container-fluid"><span class="navbar-brand">Caricamento...</span></div>
+        </nav>
+    </div>
+
+    <main>
+        <div class="container mt-4">
+            <h1 class="mb-4">Le Mie Classi</h1>
+
+            <div id="loading-mie-classi" class="text-center py-5">
+                <div class="spinner-border text-primary"></div>
+            </div>
+            <div id="error-mie-classi" class="alert alert-danger d-none"></div>
+            <div id="no-mie-classi" class="alert alert-info d-none">Non sei ancora iscritto a nessuna classe. Usa il
+                codice fornito dal tuo docente per iscriverti (dal tuo profilo o dalla pagina di iscrizione).</div>
+
+            <div id="classi-container">
+            </div>
+
+            <div class="card shadow-sm mt-4">
+                <div class="card-body">
+                    <h5 class="card-title">Iscriviti a una Nuova Classe</h5>
+                    <form id="iscrizioneForm" class="row g-2 align-items-end">
+                        <div class="col-md-8">
+                            <label for="codiceIscrizione" class="form-label visually-hidden">Codice Iscrizione</label>
+                            <input type="text" class="form-control" id="codiceIscrizione"
+                                placeholder="Inserisci codice iscrizione" required maxlength="20"
+                                aria-label="Codice Iscrizione">
+                        </div>
+                        <div class="col-md-4 d-grid">
+                            <button type="submit" class="btn btn-primary">Iscriviti</button>
+                        </div>
+                    </form>
+                    <div id="iscrizioneMessage" class="mt-2 d-none" role="alert"></div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <div class="modal fade" id="leaderboardModal" tabindex="-1" aria-labelledby="leaderboardModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="leaderboardModalLabel">Classifica</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="leaderboardLoading" class="text-center">
+                        <div class="spinner-border spinner-border-sm"></div> Caricamento...
+                    </div>
+                    <div id="leaderboardError" class="alert alert-danger d-none"></div>
+                    <div id="leaderboardContent" class="d-none">
+                        <h6 id="leaderboardSubtitle" class="mb-3"></h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">#</th>
+                                        <th scope="col">Studente</th>
+                                        <th scope="col" class="text-end">Monete</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="leaderboardTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                        <p id="noLeaderboardData" class="text-center text-muted d-none">Nessun dato disponibile per questa
+                            classifica.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+    <script src="/js/template-loader.js"></script>
+    <script src="/js/navbar.js"></script>
+    <script>
+        // Riferimenti UI
+        const loadingDiv = document.getElementById('loading-mie-classi');
+        const errorDiv = document.getElementById('error-mie-classi');
+        const noClassiDiv = document.getElementById('no-mie-classi');
+        const classiContainer = document.getElementById('classi-container');
+        const iscrizioneForm = document.getElementById('iscrizioneForm');
+        const codiceInput = document.getElementById('codiceIscrizione');
+        const iscrizioneMessageDiv = document.getElementById('iscrizioneMessage');
+        //riferimenti Modal Classifica
+        const leaderboardModalElement = document.getElementById('leaderboardModal');
+        const leaderboardModal = leaderboardModalElement ? new bootstrap.Modal(leaderboardModalElement) : null;
+        const leaderboardModalLabel = document.getElementById('leaderboardModalLabel');
+        const leaderboardSubtitle = document.getElementById('leaderboardSubtitle');
+        const leaderboardLoading = document.getElementById('leaderboardLoading');
+        const leaderboardError = document.getElementById('leaderboardError');
+        const leaderboardContent = document.getElementById('leaderboardContent');
+        const leaderboardTableBody = document.getElementById('leaderboardTableBody');
+        const noLeaderboardData = document.getElementById('noLeaderboardData');
+
+        // Funzione helper escape HTML
+        function escapeHtml(unsafe) { if (typeof unsafe !== 'string') return unsafe; return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
+
+        // Funzione per creare card gioco (aggiunge pulsante classifica gioco)
+        function createGiocoCard(gioco, classeId) {
+            const placeholderImg = '/assets/images/game-placeholder.png';
+            const imgSrc = gioco.immagine1 || placeholderImg;
+            const col = document.createElement('div');
+            col.className = 'col-6 col-sm-4 col-md-3 col-lg-3';
+            const playLink = `/player.html?giocoId=${gioco.id}&classeId=${classeId}`;
+            col.innerHTML = `
+            <div class="card gioco-card h-100">
+                <img src="${imgSrc}" class="card-img-top" alt="${escapeHtml(gioco.titolo)}" onerror="this.onerror=null;this.src='${placeholderImg}';">
+                <div class="card-body d-flex flex-column p-2">
+                    <h6 class="card-title small fw-bold mb-1">${escapeHtml(gioco.titolo)}</h6>
+                    <p class="card-text small text-muted flex-grow-1">${escapeHtml(gioco.descrizioneBreve) || ''}</p>
+                    <div class="mt-auto d-grid gap-1"> <a href="${playLink}" class="btn btn-sm btn-success">Gioca</a>
+                        <button class="btn btn-sm btn-outline-warning" onclick="viewLeaderboard(${classeId}, ${gioco.id}, '${escapeHtml(gioco.titolo)}')">Classifica Gioco</button>
+                    </div>
+                </div>
+            </div>`;
+            return col;
+        }
+
+
+        // Funzione per caricare e visualizzare le classi iscritte
+        async function loadMieClassi() {
+            if (loadingDiv) loadingDiv.classList.remove('d-none');
+            if (errorDiv) errorDiv.classList.add('d-none');
+            if (noClassiDiv) noClassiDiv.classList.add('d-none');
+            if (classiContainer) classiContainer.innerHTML = '';
+
+            try {
+                const response = await fetch('/api/iscrizioni/mie');
+                if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) throw new Error('Non autorizzato o non sei uno studente.');
+                    else throw new Error(`Errore API: ${response.status}`);
+                }
+                const classi = await response.json();
+
+                if (classi && classi.length > 0) {
+                    classi.forEach(classe => {
+                        const classeCard = document.createElement('div');
+                        classeCard.className = 'card shadow-sm classe-card';
+                        let giochiHtml = '<p class="text-center text-muted small mt-3">Nessun gioco.</p>';
+                        if (classe.giochiDisponibili && classe.giochiDisponibili.length > 0) {
+                            giochiHtml = '<div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-3">';
+                            classe.giochiDisponibili.forEach(gioco => { giochiHtml += createGiocoCard(gioco, classe.idClasse).outerHTML; });
+                            giochiHtml += '</div>';
+                        }
+                        classeCard.innerHTML = `
+                            <div class="card-header bg-light d-flex justify-content-between align-items-center flex-wrap">
+                                <div>
+                                    <h2 class="h5 mb-0 me-3 d-inline">${escapeHtml(classe.nomeClasse)} (${escapeHtml(classe.materiaNome)})</h2>
+                                    <small class="text-muted">Docente: ${escapeHtml(classe.nomeDocente)}</small>
+                                </div>
+                                <button class="btn btn-sm btn-warning mt-1 mt-md-0" onclick="viewLeaderboard(${classe.idClasse}, null, '${escapeHtml(classe.nomeClasse)}')">
+                                    <i class="bi bi-trophy-fill"></i> Classifica Classe
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-3 text-muted">Giochi disponibili:</h6>
+                                ${giochiHtml}
+                            </div>`;
+                        if (classiContainer) classiContainer.appendChild(classeCard);
+                    });
+                } else { if (noClassiDiv) noClassiDiv.classList.remove('d-none'); }
+            } catch (error) {
+                console.error("Errore caricamento mie classi:", error);
+                if (errorDiv) { errorDiv.textContent = `Errore nel caricamento delle classi: ${error.message}`; errorDiv.classList.remove('d-none'); }
+            } finally {
+                if (loadingDiv) loadingDiv.classList.add('d-none');
+            }
+        }
+
+    // Funzione per mostrare messaggi iscrizione
+    function showIscrizioneMessage(message, isError = true) {
+        if (!iscrizioneMessageDiv) return;
+        iscrizioneMessageDiv.textContent = message;
+        iscrizioneMessageDiv.className = isError ? 'mt-2 alert alert-danger' : 'mt-2 alert alert-success';
+        iscrizioneMessageDiv.classList.remove('d-none');
+        setTimeout(() => { iscrizioneMessageDiv.classList.add('d-none'); }, 4000);
+    }
+    // Apre Modal Classifica (identica a gestione-classi.html) 
+    async function viewLeaderboard(classeId, giocoId = null, nomeElemento) {
+        if (!leaderboardModal) return;
+        // Resetta stato modal classifica
+        if (leaderboardLoading) leaderboardLoading.classList.remove('d-none');
+        if (leaderboardError) leaderboardError.classList.add('d-none');
+        if (leaderboardContent) leaderboardContent.classList.add('d-none');
+        if (leaderboardTableBody) leaderboardTableBody.innerHTML = '';
+        if (noLeaderboardData) noLeaderboardData.classList.add('d-none');
+
+        // Imposta titolo modal
+        let modalTitle = `Classifica Generale - Classe: ${escapeHtml(nomeElemento)}`;
+        let apiUrl = `/api/classifiche/classe/${classeId}`;
+        let subtitle = `Classifica generale basata sulla somma delle monete di tutti i giochi.`;
+
+        if (giocoId) { // Se è specificato un gioco
+            modalTitle = `Classifica Gioco: ${escapeHtml(nomeElemento)} - Classe ID: ${classeId}`; // Usiamo titolo gioco
+            apiUrl = `/api/classifiche/classe/${classeId}/gioco/${giocoId}`;
+            subtitle = `Classifica basata sulle monete ottenute nel gioco selezionato.`;
+        }
+        if (leaderboardModalLabel) leaderboardModalLabel.textContent = modalTitle;
+        if (leaderboardSubtitle) leaderboardSubtitle.textContent = subtitle;
+
+        leaderboardModal.show(); // Mostra il modal
+
+        try {
+            const response = await fetch(apiUrl);
+            if (!response.ok) {
+                let errorMsg = `Errore ${response.status}`;
+                try { const err = await response.json(); errorMsg = err.title || err.detail || errorMsg; } catch { }
+                throw new Error(errorMsg);
+            }
+            const classifica = await response.json();
+
+            if (classifica && classifica.length > 0) {
+                classifica.forEach((entry, index) => {
+                    const row = leaderboardTableBody.insertRow();
+                    row.innerHTML = `
+                              <th scope="row">${index + 1}</th>
+                              <td>${escapeHtml(entry.nomeStudente)}</td>
+                              <td class="text-end">${entry.monete}</td>
+                          `;
+                });
+            } else {
+                if (noLeaderboardData) noLeaderboardData.classList.remove('d-none');
+            }
+            if (leaderboardContent) leaderboardContent.classList.remove('d-none'); // Mostra contenuto tabella
+
+        } catch (error) {
+            console.error("Errore caricamento classifica:", error);
+            if (leaderboardError) { leaderboardError.textContent = `Errore: ${error.message}`; leaderboardError.classList.remove('d-none'); }
+        } finally {
+            if (leaderboardLoading) leaderboardLoading.classList.add('d-none');
+        }
+    }
+
+
+        // Inizializzazione Pagina
+            document.addEventListener('DOMContentLoaded', async function () {
+                console.log("Mie Classi page: Initializing templates...");
+                try {
+                    await TemplateLoader.initializeCommonTemplates();
+                    await new Promise(resolve => setTimeout(resolve, 0)); // Delay
+                    let userData = null;
+                    try { const response = await fetch('/api/account/my-roles'); if (response.ok) userData = await response.json(); else throw new Error('Not logged in'); }
+                    catch { throw new Error('Auth check failed'); }
+
+                    updateNavbar(userData);
+                    const classiLink = document.getElementById('nav-studente-classi')?.querySelector('.nav-link');
+                    if (classiLink) classiLink.classList.add('active'); // Imposta link attivo
+
+                    if (userData?.isStudente) {
+                        await loadMieClassi(); // Carica le classi dello studente
+                        if (iscrizioneForm) iscrizioneForm.closest('.card').classList.remove('d-none'); // Mostra form iscrizione
+                    } else {
+                        // Mostra errore autorizzazione
+                        if (errorDiv) { errorDiv.textContent = "Non sei autorizzato ad accedere a questa sezione (solo studenti)."; errorDiv.classList.remove('d-none'); }
+                        if (loadingDiv) loadingDiv.classList.add('d-none');
+                        if (iscrizioneForm) iscrizioneForm.closest('.card').classList.add('d-none');
+                        if (classiContainer) classiContainer.classList.add('d-none');
+                    }
+                } catch (error) {
+                    console.error('Error during page initialization:', error);
+                    if (typeof updateNavbar === 'function') updateNavbar(null);
+                    if (errorDiv) { errorDiv.textContent = 'Errore durante l\'inizializzazione o accesso non autorizzato.'; errorDiv.classList.remove('d-none'); }
+                    if (loadingDiv) loadingDiv.classList.add('d-none');
+                    if (iscrizioneForm) iscrizioneForm.closest('.card').classList.add('d-none');
+                    if (classiContainer) classiContainer.classList.add('d-none');
+                }
+            });
+
+        // Gestione Form Iscrizione
+            if (iscrizioneForm) {
+                iscrizioneForm.addEventListener('submit', async function (event) {
+                    event.preventDefault();
+                    iscrizioneMessageDiv.classList.add('d-none');
+                    codiceInput.classList.remove('is-invalid');
+                    const feedbackDiv = codiceInput.nextElementSibling?.classList.contains('invalid-feedback') ? codiceInput.nextElementSibling : null;
+                    if (feedbackDiv) feedbackDiv.textContent = '';
+
+                    const submitBtn = iscrizioneForm.querySelector('button[type="submit"]');
+                    const codice = codiceInput.value.trim();
+
+                    if (!codice) {
+                        codiceInput.classList.add('is-invalid');
+                        if (feedbackDiv) feedbackDiv.textContent = 'Inserisci un codice.';
+                        return;
+                    }
+
+                    submitBtn.disabled = true;
+                    const originalText = submitBtn.textContent;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Iscrizione...';
+
+                    try {
+                        const response = await fetch('/api/iscrizioni', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                            body: JSON.stringify({ codiceIscrizione: codice })
+                        });
+
+                        if (response.ok || response.status === 201 || response.status === 204) {
+                            let successMsg = "Iscrizione avvenuta con successo!";
+                            try { const data = await response.json(); successMsg = data.message || successMsg; } catch { }
+                            showIscrizioneMessage(successMsg, false);
+                            iscrizioneForm.reset();
+                            await loadMieClassi(); // Ricarica l'elenco delle classi
+                        } else {
+                            let errorMsg = 'Errore durante l\'iscrizione.';
+                            let isValidationError = false;
+                            try {
+                                const errorData = await response.json();
+                                errorMsg = errorData.title || errorData.detail || errorData.message || `Errore ${response.status}`;
+                                if (response.status === 400 && errorData.errors && errorData.errors.CodiceIscrizione) { errorMessage = errorData.errors.CodiceIscrizione[0]; isValidationError = true; }
+                                else if (response.status === 409) { errorMessage = errorData.message || errorMsg; isValidationError = false; }
+                            } catch { }
+                            if (isValidationError && feedbackDiv) { codiceInput.classList.add('is-invalid'); feedbackDiv.textContent = errorMessage; }
+                            else { showIscrizioneMessage(errorMsg, true); }
+                            throw new Error(errorMsg);
+                        }
+                    } catch (error) {
+                        console.error("Errore iscrizione classe:", error);
+                        // Evita di mostrare l'errore generico se ne è già stato mostrato uno specifico
+                        if (!iscrizioneMessageDiv.classList.contains('alert-danger') || !iscrizioneMessageDiv.textContent) {
+                            showIscrizioneMessage(error.message || 'Errore imprevisto.', true);
+                        }
+                    } finally {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = originalText;
+                    }
+                });
+            }
+
+    </script>
+
+</body>
+
+</html>

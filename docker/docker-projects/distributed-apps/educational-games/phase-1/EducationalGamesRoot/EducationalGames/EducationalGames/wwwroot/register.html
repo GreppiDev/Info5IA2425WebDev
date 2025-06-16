@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="it">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Registrazione - Educational Games</title>
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        /* Stili specifici per questa pagina */
+        .card {
+            max-width: 550px;
+            /* Leggermente più larga per il form */
+            width: 100%;
+            margin: 1rem auto;
+            /* Margine sopra/sotto e auto laterale */
+        }
+
+        .or-separator {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: #6c757d;
+            margin: 1.5rem 0;
+        }
+
+        .or-separator::before,
+        .or-separator::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .or-separator:not(:empty)::before {
+            margin-right: .25em;
+        }
+
+        .or-separator:not(:empty)::after {
+            margin-left: .25em;
+        }
+
+        /* Stile per pulsante Microsoft */
+        .btn-microsoft {
+            background-color: #0067b8;
+            color: white;
+        }
+
+        .btn-microsoft:hover {
+            background-color: #005da6;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="navbar-container">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+            <div class="container-fluid"><span class="navbar-brand">Caricamento...</span></div>
+        </nav>
+    </div>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="card shadow-sm">
+                <div class="card-body p-4 p-md-5">
+                    <h1 class="h3 card-title text-center mb-4">Crea un Account</h1>
+
+                    <form id="registerForm">
+                        <div id="registerError" class="alert alert-danger d-none" role="alert"></div>
+                        <div id="registerSuccess" class="alert alert-success d-none" role="alert"></div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6 mb-3">
+                                <label for="registerNome" class="form-label">Nome</label>
+                                <input type="text" class="form-control" id="registerNome" name="nome" required
+                                    maxlength="50">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="registerCognome" class="form-label">Cognome</label>
+                                <input type="text" class="form-control" id="registerCognome" name="cognome" required
+                                    maxlength="50">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerEmail" class="form-label">Indirizzo Email</label>
+                            <input type="email" class="form-control" id="registerEmail" name="email" required
+                                maxlength="100">
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerPassword" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="registerPassword" name="password" required
+                                minlength="8" maxlength="100">
+                            <div id="passwordHelpBlock" class="form-text">La password deve essere lunga almeno 8
+                                caratteri.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerConfirmPassword" class="form-label">Conferma Password</label>
+                            <input type="password" class="form-control" id="registerConfirmPassword"
+                                name="confirmPassword" required minlength="8" maxlength="100">
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerRuolo" class="form-label">Registrati come</label>
+                            <select class="form-select" id="registerRuolo" name="ruolo" required>
+                                <option value="" selected disabled>Seleziona un ruolo...</option>
+                                <option value="Studente">Studente</option>
+                                <option value="Docente">Docente</option>
+                            </select>
+                        </div>
+                        <div class="d-grid mt-4"> <button type="submit"
+                                class="btn btn-success btn-block">Registrati</button> </div>
+                        <p class="mt-3 text-center text-muted"> Hai già un account? <a
+                                href="/login-page.html">Accedi</a> </p>
+                    </form>
+
+                    <div class="or-separator">oppure</div>
+
+                    <div class="text-center">
+                        <a href="/login-google" class="btn btn-primary mb-2 d-block">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor"
+                                class="bi bi-google me-2" viewBox="0 0 16 16">
+                                <path
+                                    d="M15.545 6.558a9.4 9.4 0 0 1 .139 1.626c0 2.434-.87 4.492-2.384 5.885h.002C11.978 15.292 10.158 16 8 16A8 8 0 1 1 8 0a7.7 7.7 0 0 1 5.352 2.082l-2.284 2.284A4.35 4.35 0 0 0 8 3.166c-2.087 0-3.86 1.408-4.492 3.304a4.8 4.8 0 0 0 0 3.063h.003c.635 1.896 2.405 3.301 4.492 3.301 1.078 0 2.004-.276 2.722-.764h-.003a3.7 3.7 0 0 0 1.599-2.431H8v-3.08z" />
+                            </svg>
+                            Registrati o Accedi con Google
+                        </a>
+                        <a href="/login-microsoft" class="btn btn-microsoft mb-2 d-block">
+                            <i class="bi bi-microsoft me-2"></i> Registrati o Accedi con Microsoft
+                        </a>
+                        <p class="form-text mt-2"> (Se accedi con un provider esterno per la prima volta, verrà creato
+                            un account Studente) </p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+    <script src="/js/template-loader.js"></script>
+    <script src="/js/navbar.js"></script>
+    <script>
+        const registerForm = document.getElementById('registerForm');
+        const registerErrorDiv = document.getElementById('registerError');
+        const registerSuccessDiv = document.getElementById('registerSuccess');
+
+        // --- Funzione per controllare stato e aggiornare navbar ---
+        document.addEventListener('DOMContentLoaded', async function () { // Reso ASYNC
+            console.log("Register page: Initializing templates...");
+            try {
+                // --- ATTENDI IL CARICAMENTO DEI TEMPLATE ---
+                await TemplateLoader.initializeCommonTemplates();
+                console.log("Register page: Templates loaded. Adding short delay...");
+
+                // --- AGGIUNTO DELAY per permettere al DOM di aggiornarsi ---
+                await new Promise(resolve => setTimeout(resolve, 0));
+                console.log("Register page: Delay finished. Checking auth status...");
+                // --- FINE DELAY ---
+
+                // --- ORA ESEGUI LA FETCH PER LO STATO UTENTE ---
+                let userData = null; // Assume not logged in initially
+                try {
+                    const response = await fetch('/api/account/my-roles');
+                    console.log("Register page: fetch /my-roles status:", response.status);
+                    if (response.ok) {
+                        userData = await response.json();
+                        console.log("Register page: User data received:", userData);
+                    } else {
+                        console.warn("Register page: /my-roles request failed or user not authenticated.");
+                    }
+                } catch (fetchError) {
+                    console.error("Register page: Error fetching user status:", fetchError);
+                    // Keep userData as null
+                }
+
+                // --- ORA AGGIORNA NAVBAR ---
+                console.log("Register page: Calling updateNavbar with data:", userData);
+                if (typeof updateNavbar === 'function') {
+                    updateNavbar(userData); // Chiama la funzione da navbar.js
+                    console.log("Register page: updateNavbar called successfully.");
+                } else {
+                    console.error("Register page: updateNavbar function is not defined!");
+                }
+
+                // Se l'utente è già loggato, magari reindirizza via dalla pagina di registrazione?
+                if (userData) {
+                    console.log("User already logged in, redirecting from register page...");
+                    // window.location.href = '/'; // Opzionale
+                }
+
+            } catch (error) {
+                console.error('Error during page initialization:', error);
+                // Prova comunque ad aggiornare la navbar assumendo utente non loggato
+                console.log("Register page: Updating navbar with null due to initialization error.");
+                if (typeof updateNavbar === 'function') {
+                    updateNavbar(null); // Passa null esplicitamente
+                } else {
+                    console.error("Register page: updateNavbar function is not defined on error path!");
+                }
+            }
+        });
+
+        // --- Gestione Form Registrazione Locale ---
+        if (registerForm) {
+            registerForm.addEventListener('submit', function (event) {
+                event.preventDefault();
+                registerErrorDiv.classList.add('d-none');
+                registerSuccessDiv.classList.add('d-none');
+                registerErrorDiv.textContent = '';
+                registerSuccessDiv.textContent = '';
+
+                // Recupera e valida dati form
+                const nome = document.getElementById('registerNome').value;
+                const cognome = document.getElementById('registerCognome').value;
+                const email = document.getElementById('registerEmail').value;
+                const password = document.getElementById('registerPassword').value;
+                const confirmPassword = document.getElementById('registerConfirmPassword').value;
+                const ruolo = document.getElementById('registerRuolo').value;
+                let isValid = true;
+                let errorMessage = '';
+                if (password !== confirmPassword) { errorMessage = 'Le password non coincidono.'; isValid = false; }
+                else if (password.length < 8) { errorMessage = 'La password deve essere lunga almeno 8 caratteri.'; isValid = false; }
+                else if (!ruolo) { errorMessage = 'Seleziona un ruolo (Studente o Docente).'; isValid = false; }
+                // Aggiungi altre validazioni se necessario (es. campi non vuoti)
+                if (!nome || !cognome || !email) { errorMessage = 'Tutti i campi sono obbligatori.'; isValid = false; }
+
+
+                if (!isValid) {
+                    registerErrorDiv.textContent = errorMessage;
+                    registerErrorDiv.classList.remove('d-none');
+                    return; // Interrompe se validazione fallisce
+                }
+
+                const registerData = { nome, cognome, email, password, ruolo };
+
+                // Invia dati a /api/account/register
+                fetch('/api/account/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify(registerData)
+                })
+                    .then(response => {
+                        if (response.ok) { return response.json(); } // Successo
+                        else { throw response; } // Lancia la risposta per gestirla nel catch
+                    })
+                    .then(data => {
+                        // SUCCESSO: Mostra messaggio (che ora invita a controllare email)
+                        registerSuccessDiv.textContent = data.message || 'Registrazione quasi completata! Controlla la tua email per il link di verifica.';
+                        registerSuccessDiv.classList.remove('d-none');
+                        registerForm.reset(); // Pulisce i campi del form
+                        // NON reindirizzare subito, l'utente deve verificare l'email
+                        // setTimeout(() => { window.location.href = '/login-page.html'; }, 2500);
+                    })
+                    .catch(async errorResponseOrFetchError => { // Gestione Errori MIGLIORATA
+                        let errorMessage = 'Si è verificato un errore durante la registrazione.'; // Default
+                        if (errorResponseOrFetchError instanceof Response) { // Errore HTTP (es. 409, 400)
+                            try {
+                                const errorData = await errorResponseOrFetchError.json();
+                                // Dai priorità a 'title' o 'detail' se presenti (da Results.Problem)
+                                errorMessage = errorData.title || errorData.detail || `Errore ${errorResponseOrFetchError.status}`;
+                                console.warn("API Error Data:", errorData); // Logga l'oggetto errore completo
+                            } catch (e) {
+                                // Se il corpo non è JSON valido
+                                errorMessage = `Errore ${errorResponseOrFetchError.status}: ${errorResponseOrFetchError.statusText || 'Risposta non valida dal server.'}`;
+                            }
+                        } else { // Errore di rete o altro errore JS
+                            errorMessage = errorResponseOrFetchError.message;
+                        }
+                        console.error('Errore durante la registrazione:', errorMessage);
+                        registerErrorDiv.textContent = errorMessage;
+                        registerErrorDiv.classList.remove('d-none');
+                    });
+            });
+        }
+        // La funzione postLogout() è definita in navbar.js ed è usata dalla navbar caricata
+    </script>
+
+</body>
+
+</html>

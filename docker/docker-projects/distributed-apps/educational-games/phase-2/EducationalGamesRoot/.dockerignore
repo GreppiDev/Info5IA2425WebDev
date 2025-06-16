@@ -1,0 +1,71 @@
+# MyWebApiApp/.dockerignore
+
+# ===== FILE SPECIFICI JAVA/ECLIPSE =====
+# File di configurazione Eclipse per progetti Java
+**/.classpath
+**/.project
+**/.settings
+
+# ===== FILE DOCKER =====
+# Evita di copiare i file Docker nell'immagine (previene loop di build)
+**/.dockerignore
+**/Dockerfile*
+**/docker-compose*
+**/compose*
+
+# ===== CONFIGURAZIONI AMBIENTE E SVILUPPO =====
+# File di ambiente locale (contengono spesso credenziali sensibili)
+**/.env
+
+# Repository Git (non necessario nell'immagine finale)
+**/.git
+**/.gitignore
+
+# ===== FILE SPECIFICI IDE/EDITOR =====
+# File di configurazione Visual Studio
+**/.vs
+**/*.user
+
+# File di configurazione Visual Studio Code
+**/.vscode
+
+# File di configurazione strumenti di sviluppo
+**/.toolstarget
+
+# ===== ARTEFATTI DI BUILD .NET =====
+# Cartelle di output della compilazione .NET
+**/bin
+**/obj
+
+# File di progetto utente specifici (impostazioni locali IDE)
+**/*.*proj.user
+
+# ===== FILE DATABASE E MODELLI =====
+# File di modello database (Database Model)
+**/*.dbmdl
+
+# File JFM (potrebbero essere file temporanei specifici)
+**/*.jfm
+
+# ===== NODE.JS (per progetti full-stack) =====
+# Dipendenze Node.js (da reinstallare con npm install)
+**/node_modules
+
+# File di debug NPM
+**/npm-debug.log
+
+# ===== KUBERNETES/HELM =====
+# Chart Helm per Kubernetes (solitamente gestiti separatamente)
+**/charts
+
+# File di configurazione Kubernetes per sviluppo
+**/secrets.dev.yaml
+**/values.dev.yaml
+
+# ===== DOCUMENTAZIONE =====
+# File di documentazione del progetto (non necessari nell'immagine runtime)
+LICENSE
+README.md
+.env # Cruciale se il contesto di build fosse la root e si volesse evitare di copiarlo
+.env.local
+

@@ -1,0 +1,117 @@
+# Please refer https://aka.ms/HTTPSinContainer on how to setup an https developer certificate for your ASP.NET Core service.
+
+services:
+  # Database MariaDB
+  mariadb:
+    image: mariadb:11.4
+    container_name: mariadb
+    restart: unless-stopped # Riavvia il container a meno che non sia stato fermato esplicitamente
+    ports:
+      # Mappa la porta host (da .env, default 3306) alla porta interna del container (3306)
+      # Utile per connettersi al DB da strumenti sull'host (es. DBeaver, MySQL Workbench).
+      - "${MARIADB_HOST_PORT:-3306}:3306"
+    environment:
+      # Le password e i nomi sono presi dal file .env
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
+      MARIADB_USER: ${MARIADB_USER_NAME}
+      MARIADB_PASSWORD: ${MARIADB_USER_PASSWORD}
+    volumes:
+      - mariadb_data:/var/lib/mysql # Volume per la persistenza dei dati di MariaDB
+    networks:
+      - educationalgames_network
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 60s # Tempo di attesa iniziale prima del primo controllo di salute
+    
+
+  # WebApp "EducationalGames" (definita per poter effettuare scaling)
+  webapp:
+    image: webapp:latest # Assicurarsi che questa immagine sia costruita correttamente
+    build:
+      context: ./EducationalGames/EducationalGames # Assumendo che docker-compose.yml sia nella root del progetto e il progetto EducationalGames sia una sotto-cartella /EducationalGames/EducationalGames
+      dockerfile: Dockerfile # Specifica il percorso del Dockerfile
+    restart: unless-stopped
+    depends_on:
+      mariadb:
+        condition: service_healthy # Attende che MariaDB sia healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production # O "Development" per debug nei container
+      ASPNETCORE_URLS: http://+:${WEBAPP_CONTAINER_INTERNAL_PORT:-8080} # La porta su cui l'app ascolta DENTRO il container
+      ConnectionStrings__EducationalGamesConnection: "Server=mariadb;Port=3306;Database=${MARIADB_DATABASE};Uid=root;Pwd=${MARIADB_ROOT_PASSWORD};AllowPublicKeyRetrieval=true;Pooling=true;"
+      EmailSettings__SmtpServer: ${SMTP_SERVER}
+      EmailSettings__Port: ${SMTP_PORT}
+      EmailSettings__SenderName: ${SMTP_SENDER_NAME}
+      EmailSettings__SenderEmail: ${SMTP_SENDER_EMAIL}
+      EmailSettings__Username: ${SMTP_USERNAME}
+      EmailSettings__Password: ${SMTP_PASSWORD}
+      DefaultAdminCredentials__Nome: ${ADMIN_NAME}
+      DefaultAdminCredentials__Cognome: ${ADMIN_SURNAME}
+      DefaultAdminCredentials__Email: ${ADMIN_EMAIL}
+      DefaultAdminCredentials__Password: ${ADMIN_PASSWORD}
+      Authentication__Google__ClientId: ${GOOGLE_CLIENT_ID}
+      Authentication__Google__ClientSecret: ${GOOGLE_CLIENT_SECRET}
+      Authentication__Microsoft__ClientId: ${MICROSOFT_CLIENT_ID}
+      Authentication__Microsoft__ClientSecret: ${MICROSOFT_CLIENT_SECRET}
+      Authentication__Microsoft__TenantId: ${MICROSOFT_TENANT_ID}
+      # Data Protection
+      DATA_PROTECTION_KEYS_PATH: /app/shared_dp_keys
+      DataProtection__AutoGenerateKeys: ${WEBAPP_DP_AUTO_GENERATE_KEYS:-true}
+      DataProtection__KeyLifetime: ${WEBAPP_DP_KEY_LIFETIME:-30} 
+      # CORS Settings
+      CorsSettings__AllowedLocalOrigins__0: ${WEBAPP_CORS_ALLOWED_ORIGINS_0:-http://localhost:8080} 
+      CorsSettings__AllowedLocalOrigins__1: ${WEBAPP_CORS_ALLOWED_ORIGINS_1:-https://localhost:8443} 
+      # Si può aggiungere CorsSettings__AllowedLocalOrigins__2, __3, ecc. se necessario
+      CorsSettings__TunnelOrProxyOrigin: ${WEBAPP_CORS_TUNNEL_OR_PROXY_ORIGIN:-} 
+      # Altre
+      Testing__BypassEmailVerification: ${TESTING_BYPASS_EMAIL_VERIFICATION:-false}
+    volumes:
+      - dp_keys_volume:/app/shared_dp_keys # Volume condiviso per le Data Protection Keys
+    networks:
+      - educationalgames_network
+
+  # Nginx come Reverse Proxy e Load Balancer e terminatore HTTPS
+  # Utilizza un template per la configurazione dinamica
+  # Assicurarsi che il file educationalgames.conf.template sia presente nella cartella nginx/conf.d
+  nginx:
+    image: nginx:1.27.5
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+      - "${NGINX_HTTP_HOST_PORT:-8080}:80"
+      - "${NGINX_HTTPS_HOST_PORT:-8443}:443"
+    volumes:
+      - ./nginx/conf.d/educationalgames.conf.template:/etc/nginx/templates/educationalgames.conf.template:ro
+      - ./nginx/ssl/dev-certs:/etc/nginx/ssl/dev-certs:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    environment:
+      # Variabili per il template Nginx
+      - NGINX_SERVER_NAME=${NGINX_SERVER_NAME:-localhost}
+      - NGINX_HTTPS_HOST_PORT=${NGINX_HTTPS_HOST_PORT:-8443}
+      - WEBAPP_CONTAINER_INTERNAL_PORT=${WEBAPP_CONTAINER_INTERNAL_PORT:-8080} # Passa la porta interna della webapp
+    command:
+      - /bin/sh
+      - -c
+      - |
+        set -e
+        echo "Processing Nginx configuration template..."
+        envsubst '$${NGINX_SERVER_NAME} $${NGINX_HTTPS_HOST_PORT} $${WEBAPP_CONTAINER_INTERNAL_PORT}' \
+          < /etc/nginx/templates/educationalgames.conf.template \
+          > /etc/nginx/conf.d/educationalgames.conf
+        echo "Starting Nginx..."
+        nginx -g 'daemon off;'
+    networks:
+      - educationalgames_network
+    depends_on:
+      - webapp
+
+volumes:
+  mariadb_data: # Volume per i dati di MariaDB
+  dp_keys_volume: # Volume condiviso per le Data Protection Keys
+
+networks:
+  educationalgames_network:
+    driver: bridge

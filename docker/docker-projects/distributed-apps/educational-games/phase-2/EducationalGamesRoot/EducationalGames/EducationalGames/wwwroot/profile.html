@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="it">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Profilo Utente - Educational Games</title>
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        .card {
+            max-width: 600px;
+            margin: 1rem auto;
+        }
+
+        .claim-label {
+            font-weight: 600;
+            color: #6c757d;
+            min-width: 180px;
+            display: inline-block;
+        }
+
+        .claim-value {
+            font-family: monospace;
+            word-break: break-all;
+        }
+
+        /* Stili per nascondere/mostrare sezioni */
+        .edit-mode-hidden {
+            display: block;
+        }
+
+        /* Visibile di default */
+        .edit-mode-visible {
+            display: none;
+        }
+
+        /* Nascosto di default */
+        body.edit-mode .edit-mode-hidden {
+            display: none;
+        }
+
+        /* Nasconde visualizzazione in edit mode */
+        body.edit-mode .edit-mode-visible {
+            display: block;
+        }
+
+        /* Mostra form in edit mode */
+    </style>
+</head>
+
+<body>
+
+    <div id="navbar-container">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+            <div class="container-fluid"><span class="navbar-brand">Caricamento...</span></div>
+        </nav>
+    </div>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h1 class="h4 card-title mb-0">Profilo Utente</h1>
+                    <button id="editProfileBtn" class="btn btn-sm btn-outline-primary edit-mode-hidden">
+                        <i class="bi bi-pencil-square"></i> Modifica
+                    </button>
+                    <button id="cancelEditBtn" class="btn btn-sm btn-outline-secondary edit-mode-visible">
+                        <i class="bi bi-x-circle"></i> Annulla
+                    </button>
+                </div>
+                <div class="card-body p-4">
+                    <div id="loading-indicator" class="text-center">
+                        <div class="spinner-border text-primary" role="status"> <span
+                                class="visually-hidden">Caricamento...</span> </div>
+                        <p class="mt-2">Recupero informazioni utente...</p>
+                    </div>
+
+                    <div id="error-message" class="alert alert-danger d-none" role="alert">
+                        Impossibile caricare i dati utente. Potresti non essere autenticato. Prova a <a
+                            href="/login-page.html" class="alert-link">effettuare il login</a>.
+                    </div>
+
+                    <div id="user-info-display" class="edit-mode-hidden d-none">
+                        <h2 class="h5 mb-3">Dettagli Utente</h2>
+                        <div class="mb-2"> <span class="claim-label">ID Utente:</span> <span id="user-id"
+                                class="claim-value"></span> </div>
+                        <div class="mb-2"> <span class="claim-label">Email:</span> <span id="user-email"
+                                class="claim-value"></span> </div>
+                        <div class="mb-2"> <span class="claim-label">Nome:</span> <span id="user-givenname"
+                                class="claim-value"></span> </div>
+                        <div class="mb-2"> <span class="claim-label">Cognome:</span> <span id="user-surname"
+                                class="claim-value"></span> </div>
+                        <div class="mb-3"> <span class="claim-label">Ruolo Principale:</span> <span id="user-main-role"
+                                class="claim-value"></span> </div>
+                        <div class="mb-3"> <span class="claim-label">Ruoli Effettivi:</span>
+                            <ul id="user-roles" class="list-unstyled claim-value ps-3 d-inline-block align-top"></ul>
+                        </div>
+                        <hr class="my-4">
+                        <div class="text-center"> <a href="/" class="btn btn-secondary ms-2">Torna alla Home</a> </div>
+                    </div>
+
+                    <form id="editProfileForm" class="edit-mode-visible">
+                        <h2 class="h5 mb-3">Modifica Dati</h2>
+                        <div id="editMessage" class="d-none mb-3" role="alert"></div>
+
+                        <div class="mb-3">
+                            <label for="editNome" class="form-label">Nome</label>
+                            <input type="text" class="form-control" id="editNome" name="Nome" required maxlength="50">
+                        </div>
+                        <div class="mb-3">
+                            <label for="editCognome" class="form-label">Cognome</label>
+                            <input type="text" class="form-control" id="editCognome" name="Cognome" required
+                                maxlength="50">
+                        </div>
+                        <div class="mb-3">
+                            <label for="editEmail" class="form-label">Email (non modificabile)</label>
+                            <input type="email" class="form-control" id="editEmail" name="Email" readonly disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editRuolo" class="form-label">Ruolo</label>
+                            <select class="form-select" id="editRuolo" name="Ruolo" required>
+                                <option value="Studente">Studente</option>
+                                <option value="Docente">Docente</option>
+                            </select>
+                            <div class="form-text">Puoi scegliere tra Studente e Docente. Il ruolo Admin non può essere
+                                auto-assegnato.</div>
+                        </div>
+                        <hr class="my-4">
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-success">Salva Modifiche</button>
+                            <button type="button" id="cancelEditBtnInline"
+                                class="btn btn-secondary ms-2">Annulla</button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+    <script src="/js/template-loader.js"></script>
+    <script src="/js/navbar.js"></script>
+    <script>
+        // Riferimenti Elementi UI
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const userInfoDisplayDiv = document.getElementById('user-info-display');
+        const editProfileForm = document.getElementById('editProfileForm');
+        const errorDiv = document.getElementById('error-message');
+        const editProfileBtn = document.getElementById('editProfileBtn');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+        const cancelEditBtnInline = document.getElementById('cancelEditBtnInline');
+        const editMessageDiv = document.getElementById('editMessage');
+
+        // Riferimenti Campi Visualizzazione
+        const userIdEl = document.getElementById('user-id');
+        const userEmailEl = document.getElementById('user-email');
+        const userGivenNameEl = document.getElementById('user-givenname');
+        const userSurnameEl = document.getElementById('user-surname');
+        const userMainRoleEl = document.getElementById('user-main-role');
+        const rolesList = document.getElementById('user-roles');
+
+        // Riferimenti Campi Modifica
+        const editNomeInput = document.getElementById('editNome');
+        const editCognomeInput = document.getElementById('editCognome');
+        const editEmailInput = document.getElementById('editEmail');
+        const editRuoloSelect = document.getElementById('editRuolo');
+
+        let currentUserData = null; // Per memorizzare i dati utente correnti
+
+        // Funzione per popolare sia la visualizzazione che il form
+        function populateUserData(userData) {
+            currentUserData = userData; // Salva i dati correnti
+            if (!userData) return;
+
+            // Popola Visualizzazione
+            if (userIdEl) userIdEl.textContent = userData.nameIdentifier || 'N/D';
+            if (userEmailEl) userEmailEl.textContent = userData.username || 'N/D';
+            if (userGivenNameEl) userGivenNameEl.textContent = userData.givenName || 'N/D';
+            if (userSurnameEl) userSurnameEl.textContent = userData.surname || 'N/D';
+
+            // Determina e mostra ruolo principale
+            let mainRole = 'N/D';
+            if (userData.isAdmin) mainRole = 'Admin';
+            else if (userData.isDocente) mainRole = 'Docente';
+            else if (userData.isStudente) mainRole = 'Studente';
+            if (userMainRoleEl) userMainRoleEl.textContent = mainRole;
+
+            // Popola lista ruoli effettivi
+            if (rolesList) {
+                rolesList.innerHTML = '';
+                if (userData.roles && userData.roles.length > 0) {
+                    userData.roles.forEach(role => { const li = document.createElement('li'); li.textContent = role; rolesList.appendChild(li); });
+                } else { const li = document.createElement('li'); li.textContent = 'Nessuno'; rolesList.appendChild(li); }
+            }
+
+            // Popola Form Modifica
+            if (editNomeInput) editNomeInput.value = userData.givenName || '';
+            if (editCognomeInput) editCognomeInput.value = userData.surname || '';
+            if (editEmailInput) editEmailInput.value = userData.username || ''; // Email non modificabile
+
+            // Popola e configura select Ruolo
+            if (editRuoloSelect) {
+                const adminOptionExists = !!editRuoloSelect.querySelector('option[value="Admin"]');
+                if (userData.isAdmin) {
+                    // Se è Admin, aggiungi l'opzione Admin se non c'è, selezionala, disabilita
+                    if (!adminOptionExists) {
+                        const option = document.createElement('option');
+                        option.value = 'Admin'; option.textContent = 'Admin';
+                        editRuoloSelect.appendChild(option);
+                    }
+                    editRuoloSelect.value = 'Admin';
+                    editRuoloSelect.disabled = true;
+                    editRuoloSelect.closest('.mb-3').querySelector('.form-text').textContent = 'Il ruolo Admin non può essere modificato.';
+                } else {
+                    // Se non è Admin, assicurati che l'opzione Admin non ci sia, abilita e imposta ruolo
+                    if (adminOptionExists) editRuoloSelect.querySelector('option[value="Admin"]').remove();
+                    editRuoloSelect.disabled = false;
+                    editRuoloSelect.value = mainRole; // Imposta Studente o Docente
+                    editRuoloSelect.closest('.mb-3').querySelector('.form-text').textContent = 'Puoi scegliere tra Studente e Docente.';
+                }
+            }
+        }
+
+        // Funzione per mostrare messaggi nel form di modifica
+        function showEditMessage(message, isError = false) {
+            if (!editMessageDiv) return;
+            editMessageDiv.textContent = message;
+            editMessageDiv.className = isError ? 'alert alert-danger mb-3' : 'alert alert-success mb-3';
+            editMessageDiv.classList.remove('d-none');
+        }
+
+        // Funzione per entrare/uscire dalla modalità modifica
+        function toggleEditMode(edit) {
+            document.body.classList.toggle('edit-mode', edit);
+            if (edit && currentUserData) {
+                // Popola il form con i dati correnti quando si entra in modifica
+                populateUserData(currentUserData);
+                editMessageDiv.classList.add('d-none'); // Nasconde messaggi precedenti
+            }
+        }
+
+           // --- Inizializzazione Pagina ---
+        document.addEventListener('DOMContentLoaded', async function () {
+            try {
+                await TemplateLoader.initializeCommonTemplates();
+                await new Promise(resolve => setTimeout(resolve, 0)); // Delay
+                let userData = null;
+                try {
+                    const response = await fetch('/api/account/my-roles');
+                    if (response.ok) { userData = await response.json(); }
+                    else { throw new Error('Utente non autenticato'); }
+                } catch (fetchError) { throw fetchError; }
+
+                if (typeof updateNavbar === 'function') {
+                    updateNavbar(userData);
+                    const profileNavLink = document.querySelector('#nav-profile .nav-link');
+                    if (profileNavLink) profileNavLink.classList.add('active');
+                }
+
+                // Popola i dati iniziali
+                populateUserData(userData);
+
+                // Mostra contenuto
+                if (loadingIndicator) loadingIndicator.classList.add('d-none');
+                if (userInfoDisplayDiv) userInfoDisplayDiv.classList.remove('d-none'); // Mostra visualizzazione
+                if (errorDiv) errorDiv.classList.add('d-none');
+
+            } catch (error) {
+                console.error('Errore inizializzazione o fetch dati:', error);
+                if (typeof updateNavbar === 'function') updateNavbar(null);
+                if (loadingIndicator) loadingIndicator.classList.add('d-none');
+                if (errorDiv) errorDiv.classList.remove('d-none');
+            }
+        });
+
+        // --- Event Listener Pulsanti Modifica/Annulla ---
+        if (editProfileBtn) editProfileBtn.addEventListener('click', () => toggleEditMode(true));
+        if (cancelEditBtn) cancelEditBtn.addEventListener('click', () => toggleEditMode(false));
+        if (cancelEditBtnInline) cancelEditBtnInline.addEventListener('click', () => toggleEditMode(false));
+
+        // --- Event Listener Invio Form Modifica ---
+        if (editProfileForm) {
+            editProfileForm.addEventListener('submit', async function (event) {
+                event.preventDefault();
+                editMessageDiv.classList.add('d-none');
+                const submitBtn = editProfileForm.querySelector('button[type="submit"]');
+                const originalButtonText = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Salvataggio...';
+
+                const updatedData = {
+                    Nome: editNomeInput.value,
+                    Cognome: editCognomeInput.value,
+                    Ruolo: editRuoloSelect.value // Legge il valore selezionato
+                };
+
+                try {
+                    const response = await fetch('/api/account/profile', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify(updatedData)
+                    });
+
+                    if (response.ok) { // Successo (es. 204 No Content)
+                        showEditMessage('Profilo aggiornato con successo!', false);
+                        // Ricarica i dati utente aggiornati dall'API
+                        const freshDataResponse = await fetch('/api/account/my-roles');
+                        if (freshDataResponse.ok) {
+                            const freshUserData = await freshDataResponse.json();
+                            populateUserData(freshUserData); // Aggiorna UI e form
+                            updateNavbar(freshUserData); // Aggiorna navbar
+                            // Imposta di nuovo link profilo attivo
+                            const profileNavLink = document.querySelector('#nav-profile .nav-link');
+                            if (profileNavLink) profileNavLink.classList.add('active');
+                            // Esci da edit mode dopo ritardo
+                            setTimeout(() => toggleEditMode(false), 1500);
+                        } else { toggleEditMode(false); } // Esci comunque
+                    } else {
+                        let errorMessage = 'Errore durante l\'aggiornamento.';
+                        try { const errorData = await response.json(); errorMessage = errorData.title || errorData.detail || `Errore ${response.status}`; } catch { }
+                        throw new Error(errorMessage);
+                    }
+                } catch (error) {
+                    console.error("Errore aggiornamento profilo:", error);
+                    showEditMessage(error.message || 'Errore imprevisto.', true);
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalButtonText;
+                }
+            });
+        }
+        // La funzione postLogout() è definita in navbar.js
+    </script>
+
+</body>
+
+</html>

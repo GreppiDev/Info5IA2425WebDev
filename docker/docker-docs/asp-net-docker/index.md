@@ -4541,13 +4541,11 @@ services:
       # Utile per connettersi al DB da strumenti sull'host (es. DBeaver, MySQL Workbench).
       - "${MARIADB_HOST_PORT:-3306}:3306"
     healthcheck:
-      # Comando per verificare se MariaDB è pronto ad accettare connessioni.
-      # Usa le credenziali dell'utente dell'applicazione per il ping.
-      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "-u", "${MARIADB_USER_NAME}", "-p${MARIADB_USER_PASSWORD_SECRET}"]
-      interval: 15s      # Intervallo tra i controlli
-      timeout: 10s       # Tempo massimo per considerare il controllo fallito
-      retries: 5         # Numero di tentativi falliti prima di marcare come 'unhealthy'
-      start_period: 30s  # Periodo di grazia all'avvio prima che i fallimenti contino
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 60s # Tempo di attesa iniziale prima del primo controllo di salute
     restart: unless-stopped # Riavvia il container a meno che non sia stato fermato esplicitamente
     networks:
       - app_network_compose # Connette il servizio a questa rete definita sotto
@@ -4582,7 +4580,7 @@ networks:
 
 - `services.db.volumes`: Utilizza il volume nominato `db_data_compose` per la persistenza dei dati di MariaDB.
 
-- `services.db.healthcheck`: Definisce un comando (`mysqladmin ping`) per verificare lo stato di MariaDB. Questo è cruciale per la condizione `service_healthy` di `webapp`. Nota l'uso di `-u "${MARIADB_USER_NAME}" -p"${MARIADB_USER_PASSWORD_SECRET}"` per autenticare il ping.
+- `services.db.healthcheck`: Definisce un comando ([`healthcheck.sh`](https://mariadb.com/kb/en/using-healthcheck-sh/) è uno script presente nei container Docker di MariaDB per verificare lo stato di salute del container) per verificare lo stato di MariaDB. Questo è cruciale per la condizione `service_healthy` di `webapp`. Nota l'uso di `-u "${MARIADB_USER_NAME}" -p"${MARIADB_USER_PASSWORD_SECRET}"` per autenticare il ping.
 
 - `volumes.db_data_compose`: Definisce formalmente il volume nominato.
 
@@ -4989,7 +4987,7 @@ Finora, per semplicità, si è utilizzata la comunicazione HTTP. In produzione (
 
 1. **Terminazione SSL/TLS all'interno del container ASP.NET Core (Kestrel)**:
 
-    - È possibile configurare Kestrel per servire traffico su HTTPS direttamente.
+    - [È possibile configurare Kestrel per servire traffico su HTTPS direttamente](https://learn.microsoft.com/en-us/aspnet/core/security/docker-https).
     - Richiede:
         - Ottenere un certificato SSL/TLS valido (es. da un'autorità di certificazione come Let's Encrypt, o un certificato autofirmato per sviluppo).
         - Montare il file del certificato (es. `.pfx`) e la sua password (se protetto) all'interno del container in modo sicuro (es. tramite Docker Secrets o volumi sicuri).
