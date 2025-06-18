@@ -2911,21 +2911,23 @@ Aggiungere i servizi per Jaeger e l'OTel Collector e modificare la `webapp` per 
 ```yml
 # Please refer https://aka.ms/HTTPSinContainer on how to setup an https developer certificate for your ASP.NET Core service.
 
-services:
-  # ... servizio mariadb (invariato) ...
+services: # Database MariaDB
   mariadb:
     image: mariadb:11.4
     container_name: mariadb
-    restart: unless-stopped
+    restart: unless-stopped # Riavvia il container a meno che non sia stato fermato esplicitamente
     ports:
+      # Mappa la porta host (da .env, default 3306) alla porta interna del container (3306)
+      # Utile per connettersi al DB da strumenti sull'host (es. DBeaver, MySQL Workbench).
       - "${MARIADB_HOST_PORT:-3306}:3306"
     environment:
+      # Le password e i nomi sono presi dal file .env
       MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
       MARIADB_DATABASE: ${MARIADB_DATABASE}
       MARIADB_USER: ${MARIADB_USER_NAME}
       MARIADB_PASSWORD: ${MARIADB_USER_PASSWORD}
     volumes:
-      - mariadb_data:/var/lib/mysql
+      - mariadb_data:/var/lib/mysql # Volume per la persistenza dei dati di MariaDB
     networks:
       - educationalgames_network
     healthcheck:
@@ -2933,32 +2935,67 @@ services:
       interval: 20s
       timeout: 10s
       retries: 5
-      start_period: 60s
+      start_period: 60s # Tempo di attesa iniziale prima del primo controllo di salute
 
-  # WebApp "EducationalGames" (MODIFICATA)
+  # WebApp "EducationalGames" (definita per poter effettuare scaling)
   webapp:
-    image: webapp:latest
+    image: webapp:latest # Assicurarsi che questa immagine sia costruita correttamente
     build:
-      context: ./EducationalGames/EducationalGames
-      dockerfile: Dockerfile
+      context: ./EducationalGames/EducationalGames # Assumendo che docker-compose.yml sia nella root del progetto e il progetto EducationalGames sia una sotto-cartella /EducationalGames/EducationalGames
+      dockerfile: Dockerfile # Specifica il percorso del Dockerfile
     restart: unless-stopped
     depends_on:
       mariadb:
-        condition: service_healthy
+        condition: service_healthy # Attende che MariaDB sia healthy
       otel-collector: # Aggiunta dipendenza dal collector
         condition: service_started
     environment:
-      # ... altre variabili d'ambiente (invariate) ...
+      ASPNETCORE_ENVIRONMENT: Production # O "Development" per debug nei container
+      ASPNETCORE_URLS: http://+:${WEBAPP_CONTAINER_INTERNAL_PORT:-8080} # La porta su cui l'app ascolta DENTRO il container
       ConnectionStrings__EducationalGamesConnection: "Server=mariadb;Port=3306;Database=${MARIADB_DATABASE};Uid=root;Pwd=${MARIADB_ROOT_PASSWORD};AllowPublicKeyRetrieval=true;Pooling=true;"
-      # ...
-      # VARIABILE PER OPENTELEMETRY
-      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317" # Invia telemetria al collector via gRPC
+      EmailSettings__SmtpServer: ${SMTP_SERVER}
+      EmailSettings__Port: ${SMTP_PORT}
+      EmailSettings__SenderName: ${SMTP_SENDER_NAME}
+      EmailSettings__SenderEmail: ${SMTP_SENDER_EMAIL}
+      EmailSettings__Username: ${SMTP_USERNAME}
+      EmailSettings__Password: ${SMTP_PASSWORD}
+      DefaultAdminCredentials__Nome: ${ADMIN_NAME}
+      DefaultAdminCredentials__Cognome: ${ADMIN_SURNAME}
+      DefaultAdminCredentials__Email: ${ADMIN_EMAIL}
+      DefaultAdminCredentials__Password: ${ADMIN_PASSWORD}
+      Authentication__Google__ClientId: ${GOOGLE_CLIENT_ID}
+      Authentication__Google__ClientSecret: ${GOOGLE_CLIENT_SECRET}
+      Authentication__Microsoft__ClientId: ${MICROSOFT_CLIENT_ID}
+      Authentication__Microsoft__ClientSecret: ${MICROSOFT_CLIENT_SECRET}
+      Authentication__Microsoft__TenantId: ${MICROSOFT_TENANT_ID}
+      # Data Protection
+      DATA_PROTECTION_KEYS_PATH: /app/shared_dp_keys
+      DataProtection__AutoGenerateKeys: ${WEBAPP_DP_AUTO_GENERATE_KEYS:-true}
+      DataProtection__KeyLifetime: ${WEBAPP_DP_KEY_LIFETIME:-30}
+      # CORS Settings
+      CorsSettings__AllowedLocalOrigins__0: ${WEBAPP_CORS_ALLOWED_ORIGINS_0:-http://localhost:8080}
+      CorsSettings__AllowedLocalOrigins__1: ${WEBAPP_CORS_ALLOWED_ORIGINS_1:-https://localhost:8443}
+      # Si può aggiungere CorsSettings__AllowedLocalOrigins__2, __3, ecc. se necessario
+      CorsSettings__TunnelOrProxyOrigin: ${WEBAPP_CORS_TUNNEL_OR_PROXY_ORIGIN:-} # Altre
+      Testing__BypassEmailVerification: ${TESTING_BYPASS_EMAIL_VERIFICATION:-false}
+      # VARIABILI PER OPENTELEMETRY
+      OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-grpc}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
+      OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-EducationalGames}
+      OTEL_SERVICE_VERSION: ${OTEL_SERVICE_VERSION:-1.0.0}
+      OTEL_RESOURCE_ATTRIBUTES: ${OTEL_RESOURCE_ATTRIBUTES:-service.name=EducationalGames,service.version=1.0.0,deployment.environment=docker}
+      OTEL_METRIC_EXPORT_INTERVAL: ${OTEL_METRIC_EXPORT_INTERVAL:-5000}
+      OTEL_TRACES_EXPORTER: ${OTEL_TRACES_EXPORTER:-otlp}
+      OTEL_METRICS_EXPORTER: ${OTEL_METRICS_EXPORTER:-otlp,prometheus}
+      OTEL_LOGS_EXPORTER: ${OTEL_LOGS_EXPORTER:-otlp}
     volumes:
-      - dp_keys_volume:/app/shared_dp_keys
+      - dp_keys_volume:/app/shared_dp_keys # Volume condiviso per le Data Protection Keys
     networks:
       - educationalgames_network
 
-  # ... servizio nginx (invariato) ...
+  # Nginx come Reverse Proxy e Load Balancer e terminatore HTTPS
+  # Utilizza un template per la configurazione dinamica
+  # Assicurarsi che il file educationalgames.conf.template sia presente nella cartella nginx/conf.d
   nginx:
     image: nginx:1.27.5
     container_name: nginx
@@ -2967,21 +3004,41 @@ services:
       - "${NGINX_HTTP_HOST_PORT:-8080}:80"
       - "${NGINX_HTTPS_HOST_PORT:-8443}:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/conf.d/educationalgames.conf.template:/etc/nginx/templates/educationalgames.conf.template:ro
       - ./nginx/ssl/dev-certs:/etc/nginx/ssl/dev-certs:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     environment:
+      # Variabili per il template Nginx
       - NGINX_SERVER_NAME=${NGINX_SERVER_NAME:-localhost}
       - NGINX_HTTPS_HOST_PORT=${NGINX_HTTPS_HOST_PORT:-8443}
       - WEBAPP_CONTAINER_INTERNAL_PORT=${WEBAPP_CONTAINER_INTERNAL_PORT:-8080}
-    command: >
-      /bin/sh -c "envsubst < /etc/nginx/templates/educationalgames.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
+    command:
+      - /bin/sh
+      - -c
+      - |
+        set -e
+        echo "Removing default nginx configuration..."
+        rm -f /etc/nginx/conf.d/default.conf
+        echo "Processing Nginx configuration template..."
+        echo "NGINX_SERVER_NAME: $NGINX_SERVER_NAME"
+        echo "NGINX_HTTPS_HOST_PORT: $NGINX_HTTPS_HOST_PORT"
+        echo "WEBAPP_CONTAINER_INTERNAL_PORT: $WEBAPP_CONTAINER_INTERNAL_PORT"
+        envsubst '$$NGINX_SERVER_NAME $$NGINX_HTTPS_HOST_PORT $$WEBAPP_CONTAINER_INTERNAL_PORT' \
+          < /etc/nginx/templates/educationalgames.conf.template \
+          > /etc/nginx/conf.d/educationalgames.conf
+        echo "Generated nginx configuration:"
+        cat /etc/nginx/conf.d/educationalgames.conf
+        echo "Listing configuration files:"
+        ls -la /etc/nginx/conf.d/
+        echo "Testing nginx configuration..."
+        nginx -t
+        echo "Starting Nginx..."
+        nginx -g 'daemon off;'
     networks:
       - educationalgames_network
     depends_on:
       - webapp
 
-  # ... servizi prometheus, grafana, cadvisor, node-exporter (invariati) ...
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
@@ -2992,7 +3049,7 @@ services:
       - ./prometheus:/etc/prometheus
       - prometheus_data:/prometheus
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
+      - "--config.file=/etc/prometheus/prometheus.yml"
     networks:
       - educationalgames_network
 
@@ -3028,18 +3085,16 @@ services:
     ports:
       - "9100:9100"
     volumes:
-      - '/proc:/host/proc:ro'
-      - '/sys:/host/sys:ro'
-      - '/:/rootfs:ro'
+      - "/proc:/host/proc:ro"
+      - "/sys:/host/sys:ro"
+      - "/:/rootfs:ro"
     command:
-      - '--path.procfs=/host/proc'
-      - '--path.sysfs=/host/sys'
-      - '--path.rootfs=/rootfs'
-      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+      - "--path.procfs=/host/proc"
+      - "--path.sysfs=/host/sys"
+      - "--path.rootfs=/rootfs"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
     networks:
       - educationalgames_network
-
-  # --- NUOVI SERVIZI PER OPENTELEMETRY ---
 
   # OTel Collector
   otel-collector:
@@ -3050,35 +3105,35 @@ services:
     volumes:
       - ./otel-collector-config.yml:/etc/otelcol-contrib/config.yml:ro
     ports:
-      - "4317:4317"    # OTLP gRPC
-      - "4318:4318"    # OTLP HTTP
-      - "8889:8889"    # Prometheus metrics exporter
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
+      - "8889:8889" # Prometheus metrics exporter
     depends_on:
       - jaeger
     networks:
-      - educationalgames_network
-
-  # Jaeger per la visualizzazione dei Traces
+      - educationalgames_network # Jaeger per la visualizzazione dei Traces
   jaeger:
     image: jaegertracing/all-in-one:1.70.0
     container_name: jaeger
     restart: unless-stopped
     ports:
-      - "16686:16686"  # Jaeger UI
-      - "14268:14268"  # Per richieste client dirette (opzionale)
-      - "14250:14250"  # Per il Collector
+      - "16686:16686" # Jaeger UI
+      - "14268:14268" # Per richieste client dirette (opzionale)
+      - "14250:14250" # Per il Collector
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
     networks:
       - educationalgames_network
-
 volumes:
-  mariadb_data:
-  dp_keys_volume:
-  prometheus_data:
-  grafana_data:
+  mariadb_data: # Volume per i dati di MariaDB
+  dp_keys_volume: # Volume condiviso per le Data Protection Keys
+  prometheus_data: # Volume per i dati di Prometheus
+  grafana_data: # Volume per i dati di Grafana
 
 networks:
   educationalgames_network:
     driver: bridge
+
 ```
 
 L'architettura del progetto `EducationalGames` implementa il flusso OTLP/gRPC per centralizzare la raccolta dei dati di telemetria, come illustrato nel diagramma architetturale.
@@ -3105,35 +3160,41 @@ Crea un nuovo file nella root del progetto.
 receivers:
   otlp:
     protocols:
-      grpc: # Riceve dati via gRPC (usato dall'SDK .NET)
-      http: # Riceve dati via HTTP (utile per altri SDK)
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+        cors:
+          allowed_origins:
+            - "http://*"
+            - "https://*"
 
 processors:
   batch: # Raggruppa i dati prima di esportarli per efficienza
     timeout: 10s
 
 exporters:
-  logging: # Esporta i dati nei log del container (ottimo per debug)
+  debug:
     verbosity: detailed
 
-  jaeger: # Esporta i traces a Jaeger
-    endpoint: jaeger:14250 # Indirizzo del servizio Jaeger
+  otlp/jaeger:
+    endpoint: jaeger:4317
     tls:
-      insecure: true # Non usare TLS tra Collector e Jaeger nella rete interna
+      insecure: true
 
-  prometheus: # Esporta le metriche per essere "raschiate" da Prometheus
-    endpoint: "0.0.0.0:8889" # Endpoint su cui il collector espone le metriche
+  prometheus:
+    endpoint: "0.0.0.0:8889"
 
 service:
   pipelines:
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [jaeger, logging]
+      exporters: [otlp/jaeger, debug]
     metrics:
       receivers: [otlp]
       processors: [batch]
-      exporters: [prometheus, logging]
+      exporters: [prometheus, debug]
 
 ```
 
@@ -3150,6 +3211,12 @@ global:
   scrape_interval: 15s
 
 scrape_configs:
+  - job_name: 'educational-games-app'
+    static_configs:
+      - targets: ['webapp:8080']
+    scrape_interval: 10s
+    metrics_path: /metrics
+    
   - job_name: 'cadvisor'
     static_configs:
       - targets: ['cadvisor:8080']
@@ -3160,13 +3227,13 @@ scrape_configs:
     static_configs:
       - targets: ['node-exporter:9100']
     scrape_interval: 5s
-
-  # --- NUOVO JOB PER OPENTELEMETRY COLLECTOR ---
+    metrics_path: /metrics
+  
   - job_name: 'otel-collector'
     static_configs:
-      - targets: ['otel-collector:8889'] # Endpoint metriche esposto dal collector
+      - targets: ['otel-collector:8889'] 
     scrape_interval: 10s
-
+    metrics_path: /metrics
 ```
 
 #### Passaggio 4: Aggiungere i pacchetti NuGet al progetto ASP.NET Core
@@ -3177,6 +3244,7 @@ Aggiungere i seguenti pacchetti al file `EducationalGames.csproj.csproj`.
 # Con la shell posizionata sulla cartella che contiene il file -csproj eseguire i seguenti comandi:
 dotnet add package OpenTelemetry.Exporter.OpenTelemetryProtocol
 dotnet add package OpenTelemetry.Exporter.Prometheus.AspNetCore --prerelease
+dotnet add package OpenTelemetry.Exporter.Zipkin
 dotnet add package OpenTelemetry.Extensions.Hosting
 dotnet add package OpenTelemetry.Instrumentation.AspNetCore
 dotnet add package OpenTelemetry.Instrumentation.EntityFrameworkCore --prerelease
@@ -3185,6 +3253,143 @@ dotnet add package OpenTelemetry.Instrumentation.Runtime
 ```
 
 #### Passaggio 5: Configurare OpenTelemetry in `Program.cs`
+
+Aggiungere il servizio di esempio
+
+**File:** `EducationalGamesRoot/EducationalGames/EducationalGames/Services/TelemetryDemoService.cs`
+
+```cs
+using System.Diagnostics;
+
+namespace EducationalGames.Services;
+
+/// <summary>
+/// Servizio di esempio per dimostrare l'uso di OpenTelemetry tracing con configurazione dinamica
+/// </summary>
+public class TelemetryDemoService : IDisposable
+{
+    private readonly ActivitySource _activitySource;
+    private readonly ILogger<TelemetryDemoService> _logger;
+    private readonly string _serviceName;
+    private readonly string _serviceVersion; public TelemetryDemoService(ILogger<TelemetryDemoService> logger, IConfiguration configuration)
+    {
+        _logger = logger;
+
+        // Legge le variabili d'ambiente OTEL per configurare l'ActivitySource
+        _serviceName = configuration.GetValue<string>("OTEL_SERVICE_NAME") ?? "EducationalGames";
+        _serviceVersion = configuration.GetValue<string>("OTEL_SERVICE_VERSION") ?? "1.0.0";
+
+        // Crea l'ActivitySource usando il nome del servizio dalle variabili d'ambiente
+        var activitySourceName = $"{_serviceName}.Demo";
+        _activitySource = new ActivitySource(activitySourceName, _serviceVersion);
+
+        _logger.LogInformation("TelemetryDemoService initialized with ActivitySource: {ActivitySourceName} v{Version}",
+            activitySourceName, _serviceVersion);
+    }
+
+    /// <summary>
+    /// Metodo di esempio che crea una traccia personalizzata
+    /// </summary>
+    public async Task<string> ProcessDataAsync(string inputData)
+    {
+        using var activity = _activitySource.StartActivity("ProcessData");
+        activity?.SetTag("input.data", inputData);
+        activity?.SetTag("operation.type", "data_processing");
+        activity?.SetTag("service.name", _serviceName);
+        activity?.SetTag("service.version", _serviceVersion);
+
+        try
+        {
+            _logger.LogInformation("Starting data processing for input: {InputData}", inputData);
+
+            // Simula operazioni di elaborazione
+            await Step1ValidationAsync(inputData);
+            var processedData = await Step2TransformationAsync(inputData);
+            await Step3PersistenceAsync(processedData);
+
+            activity?.SetTag("result.status", "success");
+            activity?.SetTag("output.length", processedData.Length);
+
+            _logger.LogInformation("Data processing completed successfully");
+            return processedData;
+        }
+        catch (Exception ex)
+        {
+            activity?.SetTag("result.status", "error");
+            activity?.SetTag("error.message", ex.Message);
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+
+            _logger.LogError(ex, "Error processing data");
+            throw;
+        }
+    }
+
+    private async Task Step1ValidationAsync(string data)
+    {
+        using var activity = _activitySource.StartActivity("Step1.Validation");
+        activity?.SetTag("step", "validation");
+
+        await Task.Delay(50); // Simula elaborazione
+
+        if (string.IsNullOrEmpty(data))
+        {
+            throw new ArgumentException("Input data cannot be null or empty");
+        }
+
+        activity?.SetTag("validation.result", "passed");
+    }
+
+    private async Task<string> Step2TransformationAsync(string data)
+    {
+        using var activity = _activitySource.StartActivity("Step2.Transformation");
+        activity?.SetTag("step", "transformation");
+        activity?.SetTag("input.length", data.Length);
+
+        await Task.Delay(100); // Simula elaborazione
+
+        var transformed = $"PROCESSED_{data.ToUpper()}_{DateTime.UtcNow:yyyyMMddHHmmss}";
+
+        activity?.SetTag("output.length", transformed.Length);
+        activity?.SetTag("transformation.type", "uppercase_with_timestamp");
+
+        return transformed;
+    }
+
+    private async Task Step3PersistenceAsync(string data)
+    {
+        using var activity = _activitySource.StartActivity("Step3.Persistence");
+        activity?.SetTag("step", "persistence");
+        activity?.SetTag("data.length", data.Length);
+
+        await Task.Delay(75); // Simula salvataggio
+
+        activity?.SetTag("persistence.result", "saved");
+        activity?.SetTag("persistence.location", "memory");
+    }    /// <summary>
+         /// Metodo che genera metriche personalizzate con informazioni dalle variabili OTEL
+         /// </summary>
+    public void RecordCustomMetrics(string operation, double duration, bool success)
+    {
+        // Le metriche possono essere registrate tramite OpenTelemetry Metrics
+        // Questo è un esempio di come si potrebbero strutturare utilizzando le variabili OTEL
+        _logger.LogInformation("Recording custom metrics: Service={ServiceName} v{ServiceVersion}, Operation={Operation}, Duration={Duration}ms, Success={Success}",
+            _serviceName, _serviceVersion, operation, duration, success);
+
+        // Qui si potrebbero aggiungere metriche personalizzate usando System.Diagnostics.Metrics
+        // con le informazioni dal servizio configurato tramite variabili d'ambiente
+    }
+
+    /// <summary>
+    /// Rilascia le risorse utilizzate dall'ActivitySource
+    /// </summary>
+    public void Dispose()
+    {
+        _activitySource?.Dispose();
+        GC.SuppressFinalize(this);
+    }
+}
+
+```
 
 Aggiungere la configurazione di OpenTelemetry all'avvio dell'applicazione.
 
@@ -3198,26 +3403,134 @@ using OpenTelemetry.Resources;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// === NUOVA CONFIGURAZIONE OPENTELEMETRY ===
+//altre configurazioni iniziali
+// --- Configurazione DbContext ---
+
+// --- Configurazione OpenTelemetry ---
+var serviceName = builder.Configuration.GetValue<string>("OTEL_SERVICE_NAME") ?? "EducationalGames";
+var serviceVersion = builder.Configuration.GetValue<string>("OTEL_SERVICE_VERSION") ?? "1.0.0";
+var otlpEndpoint = builder.Configuration.GetValue<string>("OTEL_EXPORTER_OTLP_ENDPOINT") ?? "http://localhost:4317";
+var otlpProtocol = builder.Configuration.GetValue<string>("OTEL_EXPORTER_OTLP_PROTOCOL")?.ToLower() == "http"
+    ? OtlpExportProtocol.HttpProtobuf : OtlpExportProtocol.Grpc;
+var metricExportInterval = builder.Configuration.GetValue<int>("OTEL_METRIC_EXPORT_INTERVAL", 5000);
+
+// Parse resource attributes from configuration
+var resourceAttributes = new Dictionary<string, object>
+{
+    ["deployment.environment"] = builder.Environment.EnvironmentName,
+    ["service.instance.id"] = Environment.MachineName
+};
+
+// Add custom resource attributes from OTEL_RESOURCE_ATTRIBUTES if present
+var customResourceAttributes = builder.Configuration.GetValue<string>("OTEL_RESOURCE_ATTRIBUTES");
+if (!string.IsNullOrEmpty(customResourceAttributes))
+{
+    var attributes = customResourceAttributes.Split(',');
+    foreach (var attr in attributes)
+    {
+        var keyValue = attr.Split('=');
+        if (keyValue.Length == 2)
+        {
+            resourceAttributes[keyValue[0].Trim()] = keyValue[1].Trim();
+        }
+    }
+}
+
+
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource
-        .AddService(serviceName: builder.Environment.ApplicationName))
-    .WithTracing(tracing => tracing
-        .AddAspNetCoreInstrumentation() // Traccia richieste HTTP in ingresso
-        .AddHttpClientInstrumentation()   // Traccia chiamate HTTP in uscita
-        .AddEntityFrameworkCoreInstrumentation(options => // Traccia query EF Core
+        .AddService(serviceName: serviceName, serviceVersion: serviceVersion)
+        .AddAttributes(resourceAttributes)).WithTracing(tracerProvider => tracerProvider
+        .AddSource($"{serviceName}.Demo") // Activity source personalizzato dinamico
+        .AddAspNetCoreInstrumentation(options =>
         {
-            options.SetDbStatementForText = true; // Include il testo SQL nel trace
+            options.RecordException = true;
+            options.Filter = httpContext =>
+            {
+                // Escludere le richieste per /health, /metrics, ecc.
+                var path = httpContext.Request.Path.Value;
+                return !path?.StartsWith("/health") == true &&
+                       !path?.StartsWith("/metrics") == true;
+            };
         })
-        .AddOtlpExporter()) // Esporta i traces al Collector via OTLP
-    .WithMetrics(metrics => metrics
+        .AddHttpClientInstrumentation(options =>
+        {
+            options.RecordException = true;
+        }).AddEntityFrameworkCoreInstrumentation(options =>
+        {
+            options.SetDbStatementForText = true;
+            options.SetDbStatementForStoredProcedure = true;
+        })
+        .AddOtlpExporter(options =>
+        {
+            options.Endpoint = new Uri(otlpEndpoint);
+            options.Protocol = otlpProtocol;
+        })
+        .AddConsoleExporter() // Utile per debugging
+    ).WithMetrics(meterProvider => meterProvider
         .AddAspNetCoreInstrumentation()
         .AddHttpClientInstrumentation()
-        .AddRuntimeInstrumentation()      // Metriche sul runtime .NET (GC, JIT, etc.)
-        .AddPrometheusExporter());        // Esporta le metriche per Prometheus
-// === FINE CONFIGURAZIONE OPENTELEMETRY ===
+        .AddRuntimeInstrumentation()
+        .AddPrometheusExporter()
+        .AddOtlpExporter(options =>
+        {
+            options.Endpoint = new Uri(otlpEndpoint);
+            options.Protocol = otlpProtocol;
+            options.ExportProcessorType = ExportProcessorType.Batch;
+            options.BatchExportProcessorOptions = new BatchExportProcessorOptions<System.Diagnostics.Activity>
+            {
+                ExporterTimeoutMilliseconds = metricExportInterval
+            };
+        })
+        .AddConsoleExporter() // Utile per debugging
+    );
 
-// ... resto del file Program.cs (configurazione Data Protection, CORS, etc.) ...
+// --- FINE Configurazione OpenTelemetry ---
+
+// ... resto del file Program.cs 
+// --- Configurazione Autenticazione (Cookie + Google + Microsoft) ---
+
+//altre configurazioni
+// Map API endpoints
+
+// Map OpenTelemetry/Prometheus metrics endpoint
+app.MapPrometheusScrapingEndpoint();
+
+// Endpoint per health check (per monitoraggio)
+app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }))
+   .WithTags("Health")
+   .WithOpenApi();
+
+// Endpoint di test per la telemetria
+app.MapPost("/api/telemetry/test", async (
+    string? testData,
+    TelemetryDemoService telemetryService) =>
+{
+    try
+    {
+        var result = await telemetryService.ProcessDataAsync(testData ?? "sample_data");
+        return Results.Ok(new
+        {
+            success = true,
+            result = result,
+            timestamp = DateTime.UtcNow
+        });
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new
+        {
+            success = false,
+            error = ex.Message,
+            timestamp = DateTime.UtcNow
+        });
+    }
+})
+.WithTags("Telemetry")
+.WithOpenApi()
+.WithSummary("Test endpoint per dimostrare OpenTelemetry tracing");
+//altri endpoints
+// Map Game Endpoints
 
 ```
 

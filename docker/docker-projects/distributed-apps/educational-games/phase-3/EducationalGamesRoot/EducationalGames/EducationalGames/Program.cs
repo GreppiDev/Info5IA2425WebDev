@@ -225,6 +225,7 @@ if (!string.IsNullOrEmpty(customResourceAttributes))
     }
 }
 
+
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource
         .AddService(serviceName: serviceName, serviceVersion: serviceVersion)
@@ -554,7 +555,7 @@ app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = Dat
 // Endpoint di test per la telemetria
 app.MapPost("/api/telemetry/test", async (
     string? testData,
-    EducationalGames.Services.TelemetryDemoService telemetryService) =>
+    TelemetryDemoService telemetryService) =>
 {
     try
     {
