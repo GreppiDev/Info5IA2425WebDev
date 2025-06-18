@@ -1,7 +1,6 @@
 # Please refer https://aka.ms/HTTPSinContainer on how to setup an https developer certificate for your ASP.NET Core service.
 
-services:
-  # Database MariaDB
+services: # Database MariaDB
   mariadb:
     image: mariadb:11.4
     container_name: mariadb
@@ -37,6 +36,8 @@ services:
     depends_on:
       mariadb:
         condition: service_healthy # Attende che MariaDB sia healthy
+      otel-collector: # Aggiunta dipendenza dal collector
+        condition: service_started
     environment:
       ASPNETCORE_ENVIRONMENT: Production # O "Development" per debug nei container
       ASPNETCORE_URLS: http://+:${WEBAPP_CONTAINER_INTERNAL_PORT:-8080} # La porta su cui l'app ascolta DENTRO il container
@@ -64,13 +65,23 @@ services:
       CorsSettings__AllowedLocalOrigins__0: ${WEBAPP_CORS_ALLOWED_ORIGINS_0:-http://localhost:8080}
       CorsSettings__AllowedLocalOrigins__1: ${WEBAPP_CORS_ALLOWED_ORIGINS_1:-https://localhost:8443}
       # Si può aggiungere CorsSettings__AllowedLocalOrigins__2, __3, ecc. se necessario
-      CorsSettings__TunnelOrProxyOrigin: ${WEBAPP_CORS_TUNNEL_OR_PROXY_ORIGIN:-}
-      # Altre
+      CorsSettings__TunnelOrProxyOrigin: ${WEBAPP_CORS_TUNNEL_OR_PROXY_ORIGIN:-} # Altre
       Testing__BypassEmailVerification: ${TESTING_BYPASS_EMAIL_VERIFICATION:-false}
+      # VARIABILI PER OPENTELEMETRY
+      OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-grpc}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
+      OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-EducationalGames}
+      OTEL_SERVICE_VERSION: ${OTEL_SERVICE_VERSION:-1.0.0}
+      OTEL_RESOURCE_ATTRIBUTES: ${OTEL_RESOURCE_ATTRIBUTES:-service.name=EducationalGames,service.version=1.0.0,deployment.environment=docker}
+      OTEL_METRIC_EXPORT_INTERVAL: ${OTEL_METRIC_EXPORT_INTERVAL:-5000}
+      OTEL_TRACES_EXPORTER: ${OTEL_TRACES_EXPORTER:-otlp}
+      OTEL_METRICS_EXPORTER: ${OTEL_METRICS_EXPORTER:-otlp,prometheus}
+      OTEL_LOGS_EXPORTER: ${OTEL_LOGS_EXPORTER:-otlp}
     volumes:
       - dp_keys_volume:/app/shared_dp_keys # Volume condiviso per le Data Protection Keys
     networks:
       - educationalgames_network
+
   # Nginx come Reverse Proxy e Load Balancer e terminatore HTTPS
   # Utilizza un template per la configurazione dinamica
   # Assicurarsi che il file educationalgames.conf.template sia presente nella cartella nginx/conf.d
@@ -117,9 +128,96 @@ services:
     depends_on:
       - webapp
 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    networks:
+      - educationalgames_network
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - educationalgames_network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - educationalgames_network
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+    volumes:
+      - "/proc:/host/proc:ro"
+      - "/sys:/host/sys:ro"
+      - "/:/rootfs:ro"
+    command:
+      - "--path.procfs=/host/proc"
+      - "--path.sysfs=/host/sys"
+      - "--path.rootfs=/rootfs"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
+    networks:
+      - educationalgames_network
+
+  # OTel Collector
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.128.0
+    container_name: otel-collector
+    restart: unless-stopped
+    command: ["--config=/etc/otelcol-contrib/config.yml"]
+    volumes:
+      - ./otel-collector-config.yml:/etc/otelcol-contrib/config.yml:ro
+    ports:
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
+      - "8889:8889" # Prometheus metrics exporter
+    depends_on:
+      - jaeger
+    networks:
+      - educationalgames_network # Jaeger per la visualizzazione dei Traces
+  jaeger:
+    image: jaegertracing/all-in-one:1.70.0
+    container_name: jaeger
+    restart: unless-stopped
+    ports:
+      - "16686:16686" # Jaeger UI
+      - "14268:14268" # Per richieste client dirette (opzionale)
+      - "14250:14250" # Per il Collector
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    networks:
+      - educationalgames_network
 volumes:
   mariadb_data: # Volume per i dati di MariaDB
   dp_keys_volume: # Volume condiviso per le Data Protection Keys
+  prometheus_data: # Volume per i dati di Prometheus
+  grafana_data: # Volume per i dati di Grafana
 
 networks:
   educationalgames_network:

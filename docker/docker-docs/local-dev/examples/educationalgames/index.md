@@ -40,6 +40,25 @@
     - [Passi necessari per l'esecuzione di un test K6](#passi-necessari-per-lesecuzione-di-un-test-k6)
     - [Come si interpretano i risultati di uno stress test](#come-si-interpretano-i-risultati-di-uno-stress-test)
     - [Monitoring Completo e Visuale con Prometheus + Grafana (Approccio Avanzato)](#monitoring-completo-e-visuale-con-prometheus--grafana-approccio-avanzato)
+  - [Fase 3: Telemetria di una applicazione distribuita con `OpenTelemetry`](#fase-3-telemetria-di-una-applicazione-distribuita-con-opentelemetry)
+    - [Cos'è OpenTelemetry (OTel)?](#cosè-opentelemetry-otel)
+    - [Come si Integra OpenTelemetry nel Nostro Scenario (Docker Compose)?](#come-si-integra-opentelemetry-nel-nostro-scenario-docker-compose)
+    - [Docker Stats vs. Prometheus vs. OpenTelemetry](#docker-stats-vs-prometheus-vs-opentelemetry)
+    - [La Telemetria ha un Costo in Termini di Risorse? E Quanto?](#la-telemetria-ha-un-costo-in-termini-di-risorse-e-quanto)
+    - [Modalità di funzionamento: sempre attiva o on-demand? La magia del campionamento](#modalità-di-funzionamento-sempre-attiva-o-on-demand-la-magia-del-campionamento)
+    - [In quale ambiente va attivata la Telemetria? in Testing/Sviluppo o Produzione?](#in-quale-ambiente-va-attivata-la-telemetria-in-testingsviluppo-o-produzione)
+    - [Integrazione di OpenTelemetry nel progetto `EducationalGames` per Sviluppo e Testing](#integrazione-di-opentelemetry-nel-progetto-educationalgames-per-sviluppo-e-testing)
+    - [Analisi del Protocollo di Trasporto Telemetrico: OTLP su gRPC](#analisi-del-protocollo-di-trasporto-telemetrico-otlp-su-grpc)
+      - [OTLP: Lo Standard per i Dati di Telemetria](#otlp-lo-standard-per-i-dati-di-telemetria)
+      - [gRPC: Il Protocollo di Trasporto ad Alte Prestazioni](#grpc-il-protocollo-di-trasporto-ad-alte-prestazioni)
+    - [Implementazione di OpenTelemetry in EducationalGames](#implementazione-di-opentelemetry-in-educationalgames)
+      - [Passaggio 1: Aggiornare il `docker-compose.yml`](#passaggio-1-aggiornare-il-docker-composeyml)
+      - [Passaggio 2: Creare la configurazione per l'OTel Collector](#passaggio-2-creare-la-configurazione-per-lotel-collector)
+      - [Passaggio 3: Aggiornare la configurazione di Prometheus](#passaggio-3-aggiornare-la-configurazione-di-prometheus)
+      - [Passaggio 4: Aggiungere i pacchetti NuGet al progetto ASP.NET Core](#passaggio-4-aggiungere-i-pacchetti-nuget-al-progetto-aspnet-core)
+      - [Passaggio 5: Configurare OpenTelemetry in `Program.cs`](#passaggio-5-configurare-opentelemetry-in-programcs)
+      - [Passaggio 6: Creare uno script K6 per verificare la telemetria](#passaggio-6-creare-uno-script-k6-per-verificare-la-telemetria)
+      - [Passaggio 7: Esecuzione e Verifica](#passaggio-7-esecuzione-e-verifica)
   - [Passaggio da `Docker Compose` a `Kubernetes` (approfondimento)](#passaggio-da-docker-compose-a-kubernetes-approfondimento)
     - [1. Kompose (Lo Standard de Facto - Opzione Consigliata)](#1-kompose-lo-standard-de-facto---opzione-consigliata)
     - [2. Docker Compose CLI (Integrazione Diretta)](#2-docker-compose-cli-integrazione-diretta)
@@ -1324,7 +1343,7 @@ Per usare HTTPS in locale senza la complessità di Let's Encrypt, si possono uti
 
 7. **Accedere all'Applicazione:** Aprire il browser all'indirizzo `https://localhost:8443`.
 
-8.  **Fermare i Servizi:**
+8- **Fermare i Servizi:**
 
     ```sh
     docker-compose down -v # Il flag -v rimuove anche i volumi
@@ -2429,11 +2448,11 @@ Questa è la soluzione standard per un monitoraggio di livello professionale. Fo
 
         **Legenda del Diagramma:**
 
-        🟢 **Componenti Applicativi** (Verde): Nginx, WebApp instances, MariaDB
-        🟠 **Stack di Monitoraggio** (Arancione): cAdvisor, Node Exporter, Prometheus, Grafana  
-        🔵 **Motore Docker** (Blu): Docker Engine che gestisce i container
-        🟣 **Risorse Host** (Rosa): CPU, Memoria, Disco, Rete dell'host
-        🟪 **Client** (Viola): Browser dell'utente
+        - 🟢 **Componenti Applicativi** (Verde): Nginx, WebApp instances, MariaDB
+        - 🟠 **Stack di Monitoraggio** (Arancione): cAdvisor, Node Exporter, Prometheus, Grafana  
+        - 🔵 **Motore Docker** (Blu): Docker Engine che gestisce i container
+        - 🟣 **Risorse Host** (Rosa): CPU, Memoria, Disco, Rete dell'host
+        - 🟪 **Client** (Viola): Browser dell'utente
 
         **Flusso di Monitoraggio:**
 
@@ -2656,6 +2675,701 @@ Questa è la soluzione standard per un monitoraggio di livello professionale. Fo
         - Un'altra dashboard interessante è **"Node Exporter Full" (ID: `1860`)**.
 
 Questo permette di osservare visivamente come il carico viene distribuito da Nginx e come ogni istanza di backend risponde in termini di consumo di risorse.
+
+## Fase 3: Telemetria di una applicazione distribuita con `OpenTelemetry`
+
+Su GitHub è disponibile il [progetto di esempio funzionante](../../../../docker-projects/distributed-apps/educational-games/phase-3/EducationalGamesRoot/) per questa fase.
+
+OpenTelemetry si inserisce in questo discorso in modo complementare, spostando il focus dal monitoraggio dell'infrastruttura (come fa `docker stats` o cAdvisor/Prometheus) al **monitoraggio del comportamento interno della applicazione**.
+
+Mentre gli strumenti come (Prometheus, Grafana, Nginx logs) sono eccellenti per rispondere alla domanda "**Cosa sta succedendo ai container?**", OpenTelemetry è progettato per rispondere alla domanda "**Cosa sta succedendo all'interno dell' applicazione mentre elabora una richiesta?**".
+
+### Cos'è OpenTelemetry (OTel)?
+
+**OpenTelemetry** non è un software di monitoraggio come Prometheus o Grafana, ma uno **standard aperto e un insieme di strumenti (SDK, API, Collector) per generare, raccogliere e esportare dati di telemetria**. È un progetto della `Cloud Native Computing Foundation (CNCF)`, supportato da tutti i principali provider cloud e vendor di observability, che mira a standardizzare come le applicazioni e i servizi riportano il loro stato.
+
+Si basa su tre pilastri fondamentali, noti come i **"tre pilastri dell'osservabilità"**:
+
+- **Traces (Tracciamenti):** Questo è la differenza principale rispetto a quanto discusso finora. Un trace rappresenta il percorso completo di una singola richiesta attraverso tutti i componenti del tuo sistema. Se un utente fa clic su "Vedi classifica", un trace mostra ogni "passo" (chiamato *span*) di quell'operazione. Ad esempio:
+
+  - La richiesta arriva a Nginx.
+  - Nginx la inoltra al container `webapp_2`.
+  - L'endpoint API in ASP.NET Core viene eseguito.
+  - Viene effettuata una specifica query al database MariaDB.
+  - I dati vengono elaborati.
+  - La risposta viene inviata.
+
+  Ogni *span* ha una durata, permettendo di vedere immediatamente che, ad esempio, dei 200ms totali di una richiesta, 150ms sono stati spesi in attesa della query al database. Questo è impossibile da vedere con `docker stats`.
+
+- **Metrics (Metriche):** Sono aggregazioni numeriche nel tempo (es. utilizzo CPU, numero di richieste al secondo, durata media delle richieste). Prometheus è un eccellente sistema per immagazzinare e interrogare metriche. OpenTelemetry può **generare queste metriche direttamente dall' applicazione** (es. quante volte è stato chiamato un certo metodo, la durata di una query EF Core) e poi esportarle verso Prometheus.
+
+- **Logs (Registri):** Sono log testuali. OpenTelemetry può arricchire i log con informazioni di contesto dal trace a cui appartengono (es. "questo log è stato generato durante l'elaborazione del trace ID `xyz` per l'utente `abc`"), rendendo il debug molto più semplice.
+
+### Come si Integra OpenTelemetry nel Nostro Scenario (Docker Compose)?
+
+OpenTelemetry agisce come lo **strato di strumentazione** che si inserisce tra l' applicazione e gli strumenti di backend (Prometheus, Grafana, etc.).
+
+Per aggiungere la telemetria ad una applicazione distribuita come `EducationalGames` sarebbe necessario:
+
+- **Aggiungere strumenti di telemetria all'Applicazione ASP.NET Core:**
+    - Aggiungere i pacchetti NuGet di OpenTelemetry al progetto "EducationalGames".
+    - Nel `Program.cs`, configurare l'SDK di OpenTelemetry. Questo SDK può "attaccarsi" automaticamente a librerie comuni come ASP.NET Core, Entity Framework Core, HttpClient, ecc., e iniziare a generare *traces* e *metrics* per ogni richiesta HTTP e query al database, senza quasi nessuna modifica al codice esistente.
+- **Aggiungere l'OpenTelemetry Collector:**
+    - Aggiungere un nuovo servizio al `docker-compose.yml`: l'`otel-collector`.
+    - L'applicazione ASP.NET Core invierebbe tutti i suoi dati di telemetria (traces, metrics, logs) a questo Collector.
+- **Configurare il Collector per Esportare i Dati:**
+    - Il Collector è un componente estremamente flessibile. Si può configurare per:
+        - **Esportare le metriche** in un formato che **Prometheus** può "raschiare" (scrape). A questo punto, Prometheus raccoglierebbe sia le metriche dell'infrastruttura da cAdvisor e Node Explorer, sia le metriche applicative da OTel Collector.
+        - **Esportare i traces** verso un backend di tracciamento dedicato come **Jaeger** o **Zipkin** (che possono anch'essi essere aggiunti come servizi a Docker Compose).
+- **Visualizzare in Grafana:**
+    - Grafana si connetterebbe a:
+        - **Prometheus** per visualizzare le dashboard con le metriche (sia quelle dei container sia quelle dell'applicazione provenienti da OTel).
+        - **Jaeger/Zipkin** per visualizzare i tracciamenti distribuiti, permettendo di esplorare il percorso di ogni singola richiesta.
+
+### Docker Stats vs. Prometheus vs. OpenTelemetry
+
+Si immagini di voler capire perché una pagina è lenta:
+
+- **`docker stats` dice:** "Il container `webapp_2` sta usando l'80% della CPU". (Il "cosa")
+- **Prometheus + Grafana dicono:** "L'utilizzo della CPU del container `webapp_2` è aumentato drasticamente negli ultimi 5 minuti, in corrispondenza di un picco di richieste all'endpoint `/api/classifiche/game/123`". (Il "cosa" con più contesto)
+- **OpenTelemetry + Jaeger dicono:** "Per la richiesta all'endpoint `/api/classifiche/game/123`, il 95% del tempo di risposta è stato speso all'interno di una singola query SQL al database che sta facendo una full table scan sulla tabella `Progressi`". (Il "**perché**")
+
+In conclusione, OpenTelemetry non sostituisce gli strumenti di monitoraggio dell'infrastruttura, ma li **arricchisce enormemente**, fornendo una visibilità profonda e dettagliata all'interno dell'applicazione. Permette di passare dal semplice monitoraggio (sapere se qualcosa è rotto) alla vera **osservabilità** (capire perché qualcosa si comporta in un certo modo).
+
+### La Telemetria ha un Costo in Termini di Risorse? E Quanto?
+
+L'attivazione della telemetria con OpenTelemetry ha un costo in termini di risorse (un "overhead"), ma è progettata per essere minima e, soprattutto, **gestibile**.
+
+- **Da cosa è causato l'overhead?**
+
+    1- **Strumentazione (Instrumentation):** L'SDK di OpenTelemetry si "aggancia" al codice. Quando arriva una richiesta HTTP o parte una query al database, l'SDK esegue una piccola quantità di codice aggiuntivo per creare e arricchire i dati di tracciamento (gli *span*).
+    2- **Elaborazione dei Dati:** I dati raccolti vengono elaborati, serializzati (convertiti in un formato standard) e messi in coda per essere inviati.
+    3- **Esportazione (Export):** Infine, i dati vengono inviati attraverso la rete a un ricevitore (come l'OpenTelemetry Collector o direttamente a un backend).
+
+- **Quant'è in percentuale?**
+
+    È quasi impossibile dare una percentuale fissa, poiché l'impatto dipende enormemente da:
+
+    - **Quanto traffico riceve l'applicazione:** Un'app con 10 richieste al secondo avrà un overhead trascurabile. Un'app con 10.000 richieste al secondo, se tracciasse tutto, avrebbe un impatto notevole.
+    - **Quanto è complessa la strumentazione:** Tracciare ogni singolo metodo è molto più costoso che tracciare solo le richieste HTTP in ingresso e le query al database.
+    - **Come viene configurata la raccolta:** Questo è il punto più importante.
+
+    In generale, con una configurazione ottimizzata per la produzione, l'overhead della CPU e della memoria causato da OpenTelemetry è considerato molto basso, spesso nell'ordine di **pochi punti percentuali (es. 1-5%)**. Gli SDK moderni sono estremamente ottimizzati per le performance. **Il vero "costo" non è tanto la CPU, quanto il volume di dati generato e immagazzinato se non si gestisce correttamente**.
+
+### Modalità di funzionamento: sempre attiva o on-demand? La magia del campionamento
+
+Qui sta la chiave per gestire l'overhead: la telemetria **viene mantenuta sempre attiva**, ma non si cattura il 100% di tutto. Si utilizza una tecnica chiamata **campionamento (sampling)**.
+
+Si immagini di fare un controllo di qualità su una linea di produzione: non si analizza ogni singolo pezzo, ma se ne prende un campione statisticamente significativo. OpenTelemetry fa lo stesso con le richieste.
+
+Esistono due strategie principali di campionamento:
+
+- **Head-Based Sampling (Campionamento "in Testa"):**
+
+    - **Come funziona:** La decisione se tracciare o meno una richiesta viene presa **all'inizio**, non appena la richiesta entra nel primo servizio. Ad esempio, si può decidere di "catturare il 10% di tutte le tracce".
+    - **Vantaggi:** Molto efficiente e a basso costo, perché le richieste scartate non generano alcun dato di telemetria.
+    - **Svantaggi:** È una decisione "cieca". Si potrebbe scartare una traccia che poi si rivela essere un errore o particolarmente lenta.
+
+- **Tail-Based Sampling (Campionamento "in Coda"):**
+
+    - **Come funziona:** L'applicazione raccoglie tutti gli span per una data richiesta. Solo **alla fine**, quando la traccia è completa, un componente centrale (come l'OpenTelemetry Collector) analizza l'intera traccia e decide se salvarla o scartarla.
+    - **Vantaggi:** Estremamente potente. Permette di impostare regole intelligenti come: "Salva sempre tutte le tracce che contengono un errore" o "Salva tutte le tracce che hanno impiegato più di 500ms per essere completate".
+    - **Svantaggi:** Richiede più risorse, perché tutti i dati devono essere inviati al Collector, che li tiene in memoria per un breve periodo prima di prendere una decisione.
+
+In sintesi, la telemetria non è on-demand, ma è **sempre attiva con un campionamento intelligente** per mantenere l'overhead sotto controllo.
+
+### In quale ambiente va attivata la Telemetria? in Testing/Sviluppo o Produzione?
+
+La risposta è: **entrambi, ma con configurazioni diverse.**
+
+- **In Ambiente di Testing e Sviluppo:**
+
+    - **Obiettivo:** Massima visibilità per il debug.
+    - **Configurazione:** Qui, tipicamente, si imposta il **campionamento al 100%**. Il volume di traffico è basso, quindi l'overhead è irrilevante. Si vuole vedere ogni singola richiesta per assicurarsi che tutto funzioni come previsto e per diagnosticare facilmente eventuali problemi.
+- **In Ambiente di Produzione:**
+
+    - **Obiettivo:** Ottenere informazioni significative sui problemi reali e sulle performance, senza degradare le prestazioni del sistema o generare costi di storage insostenibili.
+    - **Configurazione:** Qui il campionamento intelligente è **fondamentale**. Una strategia di produzione comune è un approccio ibrido:
+        1- Si usa un **head-based sampling a basso rate** (es. 5-10%) su tutte le richieste per avere una visione statistica del comportamento normale del sistema.
+        2- Si usa un **tail-based sampling** per garantire di catturare il **100% delle tracce importanti** (quelle con errori, con alta latenza, o che toccano endpoint critici).
+
+**Conclusione:** OpenTelemetry è uno strumento **progettato per la produzione**. Il suo valore massimo si esprime proprio quando aiuta a diagnosticare problemi complessi che si verificano con traffico e utenti reali. Viene mantenuto sempre attivo, ma configurato con strategie di campionamento intelligenti per bilanciare perfettamente la visibilità con l'impatto sulle performance e sui costi.
+
+### Integrazione di OpenTelemetry nel progetto `EducationalGames` per Sviluppo e Testing
+
+In questo paragrafo verrà mostrato come configurare la telemetria senza campionamento. Questo si tradurrà in uno scenario nel quale verranno tracciate il 100% delle richieste che arriveranno alla applicazione `EducationalGames`. In un paragrafo successivo verrà mostrata una configurazione adatta al deployment in produzione.
+
+Aggiungeremo al `docker-compose.yml` della fase precedente due componenti chiave:
+
+- **OTel Collector:** Un servizio che agisce come un "router" per tutti i dati di telemetria. Le nostre istanze `webapp` invieranno i loro dati a questo collettore.
+- **Jaeger:** Un backend di tracciamento open-source che riceve i dati dei trace dal Collector e fornisce un'interfaccia utente per visualizzarli e analizzarli.
+
+Il flusso dei dati sarà il seguente:
+
+1. La **WebApp ASP.NET Core**, strumentata con l'SDK di OpenTelemetry, genera tracciati e metriche per ogni richiesta HTTP e query al database.
+2. La WebApp **esporta** questi dati all'**OTel Collector**.
+3. L'**OTel Collector** riceve i dati, li processa (es. raggruppandoli in batch) e li esporta a destinazioni diverse:
+    - I **traces** vengono inviati a **Jaeger**.
+    - Le **metrics** vengono esposte su un endpoint che **Prometheus** può "raschiare" (scrape).
+4. **Grafana** si connette sia a **Prometheus** (per le metriche di infrastruttura e applicative) sia a **Jaeger** (per visualizzare i trace), fornendo una visione completa.
+
+```mermaid
+graph TD
+    subgraph "Infrastruttura Utente"
+        CLIENT[Client Browser]
+        K6[Test k6]
+    end
+
+    subgraph "Docker Compose Environment"
+        subgraph "Ingress & Bilanciamento"
+            NGINX[Nginx<br/>Porta: 8443]
+        end
+
+        subgraph "Application Layer (Stateless)"
+            W1[WebApp 1<br/>con OTel SDK]
+            W2[WebApp 2<br/>con OTel SDK]
+            W3[WebApp 3<br/>con OTel SDK]
+        end
+
+        subgraph "Telemetry & Monitoring"
+            OTEL[OTel Collector]
+            JAEGER[Jaeger UI<br/>Visualizzazione Traces<br/>Porta: 16686]
+            PROM[Prometheus<br/>]
+            GRAFANA[Grafana<br/>Dashboard<br/>Porta: 3000]
+        end
+
+        subgraph "Storage Layer"
+            DB[(MariaDB)]
+            DP_VOL[Volume Chiavi DP]
+        end
+    end
+
+    %% Flusso Richieste
+    CLIENT --> NGINX
+    K6 --> NGINX
+    NGINX --> W1 & W2 & W3
+
+    %% Telemetry Flow
+    W1 -->|OTLP gRPC| OTEL
+    W2 -->|OTLP gRPC| OTEL
+    W3 -->|OTLP gRPC| OTEL
+    OTEL -->|Traces| JAEGER
+    OTEL -->|Metrics| PROM
+
+    %% Monitoring Flow
+    PROM -->|Scrape Metrics| CADVISOR(cAdvisor<br/>Metriche Container)
+    PROM -->|Scrape Metrics| NODEEXP(Node Exporter<br/>Metriche Host)
+    GRAFANA -->|Query| PROM
+    GRAFANA -->|Query| JAEGER
+
+    %% Data Access
+    W1 & W2 & W3 --> DP_VOL
+    W1 & W2 & W3 --> DB
+
+    classDef mainComponent fill:#d4edda,stroke:#155724,stroke-width:2px;
+    classDef ingressComponent fill:#f8d7da,stroke:#721c24,stroke-width:2px;
+    classDef telemetryComponent fill:#cce5ff,stroke:#004085,stroke-width:2px;
+    classDef storageComponent fill:#fff3cd,stroke:#856404,stroke-width:2px;
+
+    class NGINX,W1,W2,W3 mainComponent;
+    class OTEL,JAEGER,PROM,GRAFANA,CADVISOR,NODEEXP telemetryComponent;
+    class DB,DP_VOL storageComponent;
+
+```
+
+### Analisi del Protocollo di Trasporto Telemetrico: OTLP su gRPC
+
+Per comprendere il meccanismo di comunicazione utilizzato per la telemetria è essenziale analizzare i ruoli dei protocolli `OTLP` e `gRPC`. Questa combinazione rappresenta lo standard industriale per il trasporto di dati di osservabilità in sistemi distribuiti moderni.
+
+#### OTLP: Lo Standard per i Dati di Telemetria
+
+**OTLP**, acronimo di **OpenTelemetry Protocol**, è la specifica che definisce il formato e la struttura dei dati di telemetria. Può essere descritto come il "linguaggio" o il "vocabolario" comune che i componenti di un sistema di osservabilità utilizzano per comunicare. Lo scopo primario di OTLP è garantire l'interoperabilità: definendo uno schema unificato per traces, metrics e logs, permette a qualsiasi SDK, collector o backend compatibile di scambiare informazioni senza la necessità di traduzioni o adattatori proprietari.
+
+#### gRPC: Il Protocollo di Trasporto ad Alte Prestazioni
+
+**gRPC** (gRPC Remote Procedure Call) è il **meccanismo di trasporto** che veicola i dati formattati secondo lo standard OTLP. Si tratta di un framework RPC (Remote Procedure Call) ad alte prestazioni, sviluppato da Google e basato sul protocollo HTTP/2. L'utilizzo di gRPC offre vantaggi significativi in termini di efficienza, latenza ridotta e supporto per lo streaming bidirezionale, rendendolo particolarmente adatto per la trasmissione di grandi volumi di dati di telemetria, tipici di sistemi sotto carico.
+
+- Analogia Funzionale
+
+  Per consolidare il concetto, si può utilizzare la seguente analogia:
+
+  - **OTLP** è paragonabile al **contenuto e alla struttura di una lettera ufficiale**: definisce quali sezioni devono essere presenti (indirizzo del destinatario, data, oggetto, corpo del testo, firma) e in quale formato. Specifica *cosa* viene comunicato.
+  - **gRPC** è il **servizio di corriere espresso**: un metodo di consegna altamente efficiente, sicuro e veloce, specializzato per questo tipo di comunicazioni. Definisce *come* la lettera viene trasportata dal mittente (l'applicazione) al destinatario (il collector).
+
+  Esistono alternative, come OTLP/HTTP, che possono essere paragonate all'invio della stessa lettera tramite un servizio postale standard, funzionale ma potenzialmente meno performante per grandi volumi.
+
+  In conclusione, la combinazione di **OTLP/gRPC** nel progetto `EducationalGames` rappresenta una scelta architetturale moderna e robusta, che garantisce il trasporto standardizzato ed efficiente dei dati di telemetria dall'applicazione ai sistemi di analisi e visualizzazione.
+
+### Implementazione di OpenTelemetry in EducationalGames
+
+#### Passaggio 1: Aggiornare il `docker-compose.yml`
+
+Aggiungere i servizi per Jaeger e l'OTel Collector e modificare la `webapp` per comunicare con il collector.
+
+**File:** `EducationalGamesRoot/docker-compose.yml`
+
+```yml
+# Please refer https://aka.ms/HTTPSinContainer on how to setup an https developer certificate for your ASP.NET Core service.
+
+services:
+  # ... servizio mariadb (invariato) ...
+  mariadb:
+    image: mariadb:11.4
+    container_name: mariadb
+    restart: unless-stopped
+    ports:
+      - "${MARIADB_HOST_PORT:-3306}:3306"
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
+      MARIADB_USER: ${MARIADB_USER_NAME}
+      MARIADB_PASSWORD: ${MARIADB_USER_PASSWORD}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    networks:
+      - educationalgames_network
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # WebApp "EducationalGames" (MODIFICATA)
+  webapp:
+    image: webapp:latest
+    build:
+      context: ./EducationalGames/EducationalGames
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      otel-collector: # Aggiunta dipendenza dal collector
+        condition: service_started
+    environment:
+      # ... altre variabili d'ambiente (invariate) ...
+      ConnectionStrings__EducationalGamesConnection: "Server=mariadb;Port=3306;Database=${MARIADB_DATABASE};Uid=root;Pwd=${MARIADB_ROOT_PASSWORD};AllowPublicKeyRetrieval=true;Pooling=true;"
+      # ...
+      # VARIABILE PER OPENTELEMETRY
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317" # Invia telemetria al collector via gRPC
+    volumes:
+      - dp_keys_volume:/app/shared_dp_keys
+    networks:
+      - educationalgames_network
+
+  # ... servizio nginx (invariato) ...
+  nginx:
+    image: nginx:1.27.5
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+      - "${NGINX_HTTP_HOST_PORT:-8080}:80"
+      - "${NGINX_HTTPS_HOST_PORT:-8443}:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d/educationalgames.conf.template:/etc/nginx/templates/educationalgames.conf.template:ro
+      - ./nginx/ssl/dev-certs:/etc/nginx/ssl/dev-certs:ro
+    environment:
+      - NGINX_SERVER_NAME=${NGINX_SERVER_NAME:-localhost}
+      - NGINX_HTTPS_HOST_PORT=${NGINX_HTTPS_HOST_PORT:-8443}
+      - WEBAPP_CONTAINER_INTERNAL_PORT=${WEBAPP_CONTAINER_INTERNAL_PORT:-8080}
+    command: >
+      /bin/sh -c "envsubst < /etc/nginx/templates/educationalgames.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
+    networks:
+      - educationalgames_network
+    depends_on:
+      - webapp
+
+  # ... servizi prometheus, grafana, cadvisor, node-exporter (invariati) ...
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    networks:
+      - educationalgames_network
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - educationalgames_network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - educationalgames_network
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+    volumes:
+      - '/proc:/host/proc:ro'
+      - '/sys:/host/sys:ro'
+      - '/:/rootfs:ro'
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - educationalgames_network
+
+  # --- NUOVI SERVIZI PER OPENTELEMETRY ---
+
+  # OTel Collector
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.128.0
+    container_name: otel-collector
+    restart: unless-stopped
+    command: ["--config=/etc/otelcol-contrib/config.yml"]
+    volumes:
+      - ./otel-collector-config.yml:/etc/otelcol-contrib/config.yml:ro
+    ports:
+      - "4317:4317"    # OTLP gRPC
+      - "4318:4318"    # OTLP HTTP
+      - "8889:8889"    # Prometheus metrics exporter
+    depends_on:
+      - jaeger
+    networks:
+      - educationalgames_network
+
+  # Jaeger per la visualizzazione dei Traces
+  jaeger:
+    image: jaegertracing/all-in-one:1.70.0
+    container_name: jaeger
+    restart: unless-stopped
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "14268:14268"  # Per richieste client dirette (opzionale)
+      - "14250:14250"  # Per il Collector
+    networks:
+      - educationalgames_network
+
+volumes:
+  mariadb_data:
+  dp_keys_volume:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  educationalgames_network:
+    driver: bridge
+```
+
+L'architettura del progetto `EducationalGames` implementa il flusso OTLP/gRPC per centralizzare la raccolta dei dati di telemetria, come illustrato nel diagramma architetturale.
+
+1. **L'Applicazione Web (Il Client OTLP):**
+
+    - Il servizio `webapp`, come definito nel file `docker-compose.yml`, è configurato con la variabile d'ambiente `OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"`.
+    - Questa variabile istruisce l'SDK di OpenTelemetry, configurato all'interno del file `Program.cs`, a comportarsi come un client gRPC.
+    - L'SDK raccoglie automaticamente i dati di telemetria dall'applicazione (es. richieste HTTP, query al database), li serializza secondo il formato OTLP e li trasmette tramite una connessione gRPC all'endpoint specificato, ovvero il servizio `otel-collector` sulla sua porta `4317`.
+2. **L'OpenTelemetry Collector (Il Server OTLP):**
+
+    - Il servizio `otel-collector` agisce come il server che riceve i dati. La sua configurazione, definita nel file `otel-collector-config.yml`, specifica un `receiver` di tipo `otlp` che accetta connessioni sul protocollo `grpc`.
+    - Il file `docker-compose.yml` mappa la porta `4317` del container per renderla accessibile all'interno della rete Docker del progetto.
+    - Una volta ricevuti i dati, il collector li elabora attraverso la sua pipeline (ad esempio, raggruppandoli con il `batch` processor) e li esporta verso le destinazioni finali, come Jaeger per i traces e Prometheus per le metriche.
+
+#### Passaggio 2: Creare la configurazione per l'OTel Collector
+
+Crea un nuovo file nella root del progetto.
+
+**Nuovo file:** `EducationalGamesRoot/otel-collector-config.yml`
+
+```yml
+# Configurazione per OpenTelemetry Collector
+receivers:
+  otlp:
+    protocols:
+      grpc: # Riceve dati via gRPC (usato dall'SDK .NET)
+      http: # Riceve dati via HTTP (utile per altri SDK)
+
+processors:
+  batch: # Raggruppa i dati prima di esportarli per efficienza
+    timeout: 10s
+
+exporters:
+  logging: # Esporta i dati nei log del container (ottimo per debug)
+    verbosity: detailed
+
+  jaeger: # Esporta i traces a Jaeger
+    endpoint: jaeger:14250 # Indirizzo del servizio Jaeger
+    tls:
+      insecure: true # Non usare TLS tra Collector e Jaeger nella rete interna
+
+  prometheus: # Esporta le metriche per essere "raschiate" da Prometheus
+    endpoint: "0.0.0.0:8889" # Endpoint su cui il collector espone le metriche
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [jaeger, logging]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [prometheus, logging]
+
+```
+
+#### Passaggio 3: Aggiornare la configurazione di Prometheus
+
+Dobbiamo dire a Prometheus di "raschiare" (fare lo scrape) le metriche esposte dall'OTel Collector.
+
+**File:** `EducationalGamesRoot/prometheus/prometheus.yml`
+
+YAML
+
+```yml
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    scrape_interval: 5s
+    metrics_path: /metrics
+
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 5s
+
+  # --- NUOVO JOB PER OPENTELEMETRY COLLECTOR ---
+  - job_name: 'otel-collector'
+    static_configs:
+      - targets: ['otel-collector:8889'] # Endpoint metriche esposto dal collector
+    scrape_interval: 10s
+
+```
+
+#### Passaggio 4: Aggiungere i pacchetti NuGet al progetto ASP.NET Core
+
+Aggiungere i seguenti pacchetti al file `EducationalGames.csproj.csproj`.
+
+```sh
+# Con la shell posizionata sulla cartella che contiene il file -csproj eseguire i seguenti comandi:
+dotnet add package OpenTelemetry.Exporter.OpenTelemetryProtocol
+dotnet add package OpenTelemetry.Exporter.Prometheus.AspNetCore --prerelease
+dotnet add package OpenTelemetry.Extensions.Hosting
+dotnet add package OpenTelemetry.Instrumentation.AspNetCore
+dotnet add package OpenTelemetry.Instrumentation.EntityFrameworkCore --prerelease
+dotnet add package OpenTelemetry.Instrumentation.Http
+dotnet add package OpenTelemetry.Instrumentation.Runtime
+```
+
+#### Passaggio 5: Configurare OpenTelemetry in `Program.cs`
+
+Aggiungere la configurazione di OpenTelemetry all'avvio dell'applicazione.
+
+**File:** `EducationalGamesRoot/EducationalGames/EducationalGames/Program.cs`
+
+```cs
+// Aggiungere questi using all'inizio del file
+using OpenTelemetry.Trace;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// === NUOVA CONFIGURAZIONE OPENTELEMETRY ===
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource
+        .AddService(serviceName: builder.Environment.ApplicationName))
+    .WithTracing(tracing => tracing
+        .AddAspNetCoreInstrumentation() // Traccia richieste HTTP in ingresso
+        .AddHttpClientInstrumentation()   // Traccia chiamate HTTP in uscita
+        .AddEntityFrameworkCoreInstrumentation(options => // Traccia query EF Core
+        {
+            options.SetDbStatementForText = true; // Include il testo SQL nel trace
+        })
+        .AddOtlpExporter()) // Esporta i traces al Collector via OTLP
+    .WithMetrics(metrics => metrics
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddRuntimeInstrumentation()      // Metriche sul runtime .NET (GC, JIT, etc.)
+        .AddPrometheusExporter());        // Esporta le metriche per Prometheus
+// === FINE CONFIGURAZIONE OPENTELEMETRY ===
+
+// ... resto del file Program.cs (configurazione Data Protection, CORS, etc.) ...
+
+```
+
+#### Passaggio 6: Creare uno script K6 per verificare la telemetria
+
+Questo script simula un flusso utente più complesso per generare un trace interessante che attraversa più endpoint.
+
+**Nuovo file:** `EducationalGamesRoot/telemetry-verification-test.js`
+
+JavaScript
+
+```js
+import http from 'k6/http';
+import { check, sleep, group }from 'k6';
+
+export const options = {
+    insecureSkipTLSVerify: true,
+    stages: [
+        { duration: '10s', target: 1 }, // 1 solo utente virtuale
+    ],
+};
+
+export default function () {
+    const baseUrl = 'https://localhost:8443';
+    // Genera un utente univoco per ogni esecuzione del test
+    const uniqueifier = (new Date()).getTime();
+    const teacherEmail = `teacher_${uniqueifier}@test.com`;
+    const password = 'Password123!';
+    let authCookie = null;
+    let classeId = null;
+
+    console.log(`Inizio flusso di verifica telemetria per ${teacherEmail}`);
+
+    group('1. Registrazione Docente', () => {
+        const registerPayload = JSON.stringify({
+            nome: 'Telemetria',
+            cognome: `Docente_${uniqueifier}`,
+            email: teacherEmail,
+            password: password,
+            ruolo: 'Docente',
+        });
+        const registerRes = http.post(`${baseUrl}/api/account/register`, registerPayload, {
+            headers: { 'Content-Type': 'application/json' },
+        });
+        check(registerRes, { 'Registrazione Docente OK (200)': (r) => r.status === 200 });
+    });
+
+    sleep(1);
+
+    group('2. Login Docente', () => {
+        const loginPayload = JSON.stringify({ email: teacherEmail, password: password });
+        const loginRes = http.post(`${baseUrl}/api/account/login`, loginPayload, {
+            headers: { 'Content-Type': 'application/json' },
+            redirects: 0, // Intercetta il redirect per prendere il cookie
+        });
+        check(loginRes, { 'Login Docente OK (302)': (r) => r.status === 302 });
+        if (loginRes.cookies['.AspNetCore.Authentication.EducationalGames']?.length > 0) {
+            authCookie = loginRes.cookies['.AspNetCore.Authentication.EducationalGames'][0];
+        }
+    });
+
+    if (!authCookie) {
+        console.error('Login fallito, impossibile continuare il test di telemetria.');
+        return;
+    }
+
+    sleep(1);
+
+    group('3. Creazione Classe', () => {
+        const creaClassePayload = JSON.stringify({ nomeClasse: `Classe di Telemetria ${uniqueifier}`, materiaId: 1 });
+        const res = http.post(`${baseUrl}/api/classi`, creaClassePayload, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Cookie': `${authCookie.name}=${authCookie.value}`,
+            },
+        });
+        check(res, { 'Creazione Classe OK (201)': (r) => r.status === 201 });
+        if (res.status === 201) {
+            classeId = res.json('id');
+            console.log(`Classe creata con ID: ${classeId}`);
+        }
+    });
+
+    if (!classeId) {
+        console.error('Creazione classe fallita, impossibile continuare.');
+        return;
+    }
+
+    sleep(1);
+
+    group('4. Associazione Gioco', () => {
+        const associaGiocoPayload = JSON.stringify({ giocoId: 1 }); // Associa gioco con ID 1
+        const res = http.post(`${baseUrl}/api/classi/${classeId}/giochi`, associaGiocoPayload, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Cookie': `${authCookie.name}=${authCookie.value}`,
+            },
+        });
+        check(res, { 'Associazione Gioco OK (204)': (r) => r.status === 204 });
+    });
+
+    sleep(1);
+
+    group('5. Verifica Classe', () => {
+        const res = http.get(`${baseUrl}/api/classi/${classeId}`, {
+            headers: { 'Cookie': `${authCookie.name}=${authCookie.value}` },
+        });
+        check(res, {
+            'Dettaglio Classe OK (200)': (r) => r.status === 200,
+            'Gioco risulta associato': (r) => r.json('giochiAssociati.0.id') === 1,
+        });
+    });
+
+    console.log('Flusso di verifica telemetria completato.');
+}
+
+```
+
+#### Passaggio 7: Esecuzione e Verifica
+
+1. **Avvia l'ambiente completo:** Nella root del progetto, esegui il comando. Il flag `--build` è cruciale per applicare le modifiche al `Dockerfile` (implicite con l'aggiunta di pacchetti NuGet) e al `docker-compose.yml`.
+
+    Bash
+
+    ```sh
+    docker-compose up --build -d
+
+    ```
+
+2. **Esegui lo script K6:** Una volta che tutti i container sono in esecuzione, lancia il test di verifica della telemetria.
+
+    Bash
+
+    ```sh
+    k6 run telemetry-verification-test.js
+
+    ```
+
+3. **Analizza i risultati in Jaeger:**
+
+    - Apri Jaeger nel tuo browser: `http://localhost:16686`.
+    - Nel menu a tendina "Service", seleziona **`EducationalGames`** (o il nome della tua applicazione).
+    - Clicca sul pulsante **"Find Traces"**.
+    - Dovresti vedere una o più tracce. Clicca su quella che inizia con `POST /api/account/register`.
+
+    Vedrai una "waterfall view" che mostra il viaggio completo della tua richiesta attraverso il sistema. Potrai vedere:
+
+    - Lo span principale per `POST /api/account/register`.
+    - Sotto di esso, come figli, gli span per le altre chiamate API: `POST /api/account/login`, `POST /api/classi`, ecc.
+    - All'interno di ogni span API, vedrai gli span generati da Entity Framework Core per le query al database, con il testo SQL completo.
+
+    Questo ti permette di analizzare esattamente quanto tempo ha richiesto ogni singola operazione, fornendo una visibilità senza precedenti sul comportamento della tua applicazione.
 
 ## Passaggio da `Docker Compose` a `Kubernetes` (approfondimento)
 

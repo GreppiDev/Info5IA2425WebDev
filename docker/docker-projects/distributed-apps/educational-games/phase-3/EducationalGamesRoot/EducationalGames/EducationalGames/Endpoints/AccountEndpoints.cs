@@ -130,7 +130,7 @@ public static class AccountEndpoints
         {
             // Crea logger specifico
             var logger = loggerFactory.CreateLogger("EducationalGames.Endpoints.Register");
-
+            
             // 1. Validazione del Modello (automatica con Minimal API + attributi)
             //    Se il modello non è valido, Minimal API restituisce automaticamente Bad Request.
 
@@ -162,7 +162,7 @@ public static class AccountEndpoints
                 Email = model.Email,
                 Ruolo = model.Ruolo,
                 //PasswordHash = hasher.HashPassword(null!, model.Password), // Usa null! per il TUser fittizio
-
+               
             };
 
             // Passa l'oggetto `newUser` completo al metodo HashPassword
@@ -186,10 +186,9 @@ public static class AccountEndpoints
                 newUser.TokenVerificaEmail = Convert.ToBase64String(Guid.NewGuid().ToByteArray()) // Genera token univoco URL-safe
                                         .Replace("+", "-").Replace("/", "_").TrimEnd('='); // Rende URL-safe
                 newUser.ScadenzaTokenVerificaEmail = DateTime.UtcNow.AddHours(24); // Scadenza 24 ore
-            }
-            
+            };
+
             db.Utenti.Add(newUser);
-            
             try
             {
                 await db.SaveChangesAsync();
@@ -353,7 +352,7 @@ public static class AccountEndpoints
 
         }).AllowAnonymous();
 
-
+  
         group.MapPost("/reset-password", async (
             AppDbContext db,
             ResetPasswordModel model) =>
@@ -527,7 +526,7 @@ public static class AccountEndpoints
                 logger.LogInformation("Cookie di autenticazione aggiornato per utente {UserId}.", userId);
                 return Results.NoContent(); // Successo
             }
-
+            
             catch (DbUpdateConcurrencyException dbEx)
             {
                 logger.LogError(dbEx, "Errore di concorrenza aggiornando profilo utente {UserId}. Tentativo di sovrascrittura rilevato.", userId);
@@ -656,7 +655,7 @@ public static class AccountEndpoints
 
         }).RequireAuthorization(); // È necessario essere loggati per poter fare logout
 
-
+        
 
         return group;
     }

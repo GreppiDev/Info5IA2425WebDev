@@ -7,7 +7,7 @@
    1. [Ambienti di esecuzione nel Cloud, Tecniche di Virtualizzazione, VM vs. Containers](./cloud/docs/virtualization-technologies/index.md)
    2. [Docker - Comandi di base per la gestione di container, volumi e networking](./docker/docker-docs/getting-started/index.md)
    3. [Deployment di applicazioni ASP.NET Core con Docker e Docker Compose](./docker/docker-docs/asp-net-docker/index.md)
-   4. [Orchestrazione per sviluppo locale con `Docker Compose`; `Load Balancing`/`Reverse Proxy`/`HTTPS termination`/`DDoS mitigation` con `Nginx`; Analisi delle prestazioni con `K6`; Statistiche di funzionamento e Telemetria con `Prometheus`, `Grafana` e `OpenTelemetry`; gestione delle migrazioni del database con un progetto `Worker` separato; creazione di un account limitato mediante script SQL  - un esempio completo con la Web App `EducationalGames`](./docker/docker-docs/local-dev/examples/educationalgames/index.md)
+   4. [Orchestrazione per sviluppo locale con `Docker Compose`; `Load Balancing`/`Reverse Proxy`/`HTTPS termination`/`DDoS mitigation` con `Nginx`; Analisi delle prestazioni con `K6`; Statistiche di funzionamento con `Prometheus` e `Grafana`; gestione delle migrazioni del database con un progetto `Worker` separato; creazione di un account limitato mediante script SQL  - un esempio completo con la Web App `EducationalGames`](./docker/docker-docs/local-dev/examples/educationalgames/index.md)
 
 ### Azure
 

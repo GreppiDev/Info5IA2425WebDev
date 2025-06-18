@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="it">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Classifica Classe - Educational Games</title>
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        .table th {
+            white-space: nowrap;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="navbar-container">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+            <div class="container-fluid"><span class="navbar-brand">Caricamento...</span></div>
+        </nav>
+    </div>
+
+    <main>
+        <div class="container mt-4">
+            <h1 id="pageTitle" class="mb-4">Visualizza Classifica Classe</h1>
+
+            <!-- Form per inserire ID Classe -->
+            <form id="classeForm" class="mb-4 card shadow-sm">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="idClasseInput" class="form-label">Inserisci ID Classe:</label>
+                        <input type="text" class="form-control" id="idClasseInput" placeholder="Es: 1" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Mostra Classifica</button>
+                </div>
+            </form>
+
+            <div id="loading" class="text-center py-5 d-none"> <!-- Nascosto inizialmente -->
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Caricamento...</span>
+                </div>
+            </div>
+
+            <div id="error" class="alert alert-danger d-none" role="alert"></div>
+
+            <div id="leaderboardContent" class="card shadow-sm d-none"> <!-- Nascosto inizialmente -->
+                <div class="card-header">
+                    <h2 id="leaderboardSubtitle" class="h5 mb-0">Dettaglio Classifica</h2>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">Studente</th>
+                                    <th scope="col" class="text-end">Monete Totali</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leaderboardTableBody">
+                                <!-- Righe classifica verranno inserite qui -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <p id="noLeaderboardData" class="text-center text-muted mt-3 d-none">
+                        Nessun dato disponibile per questa classifica al momento.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+    <script src="/js/template-loader.js"></script>
+    <script src="/js/navbar.js"></script>
+    <script>
+        // Riferimenti UI
+        const loadingDiv = document.getElementById('loading');
+        const errorDiv = document.getElementById('error');
+        const leaderboardContentDiv = document.getElementById('leaderboardContent');
+        const leaderboardTableBody = document.getElementById('leaderboardTableBody');
+        const noLeaderboardDataP = document.getElementById('noLeaderboardData');
+        const pageTitleH1 = document.getElementById('pageTitle'); // Titolo principale pagina
+        const leaderboardSubtitleH2 = document.getElementById('leaderboardSubtitle'); // Sottotitolo nel card
+        const classeForm = document.getElementById('classeForm');
+        const idClasseInput = document.getElementById('idClasseInput');
+
+        // Funzione helper escape HTML
+        function escapeHtml(unsafe) {
+            if (typeof unsafe !== 'string') return unsafe;
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Funzione per mostrare errori
+        function showError(message) {
+            console.error("Errore visualizzato:", message); // Log dell'errore
+            if (errorDiv) {
+                errorDiv.textContent = message;
+                errorDiv.classList.remove('d-none');
+            }
+            if (loadingDiv) loadingDiv.classList.add('d-none');
+            if (leaderboardContentDiv) leaderboardContentDiv.classList.add('d-none'); // Nasconde la tabella se c'è errore
+        }
+
+        // Funzione principale per caricare la classifica
+        async function loadClassifica(idClasse) {
+            if (!idClasse || idClasse.trim() === '') {
+                showError("ID della classe non specificato o non valido.");
+                return;
+            }
+
+            if (loadingDiv) loadingDiv.classList.remove('d-none');
+            if (errorDiv) errorDiv.classList.add('d-none'); // Nasconde errori precedenti
+            if (leaderboardContentDiv) leaderboardContentDiv.classList.add('d-none'); // Nasconde la tabella durante il caricamento
+
+            try {
+                // Tentativo 1: Caricare la classifica
+                const responseClassifica = await fetch(`/api/classifiche/classe/${idClasse}`);
+
+                if (!responseClassifica.ok) {
+                    let errorMsg = `Errore nel caricamento della classifica (Status: ${responseClassifica.status})`;
+                    try {
+                        const errData = await responseClassifica.json();
+                        errorMsg = errData.title || errData.detail || errorMsg;
+                    } catch { /* Ignora errore parsing JSON */ }
+                    if (responseClassifica.status === 401) errorMsg = "Non sei autenticato. Effettua il login.";
+                    if (responseClassifica.status === 403) errorMsg = "Non hai i permessi per visualizzare questa classifica.";
+                    if (responseClassifica.status === 404) errorMsg = `Classe con ID ${idClasse} non trovata.`; // Messaggio specifico per 404
+                    throw new Error(errorMsg);
+                }
+
+                const classifica = await responseClassifica.json();
+
+                // Tentativo 2: Caricare i dettagli della classe per il titolo (opzionale ma utile)
+                let nomeClasse = `ID: ${idClasse}`; // Default
+                try {
+                    const responseClasse = await fetch(`/api/classi/${idClasse}`);
+                    if (responseClasse.ok) {
+                        const classeInfo = await responseClasse.json();
+                        nomeClasse = classeInfo.nome || nomeClasse;
+                    } else if (responseClasse.status === 404) {
+                        // Se la classe non esiste, potremmo volerlo segnalare anche qui,
+                        // ma l'errore principale dovrebbe arrivare dalla chiamata alla classifica.
+                        console.warn(`Classe con ID ${idClasse} non trovata durante il recupero del nome.`);
+                    }
+                } catch (classeError) {
+                    console.warn("Errore nel recupero del nome della classe:", classeError);
+                    // Non blocca la visualizzazione della classifica se la chiamata principale ha funzionato
+                }
+
+                // Aggiorna Titoli (Sottotitolo nel card)
+                if (leaderboardSubtitleH2) leaderboardSubtitleH2.textContent = `Classifica - Classe: ${escapeHtml(nomeClasse)}`;
+                // pageTitleH1 rimane statico o può essere aggiornato se preferito
+
+                // Popola la tabella
+                if (leaderboardTableBody) leaderboardTableBody.innerHTML = ''; // Pulisce prima
+                if (classifica && classifica.length > 0) {
+                    if (noLeaderboardDataP) noLeaderboardDataP.classList.add('d-none');
+                    classifica.forEach((entry, index) => {
+                        const row = leaderboardTableBody.insertRow();
+                        row.innerHTML = `
+                            <th scope="row">${index + 1}</th>
+                            <td>${escapeHtml(entry.nomeStudente)}</td>
+                            <td class="text-end">${entry.monete}</td>
+                        `;
+                    });
+                    // Mostra il contenuto della classifica
+                    if (leaderboardContentDiv) leaderboardContentDiv.classList.remove('d-none');
+                } else {
+                    // Mostra messaggio "nessun dato" se l'API ritorna array vuoto
+                    if (noLeaderboardDataP) noLeaderboardDataP.classList.remove('d-none');
+                    // Mostra comunque il contenitore della tabella/messaggio
+                    if (leaderboardContentDiv) leaderboardContentDiv.classList.remove('d-none');
+                }
+
+
+            } catch (error) {
+                console.error("Errore durante il caricamento:", error);
+                showError(error.message || "Si è verificato un errore imprevisto.");
+            } finally {
+                // Nasconde l'indicatore di caricamento
+                if (loadingDiv) loadingDiv.classList.add('d-none');
+            }
+        }
+
+        // --- Inizializzazione Pagina ---
+        document.addEventListener('DOMContentLoaded', async function () {
+            console.log("Classifica Classe page: Initializing templates...");
+            try {
+                await TemplateLoader.initializeCommonTemplates();
+
+                let userData = null;
+                try {
+                    const response = await fetch('/api/account/my-roles');
+                    if (response.ok) {
+                        userData = await response.json();
+                    } else if (response.status === 401) {
+                        // Non autenticato, mostra errore e disabilita form
+                        showError("Non sei autenticato. Effettua il login per visualizzare le classifiche.");
+                        if (classeForm) classeForm.classList.add('d-none'); // Nasconde il form
+                        if (typeof updateNavbar === 'function') updateNavbar(null);
+                        return; // Interrompe
+                    } else {
+                        throw new Error("Errore nel controllo autenticazione.");
+                    }
+                } catch (authError) {
+                    showError(authError.message);
+                    if (classeForm) classeForm.classList.add('d-none'); // Nasconde il form
+                    if (typeof updateNavbar === 'function') updateNavbar(null);
+                    return; // Interrompe
+                }
+
+                // Se autenticato, aggiorna la navbar
+                if (typeof updateNavbar === 'function') {
+                    updateNavbar(userData);
+                } else {
+                    console.error("Funzione updateNavbar non trovata dopo il caricamento di navbar.js");
+                }
+
+                // Aggiungi listener per il submit del form
+                if (classeForm) {
+                    classeForm.addEventListener('submit', function (event) {
+                        event.preventDefault(); // Impedisce il submit tradizionale
+                        const idClasse = idClasseInput.value;
+                        loadClassifica(idClasse); // Carica la classifica con l'ID inserito
+                    });
+                } else {
+                    showError("Errore: Impossibile trovare il form per l'ID della classe.");
+                }
+
+                // NON caricare la classifica all'avvio, aspetta il submit del form
+
+            } catch (error) {
+                console.error("Errore durante l'inizializzazione della pagina:", error);
+                showError("Errore grave durante l'inizializzazione della pagina.");
+                if (classeForm) classeForm.classList.add('d-none'); // Nasconde il form in caso di errore grave
+                if (typeof updateNavbar === 'function') updateNavbar(null); // Fallback navbar
+            }
+        });
+
+    </script>
+
+</body>
+
+</html>

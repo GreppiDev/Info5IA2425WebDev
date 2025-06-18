@@ -3,8 +3,22 @@
 - [Guida Completa alla Virtualizzazione e ai Container](#guida-completa-alla-virtualizzazione-e-ai-container)
   - [Parte 1: La Virtualizzazione Tradizionale (Macchine Virtuali)](#parte-1-la-virtualizzazione-tradizionale-macchine-virtuali)
     - [1.1 Cos'è una Macchina Virtuale (VM)?](#11-cosè-una-macchina-virtuale-vm)
-    - [1.2 Approfondimento sulle Tecniche di Virtualizzazione](#12-approfondimento-sulle-tecniche-di-virtualizzazione)
-      - [1.2.1 Full Virtualization (con Binary Translation)](#121-full-virtualization-con-binary-translation)
+  - [1.1 Fondamenti: Sistemi Operativi e Ring di Protezione](#11-fondamenti-sistemi-operativi-e-ring-di-protezione)
+    - [1.1.1 Come Funziona un Sistema Operativo](#111-come-funziona-un-sistema-operativo)
+      - [Il Problema della Condivisione delle Risorse](#il-problema-della-condivisione-delle-risorse)
+      - [La Soluzione: Separazione dei Privilegi](#la-soluzione-separazione-dei-privilegi)
+      - [Le Due Modalità di Esecuzione](#le-due-modalità-di-esecuzione)
+      - [System Call: Il Bridge tra i Due Mondi](#system-call-il-bridge-tra-i-due-mondi)
+      - [Funzioni Principali del Sistema Operativo](#funzioni-principali-del-sistema-operativo)
+      - [Il Collegamento con l'Hardware: I Ring di Protezione](#il-collegamento-con-lhardware-i-ring-di-protezione)
+    - [1.1.2 Ring di Protezione CPU x86 - Panoramica Completa](#112-ring-di-protezione-cpu-x86---panoramica-completa)
+      - [Dettaglio dei Ring di Protezione](#dettaglio-dei-ring-di-protezione)
+    - [1.1.3 Il Problema della Virtualizzazione](#113-il-problema-della-virtualizzazione)
+      - [Problematiche nella Virtualizzazione](#problematiche-nella-virtualizzazione)
+    - [1.1.4 Istruzioni CPU: Privilegiate, Non-Privilegiate e Sensibili](#114-istruzioni-cpu-privilegiate-non-privilegiate-e-sensibili)
+  - [1.2 Tipi di Hypervisor](#12-tipi-di-hypervisor)
+  - [1.3 Approfondimento sulle Tecniche di Virtualizzazione](#13-approfondimento-sulle-tecniche-di-virtualizzazione)
+    - [1.3.1 Full Virtualization (con Binary Translation)](#131-full-virtualization-con-binary-translation)
       - [1.2.2 Paravirtualizzazione](#122-paravirtualizzazione)
       - [1.2.3 Hardware-Assisted Virtualization (Intel VT-x \& AMD-V)](#123-hardware-assisted-virtualization-intel-vt-x--amd-v)
       - [Tabella Riassuntiva](#tabella-riassuntiva)
@@ -38,27 +52,431 @@ La virtualizzazione è una tecnologia che permette di creare una versione virtua
 
 Una **Macchina Virtuale (VM)** è l'emulazione completa di un sistema hardware. Su questo hardware virtuale viene installato un sistema operativo completo (chiamato *Guest OS*), che funziona in modo isolato dal sistema operativo dell'hardware fisico sottostante (*Host OS*).
 
-L'elemento chiave che rende possibile la virtualizzazione è l'**Hypervisor** (o Virtual Machine Monitor, VMM). L'Hypervisor è uno strato software che si interpone tra l'hardware fisico e le macchine virtuali, gestendo l'allocazione delle risorse fisiche (CPU, RAM, storage, rete) a ciascuna VM.
+## 1.1 Fondamenti: Sistemi Operativi e Ring di Protezione
 
-Esistono due tipi principali di Hypervisor:
+Prima di comprendere la virtualizzazione, è essenziale capire come funziona un sistema operativo e i meccanismi di protezione hardware che rendono necessarie le tecniche di virtualizzazione.
 
-- **Tipo 1 (Bare Metal):** Viene eseguito direttamente sull'hardware fisico dell'host. Esempi includono VMware vSphere/ESXi, Microsoft Hyper-V, KVM (Kernel-based Virtual Machine) su Linux. Questo tipo è il più performante ed è lo standard nei data center e nel cloud computing.
+### 1.1.1 Come Funziona un Sistema Operativo
 
-- **Tipo 2 (Hosted):** Viene eseguito come un'applicazione all'interno di un sistema operativo host. Esempi includono Oracle VirtualBox, VMware Workstation, Parallels Desktop. È comunemente usato per lo sviluppo e il testing su macchine locali.
+Un sistema operativo (OS) è il software di base che gestisce le risorse hardware di un computer e fornisce servizi alle applicazioni. Per comprendere come funziona, è fondamentale capire il problema che deve risolvere: **come permettere a più programmi di condividere le stesse risorse hardware in modo sicuro ed efficiente**.
 
-\[Immagine di Architettura Hypervisor Tipo 1 e Tipo 2\]
+#### Il Problema della Condivisione delle Risorse
 
-### 1.2 Approfondimento sulle Tecniche di Virtualizzazione
+Immaginiamo un computer senza sistema operativo: ogni programma dovrebbe:
 
-Per comprendere le diverse tecniche di virtualizzazione, è fondamentale capire il problema architetturale che esse risolvono. L'architettura delle CPU x86 (usata dalla maggior parte dei server e PC) utilizza un sistema di anelli di protezione (*protection rings*) per la sicurezza.
+- Gestire direttamente la memoria fisica
+- Comunicare direttamente con hard disk, tastiera, schermo
+- Coordinarsi con altri programmi per evitare conflitti
+- Implementare propri meccanismi di sicurezza
 
-- **Ring 0 (Kernel Mode):** Il livello più privilegiato. Qui opera il kernel del sistema operativo, che ha accesso diretto a tutto l'hardware.
+Questo approccio sarebbe:
 
-- **Ring 3 (User Mode):** Il livello meno privilegiato. Qui vengono eseguite le applicazioni utente (es. browser, editor di testo). Le applicazioni non possono accedere direttamente all'hardware, ma devono chiedere al kernel di farlo per loro tramite chiamate di sistema (*system calls*).
+- **Inefficiente**: Ogni programma duplicherebbe le stesse funzionalità
+- **Insicuro**: Un programma malintenzionato potrebbe accedere a dati di altri programmi
+- **Complesso**: Gli sviluppatori dovrebbero conoscere tutti i dettagli dell'hardware
 
-Il problema della virtualizzazione classica è che il sistema operativo Guest si aspetta di girare in Ring 0 per poter gestire l'hardware. Tuttavia, il Ring 0 è già occupato dall'Hypervisor (o dall'Host OS). Far girare il Guest OS in Ring 3 non funziona, perché molte delle sue istruzioni (quelle per accedere all'hardware) sono "privilegiate" e possono essere eseguite solo in Ring 0. Le diverse tecniche di virtualizzazione sono, in sostanza, diverse strategie per risolvere questo conflitto.
+#### La Soluzione: Separazione dei Privilegi
 
-#### 1.2.1 Full Virtualization (con Binary Translation)
+I sistemi operativi moderni risolvono questo problema attraverso una **separazione netta tra due modalità di esecuzione**:
+
+```mermaid
+graph TD
+    APPS[Applicazioni Utente<br/>Modalità Utente<br/>Privilegi Limitati<br/>Browser, Editor, Giochi]
+    SYSCALL[System Call Interface<br/>Meccanismo di Comunicazione Sicura<br/>Chiamate di Sistema]
+    KERNEL[Kernel del Sistema Operativo<br/>Modalità Kernel<br/>Privilegi Completi<br/>Accesso diretto all'hardware]
+    HW[Hardware Fisico<br/>CPU, RAM, Storage, Rete, I/O]
+    
+    APPS <--> SYSCALL
+    SYSCALL --> KERNEL
+    KERNEL --> HW
+    
+    classDef hardware fill:#e1f5fe,stroke:#01579b,stroke-width:3px
+    classDef kernel fill:#ff9999,stroke:#cc0000,stroke-width:3px
+    classDef syscall fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef apps fill:#99ff99,stroke:#00cc00,stroke-width:2px
+    
+    class HW hardware
+    class KERNEL kernel
+    class SYSCALL syscall
+    class APPS apps
+```
+
+#### Le Due Modalità di Esecuzione
+
+**1. Modalità Kernel (Modalità Privilegiata):**
+
+- **Chi opera qui:** Solo il kernel del sistema operativo
+- **Privilegi:** Accesso completo e diretto a tutte le risorse hardware
+- **Responsabilità:** 
+  - Gestione della memoria fisica
+  - Controllo dei dispositivi hardware
+  - Scheduling dei processi
+  - Gestione delle interruzioni
+- **Sicurezza:** È il livello di massima fiducia del sistema
+
+**2. Modalità Utente (Modalità Non Privilegiata):**
+
+- **Chi opera qui:** Tutte le applicazioni utente (browser, editor, giochi, etc.)
+- **Privilegi:** Limitati, nessun accesso diretto all'hardware
+- **Limitazioni:**
+  - Non può accedere direttamente alla memoria di altri processi
+  - Non può controllare direttamente i dispositivi hardware
+  - Non può modificare le strutture dati critiche del sistema
+- **Accesso alle risorse:** Solo tramite richieste al kernel (system call)
+
+#### System Call: Il Bridge tra i Due Mondi
+
+Le **system call** sono il meccanismo attraverso cui le applicazioni in modalità utente richiedono servizi al kernel:
+
+**Esempi di System Call comuni:**
+
+- `open()`, `read()`, `write()` - Accesso ai file
+- `malloc()`, `free()` - Gestione della memoria
+- `socket()`, `send()`, `recv()` - Comunicazione di rete
+- `fork()`, `exec()` - Creazione di nuovi processi
+
+**Come funziona una System Call:**
+
+1. L'applicazione invoca una system call (es. aprire un file)
+2. La CPU passa automaticamente in modalità kernel
+3. Il kernel esegue l'operazione richiesta con i suoi privilegi
+4. Il kernel restituisce il risultato all'applicazione
+5. La CPU torna in modalità utente
+
+#### Funzioni Principali del Sistema Operativo
+
+Grazie a questa architettura, il sistema operativo può fornire servizi essenziali:
+
+- **Gestione dei Processi:** 
+  - Scheduling: Decidere quale programma eseguire e per quanto tempo
+  - Context switching: Passare rapidamente tra diversi programmi
+  - Comunicazione inter-processo: Permettere ai programmi di collaborare in sicurezza
+
+- **Gestione della Memoria:**
+  - Allocazione: Assegnare memoria ai programmi che ne hanno bisogno
+  - Memoria virtuale: Creare l'illusione di avere più memoria di quella fisica
+  - Protezione: Impedire ai programmi di accedere alla memoria di altri
+
+- **Gestione del File System:** 
+  - Organizzazione: Strutturare i dati su disco in file e cartelle
+  - Sicurezza: Controllare chi può accedere a quali file
+  - Ottimizzazione: Velocizzare l'accesso ai dati
+
+- **Gestione dei Dispositivi:** 
+  - Driver: Fornire interfacce standardizzate per hardware diverso
+  - Input/output: Gestire tastiera, mouse, schermo, stampanti
+  - Interruzioni: Reagire agli eventi hardware in tempo reale
+
+- **Sicurezza e Protezione:** 
+  - Controllo accessi: Verificare che gli utenti abbiano i permessi necessari
+  - Isolamento: Impedire ai programmi di interferire tra loro
+  - Audit: Registrare le attività per sicurezza e debug
+
+#### Il Collegamento con l'Hardware: I Ring di Protezione
+
+Ora che abbiamo compreso il concetto di separazione tra modalità kernel e utente, è importante sapere che questa separazione è implementata a livello hardware attraverso quello che viene chiamato **sistema dei ring di protezione**. Le CPU moderne (come quelle x86) implementano diversi livelli di privilegi, chiamati "ring", dove ogni ring ha accesso a risorse specifiche:
+
+- **Ring 0 (Kernel Mode)**: Corrisponde alla modalità kernel che abbiamo descritto
+- **Ring 3 (User Mode)**: Corrisponde alla modalità utente
+
+Esistono anche Ring 1 e Ring 2, ma sono raramente utilizzati nei sistemi operativi moderni. Questa implementazione hardware è fondamentale per comprendere le sfide della virtualizzazione, che esploreremo nelle sezioni successive.
+
+### 1.1.2 Ring di Protezione CPU x86 - Panoramica Completa
+
+L'architettura x86 implementa un sistema gerarchico di protezione a 4 livelli (Ring 0-3), dove ogni ring ha privilegi specifici:
+
+```mermaid
+graph TD
+    R0[Ring 0 - Kernel Mode<br/>Massimo Privilegio<br/>Accesso diretto hardware<br/>Istruzioni privilegiate]
+    R1[Ring 1 - Device Driver<br/>Privilegi intermedi<br/>Driver di sistema<br/>Raramente utilizzato]
+    R2[Ring 2 - System Services<br/>Servizi di sistema<br/>Utilities di sistema<br/>Raramente utilizzato]
+    R3[Ring 3 - User Mode<br/>Minimo Privilegio<br/>Applicazioni utente<br/>Accesso mediato]
+    
+    R0 --> R1
+    R1 --> R2
+    R2 --> R3
+    
+    classDef ring0 fill:#ff9999,stroke:#cc0000,stroke-width:4px
+    classDef ring1 fill:#ffcc99,stroke:#ff6600,stroke-width:3px
+    classDef ring2 fill:#ffff99,stroke:#cccc00,stroke-width:2px
+    classDef ring3 fill:#99ff99,stroke:#00cc00,stroke-width:2px
+    
+    class R0 ring0
+    class R1 ring1
+    class R2 ring2
+    class R3 ring3
+```
+
+#### Dettaglio dei Ring di Protezione
+
+**Ring 0 (Kernel Mode) - Massimo Privilegio:**
+
+- **Cosa può fare:**
+  - Accesso diretto a tutte le risorse hardware
+  - Esecuzione di tutte le istruzioni privilegiate
+  - Gestione della memoria virtuale e fisica
+  - Controllo delle interruzioni e dei timer
+  - Accesso ai registri di controllo della CPU
+  - Gestione dei context switch tra processi
+
+- **Chi opera qui:**
+  - Kernel del sistema operativo
+  - Hypervisor di Tipo 1
+  - Driver critici di sistema
+
+- **Istruzioni privilegiate tipiche:**
+  - `CLI/STI` (controllo interruzioni)
+  - `HLT` (halt CPU)
+  - `LGDT/LIDT` (caricamento descriptor table)
+  - `MOV` verso registri di controllo (CR0, CR3, etc.)
+
+**Ring 1 (Device Driver Level) - Privilegi Intermedi:**
+
+- **Cosa può fare:**
+  - Accesso limitato alle risorse hardware
+  - Esecuzione di alcune istruzioni privilegiate
+  - Interfacciamento tra kernel e hardware
+
+- **Chi opera qui:**
+  - Driver di dispositivo non critici
+  - Moduli del kernel (in alcuni OS)
+  - **Uso moderno:** Raramente utilizzato, la maggior parte dei driver opera in Ring 0
+
+- **Limitazioni:**
+  - Non può accedere direttamente a tutti i registri di controllo
+  - Accesso hardware mediato dal Ring 0
+
+**Ring 2 (System Services) - Privilegi di Sistema:**
+
+- **Cosa può fare:**
+  - Servizi di sistema ad alto livello
+  - Gestione di risorse condivise
+  - Interfacce per servizi privilegiati
+
+- **Chi opera qui:**
+  - Servizi di sistema non critici
+  - Utility di sistema
+  - **Uso moderno:** Virtualmente inutilizzato nei sistemi operativi moderni
+
+- **Limitazioni:**
+  - Accesso limitato alle risorse hardware
+  - Dipende dai ring superiori per operazioni privilegiate
+
+**Ring 3 (User Mode) - Minimo Privilegio:**
+
+- **Cosa può fare:**
+  - Esecuzione di applicazioni utente
+  - Accesso alla memoria assegnata al processo
+  - Chiamate di sistema tramite system call
+  - Operazioni aritmetiche e logiche standard
+
+- **Chi opera qui:**
+  - Tutte le applicazioni utente (browser, editor, giochi)
+  - Hypervisor di Tipo 2
+  - Librerie di sistema non privilegiate
+
+- **Limitazioni:**
+  - **Nessun accesso diretto all'hardware**
+  - **Nessuna istruzione privilegiata**
+  - Accesso alla memoria limitato al proprio spazio virtuale
+  - Deve richiedere servizi al kernel tramite system call
+
+### 1.1.3 Il Problema della Virtualizzazione
+
+#### Problematiche nella Virtualizzazione
+
+**Ring Compression Problem:**
+
+- CPU x86 ha 4 ring, ma i sistemi operativi moderni ne usano solo 2 (Ring 0 e Ring 3)
+- Nella virtualizzazione, l'hypervisor deve occupare Ring 0
+- I Guest OS vengono "compressi" nei ring disponibili
+- Perdita di privilegi per i Guest OS che si aspettano Ring 0
+
+**Istruzioni Sensibili vs Privilegiate:**
+
+- **Istruzioni Privilegiate:** Causano trap se eseguite fuori da Ring 0
+- **Istruzioni Sensibili:** Il loro comportamento dipende dal ring di esecuzione
+- Problema: alcune istruzioni sono sensibili ma non privilegiate
+- Conseguenza: possono eseguire silenziosamente con comportamento errato
+
+**Cosa sono i "Trap" CPU:**
+
+Un "trap" (o eccezione) è un meccanismo hardware fondamentale della CPU che interrompe l'esecuzione normale di un programma quando si verifica una condizione anomala, trasferendo il controllo al sistema operativo. Esistono diversi tipi di trap:
+
+- **Trap da Istruzione Privilegiata:** Quando un codice in esecuzione in Ring 3 (modalità utente) tenta di eseguire un'istruzione privilegiata riservata al Ring 0, la CPU genera automaticamente un trap. Il sistema operativo prende il controllo e generalmente termina il processo con un errore di "operazione non consentita".
+
+- **Page Fault:** Si verifica quando un programma tenta di accedere a un indirizzo di memoria non mappato nel suo spazio di indirizzi.
+
+- **Interrupt:** Un tipo speciale di trap generato da eventi hardware esterni (ad esempio, tasto premuto, pacchetto di rete arrivato).
+
+- **System Call:** Un trap "volontario" generato da un'applicazione per richiedere un servizio al sistema operativo.
+
+**Nel contesto della virtualizzazione:**
+- Gli hypervisor sfruttano i trap per intercettare le istruzioni privilegiate dei guest OS
+- Quando un guest OS tenta di eseguire un'istruzione privilegiata, viene generato un trap
+- L'hypervisor prende il controllo (trap handler) ed emula l'istruzione per il guest OS
+- Questo meccanismo è fondamentale per il metodo "trap-and-emulate" nella virtualizzazione
+
+**Il problema delle "istruzioni sensibili ma non privilegiate"** è che non generano un trap quando vengono eseguite in Ring 3, rendendo impossibile all'hypervisor intercettarle e gestirle correttamente, il che ha richiesto lo sviluppo di tecniche alternative come la traduzione binaria.
+
+### 1.1.4 Istruzioni CPU: Privilegiate, Non-Privilegiate e Sensibili
+
+Per comprendere le sfide della virtualizzazione, è fondamentale capire le diverse tipologie di istruzioni CPU e il loro comportamento nei vari ring di protezione. Le istruzioni della CPU x86 possono essere classificate in diverse categorie in base ai loro requisiti di privilegio e al loro comportamento:
+
+#### Istruzioni Privilegiate
+
+Le **istruzioni privilegiate** sono istruzioni che possono essere eseguite **solo** quando la CPU è in Ring 0 (modalità kernel). Se queste istruzioni vengono tentate in Ring 1-3, la CPU genera automaticamente un trap (eccezione), interrompendo l'esecuzione e trasferendo il controllo al sistema operativo.
+
+**Esempi di istruzioni privilegiate:**
+
+| Istruzione | Descrizione | Perché è privilegiata |
+|------------|-------------|------------------------|
+| `CLI` / `STI` | Disabilita/Abilita gli interrupt | Potrebbe impedire il multitasking |
+| `HLT` | Ferma la CPU fino al prossimo interrupt | Potrebbe bloccare il sistema |
+| `LGDT` / `SGDT` | Carica/Salva la Global Descriptor Table | Controlla la memoria virtuale |
+| `LIDT` / `SIDT` | Carica/Salva la Interrupt Descriptor Table | Gestisce gli handler degli interrupt |
+| `MOV` (verso CR0-CR4) | Accede ai registri di controllo | Configura modalità della CPU e MMU |
+| `INVLPG` | Invalida una entry della TLB | Gestione avanzata della memoria |
+| `CLTS` | Pulisce il bit Task Switched nel CR0 | Gestione del contesto FPU |
+| `LMSW` | Carica Machine Status Word | Modifica lo stato della CPU |
+
+Queste istruzioni sono facilmente virtualizzabili perché generano un trap quando un sistema operativo guest cerca di eseguirle, permettendo all'hypervisor di intercettare l'operazione ed emularla.
+
+#### Istruzioni Non-Privilegiate
+
+Le **istruzioni non-privilegiate** possono essere eseguite in qualsiasi ring di protezione (0-3). Queste istruzioni sono generalmente innocue per la sicurezza del sistema e non richiedono privilegi speciali.
+
+**Esempi di istruzioni non-privilegiate:**
+
+| Istruzione | Descrizione | Uso tipico |
+|------------|-------------|------------|
+| `MOV` (registri generali) | Sposta dati tra registri o memoria | Manipolazione dati standard |
+| `ADD`, `SUB`, `MUL`, `DIV` | Operazioni aritmetiche | Calcoli matematici |
+| `AND`, `OR`, `XOR`, `NOT` | Operazioni logiche | Manipolazione bit, flags |
+| `JMP`, `CALL`, `RET` | Controllo di flusso | Salti, chiamate di funzioni |
+| `PUSH`, `POP` | Gestione stack | Salvataggio/ripristino dati |
+| `LEA` | Load Effective Address | Calcolo indirizzi |
+| `NOP` | Nessuna operazione | Allineamento, ritardi |
+
+Queste istruzioni non presentano problemi di virtualizzazione perché possono essere eseguite direttamente dal guest OS senza intervento dell'hypervisor.
+
+#### Istruzioni Sensibili
+
+Le **istruzioni sensibili** sono istruzioni il cui comportamento o risultato **dipende dal livello di privilegio** o da registri di stato della CPU che potrebbero differire tra il contesto reale e quello virtualizzato. Il problema critico è che alcune istruzioni sensibili **non sono privilegiate**, quindi non generano trap quando eseguite in Ring 1-3.
+
+**Esempi di istruzioni sensibili non-privilegiate:**
+
+| Istruzione | Descrizione | Problema per la virtualizzazione |
+|------------|-------------|----------------------------------|
+| `POPF` / `PUSHF` | Pop/Push dei flag | Può modificare o leggere flag di stato senza generare trap |
+| `SGDT` / `SIDT` | Store Global/Interrupt Descriptor Table | Rivela strutture dati del sistema host invece che virtuali |
+| `SMSW` | Store Machine Status Word | Può leggere lo stato reale della CPU |
+| `LAR` / `LSL` | Load Access Rights/Segment Limit | Possono dare risultati inconsistenti |
+| `RDTSC` / `RDTSCP` | Read Time-Stamp Counter | Rivela il timing reale della CPU |
+| `CPUID` | Identifica capacità della CPU | Mostra caratteristiche fisiche invece di virtuali |
+| `IN` / `OUT` | I/O da/verso porte | Possono accedere a device I/O senza trap |
+
+#### Il Dilemma della Virtualizzazione x86
+
+Il problema fondamentale che ha reso complessa la virtualizzazione x86 classica è rappresentato da queste **istruzioni sensibili ma non privilegiate**. Secondo i requisiti formali per la virtualizzabilità definiti da Popek e Goldberg (1974), un'architettura è virtualizzabile solo se:
+
+1. Tutte le istruzioni sensibili sono anche privilegiate (generano trap)
+2. Esiste almeno un livello di privilegio utente (Ring 3)
+
+L'architettura x86 originale **non soddisfa il primo requisito**, poiché contiene circa 17 istruzioni che sono sensibili ma non privilegiate.
+
+**Conseguenze pratiche:**
+- Un guest OS eseguito in Ring 1-3 può eseguire queste istruzioni senza che l'hypervisor lo sappia
+- Questo porta a risultati incoerenti, perché il guest OS "vede" lo stato reale della macchina fisica invece dello stato virtuale
+- Il comportamento del sistema diventa imprevedibile
+
+Questo problema ha richiesto lo sviluppo di tecniche alternative come:
+- **Traduzione Binaria**: Intercetta e traduce dinamicamente le istruzioni problematiche
+- **Paravirtualizzazione**: Modifica il guest OS per evitare di usare istruzioni problematiche
+- **Estensioni Hardware**: Aggiunta di funzionalità CPU specifiche per la virtualizzazione (Intel VT-x, AMD-V)
+
+## 1.2 Tipi di Hypervisor
+
+**Architettura Hypervisor Tipo 1 (Bare Metal):**
+
+```mermaid
+graph TB
+    HW1[Hardware Fisico<br/>CPU, RAM, Storage, Rete]
+    HYP1[Hypervisor Tipo 1 - Ring 0<br/>VMware ESXi, Hyper-V, KVM<br/>Accesso diretto all'hardware]
+    VM1A[VM 1 - Ring 1/3<br/>Guest OS A<br/>Applicazioni]
+    VM1B[VM 2 - Ring 1/3<br/>Guest OS B<br/>Applicazioni]
+    VM1C[VM 3 - Ring 1/3<br/>Guest OS C<br/>Applicazioni]
+    
+    HW1 --> HYP1
+    HYP1 --> VM1A
+    HYP1 --> VM1B
+    HYP1 --> VM1C
+    
+    classDef hardware fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef hypervisor fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef vm fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    
+    class HW1 hardware
+    class HYP1 hypervisor
+    class VM1A,VM1B,VM1C vm
+```
+
+**Architettura Hypervisor Tipo 2 (Hosted):**
+
+```mermaid
+graph TB
+    HW2[Hardware Fisico<br/>CPU, RAM, Storage, Rete]
+    HOST[Host Operating System - Ring 0<br/>Windows, Linux, macOS<br/>Controllo diretto dell'hardware]
+    HYP2["Hypervisor&nbsp;&nbsp;Tipo&nbsp;&nbsp;2&nbsp;&nbsp;-&nbsp;&nbsp;Ring&nbsp;&nbsp;3<br/>VirtualBox,&nbsp;&nbsp;VMware&nbsp;&nbsp;Workstation<br/>Applicazione&nbsp;&nbsp;sull'Host&nbsp;&nbsp;OS"]
+    VM2A[VM 1 - Ring 3<br/>Guest OS A<br/>Applicazioni]
+    VM2B[VM 2 - Ring 3<br/>Guest OS B<br/>Applicazioni]
+    
+    HW2 --> HOST
+    HOST --> HYP2
+    HYP2 --> VM2A
+    HYP2 --> VM2B
+    
+    classDef hardware fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef host fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef hypervisor fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef vm fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    
+    class HW2 hardware
+    class HOST host
+    class HYP2 hypervisor
+    class VM2A,VM2B vm
+```
+
+**Caratteristiche e Ring di Protezione:**
+
+- **Tipo 1 (Bare Metal):** 
+  - **Ring 0:** Hypervisor con accesso diretto all'hardware
+  - **Ring 1/3:** Guest OS eseguiti in modalità deprivilegiata
+  - Prestazioni superiori (overhead minimo)
+  - Utilizzato in ambienti enterprise e cloud
+  - Esempi: VMware ESXi, Microsoft Hyper-V, KVM
+
+- **Tipo 2 (Hosted):** 
+  - **Ring 0:** Host Operating System
+  - **Ring 3:** Hypervisor come applicazione user-space
+  - **Ring 3:** Guest OS eseguiti tramite l'hypervisor
+  - Doppio overhead (Host OS + Hypervisor)
+  - Più semplice da installare e gestire
+  - Ideale per sviluppo, testing e uso desktop
+  - Esempi: VirtualBox, VMware Workstation, Parallels
+
+**Problemi dei Ring di Protezione:**
+
+- I Guest OS si aspettano di eseguire in Ring 0
+- Le istruzioni privilegiate possono essere eseguite solo in Ring 0
+- Necessità di tecniche di virtualizzazione per gestire questo conflitto
+- Ring compression: compressione dei livelli di privilegio disponibili
+
+## 1.3 Approfondimento sulle Tecniche di Virtualizzazione
+
+Ora che abbiamo compreso i fondamenti dei sistemi operativi e il problema dei ring di protezione, possiamo esplorare le diverse strategie sviluppate per risolverlo. Le diverse tecniche di virtualizzazione sono, in sostanza, diverse strategie per gestire il conflitto tra l'hypervisor che deve occupare Ring 0 e i Guest OS che si aspettano di eseguire nello stesso ring privilegiato.
+
+### 1.3.1 Full Virtualization (con Binary Translation)
 
 La virtualizzazione completa emula l'intero hardware, permettendo di eseguire un sistema operativo Guest non modificato. L'approccio classico per raggiungere questo obiettivo su architetture x86 (prima dell'avvento del supporto hardware) era la **traduzione binaria**.
 
@@ -148,7 +566,7 @@ La paravirtualizzazione adotta un approccio cooperativo: il sistema operativo Gu
         H --> I[Guest OS continua l'esecuzione]
         
         style A fill:#e3f2fd
-        style C fill:#fff3e0
+        style B fill:#fff3e0
         style D fill:#f3e5f5
         style E fill:#e8f5e8
         style F fill:#ffebee
