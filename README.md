@@ -112,3 +112,7 @@
  1. [Traccia di informatica del 2017 - sessione ordinaria](./esame/tracce-svolte/2017/ordinaria/index.md)
  2. [Traccia di Informatica del 2023 - sessione ordinaria](./esame/tracce-svolte/2023/ordinaria/index.md)
  3. [Traccia di Informatica del 2023 - sessione suppletiva](./esame/tracce-svolte/2023/suppletiva/index.md)
+
+### Esame di Stato 2025
+
+ 1. [Traccia di informatica del 2025 - sessione ordinaria](./esame/tracce-svolte/2025/ordinaria/index.md)
