@@ -114,7 +114,8 @@ La piattaforma *VerifAI News* deve soddisfare i seguenti requisiti:
 #### **Diagramma dei Casi d'Uso (UML)**
 
 ![Diagramma dei casi d'uso](VerifAI-News-use-cases.svg)
-    Il diagramma dei casi d'uso è stato ottenuto con il codice per [PlantUML](https://www.plantuml.com/plantuml/uml) riportato di seguito:
+
+Il diagramma dei casi d'uso è stato ottenuto con il codice per [PlantUML](https://www.plantuml.com/plantuml/uml) riportato di seguito:
 
 ```text
 @startuml
