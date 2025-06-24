@@ -1,0 +1,30 @@
+/* File: wwwroot/css/styles.css */
+
+/* Stile base e font */
+body {
+    font-family: 'Inter', sans-serif; /* Assicurati di importare Inter se lo usi */
+    background-color: #f8f9fa;
+    display: flex; /* Abilita Flexbox per sticky footer */
+    flex-direction: column; /* Impila elementi verticalmente */
+    min-height: 100vh; /* Altezza minima per riempire viewport */
+}
+
+/* Padding per Navbar Fissa */
+body {
+    padding-top: 56px; /* Altezza standard navbar Bootstrap, aggiusta se necessario */
+}
+
+/* Contenuto principale che si espande */
+main {
+    flex: 1 0 auto; /* Permette al main di crescere e restringersi, ma non restringersi oltre il suo contenuto */
+    padding-top: 1rem; /* Aggiunge un po' di spazio sopra il contenuto */
+    padding-bottom: 1rem; /* Aggiunge un po' di spazio sotto il contenuto */
+}
+
+/* Stile Footer */
+.footer {
+    flex-shrink: 0; /* Impedisce al footer di restringersi */
+    font-size: 0.9em;
+}
+
+/* Eventuali altri stili comuni */

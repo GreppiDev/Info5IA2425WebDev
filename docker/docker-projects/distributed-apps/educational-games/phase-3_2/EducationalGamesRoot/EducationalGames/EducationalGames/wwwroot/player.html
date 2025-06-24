@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="it">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Gioca - Educational Games</title>
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        .quiz-container {
+            max-width: 800px;
+            margin: 1rem auto;
+        }
+
+        .risposta-btn {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Stile per risposta selezionata */
+        .risposta-btn.active {
+            background-color: #0d6efd;
+            color: white;
+            border-color: #0d6efd;
+        }
+
+        /* Stili feedback risposte (opzionale) */
+        .risposta-btn.correct {
+            background-color: #198754;
+            color: white;
+            border-color: #198754;
+        }
+
+        .risposta-btn.incorrect {
+            background-color: #dc3545;
+            color: white;
+            border-color: #dc3545;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="navbar-container">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+            <div class="container-fluid"><span class="navbar-brand">Caricamento...</span></div>
+        </nav>
+    </div>
+
+    <main>
+        <div class="container mt-4 quiz-container">
+
+            <div id="loading-quiz" class="text-center py-5">
+                <div class="spinner-border text-primary"></div>
+                <p>Caricamento gioco...</p>
+            </div>
+            <div id="error-quiz" class="alert alert-danger d-none"></div>
+
+            <div id="quiz-area" class="card shadow-sm d-none">
+                <div class="card-header">
+                    <h1 id="quiz-title" class="h4 mb-0"></h1>
+                </div>
+                <div class="card-body">
+                    <p class="lead" id="quiz-description"></p>
+                    <hr>
+                    <div id="question-container">
+                        <h4 id="question-text" class="mb-4"></h4>
+                        <div id="question-resources" class="mb-3"></div>
+                        <div id="answers-container"></div>
+                    </div>
+                    <div id="quiz-navigation" class="mt-4 d-flex justify-content-between">
+                        <button id="prev-question-btn" class="btn btn-secondary" disabled>Precedente</button>
+                        <span id="question-counter" class="align-self-center">Domanda X di Y</span>
+                        <button id="next-question-btn" class="btn btn-primary">Successiva</button>
+                        <button id="finish-quiz-btn" class="btn btn-success d-none">Termina Quiz</button>
+                    </div>
+                    <div id="quiz-result" class="mt-4 text-center d-none">
+                        <h2 class="mb-3">Quiz Terminato!</h2>
+                        <p>Hai risposto correttamente a <strong id="correct-answers"></strong> su <strong
+                                id="total-questions"></strong> domande.</p>
+                        <p>Monete Guadagnate: <strong id="coins-earned" class="fs-4 text-warning"></strong> / <span
+                                id="max-coins"></span></p>
+                        <div id="progress-message" class="mt-3" role="alert"></div>
+                        <a href="/mie-classi.html" class="btn btn-info mt-3">Torna alle Mie Classi</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <div id="footer-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+    <script src="/js/template-loader.js"></script>
+    <script src="/js/navbar.js"></script>
+    <script>
+        // Riferimenti UI Quiz
+        const loadingDiv = document.getElementById('loading-quiz');
+        const errorDiv = document.getElementById('error-quiz');
+        const quizAreaDiv = document.getElementById('quiz-area');
+        const quizTitleH1 = document.getElementById('quiz-title');
+        const quizDescriptionP = document.getElementById('quiz-description');
+        const questionContainerDiv = document.getElementById('question-container');
+        const questionTextH4 = document.getElementById('question-text');
+        const questionResourcesDiv = document.getElementById('question-resources');
+        const answersContainerDiv = document.getElementById('answers-container');
+        const quizNavigationDiv = document.getElementById('quiz-navigation');
+        const prevBtn = document.getElementById('prev-question-btn');
+        const nextBtn = document.getElementById('next-question-btn');
+        const finishBtn = document.getElementById('finish-quiz-btn');
+        const counterSpan = document.getElementById('question-counter');
+        const quizResultDiv = document.getElementById('quiz-result');
+        const correctAnswersSpan = document.getElementById('correct-answers');
+        const totalQuestionsSpan = document.getElementById('total-questions');
+        const coinsEarnedSpan = document.getElementById('coins-earned');
+        const maxCoinsSpan = document.getElementById('max-coins');
+        const progressMessageDiv = document.getElementById('progress-message');
+
+        let giocoId = null;
+        let classeId = null;
+        let quizDefinition = null; // Conterrà l'oggetto JS parsato da DefinizioneGioco
+        let allQuestions = []; // Array piatto di tutte le domande
+        let maxCoins = 0;
+        let currentQuestionIndex = 0;
+        let userAnswers = {}; // Oggetto per memorizzare le risposte date: { "domandaId": "rispostaId" }
+
+        // Funzione helper escape HTML
+        function escapeHtml(unsafe) { if (typeof unsafe !== 'string') return unsafe; return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
+
+        // Mostra una domanda specifica
+        function displayQuestion(index) {
+            if (!allQuestions || index < 0 || index >= allQuestions.length) return;
+            currentQuestionIndex = index;
+            const domanda = allQuestions[index];
+
+            if (questionTextH4) questionTextH4.textContent = `${index + 1}. ${domanda.testoDomanda}`;
+            if (counterSpan) counterSpan.textContent = `Domanda ${index + 1} di ${allQuestions.length}`;
+
+            // Mostra risorse (se presenti nel JSON - attualmente non lo sono nel seed)
+            if (questionResourcesDiv) {
+                questionResourcesDiv.innerHTML = '';
+                if (domanda.risorse && domanda.risorse.length > 0) {
+                    domanda.risorse.forEach(r => {
+                        if (r.tipo === 'immagine' && r.url) { questionResourcesDiv.innerHTML += `<img src="${escapeHtml(r.url)}" alt="${escapeHtml(r.descrizione || '')}" class="img-fluid mb-2" style="max-height: 150px;">`; }
+                        else if (r.tipo === 'link' && r.url) { questionResourcesDiv.innerHTML += `<p class="small"><a href="${escapeHtml(r.url)}" target="_blank" rel="noopener noreferrer">Link: ${escapeHtml(r.descrizione || r.url)}</a></p>`; }
+                    });
+                }
+            }
+
+            // Mostra risposte
+            if (answersContainerDiv) {
+                answersContainerDiv.innerHTML = '';
+                // Mescola le risposte se desiderato (opzionale)
+                const risposteMescolate = domanda.risposte; //.sort(() => Math.random() - 0.5);
+                risposteMescolate.forEach(risposta => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'btn btn-outline-primary d-block w-100 text-start risposta-btn';
+                    button.dataset.answerId = risposta.idRisposta; // Usa idRisposta
+                    button.innerHTML = `<span class="fw-bold me-2">${risposta.idRisposta}.</span> ${escapeHtml(risposta.testoRisposta)}`; // Usa testoRisposta
+                    button.onclick = () => selectAnswer(domanda.idDomanda, risposta.idRisposta, button); // Usa idDomanda e idRisposta
+                    if (userAnswers[domanda.idDomanda] === risposta.idRisposta) { button.classList.add('active'); } // Usa idDomanda e idRisposta
+                    answersContainerDiv.appendChild(button);
+                });
+            }
+
+            // Aggiorna stato pulsanti navigazione
+            if (prevBtn) prevBtn.disabled = index === 0;
+            if (nextBtn) nextBtn.classList.toggle('d-none', index === allQuestions.length - 1);
+            if (finishBtn) finishBtn.classList.toggle('d-none', index !== allQuestions.length - 1);
+        }
+
+        // Seleziona una risposta
+        function selectAnswer(questionId, answerId, clickedButton) {
+            userAnswers[questionId] = answerId;
+            answersContainerDiv.querySelectorAll('.risposta-btn').forEach(btn => btn.classList.remove('active'));
+            clickedButton.classList.add('active');
+        }
+
+        // Calcola punteggio e monete
+        function calculateScoreAndCoins() {
+            let correctCount = 0;
+            allQuestions.forEach(q => {
+                // Confronta la risposta data con l'ID della risposta corretta
+                if (userAnswers[q.idDomanda] === q.corretta) { // Usa idDomanda
+                    correctCount++;
+                }
+            });
+            const scorePercentage = allQuestions.length > 0 ? (correctCount / allQuestions.length) * 100 : 0;
+            const coins = Math.round((scorePercentage / 100) * maxCoins);
+            return { correctCount, totalQuestions: allQuestions.length, coins };
+        }
+
+        // Invia progresso al backend
+        async function submitProgress(coins) {
+            if (!progressMessageDiv) return;
+            progressMessageDiv.textContent = 'Salvataggio progresso...';
+            progressMessageDiv.className = 'mt-3 alert alert-info';
+            progressMessageDiv.classList.remove('d-none');
+
+            const data = { GiocoId: giocoId, ClasseId: classeId, MoneteRaccolte: coins };
+
+            try {
+                const response = await fetch('/api/progressi', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (!response.ok) {
+                    let errorMsg = `Errore ${response.status}`;
+                    try { const errData = await response.json(); errorMsg = errData.title || errData.detail || errorMsg; } catch { }
+                    throw new Error(errorMsg);
+                }
+                const result = await response.json();
+                progressMessageDiv.textContent = result.message || 'Progresso salvato!';
+                progressMessageDiv.className = 'mt-3 alert alert-success';
+            } catch (error) {
+                console.error("Errore salvataggio progresso:", error);
+                progressMessageDiv.textContent = `Errore salvataggio: ${error.message}`;
+                progressMessageDiv.className = 'mt-3 alert alert-danger';
+            }
+        }
+
+        // Termina il quiz
+        function finishQuiz() {
+            // Verifica se sono state date tutte le risposte (opzionale)
+            if (Object.keys(userAnswers).length !== allQuestions.length) {
+                if (!confirm("Non hai risposto a tutte le domande. Vuoi terminare comunque?")) {
+                    return;
+                }
+            }
+
+            const { correctCount, totalQuestions, coins } = calculateScoreAndCoins();
+
+            if (correctAnswersSpan) correctAnswersSpan.textContent = correctCount;
+            if (totalQuestionsSpan) totalQuestionsSpan.textContent = totalQuestions;
+            if (coinsEarnedSpan) coinsEarnedSpan.textContent = coins;
+            if (maxCoinsSpan) maxCoinsSpan.textContent = maxCoins;
+
+            if (quizNavigationDiv) quizNavigationDiv.classList.add('d-none');
+            if (questionContainerDiv) questionContainerDiv.classList.add('d-none');
+            if (quizResultDiv) quizResultDiv.classList.remove('d-none');
+
+            submitProgress(coins); // Invia il progresso
+        }
+
+
+        // --- Inizializzazione Pagina ---
+        document.addEventListener('DOMContentLoaded', async function () {
+            console.log("Player page: Initializing templates...");
+            try {
+                await TemplateLoader.initializeCommonTemplates();
+                await new Promise(resolve => setTimeout(resolve, 0)); // Delay
+                let userData = null;
+                try { const response = await fetch('/api/account/my-roles'); if (response.ok) userData = await response.json(); else throw new Error('Not logged in'); }
+                catch { throw new Error('Auth check failed'); }
+
+                updateNavbar(userData); // Aggiorna navbar
+
+                if (!userData?.isStudente) { throw new Error("Accesso non autorizzato (solo studenti)."); }
+
+                const params = new URLSearchParams(window.location.search);
+                giocoId = parseInt(params.get('giocoId'));
+                classeId = parseInt(params.get('classeId'));
+
+                if (!giocoId || !classeId) { throw new Error("ID gioco o classe mancanti nell'URL."); }
+
+                console.log(`Player page: Loading game ${giocoId} for class ${classeId}`);
+                if (loadingDiv) loadingDiv.classList.remove('d-none');
+
+                // Carica definizione gioco
+                const gameResponse = await fetch(`/api/giochi/${giocoId}/play?classeId=${classeId}`);
+                if (!gameResponse.ok) {
+                    let errorMsg = `Errore ${gameResponse.status}`;
+                    try { const err = await gameResponse.json(); errorMsg = err.title || err.detail || errorMsg; } catch { }
+                    throw new Error(`Impossibile caricare il gioco: ${errorMsg}`);
+                }
+                const gamePlayData = await gameResponse.json();
+
+                if (gamePlayData.definizioneGioco) {
+                    try {
+                        quizDefinition = JSON.parse(gamePlayData.definizioneGioco);
+                        maxCoins = gamePlayData.maxMonete; // Salva max monete
+
+                        // Estrai tutte le domande dall'array 'domande' nel JSON
+                        // Mappa le proprietà JSON ai nomi usati nel JS
+                        if (quizDefinition && Array.isArray(quizDefinition.domande)) {
+                            allQuestions = quizDefinition.domande.map(q => ({
+                                idDomanda: q.id, // Mappa id -> idDomanda
+                                testoDomanda: q.testo, // Mappa testo -> testoDomanda
+                                risposte: q.risposte.map(r => ({
+                                    idRisposta: r.id, // Mappa id -> idRisposta
+                                    testoRisposta: r.testo // Mappa testo -> testoRisposta
+                                })),
+                                corretta: q.corretta,
+                                risorse: q.risorse || [] // Gestisci risorse opzionali
+                            }));
+                        } else {
+                            throw new Error("La struttura del gioco non contiene un array 'domande' valido.");
+                        }
+
+
+                        console.log("Quiz definition loaded, total questions:", allQuestions.length);
+
+                        if (!allQuestions || allQuestions.length === 0) { throw new Error("Nessuna domanda valida nel quiz."); }
+
+                        if (quizTitleH1) quizTitleH1.textContent = gamePlayData.titolo;
+                        if (quizDescriptionP) quizDescriptionP.textContent = quizDefinition.descrizioneQuiz || gamePlayData.descrizioneBreve || ''; // Usa descrizione dal JSON o dal gioco
+
+                        displayQuestion(0); // Mostra la prima domanda
+                        if (quizAreaDiv) quizAreaDiv.classList.remove('d-none');
+
+                    } catch (parseError) {
+                        console.error("Errore durante il parsing del JSON del gioco:", parseError);
+                        throw new Error(`Formato del gioco non valido: ${parseError.message}`);
+                    }
+                } else { throw new Error("Dati del gioco incompleti (definizione mancante)."); }
+
+            } catch (error) {
+                console.error('Error during page initialization:', error);
+                if (typeof updateNavbar === 'function') updateNavbar(null);
+                if (errorDiv) { errorDiv.textContent = `Errore: ${error.message}`; errorDiv.classList.remove('d-none'); }
+                if (quizAreaDiv) quizAreaDiv.classList.add('d-none');
+            } finally {
+                if (loadingDiv) loadingDiv.classList.add('d-none');
+            }
+
+            // Listener navigazione quiz
+            if (prevBtn) prevBtn.addEventListener('click', () => { if (currentQuestionIndex > 0) displayQuestion(currentQuestionIndex - 1); });
+            if (nextBtn) nextBtn.addEventListener('click', () => { if (allQuestions && currentQuestionIndex < allQuestions.length - 1) displayQuestion(currentQuestionIndex + 1); });
+            if (finishBtn) finishBtn.addEventListener('click', finishQuiz);
+
+        });
+        // La funzione postLogout() è definita in navbar.js
+    </script>
+
+</body>
+
+</html>

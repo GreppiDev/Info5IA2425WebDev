@@ -1,0 +1,27 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'educational-games-app'
+    static_configs:
+      - targets: ['webapp:8080']
+    scrape_interval: 10s
+    metrics_path: /metrics
+    
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    scrape_interval: 5s
+    metrics_path: /metrics
+
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 5s
+    metrics_path: /metrics
+  
+  - job_name: 'otel-collector'
+    static_configs:
+      - targets: ['otel-collector:8889'] 
+    scrape_interval: 10s
+    metrics_path: /metrics

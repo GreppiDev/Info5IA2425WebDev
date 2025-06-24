@@ -1,0 +1,76 @@
+# Configurazione per OpenTelemetry Collector
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+        cors:
+          allowed_origins:
+            - "http://*"
+            - "https://*"
+
+processors:
+  batch: # Raggruppa i dati prima di esportarli per efficienza
+    timeout: 10s
+
+  # NUOVO: Processore per il Tail-Based Sampling
+  tail_sampling:
+    decision_wait: 10s # Tempo di attesa per ricevere tutti gli span di una traccia
+    num_traces: 50000  # Numero massimo di tracce da tenere in memoria in attesa di una decisione
+    policies:
+      # Policy 1: Salva SEMPRE le tracce che contengono un errore.
+      - name: errors-policy
+        type: status_code
+        status_code:
+          status_codes: [ERROR]
+
+      # Policy 2: Salva le tracce che sono più lente di una certa soglia (configurabile tramite .env).
+      - name: slow-traces-policy
+        type: latency
+        latency:
+          threshold_ms: ${OTEL_TAIL_SAMPLING_LATENCY_THRESHOLD_MS}
+
+      # Policy 3 (Consigliata): Salva le tracce per endpoint critici.
+      # Personalizzare questo elenco con i path più importanti della propria applicazione.
+      - name: critical-paths-policy
+        type: string_attribute
+        string_attribute:
+          key: "url.path" # Attributo standard per il path HTTP
+          values:
+            - "/api/account/register"
+            - "/api/account/login"
+            - "/api/iscrizioni"
+            # Aggiungi altri endpoint critici qui
+
+      # Policy 4: Salva una frazione (configurabile tramite .env) di tutte le altre tracce.
+      # Questo fornisce la visione statistica del comportamento "normale" del sistema.
+      - name: statistical-sampling-policy
+        type: probabilistic
+        probabilistic:
+          sampling_percentage: ${OTEL_TAIL_SAMPLING_PROBABILISTIC_PERCENT}
+
+exporters:
+  debug:
+    verbosity: detailed
+
+  otlp/jaeger:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      # AGGIUNTO 'tail_sampling' alla pipeline delle tracce
+      processors: [batch, tail_sampling]
+      exporters: [otlp/jaeger, debug]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [prometheus, debug]
