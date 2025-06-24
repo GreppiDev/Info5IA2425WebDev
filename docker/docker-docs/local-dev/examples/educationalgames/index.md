@@ -5,7 +5,7 @@
     - [1. File `docker-compose.yml`](#1-file-docker-composeyml)
     - [2. Esempio di Configurazione Nginx](#2-esempio-di-configurazione-nginx)
       - [`nginx/nginx.conf` (base)](#nginxnginxconf-base)
-      - [`nginx/conf.d/educationalgames.conf.template` (per il sito)](#nginxconfdeducationalgamesconftemplate-per-il-sito)
+      - [`nginx/conf.d/educationalgames.template.conf` (per il sito)](#nginxconfdeducationalgamestemplateconf-per-il-sito)
       - [Aspetti importanti relativi alla configurazione di Nginx](#aspetti-importanti-relativi-alla-configurazione-di-nginx)
         - [$host vs. $http\_host](#host-vs-http_host)
           - [Quale usare per X-Forwarded-Host in un Reverse Proxy?](#quale-usare-per-x-forwarded-host-in-un-reverse-proxy)
@@ -118,7 +118,6 @@ services:
       timeout: 10s
       retries: 5
       start_period: 60s # Tempo di attesa iniziale prima del primo controllo di salute
-    
 
   # WebApp "EducationalGames" (definita per poter effettuare scaling)
   webapp:
@@ -152,19 +151,18 @@ services:
       # Data Protection
       DATA_PROTECTION_KEYS_PATH: /app/shared_dp_keys
       DataProtection__AutoGenerateKeys: ${WEBAPP_DP_AUTO_GENERATE_KEYS:-true}
-      DataProtection__KeyLifetime: ${WEBAPP_DP_KEY_LIFETIME:-30} 
+      DataProtection__KeyLifetime: ${WEBAPP_DP_KEY_LIFETIME:-30}
       # CORS Settings
-      CorsSettings__AllowedLocalOrigins__0: ${WEBAPP_CORS_ALLOWED_ORIGINS_0:-http://localhost:8080} 
-      CorsSettings__AllowedLocalOrigins__1: ${WEBAPP_CORS_ALLOWED_ORIGINS_1:-https://localhost:8443} 
+      CorsSettings__AllowedLocalOrigins__0: ${WEBAPP_CORS_ALLOWED_ORIGINS_0:-http://localhost:8080}
+      CorsSettings__AllowedLocalOrigins__1: ${WEBAPP_CORS_ALLOWED_ORIGINS_1:-https://localhost:8443}
       # Si può aggiungere CorsSettings__AllowedLocalOrigins__2, __3, ecc. se necessario
-      CorsSettings__TunnelOrProxyOrigin: ${WEBAPP_CORS_TUNNEL_OR_PROXY_ORIGIN:-} 
+      CorsSettings__TunnelOrProxyOrigin: ${WEBAPP_CORS_TUNNEL_OR_PROXY_ORIGIN:-}
       # Altre
       Testing__BypassEmailVerification: ${TESTING_BYPASS_EMAIL_VERIFICATION:-false}
     volumes:
       - dp_keys_volume:/app/shared_dp_keys # Volume condiviso per le Data Protection Keys
     networks:
       - educationalgames_network
-
   # Nginx come Reverse Proxy e Load Balancer e terminatore HTTPS
   # Utilizza un template per la configurazione dinamica
   # Assicurarsi che il file educationalgames.conf.template sia presente nella cartella nginx/conf.d
@@ -176,23 +174,34 @@ services:
       - "${NGINX_HTTP_HOST_PORT:-8080}:80"
       - "${NGINX_HTTPS_HOST_PORT:-8443}:443"
     volumes:
-      - ./nginx/conf.d/educationalgames.conf.template:/etc/nginx/templates/educationalgames.conf.template:ro
+      - ./nginx/conf.d/educationalgames.template.conf:/etc/nginx/templates/educationalgames.template.conf:ro
       - ./nginx/ssl/dev-certs:/etc/nginx/ssl/dev-certs:ro
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     environment:
       # Variabili per il template Nginx
       - NGINX_SERVER_NAME=${NGINX_SERVER_NAME:-localhost}
       - NGINX_HTTPS_HOST_PORT=${NGINX_HTTPS_HOST_PORT:-8443}
-      - WEBAPP_CONTAINER_INTERNAL_PORT=${WEBAPP_CONTAINER_INTERNAL_PORT:-8080} # Passa la porta interna della webapp
+      - WEBAPP_CONTAINER_INTERNAL_PORT=${WEBAPP_CONTAINER_INTERNAL_PORT:-8080}
     command:
       - /bin/sh
       - -c
       - |
         set -e
+        echo "Removing default nginx configuration..."
+        rm -f /etc/nginx/conf.d/default.conf
         echo "Processing Nginx configuration template..."
-        envsubst '$${NGINX_SERVER_NAME} $${NGINX_HTTPS_HOST_PORT} $${WEBAPP_CONTAINER_INTERNAL_PORT}' \
-          < /etc/nginx/templates/educationalgames.conf.template \
+        echo "NGINX_SERVER_NAME: $NGINX_SERVER_NAME"
+        echo "NGINX_HTTPS_HOST_PORT: $NGINX_HTTPS_HOST_PORT"
+        echo "WEBAPP_CONTAINER_INTERNAL_PORT: $WEBAPP_CONTAINER_INTERNAL_PORT"
+        envsubst '$$NGINX_SERVER_NAME $$NGINX_HTTPS_HOST_PORT $$WEBAPP_CONTAINER_INTERNAL_PORT' \
+          < /etc/nginx/templates/educationalgames.template.conf \
           > /etc/nginx/conf.d/educationalgames.conf
+        echo "Generated nginx configuration:"
+        cat /etc/nginx/conf.d/educationalgames.conf
+        echo "Listing configuration files:"
+        ls -la /etc/nginx/conf.d/
+        echo "Testing nginx configuration..."
+        nginx -t
         echo "Starting Nginx..."
         nginx -g 'daemon off;'
     networks:
@@ -207,6 +216,7 @@ volumes:
 networks:
   educationalgames_network:
     driver: bridge
+
 ```
 
 Si noti che Docker Compose permette di specificare i parametri per le variabili d'ambiente (`environment`) utilizzando due notazioni principali:
@@ -279,20 +289,31 @@ http {
 }
 ```
 
-#### `nginx/conf.d/educationalgames.conf.template` (per il sito)
+#### `nginx/conf.d/educationalgames.template.conf` (per il sito)
 
 Di seguito è riportato un template di Nginx per la configurazione specifica del sito relativo alla web app `Educational Games`. Viene utilizzato un template script e non un semplice file di script per `Nginx` perché alcuni parametri dello script possono essere variati in base alle variabili d'ambiente presenti nel file `.env`. L'istruzione presente nel file `docker-compose.yml`:
 
 ```yaml
-command:
+    command:
       - /bin/sh
       - -c
       - |
         set -e
+        echo "Removing default nginx configuration..."
+        rm -f /etc/nginx/conf.d/default.conf
         echo "Processing Nginx configuration template..."
-        envsubst '$${NGINX_SERVER_NAME} $${NGINX_HTTPS_HOST_PORT} $${WEBAPP_CONTAINER_INTERNAL_PORT}' \
-          < /etc/nginx/templates/educationalgames.conf.template \
+        echo "NGINX_SERVER_NAME: $NGINX_SERVER_NAME"
+        echo "NGINX_HTTPS_HOST_PORT: $NGINX_HTTPS_HOST_PORT"
+        echo "WEBAPP_CONTAINER_INTERNAL_PORT: $WEBAPP_CONTAINER_INTERNAL_PORT"
+        envsubst '$$NGINX_SERVER_NAME $$NGINX_HTTPS_HOST_PORT $$WEBAPP_CONTAINER_INTERNAL_PORT' \
+          < /etc/nginx/templates/educationalgames.template.conf \
           > /etc/nginx/conf.d/educationalgames.conf
+        echo "Generated nginx configuration:"
+        cat /etc/nginx/conf.d/educationalgames.conf
+        echo "Listing configuration files:"
+        ls -la /etc/nginx/conf.d/
+        echo "Testing nginx configuration..."
+        nginx -t
         echo "Starting Nginx..."
         nginx -g 'daemon off;'
 ```
@@ -443,7 +464,7 @@ Usare `$http_host` potrebbe inoltrare valori inaspettati (come `example.com:8080
     - **Configurazione Nginx necessaria:** Per far funzionare l'autenticazione con Google/Microsoft, abbiamo dovuto usare `$http_host` per l'header `X-Forwarded-Host`.Nginx
 
         ```nginx
-        # /etc/nginx/conf.d/educationalgames.conf.template (versione SVILUPPO)
+        # /etc/nginx/conf.d/educationalgames.template.conf (versione SVILUPPO)
         ...
         proxy_set_header X-Forwarded-Host $http_host; # Invia "localhost:8443" al backend
         ...
@@ -468,10 +489,10 @@ Usare `$http_host` potrebbe inoltrare valori inaspettati (come `example.com:8080
 
     - **A) Aggiornare la Configurazione di Nginx**
 
-        Nel nostro file di template di Nginx (`educationalgames.conf.template`), torneremo a usare la variabile `$host`. È considerata una best practice perché "pulisce" l'input e si affida al `server_name` in caso di header `Host` mancante o malformato, rendendo la configurazione più stabile.
+        Nel nostro file di template di Nginx (`educationalgames.template.conf`), torneremo a usare la variabile `$host`. È considerata una best practice perché "pulisce" l'input e si affida al `server_name` in caso di header `Host` mancante o malformato, rendendo la configurazione più stabile.
 
         ```nginx
-        # /etc/nginx/conf.d/educationalgames.conf.template (versione PRODUZIONE)
+        # /etc/nginx/conf.d/educationalgames.template.conf (versione PRODUZIONE)
         ...
         # Torniamo a usare $host, la scelta migliore per la produzione
         proxy_set_header X-Forwarded-Host $host;
@@ -612,7 +633,7 @@ EducationalGamesRoot/
 ├── .dockerignore
 ├── nginx/
 │   ├── conf.d/
-│   │   └── educationalgames.conf.template
+│   │   └── educationalgames.template.conf
 │   ├── ssl/
 │   │   └── dev-certs/  <-- QUI DEVONO ESSERE I FILE localhost.crt e localhost.key
 │   │       ├── localhost.crt
@@ -712,6 +733,7 @@ flowchart TD
 ```
 
 **Caratteristiche Applicazioni Stateless:**
+
 - ✅ **Qualsiasi istanza** può gestire qualsiasi richiesta
 - ✅ **Chiavi DataProtection condivise** permettono decrittografia cookie su qualsiasi istanza
 - ✅ **Stato memorizzato nel database** condiviso
@@ -775,6 +797,7 @@ flowchart TD
 ```
 
 **Caratteristiche Session Affinity (IP Hash):**
+
 - ⚠️ **Stesso client IP** sempre verso la stessa istanza
 - ⚠️ **Richiesto per applicazioni stateful** con sessioni in memoria
 - ⚠️ **Distribuzione non uniforme** del carico
@@ -1027,7 +1050,7 @@ Implementare una protezione DDoS completa richiede soluzioni dedicate, ma Nginx 
     }
     ```
 
-    **2. Modifica al file `nginx/conf.d/educationalgames.conf.template` (per il sito):**
+    **2. Modifica al file `nginx/conf.d/educationalgames.template.conf` (per il sito):**
 
     Applicare la regola di limitazione definita (`ratelimit_per_ip`) a una specifica `location` all'interno del blocco `server`. È possibile scegliere di applicarla a tutto il sito (es. `location /`) o a parti specifiche (es. `location /api/`).
 
@@ -1103,7 +1126,7 @@ Implementare una protezione DDoS completa richiede soluzioni dedicate, ma Nginx 
 
     **Come testare:**
 
-    1. Salvare le modifiche ai file `nginx.conf` e `educationalgames.conf.template`.
+    1. Salvare le modifiche ai file `nginx.conf` e `educationalgames.template.conf`.
     2. Ricostruire l'immagine di Nginx e riavviare i container Docker: `docker-compose up -d --build nginx webapp` (o `docker-compose restart nginx` se solo la configurazione di Nginx è cambiata e il container `nginx` è già costruito per usare il template).
         Esempio con `curl` in bash (esegui da un terminale):
     3. Provare a inviare rapidamente più di 1 richiesta al secondo (più il burst di 5) a un endpoint sotto `/api` (es. `/api/account/userinfo` se esiste e non richiede autenticazione per un test semplice, o qualsiasi altro endpoint API). È possibile usare strumenti come `curl` in un loop, Postman, o strumenti di test di carico come `ab` (Apache Bench) o `k6`.
@@ -1152,7 +1175,7 @@ Implementare una protezione DDoS completa richiede soluzioni dedicate, ma Nginx 
     }
     ```
 
-    **2. Modifica al file `nginx/conf.d/educationalgames.conf.template` (per il sito):**
+    **2. Modifica al file `nginx/conf.d/educationalgames.template.conf` (per il sito):**
 
     Applicare la regola di limitazione delle connessioni definita (`connlimit_per_ip`) a una specifica `location` o all'intero blocco `server`. La direttiva `limit_conn` specifica la zona e il numero massimo di connessioni consentite per chiave.
 
@@ -1221,7 +1244,7 @@ Implementare una protezione DDoS completa richiede soluzioni dedicate, ma Nginx 
 
     **Come testare:**
 
-    1. Salvare le modifiche ai file `nginx.conf` e `educationalgames.conf.template`.
+    1. Salvare le modifiche ai file `nginx.conf` e `educationalgames.template.conf`.
     2. Ricostruire l'immagine di Nginx e riavviare i container Docker: `docker-compose up -d --build nginx webapp` (o `docker-compose restart nginx`).
     3. Utilizzare uno strumento che possa aprire connessioni multiple e mantenerle attive (ad esempio, `curl` con download di file di grandi dimensioni, o strumenti di test di carico come `siege` o `ab` configurati per mantenere le connessioni aperte).
         Ad esempio, se si ha un endpoint che serve un file di grandi dimensioni o che impiega tempo a rispondere, si possono avviare più di 10 download contemporaneamente dallo stesso IP.
@@ -1340,7 +1363,7 @@ Per usare HTTPS in locale senza la complessità di Let's Encrypt, si possono uti
 
 4. **Creare le Configurazioni Nginx:** 
 
-   - Creare la cartella `nginx` e i file `nginx.conf` e `nginx/conf.d/educationalgames.conf.template` come da esempi.
+   - Creare la cartella `nginx` e i file `nginx.conf` e `nginx/conf.d/educationalgames.template.conf` come da esempi.
 
 5. **Avviare i Servizi:**
 
@@ -2502,179 +2525,190 @@ Questa è la soluzione standard per un monitoraggio di livello professionale. Fo
         # Please refer https://aka.ms/HTTPSinContainer on how to setup an https developer certificate for your ASP.NET Core service.
 
         services:
-        # Database MariaDB
-        mariadb:
+          # Database MariaDB
+          mariadb:
             image: mariadb:11.4
             container_name: mariadb
             restart: unless-stopped # Riavvia il container a meno che non sia stato fermato esplicitamente
             ports:
-            # Mappa la porta host (da .env, default 3306) alla porta interna del container (3306)
-            # Utile per connettersi al DB da strumenti sull'host (es. DBeaver, MySQL Workbench).
-            - "${MARIADB_HOST_PORT:-3306}:3306"
+              # Mappa la porta host (da .env, default 3306) alla porta interna del container (3306)
+              # Utile per connettersi al DB da strumenti sull'host (es. DBeaver, MySQL Workbench).
+              - "${MARIADB_HOST_PORT:-3306}:3306"
             environment:
-            # Le password e i nomi sono presi dal file .env
-            MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
-            MARIADB_DATABASE: ${MARIADB_DATABASE}
-            MARIADB_USER: ${MARIADB_USER_NAME}
-            MARIADB_PASSWORD: ${MARIADB_USER_PASSWORD}
+              # Le password e i nomi sono presi dal file .env
+              MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+              MARIADB_DATABASE: ${MARIADB_DATABASE}
+              MARIADB_USER: ${MARIADB_USER_NAME}
+              MARIADB_PASSWORD: ${MARIADB_USER_PASSWORD}
             volumes:
-            - mariadb_data:/var/lib/mysql # Volume per la persistenza dei dati di MariaDB
+              - mariadb_data:/var/lib/mysql # Volume per la persistenza dei dati di MariaDB
             networks:
-            - educationalgames_network
+              - educationalgames_network
             healthcheck:
-            test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
-            interval: 20s
-            timeout: 10s
-            retries: 5
-            start_period: 60s # Tempo di attesa iniziale prima del primo controllo di salute
-            
+              test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+              interval: 20s
+              timeout: 10s
+              retries: 5
+              start_period: 60s # Tempo di attesa iniziale prima del primo controllo di salute
 
-        # WebApp "EducationalGames" (definita per poter effettuare scaling)
-        webapp:
+          # WebApp "EducationalGames" (definita per poter effettuare scaling)
+          webapp:
             image: webapp:latest # Assicurarsi che questa immagine sia costruita correttamente
             build:
-            context: ./EducationalGames/EducationalGames # Assumendo che docker-compose.yml sia nella root del progetto e il progetto EducationalGames sia una sotto-cartella /EducationalGames/EducationalGames
-            dockerfile: Dockerfile # Specifica il percorso del Dockerfile
+              context: ./EducationalGames/EducationalGames # Assumendo che docker-compose.yml sia nella root del progetto e il progetto EducationalGames sia una sotto-cartella /EducationalGames/EducationalGames
+              dockerfile: Dockerfile # Specifica il percorso del Dockerfile
             restart: unless-stopped
             depends_on:
-            mariadb:
+              mariadb:
                 condition: service_healthy # Attende che MariaDB sia healthy
             environment:
-            ASPNETCORE_ENVIRONMENT: Production # O "Development" per debug nei container
-            ASPNETCORE_URLS: http://+:${WEBAPP_CONTAINER_INTERNAL_PORT:-8080} # La porta su cui l'app ascolta DENTRO il container
-            ConnectionStrings__EducationalGamesConnection: "Server=mariadb;Port=3306;Database=${MARIADB_DATABASE};Uid=root;Pwd=${MARIADB_ROOT_PASSWORD};AllowPublicKeyRetrieval=true;Pooling=true;"
-            EmailSettings__SmtpServer: ${SMTP_SERVER}
-            EmailSettings__Port: ${SMTP_PORT}
-            EmailSettings__SenderName: ${SMTP_SENDER_NAME}
-            EmailSettings__SenderEmail: ${SMTP_SENDER_EMAIL}
-            EmailSettings__Username: ${SMTP_USERNAME}
-            EmailSettings__Password: ${SMTP_PASSWORD}
-            DefaultAdminCredentials__Nome: ${ADMIN_NAME}
-            DefaultAdminCredentials__Cognome: ${ADMIN_SURNAME}
-            DefaultAdminCredentials__Email: ${ADMIN_EMAIL}
-            DefaultAdminCredentials__Password: ${ADMIN_PASSWORD}
-            Authentication__Google__ClientId: ${GOOGLE_CLIENT_ID}
-            Authentication__Google__ClientSecret: ${GOOGLE_CLIENT_SECRET}
-            Authentication__Microsoft__ClientId: ${MICROSOFT_CLIENT_ID}
-            Authentication__Microsoft__ClientSecret: ${MICROSOFT_CLIENT_SECRET}
-            Authentication__Microsoft__TenantId: ${MICROSOFT_TENANT_ID}
-            # Data Protection
-            DATA_PROTECTION_KEYS_PATH: /app/shared_dp_keys
-            DataProtection__AutoGenerateKeys: ${WEBAPP_DP_AUTO_GENERATE_KEYS:-true}
-            DataProtection__KeyLifetime: ${WEBAPP_DP_KEY_LIFETIME:-30} 
-            # CORS Settings
-            CorsSettings__AllowedLocalOrigins__0: ${WEBAPP_CORS_ALLOWED_ORIGINS_0:-http://localhost:8080} 
-            CorsSettings__AllowedLocalOrigins__1: ${WEBAPP_CORS_ALLOWED_ORIGINS_1:-https://localhost:8443} 
-            # Si può aggiungere CorsSettings__AllowedLocalOrigins__2, __3, ecc. se necessario
-            CorsSettings__TunnelOrProxyOrigin: ${WEBAPP_CORS_TUNNEL_OR_PROXY_ORIGIN:-} 
-            # Altre
-            Testing__BypassEmailVerification: ${TESTING_BYPASS_EMAIL_VERIFICATION:-false}
+              ASPNETCORE_ENVIRONMENT: Production # O "Development" per debug nei container
+              ASPNETCORE_URLS: http://+:${WEBAPP_CONTAINER_INTERNAL_PORT:-8080} # La porta su cui l'app ascolta DENTRO il container
+              ConnectionStrings__EducationalGamesConnection: "Server=mariadb;Port=3306;Database=${MARIADB_DATABASE};Uid=root;Pwd=${MARIADB_ROOT_PASSWORD};AllowPublicKeyRetrieval=true;Pooling=true;"
+              EmailSettings__SmtpServer: ${SMTP_SERVER}
+              EmailSettings__Port: ${SMTP_PORT}
+              EmailSettings__SenderName: ${SMTP_SENDER_NAME}
+              EmailSettings__SenderEmail: ${SMTP_SENDER_EMAIL}
+              EmailSettings__Username: ${SMTP_USERNAME}
+              EmailSettings__Password: ${SMTP_PASSWORD}
+              DefaultAdminCredentials__Nome: ${ADMIN_NAME}
+              DefaultAdminCredentials__Cognome: ${ADMIN_SURNAME}
+              DefaultAdminCredentials__Email: ${ADMIN_EMAIL}
+              DefaultAdminCredentials__Password: ${ADMIN_PASSWORD}
+              Authentication__Google__ClientId: ${GOOGLE_CLIENT_ID}
+              Authentication__Google__ClientSecret: ${GOOGLE_CLIENT_SECRET}
+              Authentication__Microsoft__ClientId: ${MICROSOFT_CLIENT_ID}
+              Authentication__Microsoft__ClientSecret: ${MICROSOFT_CLIENT_SECRET}
+              Authentication__Microsoft__TenantId: ${MICROSOFT_TENANT_ID}
+              # Data Protection
+              DATA_PROTECTION_KEYS_PATH: /app/shared_dp_keys
+              DataProtection__AutoGenerateKeys: ${WEBAPP_DP_AUTO_GENERATE_KEYS:-true}
+              DataProtection__KeyLifetime: ${WEBAPP_DP_KEY_LIFETIME:-30}
+              # CORS Settings
+              CorsSettings__AllowedLocalOrigins__0: ${WEBAPP_CORS_ALLOWED_ORIGINS_0:-http://localhost:8080}
+              CorsSettings__AllowedLocalOrigins__1: ${WEBAPP_CORS_ALLOWED_ORIGINS_1:-https://localhost:8443}
+              # Si può aggiungere CorsSettings__AllowedLocalOrigins__2, __3, ecc. se necessario
+              CorsSettings__TunnelOrProxyOrigin: ${WEBAPP_CORS_TUNNEL_OR_PROXY_ORIGIN:-}
+              # Altre
+              Testing__BypassEmailVerification: ${TESTING_BYPASS_EMAIL_VERIFICATION:-false}
             volumes:
-            - dp_keys_volume:/app/shared_dp_keys # Volume condiviso per le Data Protection Keys
+              - dp_keys_volume:/app/shared_dp_keys # Volume condiviso per le Data Protection Keys
             networks:
-            - educationalgames_network
+              - educationalgames_network
 
-        # Nginx come Reverse Proxy e Load Balancer e terminatore HTTPS
-        # Utilizza un template per la configurazione dinamica
-        # Assicurarsi che il file educationalgames.conf.template sia presente nella cartella nginx/conf.d
-        nginx:
+          # Nginx come Reverse Proxy e Load Balancer e terminatore HTTPS
+          # Utilizza un template per la configurazione dinamica
+          # Assicurarsi che il file educationalgames.conf.template sia presente nella cartella nginx/conf.d
+          nginx:
             image: nginx:1.27.5
             container_name: nginx
             restart: unless-stopped
             ports:
-            - "${NGINX_HTTP_HOST_PORT:-8080}:80"
-            - "${NGINX_HTTPS_HOST_PORT:-8443}:443"
+              - "${NGINX_HTTP_HOST_PORT:-8080}:80"
+              - "${NGINX_HTTPS_HOST_PORT:-8443}:443"
             volumes:
-            - ./nginx/conf.d/educationalgames.conf.template:/etc/nginx/templates/educationalgames.conf.template:ro
-            - ./nginx/ssl/dev-certs:/etc/nginx/ssl/dev-certs:ro
-            - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+              - ./nginx/conf.d/educationalgames.template.conf:/etc/nginx/templates/educationalgames.template.conf:ro
+              - ./nginx/ssl/dev-certs:/etc/nginx/ssl/dev-certs:ro
+              - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
             environment:
-            # Variabili per il template Nginx
-            - NGINX_SERVER_NAME=${NGINX_SERVER_NAME:-localhost}
-            - NGINX_HTTPS_HOST_PORT=${NGINX_HTTPS_HOST_PORT:-8443}
-            - WEBAPP_CONTAINER_INTERNAL_PORT=${WEBAPP_CONTAINER_INTERNAL_PORT:-8080} # Passa la porta interna della webapp
+              # Variabili per il template Nginx
+              - NGINX_SERVER_NAME=${NGINX_SERVER_NAME:-localhost}
+              - NGINX_HTTPS_HOST_PORT=${NGINX_HTTPS_HOST_PORT:-8443}
+              - WEBAPP_CONTAINER_INTERNAL_PORT=${WEBAPP_CONTAINER_INTERNAL_PORT:-8080}
             command:
-            - /bin/sh
-            - -c
-            - |
+              - /bin/sh
+              - -c
+              - |
                 set -e
+                echo "Removing default nginx configuration..."
+                rm -f /etc/nginx/conf.d/default.conf
                 echo "Processing Nginx configuration template..."
-                envsubst '$${NGINX_SERVER_NAME} $${NGINX_HTTPS_HOST_PORT} $${WEBAPP_CONTAINER_INTERNAL_PORT}' \
-                < /etc/nginx/templates/educationalgames.conf.template \
-                > /etc/nginx/conf.d/educationalgames.conf
+                echo "NGINX_SERVER_NAME: $NGINX_SERVER_NAME"
+                echo "NGINX_HTTPS_HOST_PORT: $NGINX_HTTPS_HOST_PORT"
+                echo "WEBAPP_CONTAINER_INTERNAL_PORT: $WEBAPP_CONTAINER_INTERNAL_PORT"
+                envsubst '$$NGINX_SERVER_NAME $$NGINX_HTTPS_HOST_PORT $$WEBAPP_CONTAINER_INTERNAL_PORT' \
+                  < /etc/nginx/templates/educationalgames.template.conf \
+                  > /etc/nginx/conf.d/educationalgames.conf
+                echo "Generated nginx configuration:"
+                cat /etc/nginx/conf.d/educationalgames.conf
+                echo "Listing configuration files:"
+                ls -la /etc/nginx/conf.d/
+                echo "Testing nginx configuration..."
+                nginx -t
                 echo "Starting Nginx..."
                 nginx -g 'daemon off;'
             networks:
-            - educationalgames_network
+              - educationalgames_network
             depends_on:
-            - webapp
+              - webapp
 
-        prometheus:
+          prometheus:
             image: prom/prometheus:latest
             container_name: prometheus
             restart: unless-stopped
             ports:
-            - "9090:9090"
+              - "9090:9090"
             volumes:
-            - ./prometheus:/etc/prometheus
-            - prometheus_data:/prometheus
+              - ./prometheus:/etc/prometheus
+              - prometheus_data:/prometheus
             command:
-            - '--config.file=/etc/prometheus/prometheus.yml'
+              - "--config.file=/etc/prometheus/prometheus.yml"
             networks:
-            - educationalgames_network
+              - educationalgames_network
 
-        cadvisor:
+          cadvisor:
             image: gcr.io/cadvisor/cadvisor:latest
             container_name: cadvisor
             restart: unless-stopped
             ports:
-            - "8081:8080"
+              - "8081:8080"
             volumes:
-            - /:/rootfs:ro
-            - /var/run:/var/run:rw
-            - /sys:/sys:ro
-            - /var/lib/docker/:/var/lib/docker:ro
+              - /:/rootfs:ro
+              - /var/run:/var/run:rw
+              - /sys:/sys:ro
+              - /var/lib/docker/:/var/lib/docker:ro
             networks:
-            - educationalgames_network
+              - educationalgames_network
 
-        grafana:
+          grafana:
             image: grafana/grafana:latest
             container_name: grafana
             restart: unless-stopped
             ports:
-            - "3000:3000"
+              - "3000:3000"
             volumes:
-            - grafana_data:/var/lib/grafana
+              - grafana_data:/var/lib/grafana
             networks:
-            - educationalgames_network
-        
-        node-exporter:
+              - educationalgames_network
+
+          node-exporter:
             image: prom/node-exporter:latest
             container_name: node-exporter
             restart: unless-stopped
             ports:
-            - "9100:9100"
+              - "9100:9100"
             volumes:
-            - '/proc:/host/proc:ro'
-            - '/sys:/host/sys:ro'
-            - '/:/rootfs:ro'
+              - "/proc:/host/proc:ro"
+              - "/sys:/host/sys:ro"
+              - "/:/rootfs:ro"
             command:
-            - '--path.procfs=/host/proc'
-            - '--path.sysfs=/host/sys'
-            - '--path.rootfs=/rootfs'
-            - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+              - "--path.procfs=/host/proc"
+              - "--path.sysfs=/host/sys"
+              - "--path.rootfs=/rootfs"
+              - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
             networks:
-            - educationalgames_network
+              - educationalgames_network
 
         volumes:
-        mariadb_data: # Volume per i dati di MariaDB
-        dp_keys_volume: # Volume condiviso per le Data Protection Keys
-        prometheus_data: # Volume per i dati di Prometheus
-        grafana_data: # Volume per i dati di Grafana
+          mariadb_data: # Volume per i dati di MariaDB
+          dp_keys_volume: # Volume condiviso per le Data Protection Keys
+          prometheus_data: # Volume per i dati di Prometheus
+          grafana_data: # Volume per i dati di Grafana
 
         networks:
-        educationalgames_network:
+          educationalgames_network:
             driver: bridge
+
 
         ```
 
@@ -3052,7 +3086,7 @@ services: # Database MariaDB
       - "${NGINX_HTTP_HOST_PORT:-8080}:80"
       - "${NGINX_HTTPS_HOST_PORT:-8443}:443"
     volumes:
-      - ./nginx/conf.d/educationalgames.conf.template:/etc/nginx/templates/educationalgames.conf.template:ro
+      - ./nginx/conf.d/educationalgames.template.conf:/etc/nginx/templates/educationalgames.template.conf:ro
       - ./nginx/ssl/dev-certs:/etc/nginx/ssl/dev-certs:ro
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     environment:
@@ -3072,7 +3106,7 @@ services: # Database MariaDB
         echo "NGINX_HTTPS_HOST_PORT: $NGINX_HTTPS_HOST_PORT"
         echo "WEBAPP_CONTAINER_INTERNAL_PORT: $WEBAPP_CONTAINER_INTERNAL_PORT"
         envsubst '$$NGINX_SERVER_NAME $$NGINX_HTTPS_HOST_PORT $$WEBAPP_CONTAINER_INTERNAL_PORT' \
-          < /etc/nginx/templates/educationalgames.conf.template \
+          < /etc/nginx/templates/educationalgames.template.conf \
           > /etc/nginx/conf.d/educationalgames.conf
         echo "Generated nginx configuration:"
         cat /etc/nginx/conf.d/educationalgames.conf
@@ -3181,7 +3215,6 @@ volumes:
 networks:
   educationalgames_network:
     driver: bridge
-
 
 ```
 
@@ -4059,7 +4092,7 @@ services: # Database MariaDB
 
   # Nginx come Reverse Proxy e Load Balancer e terminatore HTTPS
   # Utilizza un template per la configurazione dinamica
-  # Assicurarsi che il file educationalgames.conf.template sia presente nella cartella nginx/conf.d
+  # Assicurarsi che il file educationalgames.template.conf sia presente nella cartella nginx/conf.d
   nginx:
     image: nginx:1.27.5
     container_name: nginx
@@ -4068,7 +4101,7 @@ services: # Database MariaDB
       - "${NGINX_HTTP_HOST_PORT:-8080}:80"
       - "${NGINX_HTTPS_HOST_PORT:-8443}:443"
     volumes:
-      - ./nginx/conf.d/educationalgames.conf.template:/etc/nginx/templates/educationalgames.conf.template:ro
+      - ./nginx/conf.d/educationalgames.template.conf:/etc/nginx/templates/educationalgames.template.conf:ro
       - ./nginx/ssl/dev-certs:/etc/nginx/ssl/dev-certs:ro
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     environment:
@@ -4088,7 +4121,7 @@ services: # Database MariaDB
         echo "NGINX_HTTPS_HOST_PORT: $NGINX_HTTPS_HOST_PORT"
         echo "WEBAPP_CONTAINER_INTERNAL_PORT: $WEBAPP_CONTAINER_INTERNAL_PORT"
         envsubst '$$NGINX_SERVER_NAME $$NGINX_HTTPS_HOST_PORT $$WEBAPP_CONTAINER_INTERNAL_PORT' \
-          < /etc/nginx/templates/educationalgames.conf.template \
+          < /etc/nginx/templates/educationalgames.template.conf \
           > /etc/nginx/conf.d/educationalgames.conf
         echo "Generated nginx configuration:"
         cat /etc/nginx/conf.d/educationalgames.conf
@@ -4161,15 +4194,11 @@ services: # Database MariaDB
       - educationalgames_network
 
   # OTel Collector Configuration Processor
-  # l'immagine otel/opentelemetry-collector-contrib è minimale e non dispone degli strumenti della bash
-  # per effettuare una sostituzione di parametri a partire dal template come fatto per nginx.
-  # In questo caso per effettuare la creazione del file di configurazione con i parametri presi da .env
-  # viene utilizzato un container preprocessor basato su Alpine con un volume condiviso con otel/opentelemetry-collector-contrib
   otel-config-processor:
     image: alpine:latest
     container_name: otel-config-processor
     volumes:
-      - ./otel-collector-config.yml.template:/templates/config.yml.template:ro
+      - ./otel-collector-config.template.yml:/templates/config.template.yml:ro
       - otel_config_volume:/output
     environment:
       - OTEL_TAIL_SAMPLING_LATENCY_THRESHOLD_MS=${OTEL_TAIL_SAMPLING_LATENCY_THRESHOLD_MS:-500}
@@ -4187,7 +4216,7 @@ services: # Database MariaDB
         apk add --no-cache gettext
 
         envsubst '$$OTEL_TAIL_SAMPLING_LATENCY_THRESHOLD_MS $$OTEL_TAIL_SAMPLING_PROBABILISTIC_PERCENT' \
-          < /templates/config.yml.template \
+          < /templates/config.template.yml \
           > /output/config.yml
         echo "Generated OpenTelemetry Collector configuration:"
         cat /output/config.yml

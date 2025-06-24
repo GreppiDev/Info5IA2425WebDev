@@ -82,7 +82,7 @@ services:
       - "${NGINX_HTTP_HOST_PORT:-8080}:80"
       - "${NGINX_HTTPS_HOST_PORT:-8443}:443"
     volumes:
-      - ./nginx/conf.d/educationalgames.conf.template:/etc/nginx/templates/educationalgames.conf.template:ro
+      - ./nginx/conf.d/educationalgames.template.conf:/etc/nginx/templates/educationalgames.template.conf:ro
       - ./nginx/ssl/dev-certs:/etc/nginx/ssl/dev-certs:ro
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     environment:
@@ -102,7 +102,7 @@ services:
         echo "NGINX_HTTPS_HOST_PORT: $NGINX_HTTPS_HOST_PORT"
         echo "WEBAPP_CONTAINER_INTERNAL_PORT: $WEBAPP_CONTAINER_INTERNAL_PORT"
         envsubst '$$NGINX_SERVER_NAME $$NGINX_HTTPS_HOST_PORT $$WEBAPP_CONTAINER_INTERNAL_PORT' \
-          < /etc/nginx/templates/educationalgames.conf.template \
+          < /etc/nginx/templates/educationalgames.template.conf \
           > /etc/nginx/conf.d/educationalgames.conf
         echo "Generated nginx configuration:"
         cat /etc/nginx/conf.d/educationalgames.conf

@@ -26,7 +26,6 @@ services:
       timeout: 10s
       retries: 5
       start_period: 60s # Tempo di attesa iniziale prima del primo controllo di salute
-    
 
   # WebApp "EducationalGames" (definita per poter effettuare scaling)
   webapp:
@@ -60,12 +59,12 @@ services:
       # Data Protection
       DATA_PROTECTION_KEYS_PATH: /app/shared_dp_keys
       DataProtection__AutoGenerateKeys: ${WEBAPP_DP_AUTO_GENERATE_KEYS:-true}
-      DataProtection__KeyLifetime: ${WEBAPP_DP_KEY_LIFETIME:-30} 
+      DataProtection__KeyLifetime: ${WEBAPP_DP_KEY_LIFETIME:-30}
       # CORS Settings
-      CorsSettings__AllowedLocalOrigins__0: ${WEBAPP_CORS_ALLOWED_ORIGINS_0:-http://localhost:8080} 
-      CorsSettings__AllowedLocalOrigins__1: ${WEBAPP_CORS_ALLOWED_ORIGINS_1:-https://localhost:8443} 
+      CorsSettings__AllowedLocalOrigins__0: ${WEBAPP_CORS_ALLOWED_ORIGINS_0:-http://localhost:8080}
+      CorsSettings__AllowedLocalOrigins__1: ${WEBAPP_CORS_ALLOWED_ORIGINS_1:-https://localhost:8443}
       # Si può aggiungere CorsSettings__AllowedLocalOrigins__2, __3, ecc. se necessario
-      CorsSettings__TunnelOrProxyOrigin: ${WEBAPP_CORS_TUNNEL_OR_PROXY_ORIGIN:-} 
+      CorsSettings__TunnelOrProxyOrigin: ${WEBAPP_CORS_TUNNEL_OR_PROXY_ORIGIN:-}
       # Altre
       Testing__BypassEmailVerification: ${TESTING_BYPASS_EMAIL_VERIFICATION:-false}
     volumes:
@@ -84,7 +83,7 @@ services:
       - "${NGINX_HTTP_HOST_PORT:-8080}:80"
       - "${NGINX_HTTPS_HOST_PORT:-8443}:443"
     volumes:
-      - ./nginx/conf.d/educationalgames.conf.template:/etc/nginx/templates/educationalgames.conf.template:ro
+      - ./nginx/conf.d/educationalgames.template.conf:/etc/nginx/templates/educationalgames.template.conf:ro
       - ./nginx/ssl/dev-certs:/etc/nginx/ssl/dev-certs:ro
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     environment:
@@ -104,7 +103,7 @@ services:
         echo "NGINX_HTTPS_HOST_PORT: $NGINX_HTTPS_HOST_PORT"
         echo "WEBAPP_CONTAINER_INTERNAL_PORT: $WEBAPP_CONTAINER_INTERNAL_PORT"
         envsubst '$$NGINX_SERVER_NAME $$NGINX_HTTPS_HOST_PORT $$WEBAPP_CONTAINER_INTERNAL_PORT' \
-          < /etc/nginx/templates/educationalgames.conf.template \
+          < /etc/nginx/templates/educationalgames.template.conf \
           > /etc/nginx/conf.d/educationalgames.conf
         echo "Generated nginx configuration:"
         cat /etc/nginx/conf.d/educationalgames.conf
@@ -120,44 +119,44 @@ services:
       - webapp
 
   prometheus:
-      image: prom/prometheus:latest
-      container_name: prometheus
-      restart: unless-stopped
-      ports:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    ports:
       - "9090:9090"
-      volumes:
+    volumes:
       - ./prometheus:/etc/prometheus
       - prometheus_data:/prometheus
-      command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      networks:
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    networks:
       - educationalgames_network
 
   cadvisor:
-      image: gcr.io/cadvisor/cadvisor:latest
-      container_name: cadvisor
-      restart: unless-stopped
-      ports:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    restart: unless-stopped
+    ports:
       - "8081:8080"
-      volumes:
+    volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:rw
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
-      networks:
+    networks:
       - educationalgames_network
 
   grafana:
-      image: grafana/grafana:latest
-      container_name: grafana
-      restart: unless-stopped
-      ports:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    ports:
       - "3000:3000"
-      volumes:
+    volumes:
       - grafana_data:/var/lib/grafana
-      networks:
+    networks:
       - educationalgames_network
-  
+
   node-exporter:
     image: prom/node-exporter:latest
     container_name: node-exporter
@@ -165,14 +164,14 @@ services:
     ports:
       - "9100:9100"
     volumes:
-      - '/proc:/host/proc:ro'
-      - '/sys:/host/sys:ro'
-      - '/:/rootfs:ro'
+      - "/proc:/host/proc:ro"
+      - "/sys:/host/sys:ro"
+      - "/:/rootfs:ro"
     command:
-      - '--path.procfs=/host/proc'
-      - '--path.sysfs=/host/sys'
-      - '--path.rootfs=/rootfs'
-      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+      - "--path.procfs=/host/proc"
+      - "--path.sysfs=/host/sys"
+      - "--path.rootfs=/rootfs"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
     networks:
       - educationalgames_network
 

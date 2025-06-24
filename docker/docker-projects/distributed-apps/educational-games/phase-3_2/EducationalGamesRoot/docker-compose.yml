@@ -84,7 +84,7 @@ services: # Database MariaDB
 
   # Nginx come Reverse Proxy e Load Balancer e terminatore HTTPS
   # Utilizza un template per la configurazione dinamica
-  # Assicurarsi che il file educationalgames.conf.template sia presente nella cartella nginx/conf.d
+  # Assicurarsi che il file educationalgames.template.conf sia presente nella cartella nginx/conf.d
   nginx:
     image: nginx:1.27.5
     container_name: nginx
@@ -93,7 +93,7 @@ services: # Database MariaDB
       - "${NGINX_HTTP_HOST_PORT:-8080}:80"
       - "${NGINX_HTTPS_HOST_PORT:-8443}:443"
     volumes:
-      - ./nginx/conf.d/educationalgames.conf.template:/etc/nginx/templates/educationalgames.conf.template:ro
+      - ./nginx/conf.d/educationalgames.template.conf:/etc/nginx/templates/educationalgames.template.conf:ro
       - ./nginx/ssl/dev-certs:/etc/nginx/ssl/dev-certs:ro
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     environment:
@@ -113,7 +113,7 @@ services: # Database MariaDB
         echo "NGINX_HTTPS_HOST_PORT: $NGINX_HTTPS_HOST_PORT"
         echo "WEBAPP_CONTAINER_INTERNAL_PORT: $WEBAPP_CONTAINER_INTERNAL_PORT"
         envsubst '$$NGINX_SERVER_NAME $$NGINX_HTTPS_HOST_PORT $$WEBAPP_CONTAINER_INTERNAL_PORT' \
-          < /etc/nginx/templates/educationalgames.conf.template \
+          < /etc/nginx/templates/educationalgames.template.conf \
           > /etc/nginx/conf.d/educationalgames.conf
         echo "Generated nginx configuration:"
         cat /etc/nginx/conf.d/educationalgames.conf
@@ -190,7 +190,7 @@ services: # Database MariaDB
     image: alpine:latest
     container_name: otel-config-processor
     volumes:
-      - ./otel-collector-config.yml.template:/templates/config.yml.template:ro
+      - ./otel-collector-config.template.yml:/templates/config.template.yml:ro
       - otel_config_volume:/output
     environment:
       - OTEL_TAIL_SAMPLING_LATENCY_THRESHOLD_MS=${OTEL_TAIL_SAMPLING_LATENCY_THRESHOLD_MS:-500}
@@ -208,7 +208,7 @@ services: # Database MariaDB
         apk add --no-cache gettext
 
         envsubst '$$OTEL_TAIL_SAMPLING_LATENCY_THRESHOLD_MS $$OTEL_TAIL_SAMPLING_PROBABILISTIC_PERCENT' \
-          < /templates/config.yml.template \
+          < /templates/config.template.yml \
           > /output/config.yml
         echo "Generated OpenTelemetry Collector configuration:"
         cat /output/config.yml
