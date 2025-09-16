@@ -2,6 +2,15 @@
 
 - [Introduzione a Docker](#introduzione-a-docker)
   - [Riferimenti alla documentazione di Docker](#riferimenti-alla-documentazione-di-docker)
+  - [Guida all'Installazione di Docker Desktop con WSL 2 su Windows](#guida-allinstallazione-di-docker-desktop-con-wsl-2-su-windows)
+    - [Il Ruolo di Hyper-V: Serve Ancora?](#il-ruolo-di-hyper-v-serve-ancora)
+      - [**Verifica dei Prerequisiti di Virtualizzazione**](#verifica-dei-prerequisiti-di-virtualizzazione)
+    - [Installazione di WSL 2 e Ubuntu 24.04 LTS](#installazione-di-wsl-2-e-ubuntu-2404-lts)
+      - [**Passo 1: Installazione di WSL**](#passo-1-installazione-di-wsl)
+      - [**Passo 2: Configurazione Iniziale di Ubuntu**](#passo-2-configurazione-iniziale-di-ubuntu)
+    - [Installazione di Docker Desktop e Integrazione con WSL 2](#installazione-di-docker-desktop-e-integrazione-con-wsl-2)
+      - [**Passo 1: Download e Installazione**](#passo-1-download-e-installazione)
+      - [**Passo 2: Abilitazione dell'Integrazione WSL**](#passo-2-abilitazione-dellintegrazione-wsl)
   - [Comandi di base di Docker](#comandi-di-base-di-docker)
     - [Avviare un container in modalità `detached`](#avviare-un-container-in-modalità-detached)
     - [Eseguire un nuovo comando in un container attivo (running)](#eseguire-un-nuovo-comando-in-un-container-attivo-running)
@@ -10,6 +19,7 @@
   - [Elenco delle immagini locali sul Docker host](#elenco-delle-immagini-locali-sul-docker-host)
   - [Rimozione di immagini Docker](#rimozione-di-immagini-docker)
   - [Esempio di un container che ospita una web app](#esempio-di-un-container-che-ospita-una-web-app)
+  - [Un esempio di sito web statico servito all'interno di un container Docker di Nginx](#un-esempio-di-sito-web-statico-servito-allinterno-di-un-container-docker-di-nginx)
   - [Lanciare un container in modalità interattiva](#lanciare-un-container-in-modalità-interattiva)
   - [Abilitare uno pseudo-terminale (pseudo-TTY) sul container](#abilitare-uno-pseudo-terminale-pseudo-tty-sul-container)
   - [Uscita da un container](#uscita-da-un-container)
@@ -72,6 +82,106 @@ I riferimenti alla documentazione di Docker sono:
 
 - Il [sito ufficiale della documentazione Docker](https://docs.docker.com/)
 - Le [pagine della documentazione relative alla CLI di Docker](https://docs.docker.com/reference/cli/docker/)
+
+## Guida all'Installazione di Docker Desktop con WSL 2 su Windows
+
+### Il Ruolo di Hyper-V: Serve Ancora?
+
+In passato, Docker Desktop per Windows si basava esclusivamente su **Hyper-V**, la tecnologia di virtualizzazione di Microsoft. Con l'introduzione di WSL 2, lo scenario è cambiato. WSL 2 utilizza una versione ottimizzata di Hyper-V sotto il cofano, nota come **Piattaforma macchina virtuale** (Virtual Machine Platform). Quando si installa Docker Desktop con il backend WSL 2 (l'opzione predefinita e consigliata), non è più necessario abilitare manualmente l'intera funzionalità di Hyper-V. È sufficiente che la Piattaforma macchina virtuale sia attiva.
+
+#### **Verifica dei Prerequisiti di Virtualizzazione**
+
+Prima di iniziare, è fondamentale assicurarsi che la virtualizzazione hardware sia abilitata nel BIOS/UEFI del computer. Per verificarlo rapidamente da Windows:
+
+1. Aprire il **Task Manager** (Gestione attività) premendo `Ctrl + Maiusc + Esc`.
+
+2. Andare alla scheda **Prestazioni**.
+
+3. Selezionare la **CPU**.
+
+4. Controllare la voce **Virtualizzazione**: deve essere **Abilitato**.
+
+Se la virtualizzazione non fosse abilitata, è necessario riavviare il computer ed entrare nel BIOS/UEFI (solitamente premendo tasti come `F2`, `F10`, o `Canc` all'avvio) per attivarla. Le opzioni si trovano spesso sotto le sezioni relative a "CPU Configuration" o "Advanced" e possono avere nomi come "Intel VT-x" o "AMD-V".
+
+### Installazione di WSL 2 e Ubuntu 24.04 LTS
+
+WSL 2 permette di eseguire un kernel Linux reale direttamente su Windows. Questo garantisce prestazioni elevate e piena compatibilità con strumenti come Docker.
+
+#### **Passo 1: Installazione di WSL**
+
+Per installare WSL e la sua distribuzione Linux predefinita (che è solitamente l'ultima versione LTS di Ubuntu), basta aprire un terminale come **PowerShell** o il **Prompt dei comandi** con privilegi di amministratore e digitare un singolo comando:
+
+```sh
+wsl --install
+```
+
+Questo comando si occupa di:
+
+- Abilitare le funzionalità necessarie di Windows, inclusa la **Piattaforma macchina virtuale**.
+
+- Scaricare e installare l'ultima versione del kernel Linux.
+
+- Impostare WSL 2 come versione predefinita.
+
+- Scaricare e installare la distribuzione **Ubuntu LTS**.
+
+Al termine dell'installazione, sarà necessario **riavviare il computer**.
+
+#### **Passo 2: Configurazione Iniziale di Ubuntu**
+
+Dopo il riavvio, l'installazione di Ubuntu si avvierà automaticamente. Verrà richiesto di creare un **nome utente** e una **password**. Queste credenziali sono specifiche per l'ambiente Linux e non sono collegate all'account di Windows.
+
+Se si desidera installare specificamente **Ubuntu 24.04 LTS**, è possibile cercarla nel **Microsoft Store** e installarla da lì, oppure usare il seguente comando da PowerShell (come amministratore) dopo aver eseguito `wsl --install`:
+
+```sh
+wsl --install -d Ubuntu-24.04
+```
+
+Per verificare le distribuzioni installate e la versione di WSL in uso, si può usare il comando:
+
+```sh
+wsl -l -v
+```
+
+L'output dovrebbe mostrare la distribuzione Ubuntu con la `VERSION` impostata a `2`.
+
+### Installazione di Docker Desktop e Integrazione con WSL 2
+
+Ora che WSL 2 è pronto, si può procedere con l'installazione di Docker Desktop.
+
+#### **Passo 1: Download e Installazione**
+
+1. Andare alla pagina di download ufficiale di **Docker Desktop**: [Docker Desktop](https://www.docker.com/products/docker-desktop).
+
+2. Scaricare il file di installazione per Windows.
+
+3. Eseguire l'installer. Durante la configurazione, assicurarsi che l'opzione **"Use WSL 2 instead of Hyper-V"** sia selezionata. Questa è l'impostazione predefinita e raccomandata.
+
+4. Seguire le istruzioni a schermo e riavviare il computer quando richiesto.
+
+#### **Passo 2: Abilitazione dell'Integrazione WSL**
+
+Dopo l'installazione, Docker Desktop si avvierà automaticamente. L'icona della balena di Docker apparirà nell'area di notifica. Per assicurarsi che Docker sia utilizzabile dalla distribuzione Ubuntu:
+
+1. Fare clic con il tasto destro sull'icona di Docker e seleziona **"Settings"** (Impostazioni).
+
+2. Andare su **"Resources" > "WSL Integration"**.
+
+3. Assicurarsi che l'opzione **"Enable integration with my default WSL distro"** sia attiva.
+
+4. Nella lista sottostante, abilitare l'integrazione per la distribuzione Ubuntu (es. `Ubuntu-24.04`).
+
+5. Cliccare su **"Apply & Restart"**.
+
+A questo punto, l'integrazione è completa. I comandi `docker` e `docker-compose` saranno disponibili e funzionanti direttamente dal terminale di Ubuntu in WSL 2.
+
+Per verificarlo, aprire il terminale di Ubuntu e digita:
+
+```sh
+docker --version
+```
+
+Si dovrebbe vedere la versione di Docker Engine installata, a conferma che tutto funziona correttamente.
 
 ## Comandi di base di Docker
 
@@ -222,8 +332,7 @@ docker image rm image_name
 
 ## Esempio di un container che ospita una web app
 
-Si provi a lanciare un container a partire dall'immagine `kodekloud/simple-webapp`. Il container in questione fa partire una web application che mostra una pagina
-di un colore random, oppure di un colore che viene impostato attraverso una variabile d'ambiente.
+Si provi a lanciare un container a partire dall'immagine `kodekloud/simple-webapp`. Il container in questione fa partire una web application che mostra una pagina di un colore random, oppure di un colore che viene impostato attraverso una variabile d'ambiente.
 
 Se si provasse a lanciare il container con il comando `docker run kodekloud/simple-webapp` la shell rimarrebbe collegata al container, ma anche cambiando shell e provando ad aprire il browser all'indirizzo indicato nella shell del container non si vedrebbe nulla. L'output a console è:
 
@@ -286,6 +395,34 @@ docker stop container_id1 container_id2 container_id3
 docker rm container_id1 container_id2 container_id3
 ```
 
+## Un esempio di sito web statico servito all'interno di un container Docker di Nginx
+
+Si consideri il seguente [esempio di sito statico](https://github.com/cloudacademy/static-website-example) (pagine web con solo HTML, CSS, JavaScript). Per lanciare un container Docker che serve il sito web è sufficiente:
+
+1. Scaricare localmente il repository del progetto
+
+    ```sh
+    git clone https://github.com/cloudacademy/static-website-example.git
+    ```
+
+2. Lanciare il container Docker con il comando
+
+    ```sh
+    docker run --name some-nginx -v 'C:\Users\path\to\static-website-example:/usr/share/nginx/html:ro' -d -p 8080:80 nginx
+    ```
+
+3. Aprire il browser all'indirizzo `http://localhost:8080/`
+
+4. Terminare l'esecuzione del container con:
+
+   ```sh
+    docker stop some-nginx
+   ```
+
+5. Il container potrà essere fatto ripartire con `docker start some-nginx` oppure rimosso con `docker rm some-nginx`
+
+Alcuni dei comandi visti in questo esempio verranno ripresi e spiegati in dettaglio negli esempi successivi.
+
 ## Lanciare un container in modalità interattiva
 
 ```sh
@@ -306,20 +443,25 @@ L'opzione `-i` permette solo di avere accesso allo standard input del container,
 # to the I/O streams of the container. Allocating a pseudo-TTY to the container means that
 # you get access to input and output feature that TTY devices provide.
 # Ad esempio, lanciamo un container ubuntu con le opzioni -it (abbreviazione di -i -t)
+
 docker run -it --rm ubuntu
+
 # É anche possibile lanciare un container in modalità detached con le opzioni -it
+
 docker run -itd ubuntu
-# In questo modo il container viene lanciato con le opzioni -i e -t abilitate, ma la shell
-# corrente non è collegata ad esso. Sarà possibile collegarsi al container successivamente
-# con un comando come docker attach, oppure sarà possibile eseguire un comando con docker exec
+
+# In questo modo il container viene lanciato con le opzioni -i e -t abilitate, ma la shell corrente non è collegata ad esso. Sarà possibile collegarsi al container successivamente con un comando come docker attach, oppure sarà possibile eseguire un comando con docker exec
+
 docker run -itd --rm ubuntu
+
 # oppure
+
 docker run -i -t -d --rm ubuntu
 ```
 
 Si noti che, nell'esempio precedente, con l'opzione `-it` il container non viene chiuso immediatamente poiché il comando predefinito è `/bin/bash` e il container ha lo `STDIN` aperto. In questo caso il container è in attesa che venga impartito un input sullo ``STDIN`. Per chiudere il container in questo caso esistono alcune opzioni mostrate negli esempi successivi.
 
- Se si prova ad eseguire il comando seguente, si vedrà che il comando eseguito dal container è `sleep 20` e non `/bin/bash` e allo scadere del tempo stabilito il container va nello `stopped` e quindi viene automaticamente rimosso grazie all'opzione `--rm`
+ Se si prova ad eseguire il comando seguente, si vedrà che il comando eseguito dal container è `sleep 30` e non `/bin/bash` e allo scadere del tempo stabilito il container va nello stato `stopped` e quindi viene automaticamente rimosso grazie all'opzione `--rm`
 
 ```sh
 docker run -itd --rm ubuntu sleep 30
@@ -367,7 +509,7 @@ docker run -it --name my_server2 ubuntu
 
 Per uscire da un container senza chiuderlo si utilizza la combinazione di tasti `CTRL+P` seguito da `CTRL+Q`. Dopo questa sequenza il container continua la sua esecuzione in background.
 
-:memo: **ATTENZIONE!** se si utilizza il terminale di VS Code è possibile che le combinazioni di tasti `CTRL+P` e `CTRL+Q` siano già associate a scorciatoie di VS Code. In questo caso basta connettersi con un terminale esterno a VS Code, utilizzando il comando `docker attach`.
+:memo: **ATTENZIONE!** se si utilizza il terminale di VS Code è possibile che le combinazioni di tasti `CTRL+P` e `CTRL+Q` siano già associate a scorciatoie di VS Code. In questo caso sarà opportuno connettersi al container con un terminale esterno a VS Code, utilizzando il comando `docker attach`.
 
 ## Attach a un container
 
