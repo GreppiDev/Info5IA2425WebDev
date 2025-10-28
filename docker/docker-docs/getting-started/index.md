@@ -605,7 +605,7 @@ The Docker daemon performs dynamic subnetting and IP address allocation for cont
 
 ### DNS service
 
-*Containers use the same [DNS servers as the host by ](https://docs.docker.com/engine/network/#dns-services), but you can override this with --dns.
+*Containers use the same [DNS servers as the host](https://docs.docker.com/engine/network/#dns-services), but you can override this with --dns.
 By default, containers inherit the DNS settings as defined in the /etc/resolv.conf configuration file.
 Containers that attach to the default bridge network receive a copy of this file.
 Containers that attach to a custom network use Docker's embedded DNS server.
@@ -669,7 +669,7 @@ host system's filesystem
 
 [In linux](https://forums.docker.com/t/how-can-i-find-my-volumes-in-windows-11/136934) sono nella cartella: `/var/lib/docker/volumes/`
 
-[In Windows](https://superuser.com/questions/1726309/convert-wsl-path-to-uri-compliant-wsl-localhost) sono nella cartella `\\wsl.localhost\docker-desktop-data\data\docker\volumes`
+[In Windows](https://superuser.com/questions/1726309/convert-wsl-path-to-uri-compliant-wsl-localhost) sono nella cartella `\\wsl.localhost\docker-desktop\mnt\docker-desktop-disk\data\docker\volumes`
 
 Lo stesso percorso si può scrivere anche come: `\\wsl$\docker-desktop-data\data\docker\volumes`
 
@@ -869,7 +869,7 @@ si apre un'altra finestra del terminale su WSL (Ubuntu) e si digita il comando s
         # impostare il proxy per apt
 
         sudo tee -a /etc/apt/apt.conf.d/proxy.conf <<EOF
-        Acquire::http::Proxy "http://proxy12.intranet:3128";
+        Acquire::http::Proxy "http://proxy.intranet:3128";
         EOF
         
         # verificare se il proxy per apt-get è stato configurato correttamente:

@@ -589,8 +589,46 @@ static async Task<Results<NoContent,NotFound>> DeleteTodo(int id, TodoDb db)
 
 #### curl
 
-Il command line [`curl`](https://curl.se/) è stato già introdotto nel corso di informatica di quarta. I riferimenti per l'utilizzo di curl sono riassunti nelle dispense di informatica di quarta e nella guida online [everything curl](https://everything.curl.dev/).
+Il command line [`curl`](https://curl.se/) è stato già introdotto nel corso di informatica di quarta. I riferimenti per l'utilizzo di curl sono riassunti nelle dispense di informatica di quarta e nella guida online [everything curl](https://everything.curl.dev/). In questa sede è opportuno ricordare che per effettuare le richieste al server Kestrel di una applicazione Asp.Net mediante `curl` con protocollo https ci sono diverse opzioni disponibili:
 
+- **uso dell'opzione `-k` oppure `--insecure`**: con questa opzione curl non verifica la validità del certificato ssl del server. Questa opzione è insicura e va usata solo in scenari di debug o testing su server di cui si conosce direttamente la provenienza. Ad esempio:
+
+  ```bash
+  curl -k -X 'POST' `
+    'https://localhost:7157/todoitems' `
+    -H 'accept: */*' `
+    -H 'Content-Type: application/json' `
+    -d '{
+    "id": 0,
+    "name": "Studiare ASP.NET",
+    "isComplete": false
+  }'
+  ```
+
+- **uso dell'opzione `--ca-native`**: questa opzione permette a curl di usare i Trusted Root Certificate Authorities dell'OS su cui è in esecuzione. Nel caso di Windows, si tratta dei certificati `trusted` da Windows e che si possono gestire mediante lo strumento `certmgr`. Tuttavia questa opzione non è utilizzabile per tutte le versioni di `curl`, ma solo per quelle che nel loro processo di build hanno abilitato il trust delle Root CA del OS host.
+- **uso dell'opzione `--cacert`**: con questa opzione si dice a curl di utilizzare un `custom CA store` e può essere utilizzato in combinazione al comando [`dotnet dev-certs`](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-dev-certs), come mostrato di seguito:
+  
+   >:memo: uso di `dotnet dev-certs https` per la gestione del certificato https di sviluppo auto-prodotto
+     1. `dotnet dev-certs https --check`: permette di verificare se esiste un certificato https di sviluppo valido
+     2. `dotnet dev-certs https --clean`: elimina eventuali certificati https presenti
+     3. `dotnet dev-certs https --trust`: crea un certificato https auto-prodotto per lo sviluppo, se non esiste già un certificato valido
+     4. `dotnet dev-certs https -ep "$env:USERPROFILE\.aspnet\https\aspnetapp.pem" --format PEM`: esporta il certificato https auto-prodotto esistente nel file specificato (le cartelle indicate nel path devono esistere)
+
+- Si esporta il certificato auto-prodotto in un file, ad esempio in `$env:USERPROFILE\.aspnet\https\aspnetapp.pem`
+- Si utilizza `curl` con l'opzione `--cacert`, ad esempio:
+  
+  ```bash
+  curl --cacert "$env:USERPROFILE\.aspnet\https\aspnetapp.pem" -X 'POST' `
+    'https://localhost:7157/todoitems' `
+    -H 'accept: */*' `
+    -H 'Content-Type: application/json' `
+    -d '{
+    "id": 0,
+    "name": "Studiare ASP.NET",
+    "isComplete": false
+  }'
+  ```
+  
 #### Postman
 
 [Postman](https://www.postman.com/) è uno degli strumenti più utilizzati dagli sviluppatori per il testing di applicazioni web. `Postman` può essere utilizzato sia come web application che come applicazione desktop, come descritto nella [documentazione ufficiale](https://learning.postman.com/docs/getting-started/overview/).
@@ -604,6 +642,45 @@ Esiste anche un plugin di Visual Studio Code che permette di utilizzare `Postman
 `REST Client` è un plugin di VS Code che permette di testare in maniera molto semplice le Web API, utilizzando file con estensione `.http`, oppure `.rest`. Per installare il plugin di `Rest Client` di Huachao Mao in VS Code è sufficiente ricercare il plugin nell'elenco delle estensioni di VS Code e poi installarlo. L'installazione del plugin di `Rest Client` e il suo utilizzo di base in VS Code sono spiegati sulla [pagina di Rest Client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client) nel marketplace di VS Code.
 
 I dettagli sull'utilizzo di `REST Client` sono disponibili sulla [pagina di Github del progetto](https://github.com/Huachao/vscode-restclient) e in [qualche video online](https://youtu.be/Kxp5h8tXdFE?si=W5XovIN_2iSjlRmF)
+
+Un esempio di file di `.http` che effettua chiamate REST sulla Minimal API del tutorial Microsoft `TodoApi` è il seguente:
+
+```text
+@TodoApi_HostAddress = https://localhost:7157
+
+### Get all todo items
+GET {{TodoApi_HostAddress}}/todoitems
+Accept: application/json
+
+### Get complete todo items
+GET {{TodoApi_HostAddress}}/todoitems/complete
+Accept: application/json
+
+### Get todo item by id
+GET {{TodoApi_HostAddress}}/todoitems/1
+Accept: application/json
+
+### Create new todo item
+POST {{TodoApi_HostAddress}}/todoitems
+Content-Type: application/json
+
+{
+    "name": "Walk the dog",
+    "isComplete": false
+}
+
+### Update todo item
+PUT {{TodoApi_HostAddress}}/todoitems/1
+Content-Type: application/json
+
+{
+    "name": "Walk the dog",
+    "isComplete": true
+}
+
+### Delete todo item
+DELETE {{TodoApi_HostAddress}}/todoitems/1
+```
 
 #### Thunder Client
 
