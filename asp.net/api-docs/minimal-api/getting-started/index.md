@@ -593,7 +593,8 @@ Il command line [`curl`](https://curl.se/) è stato già introdotto nel corso di
 
 - **uso dell'opzione `-k` oppure `--insecure`**: con questa opzione curl non verifica la validità del certificato ssl del server. Questa opzione è insicura e va usata solo in scenari di debug o testing su server di cui si conosce direttamente la provenienza. Ad esempio:
 
-  ```bash
+  ```powershell
+  # powershell
   curl -k -X 'POST' `
     'https://localhost:7157/todoitems' `
     -H 'accept: */*' `
@@ -617,7 +618,8 @@ Il command line [`curl`](https://curl.se/) è stato già introdotto nel corso di
 - Si esporta il certificato auto-prodotto in un file, ad esempio in `$env:USERPROFILE\.aspnet\https\aspnetapp.pem`
 - Si utilizza `curl` con l'opzione `--cacert`, ad esempio:
   
-  ```bash
+  ```powershell
+  # powershell
   curl --cacert "$env:USERPROFILE\.aspnet\https\aspnetapp.pem" -X 'POST' `
     'https://localhost:7157/todoitems' `
     -H 'accept: */*' `

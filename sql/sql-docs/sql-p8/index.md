@@ -31,9 +31,36 @@
       - [Esempi di query con viste - database `dbscuola2`](#esempi-di-query-con-viste---database-dbscuola2)
     - [Operazioni di aggiornamento con viste - updatable and insertable views](#operazioni-di-aggiornamento-con-viste---updatable-and-insertable-views)
       - [Un esempio didattico di viste aggiornabili](#un-esempio-didattico-di-viste-aggiornabili)
+  - [Common Table Expression (CTE)](#common-table-expression-cte)
+    - [Vantaggi delle CTE](#vantaggi-delle-cte)
+    - [Sintassi delle CTE](#sintassi-delle-cte)
+    - [CTE vs VIEW vs Tabelle temporanee](#cte-vs-view-vs-tabelle-temporanee)
+    - [Quando usare CTE vs VIEW](#quando-usare-cte-vs-view)
+    - [Esempi di CTE con i database di esempio del corso](#esempi-di-cte-con-i-database-di-esempio-del-corso)
+      - [Esempio 1: CTE semplice - database `classicmodels`](#esempio-1-cte-semplice---database-classicmodels)
+      - [Esempio 2: CTE multiple - database `classicmodels`](#esempio-2-cte-multiple---database-classicmodels)
+      - [Esempio 3: CTE con aggregazioni multiple - database `piscine_milano`](#esempio-3-cte-con-aggregazioni-multiple---database-piscine_milano)
+      - [Esempio 4: CTE per semplificare query complesse - database `dbscuola2`](#esempio-4-cte-per-semplificare-query-complesse---database-dbscuola2)
+    - [CTE ricorsive](#cte-ricorsive)
+      - [Come funzionano le CTE ricorsive](#come-funzionano-le-cte-ricorsive)
+      - [Sintassi delle CTE ricorsive](#sintassi-delle-cte-ricorsive)
+      - [Esempio 1: Gerarchia di categorie - database `classicmodels`](#esempio-1-gerarchia-di-categorie---database-classicmodels)
+      - [Esempio 2: Generare una sequenza di date - database `piscine_milano`](#esempio-2-generare-una-sequenza-di-date---database-piscine_milano)
+      - [Esempio 3: Gerarchia di stage multi-livello - database `studenti_stages_aziende`](#esempio-3-gerarchia-di-stage-multi-livello---database-studenti_stages_aziende)
+      - [Esempio 4: Gerarchia che mostra studenti e aziende con livelli di relazione - database `studenti_stages_aziende`](#esempio-4-gerarchia-che-mostra-studenti-e-aziende-con-livelli-di-relazione---database-studenti_stages_aziende)
+      - [Esempio 5: Espandere categorie con livelli - database `classicmodels`](#esempio-5-espandere-categorie-con-livelli---database-classicmodels)
+      - [Best practices per le CTE ricorsive](#best-practices-per-le-cte-ricorsive)
+      - [Limitazioni e considerazioni delle CTE ricorsive](#limitazioni-e-considerazioni-delle-cte-ricorsive)
+      - [Quando usare le CTE ricorsive](#quando-usare-le-cte-ricorsive)
+    - [Best practices per le CTE](#best-practices-per-le-cte)
+    - [Limitazioni delle CTE](#limitazioni-delle-cte)
   - [Tabelle temporanee](#tabelle-temporanee)
     - [Esempi di tabelle temporanee](#esempi-di-tabelle-temporanee)
     - [Caratteristiche delle tabelle temporanee](#caratteristiche-delle-tabelle-temporanee)
+  - [Riepilogo comparativo: VIEW, CTE, Tabelle temporanee e Subquery](#riepilogo-comparativo-view-cte-tabelle-temporanee-e-subquery)
+    - [Scenari d'uso consigliati](#scenari-duso-consigliati)
+    - [Esempio pratico comparativo](#esempio-pratico-comparativo)
+    - [Considerazioni finali](#considerazioni-finali)
 
 ## Subquery
 
@@ -892,6 +919,455 @@ FROM test
 LIKE 'v%';
 ```
 
+## Common Table Expression (CTE)
+
+Una **Common Table Expression (CTE)** è una tabella temporanea denominata definita all'interno di una singola query SQL. A differenza delle viste, le CTE non vengono memorizzate nel database ma esistono solo per la durata dell'esecuzione della query principale. La sintassi utilizza la clausola `WITH`.
+
+Le CTE sono state introdotte nello **standard SQL:1999** e sono supportate da MySQL a partire dalla versione **8.0** e da MariaDB a partire dalla versione **10.2.1**.
+
+### Vantaggi delle CTE
+
+✅ **Leggibilità**: La logica è chiara e strutturata, suddivisa in passaggi logici
+
+✅ **Manutenibilità**: Non si ripete la stessa subquery (principio DRY - Don't Repeat Yourself)
+
+✅ **Performance**: Il database può ottimizzare meglio l'esecuzione rispetto alle subquery nidificate
+
+✅ **Riutilizzabilità**: Una CTE può essere referenziata multiple volte nella query principale
+
+### Sintassi delle CTE
+
+```sql
+WITH cte_name (column1, column2, ...) AS (
+    SELECT ...
+)
+SELECT * FROM cte_name;
+```
+
+È possibile definire **CTE multiple** separandole con la virgola:
+
+```sql
+WITH 
+    cte1 AS (SELECT ...),
+    cte2 AS (SELECT ...),
+    cte3 AS (SELECT ...)
+SELECT * FROM cte1 JOIN cte2 ON ... JOIN cte3 ON ...;
+```
+
+### CTE vs VIEW vs Tabelle temporanee
+
+| Caratteristica | CTE | VIEW | Tabella temporanea |
+|----------------|-----|------|-------------------|
+| **Persistenza** | Solo per la query | Memorizzata nel database | Solo per la sessione |
+| **Visibilità** | Solo nella query | Globale per il database | Solo per la sessione |
+| **Dati aggiornati** | Sempre aggiornati | Sempre aggiornati | Snapshot al momento della creazione |
+| **Performance** | Ottima ottimizzazione | Buona | Dipende dall'uso |
+| **Quando usarla** | Logica specifica per report | Query riutilizzate frequentemente | Dati intermedi complessi |
+
+### Quando usare CTE vs VIEW
+
+**Usare una CTE quando:**
+
+✅ Si ha bisogno di una tabella temporanea per una query complessa specifica per un report
+
+✅ Si vuole suddividere la logica in passaggi più leggibili
+
+✅ Si deve referenziare la stessa subquery multiple volte nella stessa query
+
+✅ Si sta usando MySQL 8.0+ o MariaDB 10.2.1+
+
+✅ La logica è specifica per questo report e non verrà usata altrove
+
+**Usare una VIEW quando:**
+
+✅ La query è riutilizzata frequentemente in molte parti dell'applicazione
+
+✅ Si vuole semplificare l'accesso ai dati per altri utenti/sviluppatori
+
+✅ Si deve nascondere complessità o colonne sensibili per motivi di sicurezza
+
+✅ Si hanno strumenti legacy che non supportano CTE (MySQL 5.x)
+
+✅ La logica è stabile e non cambia spesso
+
+### Esempi di CTE con i database di esempio del corso
+
+#### Esempio 1: CTE semplice - database `classicmodels`
+
+Trovare i clienti con credito superiore alla media, mostrando anche la differenza rispetto alla media.
+
+```sql
+WITH media_crediti AS (
+    SELECT AVG(creditLimit) AS media
+    FROM customers
+)
+SELECT 
+    customerName, 
+    creditLimit,
+    CONVERT(creditLimit - (SELECT media FROM media_crediti), DECIMAL(10,2)) AS differenza
+FROM customers
+WHERE creditLimit > (SELECT media FROM media_crediti);
+```
+
+#### Esempio 2: CTE multiple - database `classicmodels`
+
+Trovare i prodotti il cui prezzo di acquisto è superiore alla media della loro categoria, mostrando anche il prezzo medio della categoria.
+
+```sql
+WITH prezzo_medio_per_categoria AS (
+    SELECT 
+        productline, 
+        AVG(buyprice) AS prezzo_medio
+    FROM products
+    GROUP BY productline
+),
+prodotti_sopra_media AS (
+    SELECT 
+        p.productName,
+        p.productline,
+        p.buyprice,
+        pmc.prezzo_medio
+    FROM products p
+    JOIN prezzo_medio_per_categoria pmc 
+        ON p.productline = pmc.productline
+    WHERE p.buyprice > pmc.prezzo_medio
+)
+SELECT * FROM prodotti_sopra_media
+ORDER BY productline, buyprice DESC;
+```
+
+#### Esempio 3: CTE con aggregazioni multiple - database `piscine_milano`
+
+Analizzare i corsi per piscina, mostrando statistiche dettagliate.
+
+```sql
+WITH stats_piscina AS (
+    SELECT 
+        Piscina,
+        COUNT(*) AS numero_corsi,
+        AVG(Costo) AS costo_medio,
+        MIN(Costo) AS costo_minimo,
+        MAX(Costo) AS costo_massimo
+    FROM corsi
+    GROUP BY Piscina
+),
+corsi_costosi AS (
+    SELECT 
+        Piscina,
+        NomeC,
+        Costo
+    FROM corsi
+    WHERE Costo > (SELECT AVG(Costo) FROM corsi)
+)
+SELECT 
+    sp.Piscina,
+    sp.numero_corsi,
+    CONVERT(sp.costo_medio, DECIMAL(8,2)) AS costo_medio,
+    cc.NomeC AS corso_costoso,
+    cc.Costo
+FROM stats_piscina sp
+LEFT JOIN corsi_costosi cc ON sp.Piscina = cc.Piscina
+ORDER BY sp.Piscina, cc.Costo DESC;
+```
+
+#### Esempio 4: CTE per semplificare query complesse - database `dbscuola2`
+
+Trovare le classi con numero di assenze superiore alla media, mostrando anche gli studenti con più assenze.
+
+```sql
+WITH tot_assenze_per_classe AS (
+    SELECT 
+        s.Classe,
+        COUNT(*) AS tot_assenze
+    FROM studenti s
+    JOIN assenze a ON s.Matricola = a.Studente
+    WHERE a.Data BETWEEN '2023-09-12' AND '2024-06-08'
+    GROUP BY s.Classe
+),
+media_assenze AS (
+    SELECT AVG(tot_assenze) AS media
+    FROM tot_assenze_per_classe
+),
+classi_sopra_media AS (
+    SELECT Classe, tot_assenze
+    FROM tot_assenze_per_classe
+    WHERE tot_assenze > (SELECT media FROM media_assenze)
+)
+SELECT 
+    csm.Classe,
+    csm.tot_assenze AS numero_assenze,
+    s.Cognome,
+    s.Nome,
+    COUNT(a.ID) AS assenze_studente
+FROM classi_sopra_media csm
+JOIN studenti s ON csm.Classe = s.Classe
+JOIN assenze a ON s.Matricola = a.Studente
+GROUP BY csm.Classe, s.Matricola, s.Cognome, s.Nome
+ORDER BY csm.Classe, assenze_studente DESC;
+```
+
+### CTE ricorsive
+
+Le CTE ricorsive sono particolarmente utili per interrogare dati gerarchici o a struttura ad albero, come organigrammi aziendali, categorie con sottocategorie, relazioni padre-figlio, o generare sequenze. La sintassi richiede la parola chiave `RECURSIVE`.
+
+#### Come funzionano le CTE ricorsive
+
+Una CTE ricorsiva è composta da due parti fondamentali:
+
+1. **Anchor member**: La query non ricorsiva che definisce il punto di partenza della gerarchia
+2. **Recursive member**: La query che si richiama ricorsivamente, unendo i risultati ottenuti fino a quel momento con il livello successivo della gerarchia
+
+Il database esegue la CTE ricorsiva in questo modo:
+
+- Esegue l'anchor member e pone i risultati in un insieme temporaneo
+- Esegue il recursive member usando l'insieme temporaneo come input
+- Aggiunge i nuovi risultati all'insieme temporaneo
+- Ripete il recursive member finché non vengono prodotti nuovi risultati
+- Restituisce l'unione di tutti i risultati
+
+#### Sintassi delle CTE ricorsive
+
+```sql
+WITH RECURSIVE cte_name (col1, col2, ...) AS (
+    -- Anchor member: query non ricorsiva che definisce il livello base
+    SELECT col1, col2, ...
+    FROM tabella
+    WHERE condizione_di_base
+    
+    UNION ALL
+    
+    -- Recursive member: query che si richiama
+    SELECT t.col1, t.col2, ...
+    FROM tabella t
+    JOIN cte_name c ON t.col_riferimento = c.col_id
+    WHERE condizione_di_terminazione
+)
+SELECT * FROM cte_name;
+```
+
+:memo: **Importante**:
+
+- L'anchor member e il recursive member devono avere lo stesso numero di colonne e tipi di dati compatibili
+- Usare sempre `UNION ALL` per evitare la rimozione di duplicati (più efficiente)
+- Il recursive member deve fare riferimento alla CTE stessa (`FROM cte_name`)
+- È fondamentale avere una condizione di terminazione per evitare cicli infiniti
+
+#### Esempio 1: Gerarchia di categorie - database `classicmodels`
+
+Creare una gerarchia delle linee di prodotto con livelli (esempio didattico):
+
+```sql
+WITH RECURSIVE gerarchia_prodotti AS (
+    -- Anchor member: seleziona le categorie radice (senza padre)
+    SELECT 
+        productLine,
+        productLine AS categoria_radice,
+        0 AS livello
+    FROM productlines
+    WHERE productLine IN ('Classic Cars', 'Motorcycles')
+    
+    UNION ALL
+    -- Recursive member: aggiunge prodotti come "figli" delle categorie
+    SELECT 
+        p.productName,
+        gp.categoria_radice,
+        gp.livello + 1
+    FROM products p
+    JOIN gerarchia_prodotti gp ON p.productLine = gp.productLine
+    WHERE gp.livello < 2
+)
+SELECT 
+    categoria_radice,
+    livello,
+    productLine AS elemento
+FROM gerarchia_prodotti
+ORDER BY categoria_radice, livello, elemento;
+```
+
+#### Esempio 2: Generare una sequenza di date - database `piscine_milano`
+
+Generare tutte le date di lezioni per un mese specifico:
+
+```sql
+WITH RECURSIVE date_lezioni AS (
+    -- Anchor member: data di inizio
+    SELECT '2025-10-01' AS data_lezione
+    UNION ALL
+    -- Recursive member: aggiunge un giorno alla volta
+    SELECT DATE_ADD(data_lezione, INTERVAL 1 DAY)
+    FROM date_lezioni
+    WHERE data_lezione < '2025-10-31'
+)
+SELECT 
+    dl.data_lezione,
+    l.Piscina,
+    l.Ora
+FROM date_lezioni dl
+LEFT JOIN lezioni l ON dl.data_lezione = l.Giorno
+WHERE l.Giorno IS NOT NULL
+ORDER BY dl.data_lezione;
+```
+
+#### Esempio 3: Gerarchia di stage multi-livello - database `studenti_stages_aziende`
+
+Creare una gerarchia di stage per studenti (esempio didattico).
+
+```sql
+WITH RECURSIVE stage_hierarchy AS (
+    -- Anchor member: seleziona gli stage base
+    SELECT 
+        Studente,
+        Azienda,
+        DurataComplessiva,
+        1 AS livello
+    FROM stages
+    WHERE DurataComplessiva >= 100
+    UNION ALL
+    -- Recursive member: aggiunge livelli
+    SELECT 
+        s.Studente,
+        s.Azienda,
+        s.DurataComplessiva,
+        sh.livello + 1
+    FROM stages s
+    JOIN stage_hierarchy sh 
+        ON s.Studente = sh.Studente
+    WHERE sh.livello < 3
+)
+SELECT * FROM stage_hierarchy;
+```
+
+#### Esempio 4: Gerarchia che mostra studenti e aziende con livelli di relazione - database `studenti_stages_aziende`
+
+```sql
+WITH RECURSIVE esperienze_studente AS (
+    -- Anchor member: studenti con stage di base (durata >= 100 ore)
+    SELECT 
+        s.Codice,
+        s.Cognome,
+        s.Nome,
+        st.Azienda,
+        st.DurataComplessiva,
+        1 AS livello_stage,
+        CAST(st.Azienda AS CHAR(200)) AS percorso_aziende
+    FROM studenti s
+    JOIN stages st ON s.Codice = st.Studente
+    WHERE st.DurataComplessiva >= 100
+    UNION ALL
+    -- Recursive member: aggiunge stage successivi dello stesso studente
+    SELECT 
+        s.Codice,
+        s.Cognome,
+        s.Nome,
+        st.Azienda,
+        st.DurataComplessiva,
+        es.livello_stage + 1,
+        CONCAT(es.percorso_aziende, ' -> ', st.Azienda)
+    FROM studenti s
+    JOIN stages st ON s.Codice = st.Studente
+    JOIN esperienze_studente es ON s.Codice = es.Codice
+    WHERE st.Azienda != es.Azienda
+      AND es.livello_stage < 3
+)
+SELECT 
+    Cognome,
+    Nome,
+    Azienda,
+    DurataComplessiva,
+    livello_stage,
+    percorso_aziende
+FROM esperienze_studente
+ORDER BY Codice, livello_stage;
+```
+
+#### Esempio 5: Espandere categorie con livelli - database `classicmodels`
+
+Mostrare tutti i prodotti con il loro livello di profondità nella gerarchia delle categorie:
+
+```sql
+WITH RECURSIVE prodotti_livellati AS (
+    -- Anchor member: linee di prodotto come livello 0
+    SELECT 
+        productLine,
+        productLine AS elemento,
+        0 AS livello,
+        NULL AS elemento_padre
+    FROM productlines
+    UNION ALL
+    -- Recursive member: prodotti come livello 1
+    SELECT 
+        pl.productLine,
+        p.productName,
+        pl.livello + 1,
+        pl.elemento
+    FROM prodotti_livellati pl
+    JOIN products p ON pl.productLine = p.productLine
+    WHERE pl.livello = 0
+)
+SELECT 
+    elemento_padre AS categoria,
+    livello,
+    elemento AS nome_prodotto
+FROM prodotti_livellati
+WHERE livello > 0
+ORDER BY categoria, nome_prodotto;
+```
+
+#### Best practices per le CTE ricorsive
+
+1. **Definire sempre un limite massimo di ricorsione**: Usare una colonna `livello` e una condizione `WHERE livello < max_livello` per evitare cicli infiniti
+2. **Testare l'anchor member separatamente**: Assicurarsi che l'anchor member restituisca i risultati attesi prima di aggiungere la parte ricorsiva
+3. **Verificare la condizione di terminazione**: Assicurarsi che il recursive member abbia una condizione che eventualmente diventa falsa
+4. **Usare UNION ALL invece di UNION**: UNION ALL è più efficiente perché non rimuove i duplicati
+5. **Documenta la logica ricorsiva**: Aggiungere commenti che spiegano cosa rappresenta ciascun livello della gerarchia
+6. **Limitare la profondità**: Per gerarchie molto profonde, considerare di limitare i livelli per performance
+
+#### Limitazioni e considerazioni delle CTE ricorsive
+
+- **Profondità massima**: MySQL ha un limite predefinito di 1000 iterazioni ricorsive (configurabile con `cte_max_recursion_depth`)
+- **Performance**: Le CTE ricorsive possono essere lente su grandi dataset o gerarchie molto profonde
+- **Cicli infiniti**: Se non c'è una condizione di terminazione corretta, si può creare un ciclo infinito
+- **Memoria**: I risultati intermedi sono memorizzati in memoria, quindi attenzione a dataset molto grandi
+- **Indici**: Non è possibile creare indici sulle CTE ricorsive, il che può impattare le performance
+
+#### Quando usare le CTE ricorsive
+
+✅ **Gerarchie organizzative**: Dipendenze manager-dipendente, strutture aziendali
+
+✅ **Categorie e sottocategorie**: Alberi di categorie, menu navigazione
+
+✅ **Dati temporali**: Generare sequenze di date, calcolare periodi
+
+✅ **Grafi e reti**: Trovare percorsi, analizzare connessioni (con limitazioni)
+
+✅ **Elaborazioni iterative**: Calcoli che richiedono passaggi ripetuti
+
+❌ **Evitare le CTE ricorsive quando**:
+
+- Si ha bisogno di performance massime su grandi dataset
+- La gerarchia è molto profonda (> 10-15 livelli)
+- Si può risolvere il problema con una struttura tabellare piana
+- Si ha a disposizione strumenti specifici per grafi (come Neo4j)
+
+Per ulteriori dettagli sulle CTE ricorsive si veda la [documentazione ufficiale di MySQL](https://dev.mysql.com/doc/refman/9.1/en/with.html#common-table-expressions-recursive) o la [documentazione di MariaDB](https://mariadb.com/kb/en/recursive-common-table-expressions-overview/).
+
+### Best practices per le CTE
+
+1. **Nomina le CTE in modo descrittivo**: Usa nomi che spiegano chiaramente cosa rappresenta la CTE
+2. **Non abusare delle CTE**: Per logiche semplici, una subquery inline può essere più leggibile
+3. **Considera le performance**: In alcuni casi, una CTE può essere meno performante di una subquery se referenziata molte volte
+4. **Documenta le CTE complesse**: Aggiungi commenti per spiegare la logica di CTE intricate
+5. **Test le CTE individualmente**: Puoi testare una CTE eseguendo solo la query interna
+
+### Limitazioni delle CTE
+
+- Le CTE non possono essere create in MySQL versioni precedenti alla 8.0 o MariaDB precedenti alla 10.2.1
+- Le CTE esistono solo per la durata della query principale
+- Non possono essere condivise tra diverse query
+- Non supportano indici (a differenza delle tabelle temporanee)
+
+Per ulteriori dettagli sulle CTE si veda la [documentazione ufficiale di MySQL](https://dev.mysql.com/doc/refman/9.1/en/with.html) o la [documentazione di MariaDB](https://mariadb.com/kb/en/non-recursive-common-table-expressions-overview/).
+
 ## Tabelle temporanee
 
 Una tabella temporanea è utile quando è conveniente memorizzare i dati che richiedono una specifica istruzione `SELECT`. In questi casi, si può usare una tabella temporanea per memorizzare il risultato della prima query e usare un'altra query per elaborarlo.
@@ -963,3 +1439,120 @@ Una tabella temporanea MySQL/MariaDb ha le seguenti caratteristiche:
 - Una tabella temporanea è disponibile e accessibile solo al client che la crea. Diversi client possono creare tabelle temporanee con lo stesso nome senza causare errori perché solo il client che crea la tabella temporanea può vederla. Tuttavia, nella stessa sessione, due tabelle temporanee non possono condividere lo stesso nome.
 - Una tabella temporanea può avere lo stesso nome di una tabella normale in un database. Ad esempio, se si crea una tabella temporanea denominata `employees` nel database di esempio [`classicmodels`](../../sql-scripts/00-classicmodels/mysqlsampledatabase.sql), la tabella `employees` esistente diventa inaccessibile. Ogni query che si esegue sulla tabella `employees` farà riferimento alla tabella temporary `employees`. Quando si elimina la tabella temporanea `employees`, la tabella normale `employees` sarà nuovamente disponibile e accessibile.
 - Per ulteriori dettagli sulle tabelle temporanee si veda [MySQL tutorial - temporary tables](https://www.mysqltutorial.org/mysql-basics/mysql-temporary-table/)
+
+## Riepilogo comparativo: VIEW, CTE, Tabelle temporanee e Subquery
+
+Nella seguente tabella sono riassunte le principali differenze tra le diverse tecniche per creare tabelle derivate in SQL:
+
+| Caratteristica | VIEW | CTE | Tabella temporanea | Subquery (FROM) |
+|----------------|------|-----|-------------------|-----------------|
+| **Persistenza** | Memorizzata nel database | Solo per la query | Solo per la sessione | Solo per la query |
+| **Visibilità** | Globale per il database | Solo nella query | Solo per la sessione | Solo nella query |
+| **Dati aggiornati** | Sempre aggiornati | Sempre aggiornati | Snapshot al momento della creazione | Sempre aggiornati |
+| **Memorizzazione** | Definizione salvata | Definizione temporanea | Dati materializzati temporaneamente | Definizione inline |
+| **Indicizzazione** | No (ma può usare indici delle tabelle base) | No | Sì (può creare indici) | No |
+| **Riutilizzabilità** | Molto alta (definita una volta, usata ovunque) | Media (nella stessa query) | Media (nella stessa sessione) | Bassa (solo nella query specifica) |
+| **Performance** | Buona (ottimizzazione del DBMS) | Ottima (ottimizzazione moderna) | Dipende dall'uso e dagli indici | Può essere subottimale se nidificata |
+| **Versione minima MySQL** | Tutte le versioni | 8.0+ | Tutte le versioni | Tutte le versioni |
+| **Versione minima MariaDB** | Tutte le versioni | 10.2.1+ | Tutte le versioni | Tutte le versioni |
+| **Quando usarla** | Query frequenti, sicurezza, semplicità d'uso | Query complesse, leggibilità, DRY | Dati intermedi complessi, performance | Semplicità, query semplici |
+
+### Scenari d'uso consigliati
+
+**VIEW**: Ideale quando la stessa logica di query viene utilizzata frequentemente in diverse parti dell'applicazione. Perfetta per nascondere la complessità dello schema, implementare la sicurezza a livello di riga o fornire un'interfaccia dati semplificata agli utenti.
+
+**CTE**: Eccellente per query complesse che richiedono passaggi intermedi. La leggibilità è il suo punto di forza principale, specialmente con CTE multiple. Perfetta per report specifici e quando si deve riferire alla stessa subquery più volte.
+
+**Tabella temporanea**: Ottima quando si devono materializzare i risultati intermedi per migliorare le performance, specialmente con dati molto grandi. Utile quando si devono creare indici sui risultati intermedi o quando si lavora con dati che richiedono elaborazioni multi-step nella stessa sessione.
+
+**Subquery nella clausola FROM**: Perfetta per query semplici e dirette. Non richiede sintassi aggiuntiva ed è supportata da tutte le versioni di MySQL/MariaDB. Tuttavia, può diventare difficile da leggere e mantenere se troppo nidificata.
+
+### Esempio pratico comparativo
+
+Con riferimento al database `classicmodels`, supponiamo di voler trovare i clienti con pagamenti totali sopra la media:
+
+**Con VIEW** (riutilizzabile in tutto il database):
+
+```sql
+CREATE VIEW clienti_con_totale_pagamenti AS
+SELECT 
+    c.customerNumber,
+    c.customerName,
+    SUM(p.amount) AS totale_pagamenti
+FROM customers c
+JOIN payments p ON c.customerNumber = p.customerNumber
+GROUP BY c.customerNumber;
+
+SELECT * FROM clienti_con_totale_pagamenti
+WHERE totale_pagamenti > (SELECT AVG(totale_pagamenti) FROM clienti_con_totale_pagamenti);
+```
+
+**Con CTE** (leggibile e temporanea):
+
+```sql
+WITH clienti_con_totale_pagamenti AS (
+    SELECT 
+        c.customerNumber,
+        c.customerName,
+        SUM(p.amount) AS totale_pagamenti
+    FROM customers c
+    JOIN payments p ON c.customerNumber = p.customerNumber
+    GROUP BY c.customerNumber
+)
+SELECT * FROM clienti_con_totale_pagamenti
+WHERE totale_pagamenti > (SELECT AVG(totale_pagamenti) FROM clienti_con_totale_pagamenti);
+```
+
+**Con Tabella temporanea** (materializzata e indicizzabile):
+
+```sql
+CREATE TEMPORARY TABLE clienti_con_totale_pagamenti
+SELECT 
+    c.customerNumber,
+    c.customerName,
+    SUM(p.amount) AS totale_pagamenti
+FROM customers c
+JOIN payments p ON c.customerNumber = p.customerNumber
+GROUP BY c.customerNumber;
+
+CREATE INDEX idx_totale ON clienti_con_totale_pagamenti(totale_pagamenti);
+
+SELECT * FROM clienti_con_totale_pagamenti
+WHERE totale_pagamenti > (SELECT AVG(totale_pagamenti) FROM clienti_con_totale_pagamenti);
+
+DROP TEMPORARY TABLE clienti_con_totale_pagamenti;
+```
+
+**Con Subquery** (semplice ma meno leggibile):
+
+```sql
+SELECT * FROM (
+    SELECT 
+        c.customerNumber,
+        c.customerName,
+        SUM(p.amount) AS totale_pagamenti
+    FROM customers c
+    JOIN payments p ON c.customerNumber = p.customerNumber
+    GROUP BY c.customerNumber
+) AS clienti_con_totale_pagamenti
+WHERE totale_pagamenti > (
+    SELECT AVG(totale_pagamenti) FROM (
+        SELECT SUM(p.amount) AS totale_pagamenti
+        FROM customers c
+        JOIN payments p ON c.customerNumber = p.customerNumber
+        GROUP BY c.customerNumber
+    ) AS sub
+);
+```
+
+### Considerazioni finali
+
+La scelta tra queste tecniche dipende da diversi fattori:
+
+- **Frequenza d'uso**: VIEW per uso frequente, CTE/subquery per uso occasionale
+- **Performance**: Tabelle temporanee per grandi volumi di dati e query complesse
+- **Manutenibilità**: CTE per leggibilità, VIEW per centralizzare la logica
+- **Compatibilità**: Subquery per massima compatibilità con versioni precedenti
+- **Sicurezza**: VIEW per implementare politiche di accesso ai dati
+
+In generale, per query complesse moderne su MySQL 8.0+/MariaDB 10.2.1+, le **CTE** rappresentano il miglior compromesso tra leggibilità, manutenibilità e performance.
