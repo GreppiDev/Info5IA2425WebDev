@@ -34,7 +34,7 @@
   - [Common Table Expression (CTE)](#common-table-expression-cte)
     - [Vantaggi delle CTE](#vantaggi-delle-cte)
     - [Sintassi delle CTE](#sintassi-delle-cte)
-    - [CTE vs VIEW vs Tabelle temporanee](#cte-vs-view-vs-tabelle-temporanee)
+    - [CTE vs VIEW](#cte-vs-view)
     - [Quando usare CTE vs VIEW](#quando-usare-cte-vs-view)
     - [Esempi di CTE con i database di esempio del corso](#esempi-di-cte-con-i-database-di-esempio-del-corso)
       - [Esempio 1: CTE semplice - database `classicmodels`](#esempio-1-cte-semplice---database-classicmodels)
@@ -954,15 +954,15 @@ WITH
 SELECT * FROM cte1 JOIN cte2 ON ... JOIN cte3 ON ...;
 ```
 
-### CTE vs VIEW vs Tabelle temporanee
+### CTE vs VIEW
 
-| Caratteristica | CTE | VIEW | Tabella temporanea |
-|----------------|-----|------|-------------------|
-| **Persistenza** | Solo per la query | Memorizzata nel database | Solo per la sessione |
-| **Visibilità** | Solo nella query | Globale per il database | Solo per la sessione |
-| **Dati aggiornati** | Sempre aggiornati | Sempre aggiornati | Snapshot al momento della creazione |
-| **Performance** | Ottima ottimizzazione | Buona | Dipende dall'uso |
-| **Quando usarla** | Logica specifica per report | Query riutilizzate frequentemente | Dati intermedi complessi |
+| Caratteristica | CTE | VIEW |
+|----------------|-----|------|
+| **Persistenza** | Solo per la query | Memorizzata nel database |
+| **Visibilità** | Solo nella query | Globale per il database |
+| **Dati aggiornati** | Sempre aggiornati | Sempre aggiornati |
+| **Performance** | Ottima ottimizzazione | Buona |
+| **Quando usarla** | Logica specifica per report | Query riutilizzate frequentemente |
 
 ### Quando usare CTE vs VIEW
 
