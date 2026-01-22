@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Semplice</title>
+</head>
+
+<body>
+    <h1>Form Semplice</h1>
+    <form id="simpleForm" method="post" action="">
+        <label for="nome">Nome:</label><br>
+        <input type="text" id="nome" name="nome"><br><br>
+        <label for="cognome">Cognome:</label><br>
+        <input type="text" id="cognome" name="cognome"><br><br>
+        <input type="submit" value="Invia">
+    </form>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:5124';
+        const SUBMIT_URL = `${API_BASE_URL}/submit-form`;
+
+        const form = document.getElementById('simpleForm');
+        form.action = SUBMIT_URL;
+
+        form.addEventListener('submit', function (event) {
+            event.preventDefault(); // Impedisce la submit standard
+
+            const formData = new FormData(this);
+
+            fetch(SUBMIT_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded' // Importante specificare il content type per i form standard
+                },
+                body: new URLSearchParams(formData).toString() // Converte FormData in URL encoded string
+            })
+                .then(response => response.text())
+                .then(data => {
+                    alert(data); // Mostra la risposta del server
+                });
+        });
+    </script>
+</body>
+
+</html>

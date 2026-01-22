@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form con Dropdown</title>
+</head>
+
+<body>
+    <h1>Form con Dropdown</h1>
+    <form id="dropdownForm" method="post" action="/submit-dropdown">
+        <label for="paese">Paese:</label><br>
+        <select id="paese" name="paese">
+            <option value="italia">Italia</option>
+            <option value="francia">Francia</option>
+            <option value="germania">Germania</option>
+            <option value="spagna">Spagna</option>
+        </select><br><br>
+        <input type="submit" value="Invia">
+    </form>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:5124';
+        const SUBMIT_URL = `${API_BASE_URL}/submit-dropdown`;
+        document.getElementById('dropdownForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const formData = new FormData(this);
+
+            fetch(SUBMIT_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams(formData).toString()
+            })
+                .then(response => response.text())
+                .then(data => {
+                    alert(data);
+                });
+        });
+    </script>
+</body>
+
+</html>

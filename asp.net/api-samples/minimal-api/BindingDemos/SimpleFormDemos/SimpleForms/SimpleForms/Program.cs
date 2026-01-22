@@ -6,15 +6,36 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+// CORS: permette alle pagine servite da Live Server (Frontend) di chiamare il backend su un'altra porta.
+// Nota: in produzione conviene restringere ulteriormente o rimuovere questa policy.
+builder.Services.AddCors(options =>
+{
+	options.AddPolicy("FrontendDev", policy =>
+		policy
+			.WithOrigins(
+				"http://localhost:5500",
+				"http://127.0.0.1:5500",
+				"https://localhost:5500",
+				"https://127.0.0.1:5500")
+			.AllowAnyHeader()
+			.AllowAnyMethod());
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
 	app.MapOpenApi();
+	app.UseCors("FrontendDev");
 }
 
-app.UseHttpsRedirection();
+// In sviluppo, evitare redirect automatici HTTP->HTTPS per non complicare le chiamate cross-origin.
+if (!app.Environment.IsDevelopment())
+{
+	app.UseHttpsRedirection();
+}
+
 
 
 // Form standard 
