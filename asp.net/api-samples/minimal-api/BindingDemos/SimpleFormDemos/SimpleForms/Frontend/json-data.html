@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form JSON</title>
+</head>
+
+<body>
+    <h1>Form JSON</h1>
+    <form id="jsonForm" method="post" action="">
+        <label for="nome">Nome:</label><br>
+        <input type="text" id="nome" name="nome"><br><br>
+        <label for="cognome">Cognome:</label><br>
+        <input type="text" id="cognome" name="cognome"><br><br>
+        <input type="submit" value="Invia come JSON">
+    </form>
+
+    <script>
+        document.getElementById('jsonForm').addEventListener('submit', function (event) {
+            event.preventDefault(); // Impedisce la submit standard del form
+
+            const nome = document.getElementById('nome').value;
+            const cognome = document.getElementById('cognome').value;
+
+            // Crea un oggetto JSON con i dati del form
+            const jsonData = {
+                nome: nome,
+                cognome: cognome
+            };
+
+            fetch('http://localhost:5124/submit-json-data', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json' // Specifica che inviamo JSON
+                },
+                body: JSON.stringify(jsonData) // Converte l'oggetto JavaScript in stringa JSON
+            })
+                .then(response => response.json()) // Aspetta una risposta JSON dal server
+                .then(data => {
+                    alert(data.message); // Mostra il messaggio di successo dal server
+                })
+                .catch(error => {
+                    console.error('Errore nella richiesta:', error);
+                    alert('Errore nell\'invio dei dati JSON.');
+                });
+        });
+    </script>
+</body>
+
+</html>

@@ -18,7 +18,8 @@ builder.Services.AddCors(options =>
 				"https://localhost:5500",
 				"https://127.0.0.1:5500")
 			.AllowAnyHeader()
-			.AllowAnyMethod());
+			.AllowAnyMethod()
+			.SetPreflightMaxAge(TimeSpan.FromMinutes(10)));
 });
 
 var app = builder.Build();

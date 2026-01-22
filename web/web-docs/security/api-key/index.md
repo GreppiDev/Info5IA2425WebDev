@@ -64,7 +64,7 @@ Si analizzino in dettaglio le implementazioni:
 
 2. **Endpoint Proxy**: L'endpoint `/api/tmdb/{*endpoint}` cattura qualsiasi path dopo `/api/tmdb/` e lo inoltra a TMDB, preservando i query parameter.
 
-3. **Sicurezza**: 
+3. **Sicurezza**:
    - L'API key non è mai esposta al client
    - Tutte le richieste passano attraverso il backend
    - Possibilità di implementare caching e rate limiting

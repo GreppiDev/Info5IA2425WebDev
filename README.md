@@ -72,8 +72,9 @@
 
 ### Aspetti di sicurezza nelle Web App
 
-   1. [Sicurezza nelle Web API basata sull'API Key: approcci possibili](./web/web-docs/security/api-key/index.md)
-   2. [Sicurezza nelle pagine web: CSRF e XSS](./web/web-docs/security/csrf-xss/index.md)
+   1. [Meccanismo CORS (Cross-Origin Resource Sharing)](./web/web-docs/security/cors/index.md)
+   2. [Sicurezza nelle Web API basata sull'API Key: approcci possibili](./web/web-docs/security/api-key/index.md)
+   3. [Sicurezza nelle pagine web: CSRF e XSS](./web/web-docs/security/csrf-xss/index.md)
 
 ### Autenticazione e Autorizzazione in Applicazioni Web e Mobile
 
