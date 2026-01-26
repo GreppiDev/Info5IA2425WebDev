@@ -1,0 +1,212 @@
+/*
+  Stili base (semplici)
+  Obiettivo: avere un CSS “riutilizzabile” e facile da leggere per pagine di esempio.
+*/
+
+/*
+  Variabili CSS (Custom Properties)
+  - Definite in :root (radice del documento) così sono disponibili ovunque.
+  - Permettono di cambiare rapidamente tema/colore senza riscrivere tutte le regole.
+*/
+:root {
+  /* Colori base del tema scuro */
+  --bg: #0b1220;
+  --card: #111b2e;
+  --text: #e8eefc;
+  --muted: #b7c3de;
+  --accent: #5aa7ff;
+  --border: rgba(255, 255, 255, 0.12);
+}
+
+/*
+  Tema chiaro quando il body ha data-theme="light"
+  Nota: invece di cambiare direttamente background/color su ogni selettore,
+  qui cambiamo SOLO le variabili: tutte le regole che usano var(--...) si aggiornano da sole.
+*/
+body[data-theme="light"] {
+  /* Colori base del tema chiaro */
+  --bg: #f7f8fb;
+  --card: #ffffff;
+  --text: #111827;
+  --muted: #4b5563;
+  --accent: #2563eb;
+  --border: rgba(17, 24, 39, 0.12);
+}
+
+/*
+  Reset minimo / box model
+  box-sizing: border-box fa sì che width/height includano padding e border.
+  È una scelta comune perché rende più prevedibili le dimensioni.
+*/
+* {
+  box-sizing: border-box;
+}
+
+/*
+  Stili globali della pagina
+  - margin: 0 rimuove il margine di default del browser
+  - font-family: stack di font di sistema (veloce e leggibile)
+  - line-height: migliora la leggibilità del testo
+  - background/color usano le variabili del tema
+*/
+body {
+  margin: 0;
+  font-family:
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    Arial,
+    sans-serif;
+  line-height: 1.5;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Link: colore accent (variabile) */
+a {
+  color: var(--accent);
+}
+
+/*
+  Stile per il tag <code>
+  - font monospaziato per evidenziare codice/termini tecnici
+  - dimensione leggermente ridotta
+*/
+code {
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  font-size: 0.95em;
+}
+
+/*
+  Contenitore centrale
+  - max-width limita la larghezza del testo (più leggibile)
+  - margin: 0 auto centra il contenitore
+  - padding aggiunge spazio interno
+*/
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+/* Header: separatore e sfumatura decorativa */
+.site-header {
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(
+    180deg,
+    rgba(90, 167, 255, 0.1),
+    rgba(0, 0, 0, 0)
+  );
+}
+
+/* Sottotitolo: testo meno “forte” */
+.subtitle {
+  margin-top: 6px;
+  color: var(--muted);
+}
+
+/*
+  Card: blocco riusabile per sezioni
+  - background e border usano le variabili tema
+  - border-radius arrotonda gli angoli
+*/
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 14px 0;
+}
+
+/* Riquadro “hint”: evidenzia un suggerimento con una barra laterale */
+.hint {
+  padding: 10px 12px;
+  border-left: 4px solid var(--accent);
+  background: rgba(90, 167, 255, 0.08);
+  border-radius: 8px;
+}
+
+/*
+  Riga con Flexbox
+  - display: flex allinea elementi su una riga
+  - gap crea spazio tra gli elementi
+  - flex-wrap permette di andare a capo su schermi piccoli
+*/
+.row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: end;
+  margin-top: 12px;
+}
+
+/* Campo form “a colonna”: label sopra input */
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+/* Input: stile coerente col tema */
+input {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  min-width: 220px;
+}
+
+/*
+  Bottoni
+  - .btn è il bottone base
+  - le varianti cambiano solo colori/sfondo
+*/
+.btn {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--accent);
+  color: white;
+  cursor: pointer;
+}
+
+/* Variante: bottone “secondario” meno evidente */
+.btn-secondary {
+  background: rgba(90, 167, 255, 0.15);
+  color: var(--text);
+}
+
+/* Variante: bottone “ghost” (trasparente) */
+.btn-ghost {
+  background: transparent;
+  color: var(--text);
+}
+
+/* Effetto hover: leggero aumento di luminosità */
+.btn:hover {
+  filter: brightness(1.05);
+}
+
+/* Messaggio: riquadro con bordo tratteggiato */
+.message {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  color: var(--muted);
+}
+
+/* Testo “small”: dimensione ridotta e colore più tenue */
+.small {
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+/* Footer: separatore superiore */
+.site-footer {
+  border-top: 1px solid var(--border);
+  margin-top: 18px;
+}

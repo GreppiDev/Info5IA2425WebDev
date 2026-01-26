@@ -1,0 +1,52 @@
+/*
+  bootstrap.css
+  Piccole personalizzazioni per la pagina Bootstrap.
+  (La maggior parte dello stile arriva da Bootstrap stesso.)
+*/
+
+/* Leggera differenza tra demo e resto: tile neutre e leggibili */
+.demo-tile {
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 14px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(8px);
+}
+
+.demo-tile__title {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.demo-tile__text {
+  color: rgba(0, 0, 0, 0.65);
+  font-size: 0.95rem;
+}
+
+/* Code block più “didattico” */
+.code-block {
+  white-space: pre;
+  overflow: auto;
+  border-radius: 14px;
+  padding: 14px;
+  background: #0b1020;
+  color: #e5e7eb;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.code-block code {
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  font-size: 0.95rem;
+}
+
+/* Dark mode di Bootstrap (se il browser/utente lo imposta o se lo setti tu) */
+[data-bs-theme="dark"] .demo-tile {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(17, 24, 39, 0.35);
+}
+
+[data-bs-theme="dark"] .demo-tile__text {
+  color: rgba(229, 231, 235, 0.75);
+}

@@ -1,0 +1,156 @@
+/*
+  Stili specifici per regole-css.html (pagina didattica)
+  Nota: questo file contiene SOLO ciò che serve a questa pagina.
+  Le regole “generiche” (container, card, bottoni, variabili tema, ecc.) stanno in style.css.
+*/
+
+/*
+  Blocchi di codice (<pre><code>…</code></pre>)
+  - overflow: auto aggiunge lo scroll se il codice è troppo largo
+  - border-radius/border danno un aspetto “card”
+  - background leggermente diverso dal resto per evidenziare il blocco
+*/
+pre {
+  overflow: auto;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.12);
+  margin: 10px 0;
+}
+
+/* Variante in tema chiaro: background più chiaro per mantenere contrasto */
+body[data-theme="light"] pre {
+  background: rgba(17, 24, 39, 0.04);
+}
+
+/* Il <code> dentro <pre> deve comportarsi da blocco (una riga sotto l'altra) */
+pre code {
+  display: block;
+  white-space: pre;
+}
+
+/*
+  Indice (TOC)
+  Display grid qui è un modo semplice per avere una lista “verticale” con spaziatura.
+*/
+.toc {
+  display: grid;
+  gap: 6px;
+}
+
+/*
+  Header con bottone tema
+  Flexbox ci permette di mettere titolo/descrizione a sinistra e azioni a destra,
+  andando a capo (wrap) su schermi piccoli.
+*/
+.header-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Contenitore dei bottoni/azioni nel header */
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Badge: piccola etichetta “pill” */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-left: 6px;
+}
+
+/*
+  Demo visive
+  Sono riquadri usati per mostrare esempi dei selettori (chip, colori, discendenti, ecc.).
+*/
+.demo {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(90, 167, 255, 0.06);
+}
+
+/* Riga di elementi nella demo (flex + wrap) */
+.demo-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* “Chip”: etichetta usata negli esempi */
+.chip {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+}
+
+/*
+  Classi usate SOLO per le demo sotto
+  Servono a far vedere come funzionano i selettori di classe (combinazioni, discendenti, ecc.).
+*/
+.evidenziato {
+  background: rgba(90, 167, 255, 0.18);
+}
+
+.rosso {
+  color: #ff6b6b;
+}
+
+.bordo {
+  border: 2px dashed rgba(255, 255, 255, 0.35);
+}
+
+body[data-theme="light"] .bordo {
+  border-color: rgba(17, 24, 39, 0.25);
+}
+
+/* Selettore discendente: prende .figlio DENTRO .contenitore (a qualsiasi profondità) */
+.contenitore .figlio {
+  text-decoration: underline;
+}
+
+/* Selettore figlio diretto: prende SOLO i figli immediati di .contenitore */
+.contenitore > .figlio-diretto {
+  font-weight: 700;
+}
+
+.btn-demo {
+  cursor: pointer;
+}
+
+.btn-demo:hover {
+  filter: brightness(1.07);
+}
+
+/*
+  Esempio di selettore “multi-classe”: .chip.rosso
+  Significa: l'elemento deve avere ENTRAMBE le classi (chip E rosso).
+*/
+.chip.rosso {
+  border-color: rgba(255, 107, 107, 0.55);
+}
+
+/*
+  Esempi di selezione tramite attributo class
+  [class~="chip"] seleziona gli elementi la cui lista di classi contiene la parola "chip".
+  È equivalente (come intento) a usare .chip, ma qui lo usiamo come esempio didattico.
+*/
+[class~="chip"] {
+  /* “contiene la parola chip” tra le classi */
+  box-shadow: 0 0 0 1px rgba(90, 167, 255, 0.12) inset;
+}

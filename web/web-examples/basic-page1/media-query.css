@@ -1,0 +1,128 @@
+/*
+  media-query.css
+  Stili specifici per la pagina sulle media query.
+  (La base grafica e le variabili tema sono in style.css)
+*/
+
+/* Header layout riusato anche in altre pagine */
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Griglia semplice per affiancare 2 blocchi su schermi grandi */
+.grid-2 {
+  display: grid;
+  gap: 14px;
+}
+
+@media (min-width: 900px) {
+  .grid-2 {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+}
+
+/* Demo box */
+.mq-demo {
+  border: 1px solid var(--border);
+  background: var(--card);
+  border-radius: 16px;
+  padding: 14px;
+}
+
+.mq-demo__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.mq-demo__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+body[data-theme="light"] .mq-demo__badge {
+  background: rgba(17, 24, 39, 0.04);
+}
+
+/*
+  Contenuto della demo: di base (mobile) una colonna.
+  L'obiettivo è “vedere” l'effetto delle media query.
+*/
+.mq-demo__content {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.mq-demo__item {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  text-align: center;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+body[data-theme="light"] .mq-demo__item {
+  background: rgba(17, 24, 39, 0.03);
+}
+
+/* Etichetta breakpoint: cambiamo testo con una pseudo-elemento */
+.mq-demo__badge::before {
+  content: "mobile (< 760px)";
+  color: var(--text);
+}
+
+/* Tablet: 2 colonne */
+@media (min-width: 760px) {
+  .mq-demo__content {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .mq-demo__badge::before {
+    content: "tablet (≥ 760px)";
+  }
+}
+
+/* Desktop: 3 colonne */
+@media (min-width: 1024px) {
+  .mq-demo__content {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  .mq-demo__badge::before {
+    content: "desktop (≥ 1024px)";
+  }
+}
+
+/* Extra (esempio): oltre 1200px 4 colonne */
+@media (min-width: 1200px) {
+  .mq-demo__content {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .mq-demo__badge::before {
+    content: "wide (≥ 1200px)";
+  }
+}

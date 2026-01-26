@@ -1,0 +1,150 @@
+/*
+  Stili specifici per flexbox.html
+  Questa pagina riusa style.css come base e aggiunge solo gli stili necessari ai demo Flexbox.
+*/
+
+/* Blocchi di codice (semplici e leggibili) */
+pre {
+  overflow: auto;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.12);
+  margin: 10px 0;
+}
+
+body[data-theme="light"] pre {
+  background: rgba(17, 24, 39, 0.04);
+}
+
+pre code {
+  display: block;
+  white-space: pre;
+}
+
+/*
+  Header: titolo a sinistra, azioni (bottone tema) a destra.
+  - flex-wrap permette di andare a capo su schermi piccoli
+*/
+.header-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Layout per la mini-tabella “proprietà -> effetto” */
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+@media (min-width: 760px) {
+  .grid-2 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Demo Flexbox */
+.demo {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  background: rgba(90, 167, 255, 0.06);
+  display: grid;
+  gap: 10px;
+}
+
+.demo-title {
+  margin: 0;
+}
+
+.flex-container {
+  /* Qui attiviamo Flexbox */
+  display: flex;
+
+  /* Spaziatura tra elementi */
+  gap: 10px;
+
+  /* Aspetto del contenitore */
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  padding: 12px;
+
+  /* Altezza utile per vedere align-items (asse trasversale) */
+  min-height: 90px;
+}
+
+.flex-item {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+body[data-theme="light"] .flex-item {
+  background: rgba(17, 24, 39, 0.04);
+}
+
+/* Per far vedere che gli item possono avere dimensioni diverse */
+.flex-item.big {
+  padding: 18px 14px;
+}
+
+/* Variante: riga centrata */
+.flex-center {
+  justify-content: center;
+  align-items: center;
+}
+
+/* Variante: spazio tra elementi */
+.flex-space-between {
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Variante: colonna */
+.flex-column {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* Variante: wrap (va a capo) */
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
+/*
+  Demo WRAP: rendiamo gli item abbastanza larghi da non stare tutti in una riga.
+  Così si vede subito l'effetto di flex-wrap (gli elementi vanno a capo).
+*/
+.flex-wrap .flex-item {
+  flex: 0 0 140px; /* base ~140px, non cresce */
+}
+
+/* Variante: esempio con flex-grow */
+.flex-grow-demo .flex-item {
+  flex: 1; /* grow: 1, shrink: 1, basis: 0 */
+}
+
+.flex-grow-demo .flex-item.no-grow {
+  flex: 0 0 auto; /* non cresce */
+}
+
+/* “Badge” piccola etichetta per evidenziare concetti */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}

@@ -1,0 +1,244 @@
+/*
+  Stili specifici per intro.html
+  - Riusa style.css come base (variabili tema, card, bottoni)
+  - Qui aggiungiamo solo la navbar (dropdown + hamburger)
+*/
+
+/*
+  Layout header
+  - flex per distribuire "brand", azioni e nav
+  - flex-wrap per andare a capo su schermi piccoli
+*/
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/*
+  Brand (logo/testo)
+  - inline-flex per allineare testo e "small" sulla stessa riga
+  - color e font presi dalle variabili tema in style.css
+*/
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.brand small {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+/*
+  Checkbox "hack" per hamburger
+  - su mobile non vogliamo mostrare subito tutta la nav
+  - usiamo una checkbox invisibile: quando è "checked" (spuntata) mostriamo la nav
+  - il bottone visibile è un <label for="navToggle">, così cliccando la label si spunta la checkbox
+*/
+.nav-toggle {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.nav-toggle-btn {
+  white-space: nowrap;
+}
+
+.nav {
+  display: none; /* su mobile: nascosta finché non apro il menu */
+  width: 100%;
+
+  /* Pannello “menu” su mobile (più lineare e leggibile) */
+  padding: 10px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
+/* Quando la checkbox è checked, mostro la nav (hamburger aperto) */
+.nav-toggle:checked ~ .nav {
+  display: block;
+}
+
+/*
+  Lista di navigazione (nav tradizionale)
+  - reset stile lista
+  - layout orizzontale con wrap
+*/
+.nav-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: stretch;
+}
+
+/* Link/azioni della navbar (sia <a> che <button>) */
+.nav-link {
+  font: inherit;
+  text-decoration: none;
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+
+  /* su mobile vogliamo la voce a larghezza piena */
+  width: 100%;
+  text-align: left;
+}
+
+.nav-link:hover {
+  border-color: var(--border);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+body[data-theme="light"] .nav-link:hover {
+  background: rgba(17, 24, 39, 0.04);
+}
+
+/*
+  Pannello dropdown
+  - display: grid per lista verticale con gap
+  - background: var(--card) per sembrare una card
+  - su mobile resta "in flow" (sotto), su desktop diventa assoluto (tendina)
+*/
+.dropdown-panel {
+  display: grid;
+  gap: 4px;
+
+  /* su mobile il sotto-menu “scende” in verticale (niente card flottante) */
+  padding: 6px 0 0 12px;
+  border-radius: 0;
+  border: 0;
+  background: transparent;
+
+  /* reset lista */
+  list-style: none;
+  margin: 6px 0 0;
+  padding-left: 0;
+}
+
+/*
+  IMPORTANTE:
+  Il JS apre/chiude i dropdown usando l'attributo booleano "hidden".
+  Siccome qui impostiamo display:grid, aggiungiamo una regola esplicita
+  per forzare la chiusura quando hidden è presente.
+*/
+.dropdown-panel[hidden] {
+  display: none;
+}
+
+/* Link dentro al dropdown */
+.dropdown-panel a {
+  text-decoration: none;
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+
+  width: 100%;
+  display: block;
+}
+
+.dropdown-panel a:hover {
+  border-color: var(--border);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+body[data-theme="light"] .dropdown-panel a:hover {
+  background: rgba(17, 24, 39, 0.04);
+}
+
+/* Contenitore azioni (bottone tema + hamburger) */
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/*
+  Breakpoint desktop
+  - sopra 760px: nav sempre visibile, pulsante hamburger nascosto
+  - dropdown diventa "a tendina" (position: absolute)
+*/
+@media (min-width: 760px) {
+  .nav-toggle-btn {
+    display: none;
+  }
+
+  .nav {
+    display: block;
+    width: auto;
+    justify-content: flex-end;
+
+    /* su desktop non vogliamo il pannello */
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .nav-list {
+    flex-direction: row;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .nav-link {
+    width: auto;
+  }
+
+  .nav-item {
+    position: relative;
+  }
+
+  /* Dropdown “a tendina” */
+  .dropdown-panel {
+    /* su desktop torna a sembrare una “card” flottante */
+    padding: 10px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--card);
+
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    min-width: 220px;
+    z-index: 10;
+    margin-top: 0;
+  }
+}
+
+/*
+  Sezione "cards" (contenuto centrale)
+  - su mobile: una colonna
+  - da 900px: due colonne
+*/
+.cards {
+  display: grid;
+  gap: 14px;
+}
+
+@media (min-width: 900px) {
+  .cards {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.card a {
+  color: var(--accent);
+}

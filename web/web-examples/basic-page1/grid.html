@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSS Grid (spiegazione semplice)</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="grid.css" />
+</head>
+
+<body>
+    <header class="site-header">
+        <div class="container">
+            <div class="header-top">
+                <div>
+                    <h1>CSS Grid: spiegazione semplice</h1>
+                    <p class="subtitle">
+                        Grid serve per creare layout a <strong>righe</strong> e <strong>colonne</strong> (ottimo per
+                        pagine,
+                        card, dashboard).
+                    </p>
+                </div>
+
+                <div class="header-actions">
+                    <button id="themeToggle" class="btn btn-ghost" type="button">Tema: --</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="card">
+            <h2>1) Concetto base: contenitore e celle</h2>
+            <p>
+                CSS Grid funziona quando:
+                <span class="badge">1</span> scegli un <strong>contenitore</strong> e
+                <span class="badge">2</span definisci una griglia di <strong>colonne</strong> e/o
+                <strong>righe</strong>.
+            </p>
+
+            <pre><code>/* 1) contenitore */
+.grid {
+  display: grid;
+
+  /* 2) colonne */
+  grid-template-columns: 1fr 1fr 1fr;
+
+  /* spazio tra le celle */
+  gap: 10px;
+}</code></pre>
+
+            <div class="demo">
+                <h3 class="demo-title">Demo: 3 colonne uguali (fr)</h3>
+                <div class="grid-container grid-cols-3">
+                    <div class="grid-item">1</div>
+                    <div class="grid-item">2</div>
+                    <div class="grid-item">3</div>
+                    <div class="grid-item">4</div>
+                    <div class="grid-item">5</div>
+                    <div class="grid-item">6</div>
+                </div>
+                <p class="small">
+                    <code>fr</code> significa “frazione dello spazio disponibile”. Qui: 3 colonne da 1fr.
+                </p>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>2) Colonne: grid-template-columns e repeat()</h2>
+            <div class="grid-2">
+                <div>
+                    <p>
+                        Il modo più comune per iniziare è definire le colonne con <code>grid-template-columns</code>.
+                    </p>
+                    <ul>
+                        <li><code>1fr 2fr</code>: la seconda colonna è il doppio della prima</li>
+                        <li><code>repeat(4, 1fr)</code>: 4 colonne uguali</li>
+                        <li><code>repeat(auto-fit, minmax(140px, 1fr))</code>: griglia responsive</li>
+                    </ul>
+                    <pre><code>.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}</code></pre>
+                </div>
+
+                <div class="demo">
+                    <h3 class="demo-title">Demo: repeat(4, 1fr)</h3>
+                    <div class="grid-container grid-repeat-4">
+                        <div class="grid-item">A</div>
+                        <div class="grid-item">B</div>
+                        <div class="grid-item">C</div>
+                        <div class="grid-item">D</div>
+                        <div class="grid-item">E</div>
+                        <div class="grid-item">F</div>
+                        <div class="grid-item">G</div>
+                        <div class="grid-item">H</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="demo" style="margin-top: 12px;">
+                <h3 class="demo-title">Demo: auto-fit + minmax() (responsive)</h3>
+                <div class="grid-container grid-auto-fit">
+                    <div class="grid-item">1</div>
+                    <div class="grid-item">2</div>
+                    <div class="grid-item">3</div>
+                    <div class="grid-item">4</div>
+                    <div class="grid-item">5</div>
+                    <div class="grid-item">6</div>
+                    <div class="grid-item">7</div>
+                    <div class="grid-item">8</div>
+                    <div class="grid-item">9</div>
+                    <div class="grid-item">10</div>
+                </div>
+                <p class="small">Riduci la finestra: le colonne diminuiscono e poi vanno a capo automaticamente.</p>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>3) Righe: grid-template-rows e grid-auto-rows</h2>
+            <p>
+                Puoi definire anche le righe. Se non le definisci, Grid le crea “automatiche” in base al contenuto.
+            </p>
+
+            <div class="grid-2">
+                <div>
+                    <pre><code>.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 60px 110px;
+  gap: 10px;
+}</code></pre>
+                    <p class="small">
+                        Qui stiamo dicendo: “due righe”, la prima alta 60px e la seconda alta 110px.
+                    </p>
+                </div>
+
+                <div class="demo">
+                    <h3 class="demo-title">Demo: righe con altezze diverse</h3>
+                    <div class="grid-container grid-rows">
+                        <div class="grid-item">R1C1</div>
+                        <div class="grid-item">R1C2</div>
+                        <div class="grid-item">R1C3</div>
+                        <div class="grid-item">R2C1</div>
+                        <div class="grid-item">R2C2</div>
+                        <div class="grid-item">R2C3</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>4) Posizionare elementi: grid-column e grid-row</h2>
+            <p>
+                La cosa potente di Grid è che puoi far occupare a un elemento più celle:
+                <code>grid-column: span 2</code> significa “occupa 2 colonne”.
+            </p>
+
+            <pre><code>.item-grande {
+  grid-column: span 2;
+}
+
+.item-alto {
+  grid-row: span 2;
+}</code></pre>
+
+            <div class="demo">
+                <h3 class="demo-title">Demo: elementi che "span" più celle</h3>
+                <div class="grid-container grid-placement">
+                    <div class="grid-item span-2">span 2</div>
+                    <div class="grid-item">normale</div>
+                    <div class="grid-item">normale</div>
+                    <div class="grid-item row-span-2">row span 2</div>
+                    <div class="grid-item">normale</div>
+                    <div class="grid-item span-3">span 3</div>
+                    <div class="grid-item">normale</div>
+                    <div class="grid-item">normale</div>
+                </div>
+                <p class="small">Qui la griglia ha 4 colonne e righe automatiche da 70px.</p>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>5) Allineamenti: place-items</h2>
+            <p>
+                In Grid puoi allineare il contenuto dentro le celle.
+                <code>place-items</code> è una scorciatoia per <code>align-items</code> + <code>justify-items</code>.
+            </p>
+
+            <div class="grid-2">
+                <div>
+                    <pre><code>.grid {
+  display: grid;
+  place-items: center;
+}</code></pre>
+                </div>
+                <div class="demo">
+                    <h3 class="demo-title">Demo: place-items: center</h3>
+                    <div class="grid-container grid-align">
+                        <div class="grid-item">uno</div>
+                        <div class="grid-item">due</div>
+                        <div class="grid-item">tre</div>
+                        <div class="grid-item">quattro</div>
+                        <div class="grid-item">cinque</div>
+                        <div class="grid-item">sei</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>6) Layout con grid-template-areas (molto usato)</h2>
+            <p>
+                <code>grid-template-areas</code> permette di descrivere un layout “a parole”, utile per strutture
+                tipiche
+                (header, sidebar, content, footer).
+            </p>
+
+            <pre><code>.layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  grid-template-areas:
+    "header header"
+    "sidebar content"
+    "footer footer";
+}
+
+.header { grid-area: header; }
+.sidebar { grid-area: sidebar; }
+.content { grid-area: content; }
+.footer { grid-area: footer; }</code></pre>
+
+            <div class="demo">
+                <h3 class="demo-title">Demo: aree</h3>
+                <div class="grid-container grid-areas">
+                    <div class="grid-item header">HEADER</div>
+                    <div class="grid-item sidebar">SIDEBAR</div>
+                    <div class="grid-item content">CONTENT</div>
+                    <div class="grid-item footer">FOOTER</div>
+                </div>
+                <p class="small">Riduci la finestra: il CSS mette le aree in colonna (responsive).</p>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Esercizi (veloci)</h2>
+            <ol>
+                <li>In <code>grid.css</code>, cambia <code>grid-template-columns</code> della demo 3 colonne in
+                    <code>1fr 2fr 1fr</code>.
+                </li>
+                <li>Nella demo responsive, prova <code>minmax(180px, 1fr)</code>: quante colonne vedi ora?</li>
+                <li>Nella demo “placement”, prova a cambiare <code>grid-auto-rows</code> da 70px a 90px.</li>
+            </ol>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container small">
+            Pagina didattica · CSS Grid · File: <code>grid.html</code>
+        </div>
+    </footer>
+
+    <script>
+        // Bottone tema (chiaro/scuro): cambia l'attributo data-theme sul <body>.
+        // Il CSS in style.css usa body[data-theme="light"] per cambiare le variabili dei colori.
+        (function () {
+            const STORAGE_KEY = "cssTheme";
+            const toggleBtn = document.getElementById("themeToggle");
+
+            function getTheme() {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved === "light" || saved === "dark") return saved;
+                return "dark";
+            }
+
+            function setTheme(theme) {
+                document.body.setAttribute("data-theme", theme);
+                localStorage.setItem(STORAGE_KEY, theme);
+                if (toggleBtn) {
+                    const label = theme === "light" ? "chiaro" : "scuro";
+                    toggleBtn.textContent = `Tema: ${label} (clicca per cambiare)`;
+                }
+            }
+
+            setTheme(getTheme());
+
+            if (toggleBtn) {
+                toggleBtn.addEventListener("click", () => {
+                    const current = document.body.getAttribute("data-theme") === "light" ? "light" : "dark";
+                    setTheme(current === "light" ? "dark" : "light");
+                });
+            }
+        })();
+    </script>
+</body>
+
+</html>

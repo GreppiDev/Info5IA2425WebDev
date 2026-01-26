@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Regole CSS (base) + selettori di classe</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="regole-css.css" />
+</head>
+
+<body>
+    <header class="site-header">
+        <div class="container">
+            <div class="header-top">
+                <div>
+                    <h1>Regole CSS (base) e selettori di classe</h1>
+                    <p class="subtitle">
+                        Riepilogo delle regole/proprietà CSS più comuni + approfondimento sui selettori di
+                        <strong>classe</strong>.
+                    </p>
+                </div>
+
+                <div class="header-actions">
+                    <button id="themeToggle" class="btn btn-ghost" type="button">Tema: --</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="card">
+            <h2>Indice</h2>
+            <div class="toc">
+                <a href="#regola">Cos’è una regola CSS</a>
+                <a href="#proprieta">Proprietà CSS più comuni</a>
+                <a href="#classi">Selettori di classe: guida approfondita</a>
+                <a href="#specificita">Specificità e conflitti</a>
+                <a href="#buone-pratiche">Buone pratiche per le classi</a>
+            </div>
+        </section>
+
+        <section id="regola" class="card">
+            <h2>1) Cos’è una regola CSS</h2>
+            <p>
+                Una <strong>regola CSS</strong> è composta da un <strong>selettore</strong> (a chi applico lo stile) e
+                da un blocco di
+                <strong>dichiarazioni</strong> (quali proprietà imposto).
+            </p>
+            <pre><code>/* selettore */
+.selettore {
+  /* dichiarazioni: proprietà: valore; */
+  color: red;
+  font-size: 18px;
+}</code></pre>
+            <p class="small">
+                Esempio: il selettore <code>.selettore</code> prende tutti gli elementi con classe
+                <code>selettore</code>.
+            </p>
+        </section>
+
+        <section id="proprieta" class="card">
+            <h2>2) Proprietà CSS più comuni (pagine non troppo complesse)</h2>
+            <p>
+                In pagine “normali” si incontrano spesso queste famiglie di proprietà. Non serve impararle tutte a
+                memoria:
+                è più importante capire cosa controllano.
+            </p>
+
+            <h3>Testo e font</h3>
+            <ul>
+                <li><code>font-family</code>, <code>font-size</code>, <code>font-weight</code>, <code>font-style</code>
+                </li>
+                <li><code>line-height</code> (altezza riga), <code>letter-spacing</code></li>
+                <li><code>text-align</code>, <code>text-decoration</code></li>
+            </ul>
+
+            <h3>Colori e sfondi</h3>
+            <ul>
+                <li><code>color</code> (testo), <code>background</code>/<code>background-color</code></li>
+                <li><code>background-image</code>, <code>background-size</code>, <code>background-position</code></li>
+            </ul>
+
+            <h3>Box model (spazi e bordi)</h3>
+            <ul>
+                <li><code>margin</code> (spazio esterno), <code>padding</code> (spazio interno)</li>
+                <li><code>border</code>, <code>border-radius</code></li>
+                <li><code>box-sizing</code> (molto comune: <code>border-box</code>)</li>
+            </ul>
+
+            <h3>Dimensioni</h3>
+            <ul>
+                <li><code>width</code>, <code>height</code>, <code>max-width</code>, <code>min-height</code></li>
+            </ul>
+
+            <h3>Layout</h3>
+            <ul>
+                <li><code>display</code> (es. <code>block</code>, <code>inline</code>, <code>flex</code>,
+                    <code>grid</code>, <code>none</code>)
+                </li>
+                <li>Flexbox: <code>display: flex</code>, <code>gap</code>, <code>justify-content</code>,
+                    <code>align-items</code>, <code>flex-wrap</code>
+                </li>
+                <li>Grid: <code>display: grid</code>, <code>grid-template-columns</code>, <code>gap</code></li>
+            </ul>
+
+            <h3>Posizionamento</h3>
+            <ul>
+                <li><code>position</code> (static/relative/absolute/fixed/sticky), <code>top/right/bottom/left</code>
+                </li>
+                <li><code>z-index</code> (quando ci sono sovrapposizioni)</li>
+            </ul>
+
+            <h3>Gestione contenuti</h3>
+            <ul>
+                <li><code>overflow</code> (hidden/auto/scroll)</li>
+            </ul>
+
+            <h3>Effetti e animazioni “semplici”</h3>
+            <ul>
+                <li><code>opacity</code>, <code>box-shadow</code>, <code>transform</code></li>
+                <li><code>transition</code> (transizioni), <code>cursor</code></li>
+            </ul>
+
+            <h3>Responsive</h3>
+            <ul>
+                <li><code>@media</code> (media query), es. per adattare layout su mobile</li>
+            </ul>
+
+            <h3>Variabili CSS (molto utili)</h3>
+            <ul>
+                <li><code>--nome-variabile</code> e <code>var(--nome-variabile)</code> per riusare colori/spaziature
+                </li>
+            </ul>
+
+            <pre><code>:root {
+  --accent: #2563eb;
+}
+
+.btn {
+  background: var(--accent);
+}</code></pre>
+        </section>
+
+        <section id="classi" class="card">
+            <h2>3) Selettori di classe: guida approfondita</h2>
+            <p>
+                In CSS una <strong>classe</strong> è un “nome” assegnato agli elementi HTML con l’attributo
+                <code>class</code>.
+                Un elemento può avere <strong>più classi</strong>, separate da spazi.
+            </p>
+
+            <pre><code>&lt;div class="card evidenziato"&gt;...&lt;/div&gt;
+&lt;button class="btn btn-secondary"&gt;OK&lt;/button&gt;</code></pre>
+
+            <h3>3.1 Selezione base: <code>.classe</code></h3>
+            <p>
+                Il selettore <code>.classe</code> prende tutti gli elementi che hanno quella classe (anche se hanno
+                altre classi).
+            </p>
+            <pre><code>/* Seleziona tutti gli elementi con class="evidenziato" */
+.evidenziato {
+  background: yellow;
+}</code></pre>
+
+            <div class="demo">
+                <div class="demo-row">
+                    <span class="chip">chip (senza classe evidenziato)</span>
+                    <span class="chip evidenziato">chip evidenziato</span>
+                    <span class="chip evidenziato bordo">chip evidenziato + bordo</span>
+                </div>
+                <p class="small">Demo: le classi possono sommarsi (composizione).</p>
+            </div>
+
+            <h3>3.2 Più classi sullo stesso elemento: <code>.a.b</code></h3>
+            <p>
+                <code>.a.b</code> significa: “elementi che hanno <strong>sia</strong> la classe <code>a</code>
+                <strong>sia</strong> la classe <code>b</code>”.
+                Non è la stessa cosa di <code>.a .b</code> (vedi dopo).
+            </p>
+            <pre><code>/* SOLO gli elementi che hanno entrambe le classi: class="chip rosso" */
+.chip.rosso {
+  border-color: red;
+}</code></pre>
+
+            <div class="demo">
+                <div class="demo-row">
+                    <span class="chip rosso">chip rosso (chip + rosso)</span>
+                    <span class="chip">chip (solo chip)</span>
+                    <span class="rosso">solo rosso (non è chip)</span>
+                </div>
+                <p class="small">Demo: <code>.chip.rosso</code> colpisce solo il primo.</p>
+            </div>
+
+            <h3>3.3 Classe + tipo elemento: <code>tag.classe</code></h3>
+            <p>
+                Puoi restringere la selezione: ad esempio solo <code>p</code> con classe <code>msg</code>.
+            </p>
+            <pre><code>p.msg {
+  font-style: italic;
+}</code></pre>
+
+            <h3>3.4 Discendente: <code>.contenitore .figlio</code></h3>
+            <p>
+                Lo spazio significa “discendente”: prende gli elementi con classe <code>figlio</code> che stanno
+                <strong>da qualche parte</strong>
+                dentro un elemento con classe <code>contenitore</code>.
+            </p>
+            <pre><code>.contenitore .figlio {
+  text-decoration: underline;
+}</code></pre>
+
+            <h3>3.5 Figlio diretto: <code>.contenitore &gt; .figlio</code></h3>
+            <p>
+                Con <code>&gt;</code> selezioni solo i <strong>figli diretti</strong> (un livello sotto), non i nipoti.
+            </p>
+            <pre><code>.contenitore &gt; .figlio-diretto {
+  font-weight: 700;
+}</code></pre>
+
+            <div class="demo">
+                <div class="contenitore">
+                    <div class="figlio-diretto">figlio diretto (selezionato con &gt;)</div>
+                    <div>
+                        <div class="figlio">figlio NON diretto (discendente, selezionato con lo spazio)</div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>3.6 Gruppi: <code>.a, .b, .c</code></h3>
+            <p>
+                La virgola permette di applicare lo stesso blocco a più selettori.
+            </p>
+            <pre><code>.btn, .btn-secondary, .btn-ghost {
+  border-radius: 10px;
+}</code></pre>
+
+            <h3>3.7 Stati e pseudo-classi: <code>.btn:hover</code>, <code>.input:focus</code>…</h3>
+            <p>
+                Le pseudo-classi descrivono uno <strong>stato</strong> (hover, focus, visited, ecc.).
+                Spesso si usano “attaccate” alla classe.
+            </p>
+            <pre><code>.btn-demo:hover {
+  transform: translateY(-1px);
+}
+
+.input:focus {
+  outline: 2px solid blue;
+}</code></pre>
+
+            <h3>3.8 Pseudo-elementi: <code>.badge::before</code>, <code>.card::after</code></h3>
+            <p>
+                I pseudo-elementi creano “parti” virtuali dell’elemento (prima/dopo contenuto).
+            </p>
+            <pre><code>.badge::before {
+  content: "• ";
+}</code></pre>
+
+            <h3>3.9 Selettori avanzati utili con le classi: <code>:not()</code>, <code>:is()</code>,
+                <code>:where()</code>
+            </h3>
+            <p>
+                Permettono di comporre selettori in modo leggibile.
+            </p>
+            <pre><code>/* Tutte le card tranne quelle con classe "speciale" */
+.card:not(.speciale) {
+  border-style: solid;
+}
+
+/* Più opzioni con :is() (specificità = quella più alta tra le opzioni) */
+:is(.btn, .chip).rosso {
+  color: #ff6b6b;
+}
+
+/* :where() è come :is() ma NON aggiunge specificità (comodo per reset/utility) */
+:where(.container) a {
+  text-decoration-thickness: 2px;
+}</code></pre>
+
+            <h3>3.10 Selezione tramite attributo <code>class</code> (quando serve)</h3>
+            <p>
+                Normalmente si usa <code>.classe</code>. Però a volte (es. utility CSS, pattern particolari) puoi
+                selezionare
+                usando gli <strong>attribute selectors</strong> su <code>class</code>.
+            </p>
+
+            <p><span class="badge">Importante</span> L’attributo <code>class</code> contiene una lista di parole
+                separate da spazi.</p>
+
+            <pre><code>/* Contiene la parola "btn" tra le classi (token) */
+[class~="btn"] {
+  font-weight: 600;
+}
+
+/* Inizia con "btn-" (attenzione: qui controlli la stringa completa dell'attributo!) */
+[class^="btn-"] {
+  /* raramente consigliato per classi, più comune con data-* */
+}
+
+/* Contiene "btn" come sottostringa (anche dentro altre parole) */
+[class*="btn"] {
+  /* da usare con cautela */
+}</code></pre>
+
+            <h3>3.11 Classi “difficili”: escaping</h3>
+            <p>
+                Alcuni nomi di classe possono contenere caratteri che in CSS hanno significati speciali (es.
+                <code>:</code>, <code>/</code>,
+                oppure iniziare con un numero). In quei casi bisogna “escapare”.
+            </p>
+            <pre><code>/* Se in HTML hai class="w-1/2" (non consigliato in CSS manuale) */
+.w-1\/2 { /* la / va escapata */
+  width: 50%;
+}
+
+/* Se in HTML hai class="2col" */
+.\32 col { /* \32 è il codice per '2' + spazio */
+  column-count: 2;
+}</code></pre>
+
+            <p class="small">
+                Nella pratica, per pagine semplici conviene scegliere nomi “facili”: lettere, numeri, trattini
+                (<code>-</code>) e underscore (<code>_</code>).
+            </p>
+        </section>
+
+        <section id="specificita" class="card">
+            <h2>4) Specificità e conflitti</h2>
+            <p>
+                Se più regole impostano la stessa proprietà sullo stesso elemento, il browser decide quale vince con:
+            </p>
+            <ul>
+                <li><strong>Specificità</strong> (id &gt; classi/attributi/pseudo-classi &gt; tag/pseudo-elementi)</li>
+                <li><strong>Ordine</strong>: a parità di specificità vince la regola scritta dopo</li>
+                <li><strong><code>!important</code></strong>: forza la precedenza (da evitare se possibile)</li>
+            </ul>
+
+            <pre><code>/* Specificità: 0-1-0 */
+.card { border-color: gray; }
+
+/* Specificità: 0-2-0 (più specifica, quindi vince) */
+.card.speciale { border-color: gold; }
+
+/* A parità, vince quella più in basso nel file */
+</code></pre>
+        </section>
+
+        <section id="buone-pratiche" class="card">
+            <h2>5) Buone pratiche per le classi</h2>
+            <ul>
+                <li>Usa classi per lo stile, evita di dipendere troppo da <code>id</code> (meglio per JS/ancore).</li>
+                <li>Preferisci nomi descrittivi: <code>.card</code>, <code>.btn</code>, <code>.navbar</code>,
+                    <code>.error</code>.
+                </li>
+                <li>Composizione: più classi piccole spesso è meglio di una super-classe “onnipotente”.</li>
+                <li>Evita selettori troppo lunghi (fragili). Meglio 1–3 livelli, quando basta.</li>
+                <li>Se vuoi un metodo, guarda BEM: <code>.block__element--modifier</code> (utile in progetti medi).</li>
+            </ul>
+
+            <div class="hint">
+                Esercizio: aggiungi una classe <code>speciale</code> a una card e crea una regola
+                <code>.card.speciale</code> che cambia bordo o sfondo.
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container small">
+            Pagina didattica · CSS selectors &amp; properties · File: <code>regole-css.html</code>
+        </div>
+    </footer>
+
+    <script>
+        // Bottone tema (chiaro/scuro): cambia l'attributo data-theme sul <body>.
+        // Il CSS in style.css usa body[data-theme="light"] per cambiare le variabili dei colori.
+        (function () {
+            const STORAGE_KEY = "cssTheme";
+            const toggleBtn = document.getElementById("themeToggle");
+
+            function getTheme() {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved === "light" || saved === "dark") return saved;
+                return "dark";
+            }
+
+            function setTheme(theme) {
+                document.body.setAttribute("data-theme", theme);
+                localStorage.setItem(STORAGE_KEY, theme);
+                if (toggleBtn) {
+                    const label = theme === "light" ? "chiaro" : "scuro";
+                    toggleBtn.textContent = `Tema: ${label} (clicca per cambiare)`;
+                }
+            }
+
+            // Imposta il tema iniziale
+            setTheme(getTheme());
+
+            // Cambia tema al click
+            if (toggleBtn) {
+                toggleBtn.addEventListener("click", () => {
+                    const current = document.body.getAttribute("data-theme") === "light" ? "light" : "dark";
+                    setTheme(current === "light" ? "dark" : "light");
+                });
+            }
+        })();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flexbox CSS (spiegazione semplice)</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="flexbox.css" />
+</head>
+
+<body>
+    <header class="site-header">
+        <div class="container">
+            <div class="header-top">
+                <div>
+                    <h1>Flexbox CSS: spiegazione semplice</h1>
+                    <p class="subtitle">
+                        Flexbox serve per disporre elementi in <strong>riga</strong> o <strong>colonna</strong> e
+                        gestire
+                        spazi/allineamenti.
+                    </p>
+                </div>
+
+                <div class="header-actions">
+                    <button id="themeToggle" class="btn btn-ghost" type="button">Tema: --</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="card">
+            <h2>1) Concetto base: contenitore e elementi</h2>
+            <p>
+                Flexbox funziona quando:
+                <span class="badge">1</span> scegli un <strong>contenitore</strong> e
+                <span class="badge">2</span> metti dentro degli <strong>elementi</strong>.
+                Poi attivi Flexbox sul contenitore con <code>display: flex</code>.
+            </p>
+
+            <pre><code>/* 1) contenitore */
+.container-flex {
+  display: flex;
+}
+
+/* 2) elementi dentro il contenitore */
+.container-flex .item {
+  /* stile dell'item */
+}</code></pre>
+
+            <div class="demo">
+                <h3 class="demo-title">Demo: display: flex</h3>
+                <div class="flex-container">
+                    <div class="flex-item">Item 1</div>
+                    <div class="flex-item">Item 2</div>
+                    <div class="flex-item">Item 3</div>
+                </div>
+                <p class="small">Senza Flexbox gli elementi andrebbero uno sotto l’altro; con Flexbox vanno in riga.</p>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>2) Gli assi: principale e trasversale</h2>
+            <p>
+                Flexbox ragiona su due assi:
+            </p>
+            <ul>
+                <li><strong>Asse principale</strong>: dipende da <code>flex-direction</code> (riga o colonna).</li>
+                <li><strong>Asse trasversale</strong>: è l’asse “perpendicolare” a quello principale.</li>
+            </ul>
+
+            <div class="grid-2">
+                <div class="demo">
+                    <h3 class="demo-title">flex-direction: row (default)</h3>
+                    <pre><code>.box {
+  display: flex;
+  flex-direction: row;
+}</code></pre>
+                    <div class="flex-container">
+                        <div class="flex-item">1</div>
+                        <div class="flex-item big">2 (più grande)</div>
+                        <div class="flex-item">3</div>
+                    </div>
+                    <p class="small">Asse principale = orizzontale.</p>
+                </div>
+
+                <div class="demo">
+                    <h3 class="demo-title">flex-direction: column</h3>
+                    <pre><code>.box {
+  display: flex;
+  flex-direction: column;
+}</code></pre>
+                    <div class="flex-container flex-column">
+                        <div class="flex-item">1</div>
+                        <div class="flex-item big">2 (più grande)</div>
+                        <div class="flex-item">3</div>
+                    </div>
+                    <p class="small">Asse principale = verticale.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>3) Spaziatura: gap</h2>
+            <p>
+                <code>gap</code> imposta lo spazio tra gli item (molto comodo: evita margin “a mano”).
+            </p>
+            <pre><code>.box {
+  display: flex;
+  gap: 10px;
+}</code></pre>
+        </section>
+
+        <section class="card">
+            <h2>4) Allineamenti: justify-content e align-items</h2>
+            <p>
+                Le due proprietà più usate per allineare sono:
+            </p>
+            <ul>
+                <li><code>justify-content</code>: allinea lungo l’<strong>asse principale</strong>.</li>
+                <li><code>align-items</code>: allinea lungo l’<strong>asse trasversale</strong> (tutti gli item
+                    insieme).</li>
+            </ul>
+
+            <div class="grid-2">
+                <div class="demo">
+                    <h3 class="demo-title">Centrato (justify-content + align-items)</h3>
+                    <pre><code>.box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}</code></pre>
+                    <div class="flex-container flex-center">
+                        <div class="flex-item">A</div>
+                        <div class="flex-item">B</div>
+                        <div class="flex-item">C</div>
+                    </div>
+                </div>
+
+                <div class="demo">
+                    <h3 class="demo-title">Spazio tra (space-between)</h3>
+                    <pre><code>.box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}</code></pre>
+                    <div class="flex-container flex-space-between">
+                        <div class="flex-item">Left</div>
+                        <div class="flex-item">Center</div>
+                        <div class="flex-item">Right</div>
+                    </div>
+                </div>
+            </div>
+
+            <p class="small">
+                Nota: se cambi <code>flex-direction</code> in <code>column</code>, anche “asse principale” e
+                “trasversale” si scambiano.
+            </p>
+        </section>
+
+        <section class="card">
+            <h2>5) Andare a capo: flex-wrap</h2>
+            <p>
+                Se hai tanti elementi e vuoi che vadano a capo quando non c’è spazio, usa <code>flex-wrap: wrap</code>.
+            </p>
+            <pre><code>.box {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}</code></pre>
+
+            <div class="demo">
+                <h3 class="demo-title">Demo: wrap</h3>
+                <div class="flex-container flex-wrap">
+                    <div class="flex-item">1</div>
+                    <div class="flex-item">2</div>
+                    <div class="flex-item">3</div>
+                    <div class="flex-item">4</div>
+                    <div class="flex-item">5</div>
+                    <div class="flex-item">6</div>
+                    <div class="flex-item">7</div>
+                    <div class="flex-item">8</div>
+                </div>
+                <p class="small">Riduci la finestra: vedrai gli item andare su più righe.</p>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>6) Far crescere gli elementi: flex (grow/shrink/basis)</h2>
+            <p>
+                Per distribuire lo spazio, spesso si usa la scorciatoia <code>flex</code> sugli item.
+                Un caso tipico: “questi elementi devono occupare lo stesso spazio”.
+            </p>
+
+            <pre><code>/* Tutti gli item crescono in modo uguale */
+.item {
+  flex: 1;
+}
+
+/* Un item può restare della sua dimensione */
+.item-no-grow {
+  flex: 0 0 auto;
+}</code></pre>
+
+            <div class="demo">
+                <h3 class="demo-title">Demo: flex: 1</h3>
+                <div class="flex-container flex-grow-demo">
+                    <div class="flex-item">flex: 1</div>
+                    <div class="flex-item">flex: 1</div>
+                    <div class="flex-item no-grow">no grow</div>
+                </div>
+                <p class="small">I primi due si dividono lo spazio; l’ultimo resta “automatico”.</p>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Esercizi (veloci)</h2>
+            <ol>
+                <li>Apri <code>flexbox.css</code> e prova a cambiare <code>justify-content</code> nella demo “centrato”.
+                </li>
+                <li>Prova a mettere <code>flex-direction: column</code> sulla demo “space-between”. Cosa succede?</li>
+                <li>Nella demo wrap, prova a cambiare <code>gap</code> da 10px a 20px.</li>
+            </ol>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container small">
+            Pagina didattica · Flexbox CSS · File: <code>flexbox.html</code>
+        </div>
+    </footer>
+
+    <script>
+        // Bottone tema (chiaro/scuro): cambia l'attributo data-theme sul <body>.
+        // Il CSS in style.css usa body[data-theme="light"] per cambiare le variabili dei colori.
+        (function () {
+            const STORAGE_KEY = "cssTheme";
+            const toggleBtn = document.getElementById("themeToggle");
+
+            function getTheme() {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved === "light" || saved === "dark") return saved;
+                return "dark";
+            }
+
+            function setTheme(theme) {
+                document.body.setAttribute("data-theme", theme);
+                localStorage.setItem(STORAGE_KEY, theme);
+                if (toggleBtn) {
+                    const label = theme === "light" ? "chiaro" : "scuro";
+                    toggleBtn.textContent = `Tema: ${label} (clicca per cambiare)`;
+                }
+            }
+
+            setTheme(getTheme());
+
+            if (toggleBtn) {
+                toggleBtn.addEventListener("click", () => {
+                    const current = document.body.getAttribute("data-theme") === "light" ? "light" : "dark";
+                    setTheme(current === "light" ? "dark" : "light");
+                });
+            }
+        })();
+    </script>
+</body>
+
+</html>

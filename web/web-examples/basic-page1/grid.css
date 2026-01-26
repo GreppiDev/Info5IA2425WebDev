@@ -1,0 +1,213 @@
+/*
+  Stili specifici per grid.html
+  Questa pagina riusa style.css come base e aggiunge solo gli stili necessari ai demo CSS Grid.
+*/
+
+/* Blocchi di codice */
+pre {
+  overflow: auto;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.12);
+  margin: 10px 0;
+}
+
+body[data-theme="light"] pre {
+  background: rgba(17, 24, 39, 0.04);
+}
+
+pre code {
+  display: block;
+  white-space: pre;
+}
+
+/*
+  Header: titolo a sinistra, azioni (bottone tema) a destra.
+  - flex-wrap permette di andare a capo su schermi piccoli
+*/
+.header-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Griglia “2 colonne” per affiancare spiegazione e demo */
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+@media (min-width: 760px) {
+  .grid-2 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Box demo */
+.demo {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  background: rgba(90, 167, 255, 0.06);
+  display: grid;
+  gap: 10px;
+}
+
+.demo-title {
+  margin: 0;
+}
+
+/*
+  Contenitore Grid base
+  - display: grid attiva CSS Grid
+  - gap crea spazio tra le celle
+*/
+.grid-container {
+  display: grid;
+  gap: 10px;
+
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.grid-item {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+body[data-theme="light"] .grid-item {
+  background: rgba(17, 24, 39, 0.04);
+}
+
+/*
+  Demo: colonne con fr
+  - 1fr 1fr 1fr = tre colonne della stessa larghezza
+*/
+.grid-cols-3 {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+/*
+  Demo: repeat()
+  - repeat(4, 1fr) = 4 colonne uguali
+*/
+.grid-repeat-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+/*
+  Demo responsive: auto-fit + minmax()
+  - crea quante colonne possibile, ma ogni colonna non scende sotto 140px
+  - riduci la finestra: le colonne diminuiscono e poi vanno a capo
+*/
+.grid-auto-fit {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+/*
+  Demo: righe
+  - definisco 2 righe con altezze diverse
+*/
+.grid-rows {
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 60px 110px;
+}
+
+/*
+  Demo: posizionamento item con grid-column/grid-row
+  - item “grande” occupa più celle
+*/
+.grid-placement {
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: 70px;
+}
+
+.grid-item.span-2 {
+  grid-column: span 2;
+}
+
+.grid-item.span-3 {
+  grid-column: span 3;
+}
+
+.grid-item.row-span-2 {
+  grid-row: span 2;
+}
+
+/*
+  Demo: align/justify
+  - place-items è una scorciatoia (align-items + justify-items)
+*/
+.grid-align {
+  grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: 90px;
+  place-items: center;
+}
+
+.grid-align .grid-item {
+  width: fit-content;
+}
+
+/*
+  Demo: template areas
+  Layout tipico: header / sidebar / content / footer
+*/
+.grid-areas {
+  grid-template-columns: 220px 1fr;
+  grid-template-rows: auto 1fr auto;
+  grid-template-areas:
+    "header header"
+    "sidebar content"
+    "footer footer";
+}
+
+.grid-areas .header {
+  grid-area: header;
+}
+
+.grid-areas .sidebar {
+  grid-area: sidebar;
+}
+
+.grid-areas .content {
+  grid-area: content;
+}
+
+.grid-areas .footer {
+  grid-area: footer;
+}
+
+@media (max-width: 700px) {
+  /* Su schermi piccoli metto tutto in colonna */
+  .grid-areas {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "header"
+      "content"
+      "sidebar"
+      "footer";
+  }
+}
+
+/* Badge */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}

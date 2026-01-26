@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<!--
+    intro.html
+    Pagina "hub" per navigare tra gli esempi in basic-page1.
+    Obiettivi didattici:
+    - Navbar con dropdown (HTML <details>)
+    - Navbar responsive: hamburger sotto una certa larghezza
+    - Riuso di style.css + stili specifici in intro.css
+-->
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Intro - Web Examples</title>
+    <!-- Stile base condiviso (variabili tema, card, bottoni, layout container, ecc.) -->
+    <link rel="stylesheet" href="style.css" />
+    <!-- Stile specifico di questa pagina (navbar, dropdown, hamburger) -->
+    <link rel="stylesheet" href="intro.css" />
+</head>
+
+<body>
+    <!--
+        Header con navbar.
+        Nota: "site-header" e "container" arrivano da style.css.
+        "header-top" e navbar arrivano da intro.css.
+    -->
+    <header class="site-header">
+        <div class="container header-top">
+            <!-- Brand: torna sempre alla home/hub -->
+            <a class="brand" href="intro.html">
+                Web Examples
+                <small>HTML · CSS · JS</small>
+            </a>
+
+            <!--
+                                Checkbox per aprire/chiudere il menu su mobile (hamburger “solo CSS”).
+
+                                Idea:
+                                - La checkbox (#navToggle) è invisibile, ma può essere spuntata.
+                                - Il “pulsante” ☰ Menu è in realtà una <label for="navToggle">:
+                                    cliccandola, il browser spunta/despunta la checkbox automaticamente.
+
+                                CSS (vedi intro.css):
+                                - .nav { display: none; }  → su mobile la nav è nascosta di default.
+                                - .nav-toggle:checked ~ .nav { display: block; }
+                                    * :checked = la checkbox è spuntata
+                                    * ~ .nav = seleziona il fratello successivo .nav (che sta dopo la checkbox)
+
+                                Risultato: quando #navToggle è checked, la nav compare, senza usare JavaScript.
+            -->
+            <input class="nav-toggle" type="checkbox" id="navToggle" />
+
+            <div class="header-actions">
+                <!-- Bottone tema: la logica è in intro.js (usa data-theme e localStorage) -->
+                <button id="themeToggle" class="btn btn-ghost" type="button">Tema: --</button>
+
+                <!--
+                    Label collegata alla checkbox (for="navToggle"):
+                    cliccandola, si spunta/si despunta la checkbox e il menu si apre/chiude.
+                -->
+                <label class="btn btn-ghost nav-toggle-btn" for="navToggle">☰ Menu</label>
+            </div>
+
+            <!--
+                Navigazione principale (versione "tradizionale"):
+                - <nav> contiene una lista <ul><li>
+                - I dropdown sono <li> con un bottone + un sotto-menu <ul>
+                - intro.js gestisce apertura/chiusura e “solo uno aperto alla volta”
+            -->
+            <nav class="nav" aria-label="Navigazione principale">
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a class="nav-link" href="page.html">Pagina base</a>
+                    </li>
+
+                    <li class="nav-item has-dropdown">
+                        <button class="nav-link dropdown-toggle" type="button" aria-expanded="false"
+                            aria-controls="dropdown-css">
+                            CSS
+                        </button>
+                        <ul class="dropdown-panel" id="dropdown-css" hidden>
+                            <li><a href="regole-css.html">Regole CSS (selettori di classe)</a></li>
+                            <li><a href="media-query.html">Media query</a></li>
+                            <li><a href="flexbox.html">Flexbox</a></li>
+                            <li><a href="grid.html">Grid</a></li>
+                        </ul>
+                    </li>
+
+                    <li class="nav-item has-dropdown">
+                        <button class="nav-link dropdown-toggle" type="button" aria-expanded="false"
+                            aria-controls="dropdown-extra">
+                            Extra
+                        </button>
+                        <ul class="dropdown-panel" id="dropdown-extra" hidden>
+                            <li><a href="page.html#message">Esempio JS (saluto + click)</a></li>
+                            <li><a href="page.html">Tema (variabili CSS)</a></li>
+                            <li><a href="bootstrap.html">Bootstrap (intro)</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Contenuto principale: card introduttiva + griglia di card-link -->
+    <main class="container">
+        <section class="card">
+            <h1>Benvenuto</h1>
+            <p>
+                Questa pagina è un “hub” per gli esempi della cartella <code>basic-page1</code>.
+                Usa la barra di navigazione per aprire le pagine.
+            </p>
+            <p>
+                Come è costruita la barra di navigazione (idea + pezzi usati):
+            </p>
+            <ul>
+                <li>
+                    <strong>Struttura HTML</strong>: dentro <code>&lt;header&gt;</code> c’è un link “brand”
+                    (a sinistra) e un <code>&lt;nav class="nav"&gt;</code> con i link.
+                </li>
+                <li>
+                    <strong>Dropdown (struttura classica)</strong>: ogni voce con sotto-menu è un
+                    <code>&lt;li&gt;</code> con un <code>&lt;button&gt;</code> (titolo) e un
+                    <code>&lt;ul class="dropdown-panel"&gt;</code> (link interni).
+                </li>
+                <li>
+                    <strong>Hamburger “solo CSS”</strong>: su schermi piccoli la nav viene nascosta.
+                    Per aprirla uso una checkbox invisibile (<code>#navToggle</code>) e una label
+                    (<code>&lt;label for="navToggle"&gt;</code>) che fa da pulsante “☰ Menu”.
+                    In CSS la regola <code>.nav-toggle:checked ~ .nav</code> mostra la nav quando la
+                    checkbox è spuntata.
+                </li>
+                <li>
+                    <strong>Responsive</strong>: con una media query (vedi <code>intro.css</code>) sopra
+                    760px la nav è sempre visibile e il bottone hamburger viene nascosto; i dropdown
+                    diventano “tendine” posizionate con <code>position: absolute</code>.
+                </li>
+                <li>
+                    <strong>Piccolo JS per rifinire l’esperienza</strong>: in <code>intro.js</code>
+                    mostro/nascondo i sotto-menu usando l’attributo <code>hidden</code> e aggiorno
+                    <code>aria-expanded</code>; inoltre chiudo gli altri dropdown quando ne apri uno e
+                    chiudo menu/dropdown quando clicchi un link.
+                </li>
+                <li>
+                    <strong>Tema</strong>: il bottone “Tema” imposta <code>data-theme</code> sul
+                    <code>&lt;body&gt;</code> e salva la scelta in <code>localStorage</code>; poi le variabili CSS
+                    in <code>style.css</code> cambiano i colori.
+                </li>
+            </ul>
+            <div class="hint">
+                Nota didattica: per esercizio qui la navbar è “tradizionale”, cioè
+                <code>&lt;nav&gt;</code> con una lista <code>&lt;ul&gt;&lt;li&gt;</code>.
+                I dropdown sono fatti con un <code>&lt;button&gt;</code> (titolo) + un sotto-menu
+                <code>&lt;ul&gt;</code>, mostrato/nascosto tramite JavaScript (attributo <code>hidden</code>)
+                e lo stato <code>aria-expanded</code>.
+            </div>
+            <div class="hint">
+                Suggerimento: riduci la larghezza della finestra per vedere il menu hamburger.
+            </div>
+        </section>
+
+        <!--
+            Sezione "cards": su desktop diventa a 2 colonne (vedi intro.css).
+            Ogni card è un link rapido a una pagina.
+        -->
+        <section class="cards">
+            <article class="card">
+                <h2>HTML + CSS + JS (base)</h2>
+                <p>
+                    Pagina minimale con struttura HTML, CSS semplice e piccole interazioni in JavaScript.
+                </p>
+                <p><a href="page.html">Apri pagina base →</a></p>
+            </article>
+
+            <article class="card">
+                <h2>CSS: regole e selettori</h2>
+                <p>
+                    Ripasso delle proprietà comuni e guida approfondita ai selettori di classe.
+                </p>
+                <p><a href="regole-css.html">Apri regole CSS →</a></p>
+            </article>
+
+            <article class="card">
+                <h2>Media query</h2>
+                <p>
+                    Responsive design: breakpoints, <code>min-width</code>/<code>max-width</code> e demo.
+                </p>
+                <p><a href="media-query.html">Apri media query →</a></p>
+            </article>
+
+            <article class="card">
+                <h2>Flexbox</h2>
+                <p>
+                    Layout in riga/colonna: assi, allineamenti, wrap e crescita degli elementi.
+                </p>
+                <p><a href="flexbox.html">Apri Flexbox →</a></p>
+            </article>
+
+            <article class="card">
+                <h2>Grid</h2>
+                <p>
+                    Layout a righe e colonne: template, repeat/minmax, aree e posizionamento.
+                </p>
+                <p><a href="grid.html">Apri Grid →</a></p>
+            </article>
+
+            <article class="card">
+                <h2>Bootstrap</h2>
+                <p>
+                    Framework CSS/JS: griglia responsive e componenti pronti (navbar, card, spacing…).
+                </p>
+                <p><a href="bootstrap.html">Apri Bootstrap →</a></p>
+            </article>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container small">
+            Info5IA · Web examples · Menu responsive + dropdown · File: <code>intro.html</code>
+        </div>
+    </footer>
+
+    <!-- JS della pagina: tema + comportamento navbar (chiusura dropdown/menu) -->
+    <script src="intro.js"></script>
+</body>
+
+</html>

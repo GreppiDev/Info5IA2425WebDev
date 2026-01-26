@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagina base: HTML + CSS + JS</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header class="site-header">
+        <div class="container">
+            <h1>HTML, CSS e JS: esempio base</h1>
+            <p class="subtitle">
+                Una pagina molto semplice per vedere: struttura HTML, stile CSS e una piccola interazione JavaScript.
+            </p>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="card">
+            <h2>1) HTML: struttura e contenuti</h2>
+            <p>
+                Questo paragrafo è testo “normale”. Sotto trovi una lista e un link.
+                Vai a <a href="https://developer.mozilla.org/" target="_blank" rel="noreferrer">MDN Web Docs</a>.
+            </p>
+            <ul>
+                <li><strong>h1/h2</strong> per titoli</li>
+                <li><strong>p</strong> per paragrafi</li>
+                <li><strong>ul/li</strong> per liste</li>
+                <li><strong>button</strong> per azioni</li>
+            </ul>
+        </section>
+
+        <section class="card">
+            <h2>2) CSS: stile semplice</h2>
+            <p>
+                Il CSS in <code>style.css</code> imposta font, colori, spaziature e “card”.
+            </p>
+            <div class="hint">
+                Prova a cambiare un colore in <code>style.css</code> e ricaricare la pagina.
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>3) JS: esempio di interazione</h2>
+            <p id="message" class="message">Ciao! Scrivi il tuo nome e premi “Saluta”.</p>
+
+            <form id="greetForm" class="row" autocomplete="off">
+                <label class="field">
+                    <span>Nome</span>
+                    <input id="nameInput" type="text" placeholder="Es. Mario" />
+                </label>
+                <button class="btn" type="submit">Saluta</button>
+            </form>
+
+            <div class="row">
+                <button id="countBtn" class="btn btn-secondary" type="button">Conta click</button>
+                <button id="themeBtn" class="btn btn-ghost" type="button">Tema chiaro/scuro</button>
+            </div>
+
+            <p class="small">
+                Click: <span id="countValue">0</span> · Ora: <span id="timeValue">--:--:--</span>
+            </p>
+        </section>
+
+        <noscript>
+            <p class="card">JavaScript è disattivato: la parte interattiva non funzionerà.</p>
+        </noscript>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container small">
+            Suggerimento: apri DevTools (F12) e guarda la Console.
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

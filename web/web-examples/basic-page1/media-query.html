@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<!--
+  media-query.html
+  Pagina didattica: CSS Media Queries
+  - Cosa sono e a cosa servono
+  - min-width / max-width (mobile-first vs desktop-first)
+  - Esempi pratici + piccoli esercizi
+-->
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSS: Media Query</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="media-query.css" />
+</head>
+
+<body>
+    <header class="site-header">
+        <div class="container header-top">
+            <a class="brand" href="intro.html">
+                Web Examples
+                <small>CSS · Media Query</small>
+            </a>
+
+            <div class="header-actions">
+                <button id="themeToggle" class="btn btn-ghost" type="button">Tema: --</button>
+                <a class="btn btn-ghost" href="intro.html">← Home</a>
+            </div>
+        </div>
+
+        <div class="container">
+            <h1>Media query</h1>
+            <p class="subtitle">
+                Le media query permettono di applicare regole CSS diverse in base alle caratteristiche del dispositivo
+                (es. larghezza schermo). Sono la base del <strong>responsive design</strong>.
+            </p>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="card">
+            <h2>1) La sintassi</h2>
+            <p>
+                Una media query è un “blocco” di CSS che vale solo se una condizione è vera.
+                Esempio (mobile-first):
+            </p>
+            <pre><code>@media (min-width: 760px) {
+  /* regole attive da 760px in su */
+  .menu { display: flex; }
+}</code></pre>
+
+            <div class="hint">
+                Suggerimento: apri questa pagina e cambia la larghezza della finestra.
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>2) min-width vs max-width</h2>
+            <div class="grid-2">
+                <div>
+                    <h3>Approccio mobile-first (consigliato)</h3>
+                    <ul>
+                        <li>Scrivi prima gli stili base per schermi piccoli.</li>
+                        <li>Poi “aggiungi” miglioramenti con <code>min-width</code>.</li>
+                    </ul>
+                    <pre><code>/* base: mobile */
+.card { padding: 12px; }
+
+/* da tablet in su */
+@media (min-width: 760px) {
+  .card { padding: 16px; }
+}</code></pre>
+                </div>
+                <div>
+                    <h3>Approccio desktop-first</h3>
+                    <ul>
+                        <li>Scrivi prima gli stili per desktop.</li>
+                        <li>Poi “riduci” con <code>max-width</code> per mobile.</li>
+                    </ul>
+                    <pre><code>/* base: desktop */
+.nav { display: flex; }
+
+/* sotto 760px */
+@media (max-width: 759px) {
+  .nav { display: none; }
+}</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>3) Demo: breakpoints in tempo reale</h2>
+            <p>
+                Questo riquadro cambia aspetto in base alla larghezza della finestra.
+                In alto a destra compare anche un’etichetta con il breakpoint attivo.
+            </p>
+
+            <div class="mq-demo" aria-label="Demo media query">
+                <div class="mq-demo__header">
+                    <strong>Demo box</strong>
+                    <span class="mq-demo__badge">Ridimensiona la finestra</span>
+                </div>
+                <div class="mq-demo__content">
+                    <div class="mq-demo__item">A</div>
+                    <div class="mq-demo__item">B</div>
+                    <div class="mq-demo__item">C</div>
+                    <div class="mq-demo__item">D</div>
+                    <div class="mq-demo__item">E</div>
+                    <div class="mq-demo__item">F</div>
+                </div>
+                <p class="small">
+                    Obiettivo: vedere 1 colonna su mobile, 2 su tablet, 3 su desktop.
+                </p>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>4) Media features utili</h2>
+            <ul>
+                <li><code>(orientation: portrait)</code> / <code>(orientation: landscape)</code> (orientamento)</li>
+                <li><code>(prefers-color-scheme: dark)</code> (preferenza tema)</li>
+                <li><code>print</code> (stampa)</li>
+            </ul>
+            <pre><code>/* esempio: regole diverse in stampa */
+@media print {
+    .site-header,
+    .site-footer,
+    #themeToggle { display: none; }
+
+    body { color: #000; }
+}</code></pre>
+        </section>
+
+        <section class="card">
+            <h2>5) Esercizi</h2>
+            <ol>
+                <li>Modifica i breakpoint in <code>media-query.css</code> (es. 600 / 900) e osserva cosa cambia.</li>
+                <li>Fai in modo che la griglia nella demo diventi 4 colonne oltre 1200px.</li>
+                <li>Cambia il colore del badge in base al breakpoint.</li>
+            </ol>
+            <div class="hint">
+                File da modificare: <code>media-query.css</code>.
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container small">Info5IA · CSS Media Query · File: <code>media-query.html</code></div>
+    </footer>
+
+    <script>
+        // Toggle tema (stesso meccanismo delle altre pagine)
+        (function () {
+            const STORAGE_KEY = "cssTheme";
+            const themeBtn = document.getElementById("themeToggle");
+
+            function getTheme() {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved === "light" || saved === "dark") return saved;
+                return "dark";
+            }
+
+            function setTheme(theme) {
+                document.body.setAttribute("data-theme", theme);
+                localStorage.setItem(STORAGE_KEY, theme);
+                if (themeBtn) {
+                    themeBtn.textContent = `Tema: ${theme === "light" ? "chiaro" : "scuro"}`;
+                }
+            }
+
+            setTheme(getTheme());
+
+            if (themeBtn) {
+                themeBtn.addEventListener("click", () => {
+                    const current =
+                        document.body.getAttribute("data-theme") === "light" ? "light" : "dark";
+                    setTheme(current === "light" ? "dark" : "light");
+                });
+            }
+        })();
+    </script>
+</body>
+
+</html>
