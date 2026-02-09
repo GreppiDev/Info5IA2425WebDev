@@ -1,0 +1,20 @@
+{
+  "github-copilot": {
+    "type": "oauth",
+    "refresh": "refresh_token",
+    "access": "token",
+    "expires": 0
+  },
+  "openrouter": {
+    "type": "api",
+    "key": "key"
+  },
+  "zai-coding-plan": {
+    "type": "api",
+    "key": "key"
+  },
+  "kimi-for-coding": {
+    "type": "api",
+    "key": "key"
+  }
+}

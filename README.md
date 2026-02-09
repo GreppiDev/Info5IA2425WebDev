@@ -9,6 +9,10 @@
    3. [Deployment di applicazioni ASP.NET Core con Docker e Docker Compose](./docker/docker-docs/asp-net-docker/index.md)
    4. [Orchestrazione per sviluppo locale con `Docker Compose`; `Load Balancing`/`Reverse Proxy`/`HTTPS termination`/`DDoS mitigation` con `Nginx`; Analisi delle prestazioni con `K6`; Statistiche di funzionamento con `Prometheus` e `Grafana`; gestione delle migrazioni del database con un progetto `Worker` separato; creazione di un account limitato mediante script SQL  - un esempio completo con la Web App `EducationalGames`](./docker/docker-docs/local-dev/examples/educationalgames/index.md)
 
+### Sviluppo di applicazioni in Dev Containers
+
+   1. [Introduzione ai Dev Containers](./devcontainers/devcontainers-docs/getting-started/index.md)
+
 ### Azure
 
    1. [Deployment semplificato di applicazioni distribuite su Azure - Azure Container Instances (ACI) e Azure Container Apps (ACA)](./azure/containers/docs/aci-vs-aca/aci-vs-aca.md)

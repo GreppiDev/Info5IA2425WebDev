@@ -1,0 +1,39 @@
+# Keep the Docker build context small and avoid sending secrets/unneeded files
+
+# VCS
+.git
+.git/**
+
+# Dev env / IDE
+.vscode
+.vscode/**
+.vs
+.vs/**
+
+# .NET build outputs
+**/bin
+**/bin/**
+**/obj
+**/obj/**
+
+# Test outputs
+**/TestResults
+**/TestResults/**
+
+# Visual Studio user files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Node (if present)
+**/node_modules
+**/node_modules/**
+
+# Local secrets
+.env
+.env.*
+
+# OS junk
+**/.DS_Store
+**/Thumbs.db

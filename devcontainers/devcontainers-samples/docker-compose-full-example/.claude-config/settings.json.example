@@ -1,0 +1,8 @@
+{
+  "env": {
+    "ANTHROPIC_BASE_URL": "url",
+    "ANTHROPIC_API_KEY": "inserisci_la_tua_chiave_qui"
+  },
+  "enabledPlugins": {},
+  "autoUpdatesChannel": "latest"
+}

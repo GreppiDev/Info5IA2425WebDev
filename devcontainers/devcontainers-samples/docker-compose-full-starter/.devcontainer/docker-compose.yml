@@ -1,0 +1,68 @@
+name: asp-net-starter
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    volumes:
+      # Bind mount dell'intera workspace dentro /workspaces.
+      # Il suffisso ':cached' è un hint di performance (soprattutto su Docker Desktop).
+      - ../..:/workspaces:cached
+    # Devcontainer pattern: tieni il container vivo e lancia manualmente l'app
+    # (es. `dotnet run --project src/MyApi/MyApi.csproj`).
+    command: sleep infinity
+    env_file:
+      - ../.env # Carica le variabili d'ambiente dal file .env
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    networks:
+      - my-net # Rete creata dal compose (non esterna)
+  mariadb:
+    # Best practice: pin di una versione specifica per evitare cambiamenti non controllati.
+    # (Puoi aggiornare la tag quando vuoi fare upgrade espliciti.)
+    image: mariadb:11.4
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    # Didattica: esponiamo MariaDB sull'host per facilitare test con tool esterni (DBeaver/Workbench).
+    # Best practice in ambienti reali: evita di esporre il DB, oppure limita l'accesso (firewall/VPN/SG).
+    # Se sull'host hai gia' un DB su 3306, cambia MARIADB_HOST_PORT (es. 3307).
+    #
+    # Modalita' "secure" (consigliata per ambienti reali): nessuna porta pubblicata sull'host.
+    # Per attivarla, commenta o rimuovi la sezione `ports` qui sotto.
+    ports:
+      - "${MARIADB_HOST_PORT:-3306}:3306"
+    volumes:
+      # Volume nominato per persistenza dei dati di MariaDB.
+      - mariadb-data:/var/lib/mysql
+    networks:
+      - my-net
+    healthcheck:
+      # MariaDB image include uno script di healthcheck dedicato.
+      # --connect: verifica che si riesca a connettere
+      # --innodb_initialized: verifica che InnoDB sia inizializzato
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+networks:
+  my-net:
+    # Best practice (isolamento): NON fissare un nome globale.
+    # Compose creerà una rete namespaced tipo: <project>_my-net
+    # Vantaggi: niente collisioni con altri progetti, stack eseguibili in parallelo.
+    #
+    # Se invece vuoi una rete condivisa tra più compose/progetti, puoi fissare un nome globale:
+    # name: my-net
+    driver: bridge
+
+volumes:
+  mariadb-data:
+    # Best practice (isolamento): lascia che Compose crei un volume namespaced tipo:
+    # <project>_mariadb-data
+    # Vantaggi: persistenza per progetto, niente riuso accidentale di dati.
+    #
+    # Se invece vuoi condividere/riusare volutamente lo stesso volume tra progetti:
+    # name: mariadb-data
+    driver: local

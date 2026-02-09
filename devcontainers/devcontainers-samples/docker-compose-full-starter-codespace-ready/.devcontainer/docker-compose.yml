@@ -1,0 +1,60 @@
+name: asp-net-starter-codespaces
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    volumes:
+      - ..:/workspaces/docker-compose-full-starter-codespace-ready:cached
+    command: sleep infinity
+    environment:
+      # App config (read by ASP.NET via environment variables)
+      MARIADB_HOST: ${MARIADB_HOST:-mariadb}
+      MARIADB_PORT: ${MARIADB_PORT:-3306}
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-pizza_store}
+      MARIADB_USER: ${MARIADB_USER:-pizza_user}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:-pizza_password}
+
+      # Optional dev flags (used by provisioning scripts / tooling if present)
+      MARIADB_GRANT_ALL_ON_DB: ${MARIADB_GRANT_ALL_ON_DB:-1}
+      MARIADB_GRANT_SCOPE: ${MARIADB_GRANT_SCOPE:-server}
+      MARIADB_GRANT_WITH_GRANT_OPTION: ${MARIADB_GRANT_WITH_GRANT_OPTION:-1}
+      MARIADB_ENABLE_SEED: ${MARIADB_ENABLE_SEED:-1}
+
+      # Keep root password available for dev tooling/migrations if needed
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-root}
+
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    networks:
+      - my-net
+
+  mariadb:
+    image: mariadb:11.4
+    restart: unless-stopped
+    ports:
+      - "${MARIADB_HOST_PORT:-3306}:3306"
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-root}
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-pizza_store}
+      MARIADB_USER: ${MARIADB_USER:-pizza_user}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:-pizza_password}
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    networks:
+      - my-net
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+networks:
+  my-net:
+    driver: bridge
+
+volumes:
+  mariadb-data:
+    driver: local

@@ -1,0 +1,99 @@
+{
+  // `name` è la label del Dev Container in VS Code (UI). NON è il nome del container Docker.
+  "name": "Basic Dev Container Demo for dotnet",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+
+  // Crea `.env` sul computer HOST (prima che Docker avvii il container).
+  // Serve perché `runArgs --env-file` fallisce se il file non esiste.
+  // Usiamo un file Node (non `node -e ...`) per evitare problemi di quoting tra cmd/bash/zsh.
+  "initializeCommand": "node .devcontainer/init-dotenv.cjs",
+
+  // Nome esplicito del container (utile per debug e per studenti).
+  // Nota: qui impostiamo il nome del container Docker (quello visibile in `docker ps`),
+  // e può coesistere con `name` (che è solo la label del devcontainer in VS Code).
+  // Attenzione: se esiste già un container con lo stesso nome, Docker potrebbe rifiutare l'avvio.
+  "runArgs": [
+    "--name",
+    "${localWorkspaceFolderBasename}-devcontainer",
+    "--env-file",
+    ".env"
+  ],
+
+  // (Opzionale) Volumi: persistere dati tra i rebuild del devcontainer.
+  // Di default, i dati di MariaDB stanno nel filesystem del container: sopravvivono a STOP/START,
+  // ma NON a "Dev Containers: Rebuild Container".
+  //
+  // Per rendere persistente il database, puoi abilitare un volume named su /var/lib/mysql.
+  // Nota: includiamo anche ${localEnv:USERNAME} per ridurre collisioni in ambienti didattici (Windows).
+  //
+  // "mounts": [
+  //   "source=${localWorkspaceFolderBasename}-${localEnv:USERNAME}-mariadb-data,target=/var/lib/mysql,type=volume"
+  // ],
+
+  // Features pre-costruite (database, cli tools, etc.)
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts"
+    }
+  },
+
+  // Porte per il forwarding (API standard + Hot Reload + MariaDB)
+  "forwardPorts": [5000, 5001, 8080, 8081, 3306],
+  "portsAttributes": {
+    // Nota: non impostiamo `portsAttributes` per 3306 perché è opzionale.
+    // `forwardPorts` è già sufficiente a fare il port forwarding di MariaDB.
+    // `portsAttributes` è più utile per porte HTTP/HTTPS (label, protocollo, azioni UI come "Open in Browser").
+    "5001": {
+      "protocol": "https",
+      "label": "API HTTPS"
+    },
+    "5000": {
+      "protocol": "http",
+      "label": "API HTTP"
+    }
+  },
+
+  // Estensioni VS Code essenziali
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-dotnettools.csharp",
+        "ms-dotnettools.csdevkit",
+        "ms-azuretools.vscode-docker",
+        "GitHub.vscode-pull-request-github",
+        "GitHub.copilot-chat",
+        "formulahendry.dotnet-test-explorer",
+        "humao.rest-client", // Per testare le API
+        "cweijan.vscode-mysql-client2" // Per connettersi a MariaDB direttamente da VS Code
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "editor.formatOnSave": true,
+        "omnisharp.enableRoslynAnalyzers": true,
+        "editor.inlineSuggest.enabled": true
+      }
+    }
+  },
+
+  // Post-create commands:
+  "postCreateCommand": "if ls *.sln >/dev/null 2>&1; then dotnet restore && dotnet dev-certs https --trust; else echo \"Nessun progetto trovato. Salto restore...\"; fi || true",
+
+  // Avvia MariaDB all'avvio del container (senza systemd).
+  // Le variabili vengono iniettate nel container tramite `runArgs --env-file`.
+  "postStartCommand": "sudo -E bash .devcontainer/mariadb-entrypoint.sh true || true",
+
+  // Utente non-root per sicurezza
+  "remoteUser": "vscode",
+
+  // Variabili d'ambiente
+  "containerEnv": {
+    "ASPNETCORE_ENVIRONMENT": "Development",
+    "ASPNETCORE_URLS": "https://+:5001;http://+:5000"
+  }
+}

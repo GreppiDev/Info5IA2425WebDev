@@ -1,0 +1,12 @@
+# Forza LF su tutti i file di testo
+* text=auto eol=lf
+
+# File specifici che devono essere CRLF su Windows (rari)
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# File binari (non toccare)
+*.png binary
+*.jpg binary
+*.dll binary
+*.exe binary

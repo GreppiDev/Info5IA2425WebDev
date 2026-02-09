@@ -1,0 +1,104 @@
+{
+  "name": "ASP.NET Core - full example",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  //alternativa se non usiamo il docker-compose.yml
+  //   "build": {
+  //     "dockerfile": "Dockerfile",
+  //     "context": ".."
+  //   },
+  // Features pre-costruite (database, cli tools, etc.)
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts"
+    },
+    "ghcr.io/stu-bell/devcontainer-features/open-code:0": {},
+    "ghcr.io/stu-bell/devcontainer-features/claude-code:0": {}
+  },
+  // Porte da forwardare (API standard + Hot Reload)
+  "forwardPorts": [
+    5000,
+    5001,
+    8080,
+    8081
+  ],
+  "portsAttributes": {
+    "5001": {
+      "protocol": "https",
+      "label": "API HTTPS"
+    },
+    "5000": {
+      "protocol": "http",
+      "label": "API HTTP"
+    }
+  },
+  // Estensioni VS Code essenziali
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // .NET / C#
+        "ms-dotnettools.csharp",
+        "ms-dotnettools.csdevkit",
+        "formulahendry.dotnet-test-explorer",
+        "josefpihrt-vscode.roslynator", // Analizzatori codice C#
+        // Docker
+        "ms-azuretools.vscode-docker",
+        // GitHub
+        "GitHub.vscode-pull-request-github",
+        "GitHub.copilot-chat",
+        // HTML / CSS
+        "formulahendry.auto-close-tag",
+        "formulahendry.auto-rename-tag",
+        "pranaygp.vscode-css-peek",
+        // JavaScript / TypeScript
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "christian-kohler.path-intellisense",
+        "usernamehw.errorlens",
+        // Utilità varie
+        "redhat.vscode-yaml",
+        "pkief.material-icon-theme",
+        "aaron-bond.better-comments",
+        "humao.rest-client",
+        // AI Assistants
+        "sst-dev.opencode",
+        "Anthropic.claude-code",
+        "RooVeterinaryInc.roo-cline",
+        // Database
+        "cweijan.vscode-mysql-client2"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "editor.formatOnSave": true,
+        "omnisharp.enableRoslynAnalyzers": true,
+        "editor.inlineSuggest.enabled": true,
+        "debug.javascript.autoAttachFilter": "disabled",
+        "http.proxySupport": "off",
+        "files.watcherExclude": {
+          "**/node_modules/**": true,
+          "**/.git/objects/**": true
+        },
+        "files.useExperimentalFileWatcher": true // Usa un watcher alternativo
+      }
+    }
+  },
+  // Mounts della configurazione
+  "mounts": [
+    // Mount della configurazione di Claude Code
+    "source=${localWorkspaceFolder}/.claude-config,target=/mnt/claude-config,type=bind,consistency=cached",
+    // Mount della configurazione di OpenCode
+    "source=${localWorkspaceFolder}/.opencode-config,target=/mnt/opencode-config,type=bind,consistency=cached"
+  ],
+    // Post-create commands: 
+    "postCreateCommand": "bash -c 'if ls *.sln >/dev/null 2>&1; then dotnet restore && dotnet dev-certs https --trust; else echo \"Nessun progetto trovato. Salto restore...\"; fi || true && node /workspaces/${localWorkspaceFolderBasename}/.devcontainer/init-claude.cjs && node /workspaces/${localWorkspaceFolderBasename}/.devcontainer/init-opencode.cjs'",
+  // Utente non-root per sicurezza
+  "remoteUser": "vscode",
+  // Variabili d'ambiente
+  "containerEnv": {
+    "ASPNETCORE_ENVIRONMENT": "Development",
+    "ASPNETCORE_URLS": "https://+:5001;http://+:5000"
+  }
+}
