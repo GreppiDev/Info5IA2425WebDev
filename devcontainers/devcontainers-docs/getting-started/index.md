@@ -197,22 +197,22 @@ Il file `devcontainer.json` rappresenta il cuore della configurazione di un Dev 
 
 ```json
 {
-    "name": "Il mio Dev Container",
-    "image": "mcr.microsoft.com/devcontainers/dotnet:9.0-noble",
-    "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
-    "features": {
-        "ghcr.io/devcontainers/features/github-cli:1": {}
-    },
-    "customizations": {
-        "vscode": {
-            "extensions": [
-                "ms-dotnettools.csharp",
-                "ms-dotnettools.vscode-dotnet-runtime"
-            ]
-        }
-    },
-    "forwardPorts": [5000, 5001],
-    "postCreateCommand": "dotnet restore"
+    "name": "Il mio Dev Container",
+    "image": "mcr.microsoft.com/devcontainers/dotnet:9.0-noble",
+    "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+    "features": {
+        "ghcr.io/devcontainers/features/github-cli:1": {}
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-dotnettools.csharp",
+                "ms-dotnettools.vscode-dotnet-runtime"
+            ]
+        }
+    },
+    "forwardPorts": [5000, 5001],
+    "postCreateCommand": "dotnet restore"
 }
 ```
 
@@ -264,14 +264,14 @@ Il repository [github.com/devcontainers/features](https://github.com/devcontaine
 Le Features vengono dichiarate nel file `devcontainer.json` utilizzando la proprietà `features`. Ogni Feature è identificata da un URI univoco e può accettare opzioni di configurazione:
 
 ```json
-{    
+{    
   "features": {
       "ghcr.io/devcontainers/features/node:1": {
         "version": "lts"
       },
-          "ghcr.io/devcontainers/features/docker-in-docker:2": {},
-          "ghcr.io/devcontainers/features/github-cli:1": {}
-      }
+          "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+          "ghcr.io/devcontainers/features/github-cli:1": {}
+      }
 }
 ```
 
@@ -287,9 +287,9 @@ Per utilizzare una Feature della community, è sufficiente specificare il reposi
 
 ```json
 {
-    "features": {
-        "ghcr.io/devcontainers-extra/features/angular-cli:2": {}
-    }
+    "features": {
+        "ghcr.io/devcontainers-extra/features/angular-cli:2": {}
+    }
 }
 ```
 
@@ -555,10 +555,10 @@ RUN apt-get update && apt-get install -y \
 Il Dockerfile deve essere referenziato nel file devcontainer.json utilizzando la proprietà build.dockerfile:
 
 ```json
-{    "name": "Custom .NET Environment",
-    "build": {
-        "dockerfile": "Dockerfile"
-    }
+{    "name": "Custom .NET Environment",
+    "build": {
+        "dockerfile": "Dockerfile"
+    }
 }
 ```
 
@@ -1350,17 +1350,17 @@ L'adozione efficace dei Dev Containers richiede l'applicazione di best practices
 ```text
 my-project/
 ├── .devcontainer/
-│   ├── devcontainer.json
-│   ├── Dockerfile
-│   ├── docker-compose.yml
-│   └── README.md
+│   ├── devcontainer.json
+│   ├── Dockerfile
+│   ├── docker-compose.yml
+│   └── README.md
 ├── .vscode/
-│   ├── launch.json
-│   └── tasks.json
+│   ├── launch.json
+│   └── tasks.json
 ├── src/
-│   └── ...
+│   └── ...
 ├── tests/
-│   └── ...
+│   └── ...
 └── MyProject.sln
 
 ```
