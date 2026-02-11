@@ -37,6 +37,10 @@
     - [Caso 2: Stack completo in Compose (app + MariaDB nello stesso docker-compose.yml)](#caso-2-stack-completo-in-compose-app--mariadb-nello-stesso-docker-composeyml)
       - [Esempio completo di progetto con Dev Container, Database e rete gestiti da Docker Compose](#esempio-completo-di-progetto-con-dev-container-database-e-rete-gestiti-da-docker-compose)
     - [Template Dev Container per Docker Compose (multi-container) - Starter project](#template-dev-container-per-docker-compose-multi-container---starter-project)
+  - [Connettersi al Dev Container da una shell (senza terminale VS Code)](#connettersi-al-dev-container-da-una-shell-senza-terminale-vs-code)
+    - [Metodo 1 (consigliato): `docker compose exec`](#metodo-1-consigliato-docker-compose-exec)
+    - [Metodo 2: `docker exec` (quando si conosce il nome del container)](#metodo-2-docker-exec-quando-si-conosce-il-nome-del-container)
+    - [Workdir (opzionale)](#workdir-opzionale)
   - [Prebuilds](#prebuilds)
     - [Vantaggi dei prebuilds](#vantaggi-dei-prebuilds)
     - [Configurazione GitHub Codespaces](#configurazione-github-codespaces)
@@ -145,6 +149,8 @@ Queste immagini coprono i principali linguaggi e framework:
 
 L'elenco completo delle immagini ufficiali è disponibile nella [sezione `src` delle immagini](https://github.com/devcontainers/images/tree/main/src), e include dettagli su quali versioni degli SDK e runtime sono incluse in ciascuna immagine.
 
+> Nota :memo: Per rendere più veloce la creazione dei Dev Containers mostrati negli esempi riportati di seguito è opportuno scaricare preventivamente le immagini base (es. tramite `docker pull mcr.microsoft.com/devcontainers/dotnet:10.0-noble`) prima di avviare i Dev Container, in modo da evitare tempi di download durante la prima creazione. L'elenco delle immagini di base dei Dev Containers è disponibile anche su Docker Hub all'indirizzo [hub.docker.com/r/microsoft/devcontainers](https://hub.docker.com/r/microsoft/devcontainers).
+
 ## Struttura di un Dev Container
 
 Un Dev Container si compone tipicamente di tre elementi principali:
@@ -198,7 +204,7 @@ Il file `devcontainer.json` rappresenta il cuore della configurazione di un Dev 
 ```json
 {
     "name": "Il mio Dev Container",
-    "image": "mcr.microsoft.com/devcontainers/dotnet:9.0-noble",
+    "image": "mcr.microsoft.com/devcontainers/dotnet:10.0-noble",
     "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
     "features": {
         "ghcr.io/devcontainers/features/github-cli:1": {}
@@ -1029,6 +1035,7 @@ Esempio di `.devcontainer/devcontainer.json`:
     "ASPNETCORE_URLS": "https://+:5001;http://+:5000"
   }
 }
+
 ```
 
 Nota: in questo caso *non* serve conoscere IP o configurare DNS: `Server=mariadb` funziona perché Compose crea una rete e fornisce la risoluzione DNS del nome del servizio.
@@ -1041,6 +1048,74 @@ Un esempio completo di progetto con Dev Container con rete esterna e DB separato
 
 Per facilitare l'adozione dei Dev Containers con Docker Compose, è disponibile un template di progetto starter che include una configurazione di base per un'app ASP.NET Core e un database MariaDB, già predisposto per essere eseguito con Docker Compose.
 Il template è disponibile al seguente link: [Dev Container Docker Compose Starter](../../devcontainers-samples/docker-compose-full-starter/README.md).
+
+## Connettersi al Dev Container da una shell (senza terminale VS Code)
+
+Quando si usa un Dev Container basato su Docker/Docker Compose, si può aprire una shell **direttamente dal tuo terminale host** (PowerShell, Windows Terminal, bash, ecc.) senza passare dal terminale integrato di VS Code.
+
+In questa sezione sono mostrati casi d'uso coerenti con gli esempi mostrati qui sopra, dove nel `docker-compose.yml`:
+
+- il servizio dell'app si chiama `app`
+- il container rimane vivo con `command: sleep infinity` (pattern tipico Dev Container)
+- l'utente non-root usato per lavorare è `vscode` (vedi `remoteUser: "vscode"` nei `devcontainer.json` di esempio)
+
+### Metodo 1 (consigliato): `docker compose exec`
+
+Se si ha lo stack avviato con Docker Compose (ad esempio quello in `.devcontainer/docker-compose.yml`), il modo più pulito è entrare nel **servizio**.
+
+Esempio:
+
+```bash
+# Apri una bash nel servizio "app" come utente "vscode"
+docker compose -p my-minimal-api-full-example exec --user vscode app bash
+```
+
+Note pratiche:
+
+- `-p my-minimal-api-full-example` imposta esplicitamente il *project name* Compose (è lo stesso concetto del `name:` in cima al compose, quando presente). Se non lo si conosce o non è stato fissato, si può anche ometterlo e usare lo stesso comando dalla cartella del progetto.
+- Se si sta usando un file compose non standard (tipico con Dev Containers), specificare anche `-f`:
+
+```bash
+docker compose -f .devcontainer/docker-compose.yml -p my-minimal-api-full-example exec --user vscode app bash
+```
+
+- Se `bash` non fosse presente nell'immagine, usare `sh`.
+
+Per verificare velocemente quali servizi/container sono su:
+
+```bash
+docker compose -p my-minimal-api-full-example ps
+```
+
+### Metodo 2: `docker exec` (quando si conosce il nome del container)
+
+Se si preferisce entrare *direttamente* in un container specifico (o non si ha a portata di mano il project/service Compose), si può usare `docker exec`.
+
+Esempio:
+
+```bash
+docker exec -it --user vscode my-minimal-api-full-example-app-1 bash
+```
+
+Per ricavare il nome esatto del container:
+
+```bash
+docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}"
+```
+
+### Workdir (opzionale)
+
+Nei setup mostrati sopra il workspace viene montato in bind sotto `/workspaces` e il `workspaceFolder` è tipicamente `/workspaces/${localWorkspaceFolderBasename}`. Se si vuole aprire la shell già nella cartella del progetto, si può aggiungere un workdir:
+
+```bash
+docker compose -p my-minimal-api-full-example exec --user vscode -w /workspaces/<nome-repo> app bash
+```
+
+Ad esempio, assumendo che il nome del repo sia `docker-compose-full-example`, il comando completo sarebbe:
+
+```bash
+docker compose -p my-minimal-api-full-example exec --user vscode -w /workspaces/docker-compose-full-example app bash
+```
 
 ## Prebuilds
 
