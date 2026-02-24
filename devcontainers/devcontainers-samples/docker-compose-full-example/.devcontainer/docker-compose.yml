@@ -36,10 +36,12 @@ services:
       - "${MARIADB_HOST_PORT:-3306}:3306"
     environment:
       # Inizializzazione DB (prima esecuzione volume)
-      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-change-me-root}
-      MARIADB_DATABASE: ${MARIADB_DATABASE:-pizza_store}
-      MARIADB_USER: ${MARIADB_USER:-pizza_user}
-      MARIADB_PASSWORD: ${MARIADB_PASSWORD:-change-me}
+      # NOTA: queste variabili vengono caricate dall'env_file sopra (../.env)
+      # Non usare ${VAR:-default} perché VS Code potrebbe non vedere il .env
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
     volumes:
       # Volume nominato per persistenza dei dati di MariaDB.
       - mariadb-data:/var/lib/mysql

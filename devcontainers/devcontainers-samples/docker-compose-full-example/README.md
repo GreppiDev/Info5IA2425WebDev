@@ -22,6 +22,7 @@ Le credenziali e i parametri di connessione sono definiti in un file `.env` e ve
   - [🚀 Quick Start](#-quick-start)
     - [Prerequisiti](#prerequisiti)
     - [Avvio (passi consigliati)](#avvio-passi-consigliati)
+    - [Credenziali locali suggerite](#credenziali-locali-suggerite)
   - [🧠 Come funziona (in breve)](#-come-funziona-in-breve)
   - [🗄️ Database in Compose: rete `my-net`, volume e naming](#️-database-in-compose-rete-my-net-volume-e-naming)
     - [Perché usare ancora `my-net`?](#perché-usare-ancora-my-net)
@@ -32,7 +33,8 @@ Le credenziali e i parametri di connessione sono definiti in un file `.env` e ve
       - [Come verificare i grants (debug veloce)](#come-verificare-i-grants-debug-veloce)
       - [Spiegazione Bash (per capire gli script)](#spiegazione-bash-per-capire-gli-script)
       - [Socket vs TCP per `root` e `MARIADB_USER` (in questa configurazione)](#socket-vs-tcp-per-root-e-mariadb_user-in-questa-configurazione)
-  - [🔐 Variabili d’ambiente: `.env` e `.env.example`](#-variabili-dambiente-env-e-envexample)
+  - [🔐 Variabili d'ambiente: `.env` e `.env.example`](#-variabili-dambiente-env-e-envexample)
+    - [⚠️ Posizione del file `.env` e Symlink (IMPORTANTE)](#️-posizione-del-file-env-e-symlink-importante)
     - [`.env`](#env)
     - [`.env.example`](#envexample)
     - [Nota su Windows (CRLF)](#nota-su-windows-crlf)
@@ -49,7 +51,12 @@ Le credenziali e i parametri di connessione sono definiti in un file `.env` e ve
     - [La rete `my-net` non esiste](#la-rete-my-net-non-esiste)
     - [Il DB non è raggiungibile dal devcontainer](#il-db-non-è-raggiungibile-dal-devcontainer)
     - [Credenziali errate / Access denied](#credenziali-errate--access-denied)
-    - [E' stato modificato `.env` ma l’app non vede i cambiamenti](#e-stato-modificato-env-ma-lapp-non-vede-i-cambiamenti)
+    - [E' stato modificato `.env` ma l'app non vede i cambiamenti](#e-stato-modificato-env-ma-lapp-non-vede-i-cambiamenti)
+      - [Variabili "normali" (porta host, URL app, ecc.)](#variabili-normali-porta-host-url-app-ecc)
+      - [Variabili critiche del database (password, utente, database)](#variabili-critiche-del-database-password-utente-database)
+        - [Soluzione 1: Ricostruzione completa (consigliata)](#soluzione-1-ricostruzione-completa-consigliata)
+        - [Soluzione 2: Provisioning manuale (mantieni i dati)](#soluzione-2-provisioning-manuale-mantieni-i-dati)
+      - [Verifica dopo il cambiamento](#verifica-dopo-il-cambiamento)
   - [🧯 Trovare PID e fermare processi (Linux / Dev Container)](#-trovare-pid-e-fermare-processi-linux--dev-container)
   - [🤖 AI Assistants: Claude Code e OpenCode](#-ai-assistants-claude-code-e-opencode)
     - [Panoramica](#panoramica)
@@ -77,18 +84,21 @@ Le credenziali e i parametri di connessione sono definiti in un file `.env` e ve
 1. **Aprire la cartella in VS Code**
    - File → Open Folder… → seleziona `docker-compose-full-example`
 
-2. **Configurare le variabili locali (`.env` (locale) partendo da `.env.example`)**
+2. **Configurare le variabili locali (`.env` partendo da `.env.example`)**
 
    Questo repo include un template committabile `.env.example` e un file `.env` ignorato da Git.
-   Se si vuole ripartire “puliti”, si può usare questo workflow:
 
+   **Automatico (consigliato):** Lo script [`init-env.sh`](.devcontainer/init-env.sh) crea automaticamente `.env` da `.env.example` se non esiste, quando apri il Dev Container.
+
+   **Manuale (se vuoi personalizzare prima):**
    ```bash
    cp .env.example .env
+   # Modifica .env con le tue preferenze
    ```
 
-   Poi modificare le variabili d’ambiente e salvare il file `.env`.
+   Best practice: l'app non deve usare `root` (usa `MARIADB_USER` / `MARIADB_PASSWORD`).
 
-   Best practice: l’app non deve usare `root` (usa `MARIADB_USER` / `MARIADB_PASSWORD`).
+   > **Nota:** Se modifichi `.env` dopo il primo avvio del container, vedi la sezione [Troubleshooting](#e-stato-modificato-env-ma-lapp-non-vede-i-cambiamenti) per le procedure corrette.
 
 ### Credenziali locali suggerite
 
@@ -457,14 +467,60 @@ Interpretazione minima:
 - se vedi solo `root@localhost`, `root` è locale (tipicamente socket/loopback nel container DB)
 - se vedi `${MARIADB_USER}@%`, l’utente applicativo è abilitato a connessioni TCP dalla rete Docker
 
-## 🔐 Variabili d’ambiente: `.env` e `.env.example`
+## 🔐 Variabili d'ambiente: `.env` e `.env.example`
+
+### ⚠️ Posizione del file `.env` e Symlink (IMPORTANTE)
+
+Il file `.env` deve essere posizionato nella **root del progetto** (accanto a `.env.example`).
+
+**Perché un symlink?**
+
+Quando VS Code costruisce il Dev Container, esegue `docker compose` dalla directory `.devcontainer/`. Docker Compose cerca il file `.env` nella directory di lavoro (dove viene eseguito il comando), non nella parent.
+
+Il problema:
+
+- `env_file: - ../.env` carica le variabili **dentro il container** ✓
+- `${VAR}` nel `docker-compose.yml` viene valutato dall'**host** prima che i container vengano creati
+- Se Docker Compose non trova `.env` in `.devcontainer/`, usa i valori di default (es. `change-me-root`)
+
+**La soluzione:**
+
+Un symlink viene creato automaticamente da `initializeCommand` nel `.devcontainer/devcontainer.json`:
+
+```json
+"initializeCommand": "ln -sf ../.env .devcontainer/.env ..."
+```
+
+Questo crea `.devcontainer/.env` come symlink che punta a `../.env`, permettendo a Docker Compose di trovare le variabili quando eseguito da VS Code.
+
+**Ricostruzione necessaria:**
+
+Dopo aver creato/modificato il `.env` nella root, se il symlink non esiste ancora:
+
+```bash
+# Crea il symlink manualmente (o ricostruisci il devcontainer)
+ln -sf ../.env .devcontainer/.env
+
+# Verifica che funzioni
+docker compose -f .devcontainer/docker-compose.yml config | grep -i password
+```
+
+Output atteso:
+
+```
+MARIADB_PASSWORD: pizza_pass
+MARIADB_ROOT_PASSWORD: root
+```
+
+Non `change-me` o `change-me-root` (i valori di default)!
 
 ### `.env`
 
-File **locale** con variabili d’ambiente (può contenere password), quindi:
+File **locale** con variabili d'ambiente (può contenere password), quindi:
 
 - è ignorato da Git (vedi `.gitignore`)
 - va gestito per-macchina/per-utente
+- deve essere nella **root del progetto** (non in `.devcontainer/`)
 
 In questo repo viene caricato dal servizio `app` tramite `env_file` in Docker Compose.
 
@@ -616,17 +672,57 @@ Soluzione:
 
 Nota: usare `root` è comodo per demo, ma non è una best practice per ambienti reali.
 
-### E' stato modificato `.env` ma l’app non vede i cambiamenti
+### E' stato modificato `.env` ma l'app non vede i cambiamenti
 
 Perché succede: le variabili di `env_file` vengono lette quando Compose crea/avvia il container.
 
-Soluzione:
+#### Variabili "normali" (porta host, URL app, ecc.)
 
-- `F1` → “Dev Containers: Restart Container”
+Per queste basta ricreare i container:
 
-Se non basta:
+1. `F1` → "Dev Containers: Restart Container"
+2. Se non basta: `F1` → "Dev Containers: Rebuild Container"
 
-- `F1` → “Dev Containers: Rebuild Container”
+#### Variabili critiche del database (password, utente, database)
+
+Queste variabili vengono lette da MariaDB solo al **primo avvio** quando il volume è vuoto:
+- `MARIADB_ROOT_PASSWORD`
+- `MARIADB_DATABASE`
+- `MARIADB_USER`
+- `MARIADB_PASSWORD`
+
+**Se le modifichi dopo il primo avvio**, il container MariaDB mantiene i dati vecchi nel volume.
+
+##### Soluzione 1: Ricostruzione completa (consigliata)
+
+Cancella il volume e ricostruisci:
+
+```bash
+# Dalla root del progetto
+docker compose -f .devcontainer/docker-compose.yml down -v
+```
+
+Poi in VS Code: `F1` → "Dev Containers: Rebuild Container"
+
+##### Soluzione 2: Provisioning manuale (mantieni i dati)
+
+Se vuoi mantenere il volume ma aggiornare solo schema/seed/grants:
+
+```bash
+docker compose -f .devcontainer/docker-compose.yml run --rm db-provision
+```
+
+Nota: questo **NON** cambia la password root o il nome del database esistente, ma riesegue gli script di inizializzazione.
+
+#### Verifica dopo il cambiamento
+
+```bash
+# Verifica che le variabili siano caricate nel container app:
+docker compose -f .devcontainer/docker-compose.yml exec app env | grep MARIADB
+
+# Verifica la connessione al DB:
+mariadb -h mariadb -u pizza_user -ppizza_pass -e "SELECT CURRENT_USER();"
+```
 
 ## 🧯 Trovare PID e fermare processi (Linux / Dev Container)
 
