@@ -222,6 +222,28 @@ In questa configurazione `root` serve solo per l’inizializzazione locale e per
 
 Nota importante: in MariaDB gli account sono distinti per `User` + `Host`.
 Per esempio `root@localhost` e `root@127.0.0.1` possono avere **privilegi diversi** anche se la password è la stessa.
+In questo container, in pratica, per `root` vale quanto segue:
+
+- Funziona: `mariadb -h localhost -u root -p`
+- Può non funzionare: `mariadb -h 127.0.0.1 -u root -p`
+
+Se vuoi un accesso amministrativo affidabile, usa sempre il socket Unix:
+
+- `sudo mariadb --protocol=socket --socket=/var/run/mysqld/mysqld.sock -u root -p`
+- Modalità interattiva (più semplice da ricordare): `sudo mariadb -uroot -p` e poi inserire la password quando richiesta.
+
+Perché succede / cosa cambia tra i metodi di accesso:
+
+- `-h localhost`: il client MariaDB, su Linux, tende a usare il **socket Unix** (non TCP). Quindi l’accesso avviene come account `root@localhost`.
+- `-h 127.0.0.1`: forzi il protocollo **TCP/IP** (loopback). In questo caso MariaDB valuta un account diverso, tipicamente `root@127.0.0.1` (o comunque una voce host diversa da `localhost`).
+- `--protocol=socket --socket=...`: forzi esplicitamente il **socket Unix** e rendi il comportamento deterministico.
+
+Impatto pratico:
+
+- In MariaDB gli account sono separati per coppia `User`+`Host`, quindi `root@localhost` e `root@127.0.0.1` non sono lo stesso account.
+- Plugin di autenticazione e password possono differire tra le due entry (es. una valida e l’altra no), quindi un comando può funzionare e l’altro fallire.
+- Per amministrazione locale nel devcontainer, il socket è la scelta più stabile; per l’applicazione è meglio usare l’utente applicativo (`devuser`) via TCP.
+
 Per questo, dentro al container, per comandi amministrativi conviene usare il socket:
 
 - `mariadb --protocol=socket -u root -p`
