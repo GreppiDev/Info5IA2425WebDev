@@ -356,7 +356,7 @@ Se il comando fallisce, il container continua comunque ad avviarsi. Usare `|| tr
 
 #### postStartCommand
 
-`postStartCommand` è un comando shell eseguito **ad ogni avvio** del container (a differenza di `postCreateCommand` che corre solo una volta). Utile per operazioni ricorrenti come sincronizzazione file, aggiornamento dipendenze, avvio servizi, ecc.
+`postStartCommand` è un comando shell eseguito **ad ogni avvio** del container (a differenza di `postCreateCommand` che è eseguito solo una volta). Utile per operazioni ricorrenti come sincronizzazione file, aggiornamento dipendenze, avvio servizi, ecc.
 
 ```json
 "postStartCommand": "dotnet watch run"

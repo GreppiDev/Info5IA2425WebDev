@@ -31,6 +31,7 @@ Le credenziali e i parametri di connessione sono definiti in un file `.env` e ve
       - [Riferimento: variabili di permesso (cosa fanno davvero)](#riferimento-variabili-di-permesso-cosa-fanno-davvero)
       - [Come verificare i grants (debug veloce)](#come-verificare-i-grants-debug-veloce)
       - [Spiegazione Bash (per capire gli script)](#spiegazione-bash-per-capire-gli-script)
+      - [Socket vs TCP per `root` e `MARIADB_USER` (in questa configurazione)](#socket-vs-tcp-per-root-e-mariadb_user-in-questa-configurazione)
   - [🔐 Variabili d’ambiente: `.env` e `.env.example`](#-variabili-dambiente-env-e-envexample)
     - [`.env`](#env)
     - [`.env.example`](#envexample)
@@ -73,11 +74,10 @@ Le credenziali e i parametri di connessione sono definiti in un file `.env` e ve
 
 ### Avvio (passi consigliati)
 
-1) **Aprire la cartella in VS Code**
-
+1. **Aprire la cartella in VS Code**
    - File → Open Folder… → seleziona `docker-compose-full-example`
 
-2) **Configurare le variabili locali (`.env` (locale) partendo da `.env.example`)**
+2. **Configurare le variabili locali (`.env` (locale) partendo da `.env.example`)**
 
    Questo repo include un template committabile `.env.example` e un file `.env` ignorato da Git.
    Se si vuole ripartire “puliti”, si può usare questo workflow:
@@ -90,14 +90,13 @@ Le credenziali e i parametri di connessione sono definiti in un file `.env` e ve
 
    Best practice: l’app non deve usare `root` (usa `MARIADB_USER` / `MARIADB_PASSWORD`).
 
-3) **Aprire in Dev Container**
-
+3. **Aprire in Dev Container**
    - Se appare il popup “Reopen in Container”, cliccalo.
    - Oppure: `F1` → “Dev Containers: Reopen in Container”.
 
    La prima volta VS Code costruisce l’immagine, avvia il container ed esegue `dotnet restore` nella cartella del progetto.
 
-4) **Avviare l’app**
+4. **Avviare l’app**
 
    Nel terminale del devcontainer:
 
@@ -107,7 +106,6 @@ Le credenziali e i parametri di connessione sono definiti in un file `.env` e ve
 
    In Development, l’endpoint `/` reindirizza a Swagger UI.
    Con port forwarding attivo, apri:
-
    - `http://localhost:5000/swagger`
    - `https://localhost:5001/swagger`
 
@@ -135,10 +133,10 @@ Nel file `.devcontainer/docker-compose.yml` la rete è dichiarata con nome fisso
 
 ```yaml
 networks:
-   my-net:
-      driver: bridge
-      # (opzionale) nome globale fisso, sconsigliato se si hanno piu' esempi/stack in parallelo
-      # name: my-net
+  my-net:
+    driver: bridge
+    # (opzionale) nome globale fisso, sconsigliato se si hanno piu' esempi/stack in parallelo
+    # name: my-net
 ```
 
 Questo significa che Docker Compose crea/gestisce la rete. Se non si specifica `name:`, Compose userà un nome isolato per-progetto (evita collisioni tra stack diversi).
@@ -149,11 +147,11 @@ Dal container applicativo, il DB si raggiunge tramite:
 
 - **nome servizio Compose** (`mariadb`)
 
-   Nel template `.env.example` il valore di default è:
+  Nel template `.env.example` il valore di default è:
 
-   ```dotenv
-   MARIADB_HOST=mariadb
-   ```
+  ```dotenv
+  MARIADB_HOST=mariadb
+  ```
 
 Se il proprio container DB ha un nome diverso, cambiare `MARIADB_HOST`.
 
@@ -271,19 +269,18 @@ Si possono tenere due file locali (da non committare) e copiare quello attivo in
 
 Esempio:
 
-1) creare due file locali:
-
+1. creare due file locali:
    - `.env.dev`
    - `.env.prod`
 
-2) per passare a DEV:
+2. per passare a DEV:
 
    ```bash
    cp .env.dev .env
    docker compose -f .devcontainer/docker-compose.yml --profile tools run --rm db-provision
    ```
 
-3) per passare a PROD-like:
+3. per passare a PROD-like:
 
    ```bash
    cp .env.prod .env
@@ -295,14 +292,14 @@ Esempio:
 Gli script applicano i grants leggendo queste variabili:
 
 - `MARIADB_GRANT_SCOPE`
-   - `database` (default “prod-like”): i grants vengono applicati su `<db>.*`
-   - `server` (dev superuser): i grants vengono applicati su `*.*`
+  - `database` (default “prod-like”): i grants vengono applicati su `<db>.*`
+  - `server` (dev superuser): i grants vengono applicati su `*.*`
 - `MARIADB_GRANT_ALL_ON_DB`
-   - `0`: modalità least-privilege (CRUD + DDL base) sul target scelto da `MARIADB_GRANT_SCOPE`
-   - `1`: `ALL PRIVILEGES` sul target scelto da `MARIADB_GRANT_SCOPE`
+  - `0`: modalità least-privilege (CRUD + DDL base) sul target scelto da `MARIADB_GRANT_SCOPE`
+  - `1`: `ALL PRIVILEGES` sul target scelto da `MARIADB_GRANT_SCOPE`
 - `MARIADB_GRANT_WITH_GRANT_OPTION`
-   - `0`: non aggiunge `WITH GRANT OPTION`
-   - `1`: aggiunge `WITH GRANT OPTION` (molto permissivo: consente all’utente applicativo di concedere permessi ad altri utenti)
+  - `0`: non aggiunge `WITH GRANT OPTION`
+  - `1`: aggiunge `WITH GRANT OPTION` (molto permissivo: consente all’utente applicativo di concedere permessi ad altri utenti)
 
 Nota di sicurezza:
 
@@ -343,7 +340,7 @@ mariadb_root() {
 
 `cat <<EOSQL | mariadb_root`
 
-- `<<EOSQL` è un *heredoc*: permette di scrivere un blocco di testo multilinea (qui: SQL) direttamente nello script.
+- `<<EOSQL` è un _heredoc_: permette di scrivere un blocco di testo multilinea (qui: SQL) direttamente nello script.
 - `cat <<EOSQL` stampa quel blocco su `stdout`.
 - `| mariadb_root` (pipe) inoltra quello `stdout` come `stdin` al client `mariadb`.
 
@@ -367,7 +364,7 @@ Scenario d’uso: `MARIADB_GRANT_ALL_ON_DB`
 
 Esempio (DEV "poter fare tutto"):
 
-1) Mettere in `.env`:
+1. Mettere in `.env`:
 
    ```dotenv
    MARIADB_GRANT_ALL_ON_DB=1
@@ -375,30 +372,69 @@ Esempio (DEV "poter fare tutto"):
    MARIADB_GRANT_WITH_GRANT_OPTION=1
    ```
 
-1) Applicare i grants:
-
+1. Applicare i grants:
    - reset volume (soluzione “pulita”): `docker compose -f .devcontainer/docker-compose.yml down -v`
    - oppure re-provision: `docker compose -f .devcontainer/docker-compose.yml --profile tools run --rm db-provision`
 
    Nota:
-
    - se `MARIADB_GRANT_SCOPE=database`, anche con `MARIADB_GRANT_ALL_ON_DB=1` i permessi restano confinati a `<db>.*`
    - se `MARIADB_GRANT_SCOPE=server`, i permessi diventano su `*.*` (molto comodo in sviluppo, ma da evitare in produzione)
 
 Se si vuole rieseguire il provisioning si hanno 2 opzioni:
 
-1) Reset completo (ricrea volume e rilancia automaticamente init scripts)
+1. Reset completo (ricrea volume e rilancia automaticamente init scripts)
 
 - `docker compose -f .devcontainer/docker-compose.yml down -v`
 
 Poi riapertura/ricostruzione del devcontainer.
 
-1) Re-provision senza eliminare il volume (utile dopo `DROP DATABASE`)
+1. Re-provision senza eliminare il volume (utile dopo `DROP DATABASE`)
 
 - (opzionale) elimina il database:
-   - `docker compose -f .devcontainer/docker-compose.yml exec mariadb mariadb -uroot -p$MARIADB_ROOT_PASSWORD -e "DROP DATABASE IF EXISTS \`$MARIADB_DATABASE\`;"`
+  - `docker compose -f .devcontainer/docker-compose.yml exec mariadb mariadb -uroot -p$MARIADB_ROOT_PASSWORD -e "DROP DATABASE IF EXISTS \`$MARIADB_DATABASE\`;"`
 - rieseguire il provisioning (idempotente):
-   - `docker compose -f .devcontainer/docker-compose.yml --profile tools run --rm db-provision`
+  - `docker compose -f .devcontainer/docker-compose.yml --profile tools run --rm db-provision`
+
+#### Socket vs TCP per `root` e `MARIADB_USER` (in questa configurazione)
+
+In questo progetto ci sono due piani distinti:
+
+1. come si collegano gli script a MariaDB
+2. quali host sono autorizzati per ciascun account
+
+**1) Come si collegano gli script**
+
+- Gli script in `.devcontainer/db-init/*.sh` usano la funzione `mariadb_root()`.
+- Nel bootstrap initdb (dentro il container `mariadb`) la connessione è locale, tipicamente via **socket Unix**.
+- Nel servizio `db-provision` la connessione è via **TCP** (`-h mariadb -P 3306`).
+
+Questa logica riguarda il client usato dagli script; non modifica da sola gli host consentiti agli utenti.
+
+**2) Account `root`**
+
+- Nel compose viene impostata `MARIADB_ROOT_PASSWORD`.
+- Gli script custom non fanno `CREATE/ALTER USER root ... HOST ...`.
+- Quindi la possibilità di login di `root` via TCP/localhost dipende dall’inizializzazione dell’immagine MariaDB e dallo stato reale di `mysql.user`.
+- In ogni caso `root` è pensato per amministrazione locale/provisioning, non per uso applicativo.
+
+**3) Account `MARIADB_USER`**
+
+- È l’utente applicativo non-root.
+- In questo esempio i grant sono applicati all’host `'%'` (vedi anche `SHOW GRANTS FOR '$MARIADB_USER'@'%';`).
+- Quindi `MARIADB_USER` è usabile via **rete (TCP)**; l’app si connette infatti via `MARIADB_HOST=mariadb`, non via socket.
+
+Verifica rapida dello stato reale (user/host/plugin):
+
+```bash
+docker compose -f .devcontainer/docker-compose.yml exec mariadb \
+  mariadb -uroot -p"$MARIADB_ROOT_PASSWORD" \
+  -e "SELECT User,Host,plugin FROM mysql.user WHERE User IN ('root','${MARIADB_USER}');"
+```
+
+Interpretazione minima:
+
+- se vedi solo `root@localhost`, `root` è locale (tipicamente socket/loopback nel container DB)
+- se vedi `${MARIADB_USER}@%`, l’utente applicativo è abilitato a connessioni TCP dalla rete Docker
 
 ## 🔐 Variabili d’ambiente: `.env` e `.env.example`
 
@@ -459,7 +495,7 @@ Esempio logico:
 
 - host/port/db/user/password vengono letti dall’environment
 - si compone una stringa tipo:
-   - `Server=<host>;Port=<port>;Database=<db>;User Id=<user>;Password=<pwd>;`
+  - `Server=<host>;Port=<port>;Database=<db>;User Id=<user>;Password=<pwd>;`
 
 Entity Framework Core (provider MySQL/MariaDB) usa poi questa connection string in `UseMySql(...)`.
 
@@ -577,55 +613,55 @@ Quando si lancia un comando nel terminale (es. `dotnet run`) il processo può re
 
 **Stop “pulito” (foreground):**
 
-- Se il processo sta girando nel terminale in primo piano, premere `Ctrl+C` nel *medesimo* terminale.
+- Se il processo sta girando nel terminale in primo piano, premere `Ctrl+C` nel _medesimo_ terminale.
 
 **Trovare il PID (Process ID):**
 
 - Lista processi con PID e comando (output più leggibile di `ps aux`):
 
-   ```bash
-   ps -eo pid,cmd
-   ```
+  ```bash
+  ps -eo pid,cmd
+  ```
 
 - Filtrare i processi per parola chiave (trucco `[d]otnet` evita di fare il match con la riga del `grep` stesso):
 
-   ```bash
-   ps -eo pid,cmd | grep -E '[d]otnet'
-   ```
+  ```bash
+  ps -eo pid,cmd | grep -E '[d]otnet'
+  ```
 
 **Caso particolare: `dotnet` (trovare i PID giusti)**
 
 - PID dei processi avviati con `dotnet run`:
 
-   ```bash
-   pgrep -f "dotnet run"
-   ```
+  ```bash
+  pgrep -f "dotnet run"
+  ```
 
 - PID dei processi avviati con `dotnet watch`:
 
-   ```bash
-   pgrep -f "dotnet watch"
-   ```
+  ```bash
+  pgrep -f "dotnet watch"
+  ```
 
 **Fermare un processo usando il PID:**
 
 - Tentativo “gentile” (SIGTERM):
 
-   ```bash
-   kill <PID>
-   ```
+  ```bash
+  kill <PID>
+  ```
 
 - Se non si ferma (forzato, SIGKILL):
 
-   ```bash
-   kill -9 <PID>
-   ```
+  ```bash
+  kill -9 <PID>
+  ```
 
 **Fermare tutti i `dotnet run` (attenzione: li chiude tutti)**
 
-   ```bash
-   pkill -f "dotnet run"
-   ```
+```bash
+pkill -f "dotnet run"
+```
 
 ## 🤖 AI Assistants: Claude Code e OpenCode
 
@@ -638,8 +674,8 @@ Questo repository include (opzionali) due assistenti AI configurabili in Dev Con
 
 L’idea è separare in modo chiaro:
 
-- **segreti/config** (API key, token) → restano in file locali *git-ignored*
-- **bootstrap nel container** → copia dei file nella *home* dell’utente container, al momento della creazione
+- **segreti/config** (API key, token) → restano in file locali _git-ignored_
+- **bootstrap nel container** → copia dei file nella _home_ dell’utente container, al momento della creazione
 
 ### Mount della configurazione (host → container)
 
@@ -659,12 +695,12 @@ File attesi (locali, sul repo):
 
 Sempre in [.devcontainer/devcontainer.json](.devcontainer/devcontainer.json) viene eseguito un `postCreateCommand` che:
 
-1) se trova una `*.sln` nella workspace:
-    - esegue `dotnet restore`
-    - esegue `dotnet dev-certs https --trust`
-2) esegue due script Node.js nella workspace:
-    - `.devcontainer/init-claude.cjs`
-    - `.devcontainer/init-opencode.cjs`
+1. se trova una `*.sln` nella workspace:
+   - esegue `dotnet restore`
+   - esegue `dotnet dev-certs https --trust`
+2. esegue due script Node.js nella workspace:
+   - `.devcontainer/init-claude.cjs`
+   - `.devcontainer/init-opencode.cjs`
 
 Nota: questa logica gira **dentro** il Dev Container (utente `vscode`), quindi la “home” tipica è `/home/vscode`.
 
@@ -732,9 +768,9 @@ Obiettivo: far funzionare insieme
 
 ### Avvio corretto di VS Code su Windows (PowerShell)
 
-1) Aprire **Windows PowerShell**.
+1. Aprire **Windows PowerShell**.
 
-2) Impostare le variabili d’ambiente nella *stessa* sessione:
+2. Impostare le variabili d’ambiente nella _stessa_ sessione:
 
    ```powershell
    $env:HTTP_PROXY="http://proxy:3128"
@@ -742,13 +778,13 @@ Obiettivo: far funzionare insieme
    $env:NO_PROXY="localhost,127.0.0.1,host.docker.internal"
    ```
 
-3) Dalla stessa shell, aprire VS Code sulla cartella del progetto:
+3. Dalla stessa shell, aprire VS Code sulla cartella del progetto:
 
    ```powershell
    code .
    ```
 
-4) In VS Code: `F1` → “Dev Containers: Reopen in Container”.
+4. In VS Code: `F1` → “Dev Containers: Reopen in Container”.
 
 Così VS Code (lato host) eredita le variabili e, quando serve, anche i processi collegati possono usarle.
 
@@ -770,14 +806,14 @@ Risultato pratico: riduce i casi di estensioni che non riescono a scaricare riso
 ### Problemi tipici e fix rapidi
 
 - **Le estensioni non installano / non aggiornano**
-   - assicurati di lanciare VS Code da PowerShell con `HTTP_PROXY/HTTPS_PROXY/NO_PROXY` già impostate
-   - prova `F1` → “Developer: Reload Window”, poi “Dev Containers: Rebuild Container”
+  - assicurati di lanciare VS Code da PowerShell con `HTTP_PROXY/HTTPS_PROXY/NO_PROXY` già impostate
+  - prova `F1` → “Developer: Reload Window”, poi “Dev Containers: Rebuild Container”
 
 - **Autenticazioni via proxy**
-   - se il proxy richiede credenziali, la stringa proxy potrebbe dover includere user/password (dipende dalle policy della scuola)
+  - se il proxy richiede credenziali, la stringa proxy potrebbe dover includere user/password (dipende dalle policy della scuola)
 
 - **Servizi locali non raggiungibili**
-   - verifica che `NO_PROXY` includa `localhost,127.0.0.1,host.docker.internal`
+  - verifica che `NO_PROXY` includa `localhost,127.0.0.1,host.docker.internal`
 
 ## 🐛 Debug Node: perché `debug.javascript.autoAttachFilter` è `disabled`
 

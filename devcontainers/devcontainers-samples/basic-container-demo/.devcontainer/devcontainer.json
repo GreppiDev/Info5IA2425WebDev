@@ -76,7 +76,9 @@
         "terminal.integrated.defaultProfile.linux": "bash",
         "editor.formatOnSave": true,
         "omnisharp.enableRoslynAnalyzers": true,
-        "editor.inlineSuggest.enabled": true
+        "editor.inlineSuggest.enabled": true,
+        "http.proxySupport": "off",
+        "debug.javascript.autoAttachFilter": "disabled"
       }
     }
   },
