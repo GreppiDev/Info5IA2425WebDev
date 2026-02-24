@@ -36,10 +36,10 @@ services:
       - "${MARIADB_HOST_PORT:-3306}:3306"
     environment:
       # Inizializzazione DB (prima esecuzione volume)
-      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-root}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-change-me-root}
       MARIADB_DATABASE: ${MARIADB_DATABASE:-pizza_store}
       MARIADB_USER: ${MARIADB_USER:-pizza_user}
-      MARIADB_PASSWORD: ${MARIADB_PASSWORD:-pizza_password}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:-change-me}
     volumes:
       # Volume nominato per persistenza dei dati di MariaDB.
       - mariadb-data:/var/lib/mysql
@@ -93,19 +93,19 @@ services:
         # -u  : errore se usi variabili non definite
         # pipefail: fallisce anche se si rompe un comando in una pipeline
         set -euo pipefail
-        echo "[db-provision] Running provisioning scripts against ${MARIADB_PROVISION_HOST}:${MARIADB_PROVISION_PORT}..."
+        echo "[db-provision] Running provisioning scripts against $${MARIADB_PROVISION_HOST}:$${MARIADB_PROVISION_PORT}..."
         for f in /db-init/*; do
-          case "$f" in
+          case "$$f" in
             *.sh)
-              echo "[db-provision] bash $f";
-              bash "$f";
+              echo "[db-provision] bash $$f";
+              bash "$$f";
               ;;
             *.sql)
-              echo "[db-provision] mariadb < $f";
-              mariadb -h"${MARIADB_PROVISION_HOST}" -P"${MARIADB_PROVISION_PORT}" -uroot -p"${MARIADB_ROOT_PASSWORD}" < "$f";
+              echo "[db-provision] mariadb < $$f";
+              mariadb -h"$${MARIADB_PROVISION_HOST}" -P"$${MARIADB_PROVISION_PORT}" -uroot -p"$${MARIADB_ROOT_PASSWORD}" < "$$f";
               ;;
             *)
-              echo "[db-provision] Skipping $f";
+              echo "[db-provision] Skipping $$f";
               ;;
           esac
         done

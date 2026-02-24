@@ -90,6 +90,27 @@ Le credenziali e i parametri di connessione sono definiti in un file `.env` e ve
 
    Best practice: l’app non deve usare `root` (usa `MARIADB_USER` / `MARIADB_PASSWORD`).
 
+### Credenziali locali suggerite
+
+Per sviluppo locale, i valori suggeriti (allineati a `.env.example`) sono:
+
+```dotenv
+MARIADB_HOST=mariadb
+MARIADB_PORT=3306
+MARIADB_DATABASE=pizza_store
+MARIADB_USER=pizza_user
+MARIADB_PASSWORD=pizza_pass
+MARIADB_ROOT_PASSWORD=root
+```
+
+Comandi rapidi per applicare i cambiamenti e verificare l'accesso:
+
+```bash
+docker compose -f .devcontainer/docker-compose.yml up -d mariadb
+docker compose -f .devcontainer/docker-compose.yml run --rm db-provision
+mariadb -h mariadb -P 3306 -u pizza_user -ppizza_pass -e "SELECT CURRENT_USER();"
+```
+
 3. **Aprire in Dev Container**
    - Se appare il popup “Reopen in Container”, cliccalo.
    - Oppure: `F1` → “Dev Containers: Reopen in Container”.

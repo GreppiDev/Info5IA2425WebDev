@@ -65,6 +65,9 @@ CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\`;
 -- Crea l'utente applicativo se non esiste (idempotente)
 CREATE USER IF NOT EXISTS '${APP_USER}'@'%' IDENTIFIED BY '${APP_PASSWORD}';
 
+-- Riallinea sempre la password all'env corrente (utile se .env cambia su volume gia' esistente)
+ALTER USER '${APP_USER}'@'%' IDENTIFIED BY '${APP_PASSWORD}';
+
 -- Permessi sul DB applicativo (confinati al singolo database).
 ${PRIVS_SQL}
 
