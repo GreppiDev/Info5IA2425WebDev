@@ -23,8 +23,12 @@ services:
     # (Puoi aggiornare la tag quando vuoi fare upgrade espliciti.)
     image: mariadb:11.4
     restart: unless-stopped
-    env_file:
-      - ../.env
+    environment:
+      # Queste sono le 4 variabili native che MariaDB legge all'avvio
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
     # Didattica: esponiamo MariaDB sull'host per facilitare test con tool esterni (DBeaver/Workbench).
     # Best practice in ambienti reali: evita di esporre il DB, oppure limita l'accesso (firewall/VPN/SG).
     # Se sull'host hai gia' un DB su 3306, cambia MARIADB_HOST_PORT (es. 3307).

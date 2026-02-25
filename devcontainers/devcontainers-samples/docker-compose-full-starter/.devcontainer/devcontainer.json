@@ -92,6 +92,10 @@
     // Mount della configurazione di OpenCode
     "source=${localWorkspaceFolder}/.opencode-config,target=/mnt/opencode-config,type=bind,consistency=cached"
   ],
+  // Initialize: crea un symlink del .env dalla root a .devcontainer/
+  // Docker Compose carica automaticamente il .env dalla stessa directory del docker-compose.yml
+  // Usando uno script bash per compatibilità cross-platform
+  "initializeCommand": "bash .devcontainer/init-env.sh",
   // Post-create commands: 
   "postCreateCommand": "bash -c 'if ls *.sln >/dev/null 2>&1; then dotnet restore && dotnet dev-certs https --trust; else echo \"Nessun progetto trovato. Salto restore...\"; fi || true && node /workspaces/${localWorkspaceFolderBasename}/.devcontainer/init-claude.cjs && node /workspaces/${localWorkspaceFolderBasename}/.devcontainer/init-opencode.cjs'",
   // Utente non-root per sicurezza
