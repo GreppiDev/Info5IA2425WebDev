@@ -68,7 +68,11 @@
                 "files.useExperimentalFileWatcher": true
             }
         }
-    },
+    }, 
+    // Initialize: crea un symlink del .env dalla root a .devcontainer/
+    // Docker Compose carica automaticamente il .env dalla stessa directory del docker-compose.yml
+    // Usando uno script bash per compatibilità cross-platform
+    "initializeCommand": "bash .devcontainer/init-env.sh",
     "postCreateCommand": "bash -lc 'if ls *.sln >/dev/null 2>&1; then dotnet restore && dotnet dev-certs https --trust; else echo \"Nessun progetto trovato. Salto restore...\"; fi || true; node .devcontainer/init-claude.cjs'",
     "updateContentCommand": "bash -lc 'if ls *.sln >/dev/null 2>&1; then dotnet restore; else true; fi'",
     "remoteUser": "vscode",

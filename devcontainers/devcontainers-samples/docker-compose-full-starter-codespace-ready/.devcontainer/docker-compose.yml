@@ -11,9 +11,9 @@ services:
       # App config (read by ASP.NET via environment variables)
       MARIADB_HOST: ${MARIADB_HOST:-mariadb}
       MARIADB_PORT: ${MARIADB_PORT:-3306}
-      MARIADB_DATABASE: ${MARIADB_DATABASE:-pizza_store}
-      MARIADB_USER: ${MARIADB_USER:-pizza_user}
-      MARIADB_PASSWORD: ${MARIADB_PASSWORD:-pizza_password}
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
 
       # Optional dev flags (used by provisioning scripts / tooling if present)
       MARIADB_GRANT_ALL_ON_DB: ${MARIADB_GRANT_ALL_ON_DB:-1}
@@ -37,9 +37,9 @@ services:
       - "${MARIADB_HOST_PORT:-3306}:3306"
     environment:
       MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-root}
-      MARIADB_DATABASE: ${MARIADB_DATABASE:-pizza_store}
-      MARIADB_USER: ${MARIADB_USER:-pizza_user}
-      MARIADB_PASSWORD: ${MARIADB_PASSWORD:-pizza_password}
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
     volumes:
       - mariadb-data:/var/lib/mysql
     networks:

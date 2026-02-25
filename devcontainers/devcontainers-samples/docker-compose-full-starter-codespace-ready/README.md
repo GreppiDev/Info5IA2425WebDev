@@ -21,7 +21,7 @@ Questa guida spiega come:
 4. Inizializzazione:
 
   - si può **non** creare README (si può aggiungere con push), oppure crearlo e poi sovrascriverlo
-  - non serve aggiungere `.gitignore` da template (ce l’hai già)
+  - non serve aggiungere `.gitignore` da template (è già presente)
 
 ### 2) Popolare il repo con i file della variante
 
@@ -128,11 +128,14 @@ Poi aprire:
 - `http://localhost:5000/swagger`
 - `https://localhost:5001/swagger`
 
-## Cosa cambia rispetto allo starter “locale”
+## Cosa cambia rispetto allo starter "locale"
 
 - Niente `mounts` basati su `${localWorkspaceFolder}`: in Codespaces non esiste un path locale Windows/Mac da bind-montare.
-- Nessuna dipendenza da un file `.env` obbligatorio all’avvio: in Compose qui usiamo variabili con default `${VAR:-default}`.
-  - Si può comunque usare un `.env` locale (non committato) oppure **Codespaces Secrets** per sovrascrivere i default.
+- **Inizializzazione automatica del file `.env`**: lo script `init-env.sh` (eseguito da `initializeCommand`) crea automaticamente il file `.env` dalla root copiandolo da `.env.example` se non è presente, e crea un symlink in `.devcontainer/.env` per permettere a Docker Compose di caricare le variabili.
+- **Variabili sensibili senza default**: le variabili del database (`MARIADB_DATABASE`, `MARIADB_USER`, `MARIADB_PASSWORD`) non hanno valori di default nel `docker-compose.yml` e devono essere configurate. Puoi farlo in tre modi:
+  1. **Codespaces Secrets** (consigliato per produzione): imposta i secret nel repository GitHub
+  2. **Modificare `.env`**: dopo che lo script lo ha creato automaticamente, modifica il file `.env` con i tuoi valori
+  3. **`.env.example` personalizzato**: modifica `.env.example` prima del primo avvio del Codespace
 
 ## AI assistants (Claude / OpenCode)
 
