@@ -35,6 +35,7 @@ Le credenziali e i parametri di connessione sono definiti in un file `.env` e ve
       - [Socket vs TCP per `root` e `MARIADB_USER` (in questa configurazione)](#socket-vs-tcp-per-root-e-mariadb_user-in-questa-configurazione)
   - [🔐 Variabili d'ambiente: `.env` e `.env.example`](#-variabili-dambiente-env-e-envexample)
     - [⚠️ Posizione del file `.env` e Symlink (IMPORTANTE)](#️-posizione-del-file-env-e-symlink-importante)
+    - [Problemi di permessi su Windows (Symbolic Links)](#problemi-di-permessi-su-windows-symbolic-links)
     - [`.env`](#env)
     - [`.env.example`](#envexample)
     - [Nota su Windows (CRLF)](#nota-su-windows-crlf)
@@ -485,23 +486,58 @@ Il problema:
 
 **La soluzione:**
 
-Un symlink viene creato automaticamente da `initializeCommand` nel `.devcontainer/devcontainer.json`:
+Uno script `init-env.sh` viene eseguito automaticamente da `initializeCommand` nel `.devcontainer/devcontainer.json`:
 
 ```json
-"initializeCommand": "ln -sf ../.env .devcontainer/.env ..."
+"initializeCommand": "bash .devcontainer/init-env.sh"
 ```
 
-Questo crea `.devcontainer/.env` come symlink che punta a `../.env`, permettendo a Docker Compose di trovare le variabili quando eseguito da VS Code.
+Lo script tenta di creare un symlink da `.devcontainer/.env` a `../.env`, permettendo a Docker Compose di trovare le variabili quando eseguito da VS Code.
+
+### Problemi di permessi su Windows (Symbolic Links)
+
+Su **Windows**, la creazione di symbolic link richiede il privilegio `SeCreateSymbolicLinkPrivilege`, che di default è disponibile solo per gli amministratori. Gli utenti standard ricevono un errore di permesso.
+
+**Comportamento dello script:**
+
+1. **Primo tentativo**: Crea un symlink con `ln -sf ../.env .env`
+   - ✅ Funziona su Mac/Linux
+   - ✅ Funziona su Windows con permessi admin o "Developer Mode" attivata
+   - Vantaggio: le modifiche al `.env` sono sincronizzate automaticamente
+
+2. **Verifica di leggibilità**: Dopo aver creato il symlink, verifica che sia effettivamente leggibile (`test -r .env`)
+   - Su Windows il symlink può essere creato ma risultare non accessibile ("permission denied")
+   - Se il symlink non è leggibile, viene rimosso e si passa alla copia
+
+3. **Fallback**: Se il symlink non può essere creato o letto, copia il file con `cp ../.env .env`
+   - ✅ Funziona su tutti i sistemi
+   - ⚠️ Limitazione: se modifichi `.env` nella root, devi ricostruire il container per vedere i cambiamenti
+
+**Come abilitare i symbolic link su Windows:**
+
+1. **Metodo consigliato** - Developer Mode (Windows 10/11):
+   - Impostazioni → Privacy e sicurezza → Per sviluppatori → Modalità sviluppatore: ON
+   - I symlink sono abilitati per tutti gli utenti senza richiedere admin
+
+2. **Metodo alternativo** - Git con permessi elevati:
+   ```bash
+   # Configura Git per abilitare symlink
+   git config --global core.symlinks true
+   ```
+   - Esegui VS Code come amministratore quando cloni/apri il progetto
 
 **Ricostruzione necessaria:**
 
-Dopo aver creato/modificato il `.env` nella root, se il symlink non esiste ancora:
+Dopo aver creato/modificato il `.env` nella root, se il file in `.devcontainer/` non è sincronizzato:
 
 ```bash
-# Crea il symlink manualmente (o ricostruisci il devcontainer)
+# Ricostruisci il devcontainer da VS Code
+# Command Palette (Ctrl+Shift+P) → "Dev Containers: Rebuild Container"
+
+# Oppure crea manualmente il symlink (richiede permessi su Windows)
 ln -sf ../.env .devcontainer/.env
 
-# Verifica che funzioni
+# Verifica che Docker Compose legga le variabili correttamente
 docker compose -f .devcontainer/docker-compose.yml config | grep -i password
 ```
 
