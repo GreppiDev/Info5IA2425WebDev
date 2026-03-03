@@ -1,6 +1,6 @@
 #!/bin/bash
 # Script per creare il .env in .devcontainer/ (Docker Compose lo legge qui)
-# Crea un symlink se possibile, altrimenti copia (per Windows senza permessi symlink)
+# Crea un symlink se possibile, altrimenti copia (tipica situazione per Windows senza permessi symlink)
 
 cd "$(dirname "$0")" || exit 1
 

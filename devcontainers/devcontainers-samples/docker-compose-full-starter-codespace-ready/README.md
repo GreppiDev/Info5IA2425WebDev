@@ -20,8 +20,8 @@ Questa guida spiega come:
 3. Visibilità: `Private` se dentro ci saranno studenti/chiavi, altrimenti `Public`
 4. Inizializzazione:
 
-  - si può **non** creare README (si può aggiungere con push), oppure crearlo e poi sovrascriverlo
-  - non serve aggiungere `.gitignore` da template (è già presente)
+- si può **non** creare README (si può aggiungere con push), oppure crearlo e poi sovrascriverlo
+- non serve aggiungere `.gitignore` da template (è già presente)
 
 ### 2) Popolare il repo con i file della variante
 
@@ -38,12 +38,12 @@ Workflow consigliato (locale):
 2. Copiare dentro TUTTO il contenuto della cartella di questo esempio
 3. In quella cartella:
 
-  - `git init`
-  - `git add .`
-  - `git commit -m "Initial commit (codespaces-ready)"`
-  - `git branch -M main`
-  - `git remote add origin <URL-del-repo>`
-  - `git push -u origin main`
+- `git init`
+- `git add .`
+- `git commit -m "Initial commit (codespaces-ready)"`
+- `git branch -M main`
+- `git remote add origin <URL-del-repo>`
+- `git push -u origin main`
 
 > Importante: NON committare mai `.env` o file con token. Usare solo `.env.example` e Secrets.
 
@@ -70,9 +70,9 @@ Nel repo su GitHub:
 2. Sezione `Prebuilds`
 3. Creare una configurazione di prebuild per:
 
-  - branch: `main`
-  - region: quella più vicina (EU/US)
-  - trigger: tipicamente su `push`/schedule (in base alle opzioni che GitHub mostra)
+- branch: `main`
+- region: quella più vicina (EU/US)
+- trigger: tipicamente su `push`/schedule (in base alle opzioni che GitHub mostra)
 
 Consiglio pratico: abilitare prebuild su `main` e rigenerare quando si aggiorna `.devcontainer/`.
 
@@ -83,11 +83,11 @@ Nel repo su GitHub:
 1. Andare su `Settings` → `Secrets and variables` → `Codespaces`
 2. Aggiungere i secret (nomi uguali alle variabili):
 
-  - `MARIADB_DATABASE`
-  - `MARIADB_USER`
-  - `MARIADB_PASSWORD`
-  - `MARIADB_ROOT_PASSWORD`
-  - (opzionale) `MARIADB_HOST_PORT`
+- `MARIADB_DATABASE`
+- `MARIADB_USER`
+- `MARIADB_PASSWORD`
+- `MARIADB_ROOT_PASSWORD`
+- (opzionale) `MARIADB_HOST_PORT`
 
 Perché così: la compose usa default `${VAR:-...}` ma se il Secret esiste lo userà automaticamente.
 
@@ -123,10 +123,137 @@ Quando si ha un progetto in `src/`:
 dotnet run --project src/MyApi/MyApi.csproj
 ```
 
-Poi aprire:
+### Nota: certificato HTTPS di sviluppo su Linux (`dotnet dev-certs`)
 
-- `http://localhost:5000/swagger`
-- `https://localhost:5001/swagger`
+Il `postCreateCommand` esegue `dotnet dev-certs https` per generare il certificato self-signed usato da Kestrel sulla porta HTTPS (5001). Su Linux, aggiungere o meno il flag `--trust` ha effetti limitati:
+
+| Flag                             | Cosa fa su Linux                                                                                                                                                                            |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dotnet dev-certs https`         | Genera il certificato (necessario per Kestrel)                                                                                                                                              |
+| `dotnet dev-certs https --trust` | Tenta di aggiungere il certificato al trust store via `libnss3-tools` e `update-ca-certificates`, ma spesso fallisce o funziona solo per alcuni client. Produce warning nel log del rebuild |
+
+Su **Windows** e **macOS** `--trust` è gestito a livello OS ed è pienamente efficace. Su Linux l'effetto è parziale e dipende da cosa è installato nel container.
+
+In Codespaces questo è **irrilevante per l'accesso esterno**: l'URL pubblico `*.app.github.dev` usa TLS gestito dal proxy di Codespaces, che è un certificato valido. Solo `https://localhost:5001` dal terminale interno avrebbe il solito warning di certificato non trusted.
+
+## Port Forwarding in GitHub Codespaces
+
+### Come funziona il port forwarding
+
+Quando un'app ascolta su una porta all'interno del Codespace, GitHub crea automaticamente un **tunnel HTTPS** con un URL pubblico del tipo:
+
+```
+https://<codespace-name>-<port>.app.github.dev
+```
+
+Questo tunnel passa attraverso il **proxy di Codespaces**, che può operare in due modalità:
+
+| Visibilità            | Comportamento                                              |
+| --------------------- | ---------------------------------------------------------- |
+| **Private** (default) | Il proxy richiede autenticazione GitHub per ogni richiesta |
+| **Public**            | Il proxy lascia passare le richieste senza autenticazione  |
+
+### Il problema: porta privata vs porta pubblica
+
+Con visibilità **Private** (impostazione di default):
+
+- `curl http://localhost:5000/weatherforecast` → **funziona** (richiesta interna al container, non passa per il proxy)
+- `curl https://<codespace-name>-5000.app.github.dev/weatherforecast` → **non funziona** (il proxy blocca la richiesta perché manca autenticazione)
+
+Con visibilità **Public**:
+
+- Entrambe le forme funzionano senza autenticazione.
+
+### Perché a volte funzionava senza cambiare nulla
+
+Se avevi un **tab del browser aperto su GitHub** (es. `github.com`), il browser condivideva i cookie di sessione GitHub con il dominio `*.app.github.dev`. Quindi le richieste dal browser verso la porta privata venivano autenticate automaticamente tramite quei cookie.
+
+Con `curl` invece non ha accesso ai cookie del browser, quindi falliva sempre con porte private.
+
+### Come accedere a una porta privata con curl
+
+Per autenticarsi si usa `gh`, la **GitHub CLI** (preinstallata nei Codespaces), che espone il comando `gh auth token` per ottenere il token di sessione GitHub corrente:
+
+```bash
+curl https://<codespace-name>-5000.app.github.dev/weatherforecast \
+  -H "Authorization: Bearer $(gh auth token)" \
+  -H "X-Github-Token: $(gh auth token)"
+```
+
+> `$(gh auth token)` viene sostituito dalla shell con il token GitHub attivo. Se non sei autenticato, esegui prima `gh auth login`.
+
+### Come impostare la visibilità della porta manualmente
+
+Nel pannello **Ports** di VS Code (in basso) o nella tab **Ports** dell'interfaccia web di Codespaces:
+
+1. Click destro sulla porta
+2. **Port Visibility** → **Public**
+
+⚠️ Questa impostazione è legata alla **sessione** del Codespace: viene persa ogni volta che il Codespace viene ricreato da zero.
+
+### Come rendere la configurazione persistente nel devcontainer.json
+
+Per evitare di dover impostare manualmente la visibilità ad ogni nuova creazione del Codespace, si può configurare `portsAttributes` nel file `.devcontainer/devcontainer.json`:
+
+```json
+{
+  "portsAttributes": {
+    "5000": {
+      "protocol": "http",
+      "label": "API HTTP",
+      "onAutoForward": "openPreview",
+      "visibility": "public"
+    },
+    "5001": {
+      "protocol": "https",
+      "label": "API HTTPS",
+      "onAutoForward": "openPreview",
+      "visibility": "public"
+    }
+  }
+}
+```
+
+### Problema: porte duplicate nel pannello Ports
+
+Ogni volta che l'applicazione ASP.NET Core viene avviata, Codespaces rileva che Kestrel inizia ad ascoltare sulle porte e le aggiunge di nuovo come "auto-forwarded", anche se sono già presenti in `forwardPorts`. Il risultato è che il pannello **Ports** si riempie di voci duplicate ad ogni avvio.
+
+La soluzione è aggiungere `"onAutoForward": "silent"` per tutte le porte già dichiarate in `forwardPorts`. Così Codespaces le forwarderà comunque (grazie a `forwardPorts`), ma quando l'app le attiva non creerà nuove voci:
+
+```json
+"forwardPorts": [5000, 5001],
+"portsAttributes": {
+  "5000": {
+    "protocol": "http",
+    "label": "API HTTP",
+    "onAutoForward": "silent"
+  },
+  "5001": {
+    "protocol": "https",
+    "label": "API HTTPS",
+    "onAutoForward": "silent"
+  }
+}
+```
+
+### Opzioni disponibili per `onAutoForward`
+
+| Valore        | Comportamento                                              |
+| ------------- | ---------------------------------------------------------- |
+| `openBrowser` | Apre il browser automaticamente quando la porta è rilevata |
+| `openPreview` | Apre il Simple Browser integrato in VS Code                |
+| `notify`      | Mostra una notifica con il link                            |
+| `silent`      | Fa il forward senza notifiche                              |
+| `ignore`      | Non fa il forward automatico                               |
+
+Opzioni per `visibility`:
+
+| Valore    | Comportamento                              |
+| --------- | ------------------------------------------ |
+| `public`  | Accessibile senza autenticazione           |
+| `private` | Accessibile solo con autenticazione GitHub |
+
+> Nota: impostare una porta come `public` in un repo pubblico significa che **chiunque** può accedere all'URL del Codespace mentre è in esecuzione. Per API di sviluppo con dati sensibili, considerare di mantenere la visibilità `private` e usare l'autenticazione via token.
 
 ## Cosa cambia rispetto allo starter "locale"
 
