@@ -43,7 +43,7 @@ Il GDPR si basa su sette principi fondamentali che devono guidare qualsiasi atti
 4. **Esattezza:** I dati personali devono essere esatti e, se necessario, aggiornati. Devono essere adottate tutte le misure ragionevoli per cancellare o rettificare tempestivamente i dati inesatti rispetto alle finalità per le quali sono trattati.
 5. **Limitazione della Conservazione:** I dati personali devono essere conservati in una forma che consenta l'identificazione degli interessati per un arco di tempo non superiore al conseguimento delle finalità per le quali sono trattati.
 6. **Integrità e Riservatezza:** I dati personali devono essere trattati in maniera da garantire un'adeguata sicurezza, compresa la protezione, mediante misure tecniche e organizzative adeguate, da trattamenti non autorizzati o illeciti e dalla perdita, dalla distruzione o dal danno accidentale.
-7 . **Responsabilizzazione (Accountability):** Il titolare del trattamento è competente per il rispetto dei principi sopra elencati e deve essere in grado di comprovarlo. Questo implica la necessità di documentare le proprie attività di trattamento.
+7. **Responsabilizzazione (Accountability):** Il titolare del trattamento è competente per il rispetto dei principi sopra elencati e deve essere in grado di comprovarlo. Questo implica la necessità di documentare le proprie attività di trattamento.
 
 ### Diritti degli Interessati 🛡️
 

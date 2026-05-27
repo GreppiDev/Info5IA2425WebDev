@@ -105,7 +105,6 @@ La piattaforma *VerifAI News* deve soddisfare i seguenti requisiti:
     - **UC10:** Gestisce le liste di Topic e Motivazioni.
     - **UC11:** Accede alle dashboard di analisi e reportistica.
 
-
 **Note sulla Gerarchia:**
 
 - Tutti i ruoli (Esperto Junior, Esperto Senior, Amministratore) ereditano automaticamente i casi d'uso dell'attore base "Esperto"

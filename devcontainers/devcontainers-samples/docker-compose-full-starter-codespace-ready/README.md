@@ -164,12 +164,6 @@ Con visibilità **Public**:
 
 - Entrambe le forme funzionano senza autenticazione.
 
-### Perché a volte funzionava senza cambiare nulla
-
-Se avevi un **tab del browser aperto su GitHub** (es. `github.com`), il browser condivideva i cookie di sessione GitHub con il dominio `*.app.github.dev`. Quindi le richieste dal browser verso la porta privata venivano autenticate automaticamente tramite quei cookie.
-
-Con `curl` invece non ha accesso ai cookie del browser, quindi falliva sempre con porte private.
-
 ### Come accedere a una porta privata con curl
 
 Per autenticarsi si usa `gh`, la **GitHub CLI** (preinstallata nei Codespaces), che espone il comando `gh auth token` per ottenere il token di sessione GitHub corrente:
@@ -218,7 +212,7 @@ Per evitare di dover impostare manualmente la visibilità ad ogni nuova creazion
 
 Ogni volta che l'applicazione ASP.NET Core viene avviata, Codespaces rileva che Kestrel inizia ad ascoltare sulle porte e le aggiunge di nuovo come "auto-forwarded", anche se sono già presenti in `forwardPorts`. Il risultato è che il pannello **Ports** si riempie di voci duplicate ad ogni avvio.
 
-La soluzione è aggiungere `"onAutoForward": "silent"` per tutte le porte già dichiarate in `forwardPorts`. Così Codespaces le forwarderà comunque (grazie a `forwardPorts`), ma quando l'app le attiva non creerà nuove voci:
+La soluzione è aggiungere `"onAutoForward": "notify"` per tutte le porte già dichiarate in `forwardPorts`. Così Codespaces le forwarderà comunque (grazie a `forwardPorts`), ma quando l'app le attiva non creerà nuove voci:
 
 ```json
 "forwardPorts": [5000, 5001],
@@ -226,12 +220,12 @@ La soluzione è aggiungere `"onAutoForward": "silent"` per tutte le porte già d
   "5000": {
     "protocol": "http",
     "label": "API HTTP",
-    "onAutoForward": "silent"
+    "onAutoForward": "notify"
   },
   "5001": {
     "protocol": "https",
     "label": "API HTTPS",
-    "onAutoForward": "silent"
+    "onAutoForward": "notify"
   }
 }
 ```
