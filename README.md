@@ -1,4 +1,4 @@
-# Corso di informatica per la classe 5IA a.s. 2025/2026 - Prof. G. Malafronte
+# Corso di informatica per le classi quinte - Prof. G. Malafronte
 
 ## Indice degli argomenti
 
