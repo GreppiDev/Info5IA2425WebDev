@@ -126,3 +126,5 @@
 ### Esame di Stato 2025
 
  1. [Traccia di informatica del 2025 - sessione ordinaria](./esame/tracce-svolte/2025/ordinaria/index.md)
+ 2. [Traccia di informatica del 2025 - sessione suppletiva](./esame/tracce-svolte/2025/supplettiva/index.md)
+
