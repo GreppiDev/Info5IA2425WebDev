@@ -1744,7 +1744,7 @@ Per pubblicare su Docker Hub:
 
         Ora, creare l'Azure Container Registry. Il nome del registry deve essere univoco a livello globale.
 
-        Prima di creare il registry occorre Registrare il resource provider Microsoft.ContainerRegistry nella propria sottoscrizione Azure. In Azure, ogni servizio (VM, Storage, Container Registry, ecc.) è esposto tramite un namespace provider. Per utilizzare un servizio, è necessario registrare il relativo provider. Per registrare il provider Microsoft.ContainerRegistry, eseguire:
+        Prima di creare il registry occorre registrare il resource provider `Microsoft.ContainerRegistry` nella propria sottoscrizione Azure. In Azure, ogni servizio (VM, Storage, Container Registry, ecc.) è esposto tramite un namespace provider. Per utilizzare un servizio, è necessario registrare il relativo provider. Per registrare il provider `Microsoft.ContainerRegistry`, eseguire:
 
         ```ps1
         az provider register --namespace Microsoft.ContainerRegistry
@@ -1756,7 +1756,7 @@ Per pubblicare su Docker Hub:
         az provider show --namespace Microsoft.ContainerRegistry --query "registrationState"
         ```
 
-        Se la risposta è "Registered", si può procedere con la creazione del registry:
+        Se la risposta è `Registered`, si può procedere con la creazione del registry:
 
         ```ps1
         az acr create --resource-group DotnetDemos --name ilmioregistrocontainerunico --sku Basic --admin-enabled true
